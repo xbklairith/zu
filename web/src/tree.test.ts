@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import golden from "../../internal/export/testdata/shop.view.golden.json";
-import { autoDepth, boxStats, bundles, containers, touchedExternals, declLeaves, leavesAt, methodsOf, parentBox } from "./tree";
+import { autoDepth } from "./cut";
+import { boxStats, parentBox } from "./tree";
+import { bundles, containers, declLeaves, leavesAt, methodsOf, touchedExternals } from "./testkit";
 import { parseView } from "./data";
 import type { View } from "./data";
 

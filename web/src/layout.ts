@@ -1,145 +1,22 @@
-// What one focus draws (scene) and where (layout). ELK runs on the main thread
-// (plan Deviation 5); every input is sorted and sizes come from label lengths,
-// never from the DOM, so the same View always lays out the same way.
-import ELK, { type ElkNode } from "elkjs/lib/elk.bundled.js";
-import { nodeMark, unchangedCount } from "./change";
-import type { View } from "./data";
-import {
-  EXTERNALS,
-  OUTSIDE,
-  boxesOf,
-  bundles,
-  containers,
-  declLeaves,
-  leavesAt,
-  methodsOf,
-  packagesIn,
-  placeOf,
-  touchedExternals,
-  type Bundle,
-} from "./tree";
+// Where a scene is drawn. The ELK input comes from the scene alone: every list
+// is sorted and sizes come from label lengths, never from the DOM, so the same
+// View always lays out the same way. The engine is passed in: engine.ts for
+// the page, elk.bundled.js in unit tests.
+import type { ElkNode } from "elkjs/lib/elk-api";
+import type { Scene, SceneNode } from "./scene";
 
-export type Shape = "container" | "box" | "oval" | "decl" | "outside" | "chip";
-// mark is the Change View class (change.ts); rowMarks parallel rows.
-export type Item = {
-  id: string; label: string; parent?: string; shape: Shape; rows?: string[]; mark?: string; rowMarks?: string[];
-};
 export type Placed = { x: number; y: number; w: number; h: number; parent?: string };
-export type Scene = { items: Item[]; edges: Bundle[] };
+export type Engine = { layout(graph: ElkNode): Promise<ElkNode> };
 
-const PKG = "#pkg";
+const ROW = 18;
 
-function cmp(a: string, b: string): number {
-  return a < b ? -1 : a > b ? 1 : 0;
+// sizeOf estimates a node from its text: the label, the method rows, and for
+// boxes the stats line ("15 decls · 4 unresolved").
+export function sizeOf(n: SceneNode): { w: number; h: number } {
+  const stats = n.shape === "box" ? 24 : 0;
+  const text = Math.max(n.label.length, stats, ...n.methods.map((r) => r.length + 2));
+  return { w: Math.min(280, Math.max(90, text * 7.5 + 24)), h: 40 + ROW * n.methods.length };
 }
-
-function lastSegment(id: string): string {
-  return id.slice(id.lastIndexOf("/") + 1);
-}
-
-// scene lists what focus draws at depth d: containers, leaves, and the
-// endpoints bundles reach outside them (externals, "outside").
-export function scene(view: View, focus: string, d: number): Scene {
-  const idx = boxesOf(view);
-  const items: Item[] = [];
-  const parentOf = (id: string) => placeOf(view, focus, id) || undefined;
-  const label = (id: string, parent?: string) => {
-    const base = parent ?? (focus.endsWith(PKG) ? "" : focus);
-    return base === "" ? id : id.startsWith(base + "/") ? id.slice(base.length + 1) : id;
-  };
-  for (const c of containers(view, focus, d)) {
-    const parent = c.parent || undefined;
-    items.push({ id: c.id, label: label(c.id, parent), parent, shape: "container" });
-  }
-  const leaves = leavesAt(view, focus, d);
-  for (const id of leaves) {
-    const n = idx.byId.get(id);
-    if (id.endsWith(PKG)) {
-      const pkg = id.slice(0, -PKG.length);
-      const parent = pkg === focus ? undefined : pkg;
-      items.push({ id, label: `${lastSegment(pkg)} (package)`, parent, shape: "box" });
-    } else if (n && (n.kind === "type" || n.kind === "function")) {
-      items.push(declItem(view, id));
-    } else {
-      const parent = parentOf(id);
-      items.push({ id, label: label(id, parent), parent, shape: "box" });
-    }
-  }
-  if (view.kind === "change") markChanges(view, focus, items);
-  const edges = bundles(view, focus, d);
-  const drawn = new Set(items.map((i) => i.id));
-  const extCount = touchedExternals(view, focus, d).length;
-  for (const e of edges) {
-    for (const id of [e.from, e.to]) {
-      if (drawn.has(id)) continue;
-      drawn.add(id);
-      if (id === OUTSIDE) items.push({ id, label: "outside", shape: "outside" });
-      else if (id === EXTERNALS) items.push({ id, label: `${extCount} external modules`, shape: "oval" });
-      else items.push({ id, label: id, shape: "oval" });
-    }
-  }
-  items.sort((a, b) => cmp(a.id, b.id));
-  return { items, edges };
-}
-
-function declItem(view: View, id: string, parent?: string): Item {
-  const n = boxesOf(view).byId.get(id)!;
-  const methods = n.kind === "type" ? methodsOf(view, id) : [];
-  const item: Item = { id, label: id.slice((n.parent ?? "").length + 1), shape: "decl", ...(parent ? { parent } : {}) };
-  if (methods.length) item.rows = methods.map((m) => m.slice(id.length + 1));
-  if (view.kind === "change") {
-    item.mark = nodeMark(n);
-    if (methods.length) item.rowMarks = methods.map((m) => nodeMark(boxesOf(view).byId.get(m)!));
-  }
-  return item;
-}
-
-// markChanges gives each drawn item its Change View mark and opens every
-// changed package drawn as a box onto its changed declarations, with a chip
-// counting the ones left out (Q4). A box that folds changed packages into it
-// is marked "has-change", or, when it opens, gets a chip counting them.
-function markChanges(view: View, focus: string, items: Item[]) {
-  const idx = boxesOf(view);
-  if (focus !== "" && (focus.endsWith(PKG) || idx.byId.get(focus)?.kind === "package") && !idx.boxes.get(focus)?.children) {
-    return; // a declaration view: declItem already marked them
-  }
-  for (const it of [...items]) {
-    if (it.shape !== "box") continue;
-    const pkg = it.id.endsWith(PKG) ? it.id.slice(0, -PKG.length) : it.id;
-    const n = idx.byId.get(pkg);
-    if (!n || n.kind !== "package") {
-      if (packagesIn(view, it.id).some((p) => p.status)) it.mark = "has-change";
-      continue;
-    }
-    it.mark = nodeMark(n);
-    // A package box drawn at the leaf depth folds its subpackages into it.
-    const folded = it.id.endsWith(PKG) ? 0 : packagesIn(view, it.id).filter((p) => p.id !== pkg && p.status).length;
-    const decls = n.detail ? declLeaves(view, pkg) : [];
-    if (decls.length === 0) {
-      if (folded > 0) it.mark = `${it.mark} has-change`.trim();
-      continue;
-    }
-    it.shape = "container";
-    for (const id of decls) items.push(declItem(view, id, it.id));
-    const more = unchangedCount(view, pkg);
-    if (more > 0) items.push({ id: `${it.id}#unchanged`, label: `+${more} unchanged`, parent: it.id, shape: "chip" });
-    if (folded > 0) {
-      const label = `+${folded} changed package${folded > 1 ? "s" : ""}`;
-      items.push({ id: `${it.id}#folded`, label, parent: it.id, shape: "chip" });
-    }
-  }
-}
-
-// sizeOf estimates a leaf's size from its text: the label, method rows, and
-// for boxes the stats line ("15 decls · 4 unresolved").
-export function sizeOf(item: Item): { w: number; h: number } {
-  const stats = item.shape === "box" ? 24 : 0;
-  const text = Math.max(item.label.length, stats, ...(item.rows ?? []).map((r) => r.length + 2));
-  const w = Math.min(280, Math.max(90, text * 7.5 + 24));
-  return { w, h: 40 + 18 * (item.rows?.length ?? 0) };
-}
-
-const elk = new ELK();
 
 const rootOptions = {
   "elk.algorithm": "layered",
@@ -151,44 +28,131 @@ const rootOptions = {
   "elk.layered.spacing.nodeNodeBetweenLayers": "48",
 };
 
-// layout places every item; positions are relative to the item's parent, as
-// React Flow's parentId expects.
-export async function layout(items: Item[], edges: Bundle[]): Promise<Map<string, Placed>> {
-  const sorted = [...items].sort((a, b) => cmp(a.id, b.id));
-  const nodes = new Map<string, ElkNode>();
-  for (const it of sorted) {
-    const n: ElkNode = { id: it.id, children: [] };
-    if (it.shape === "container") {
-      // Wide enough for the label, which sits in the top padding.
-      n.layoutOptions = {
+// elkGraph is the layout input: containers as compound nodes wide enough for
+// their label, leaves sized by sizeOf, and the edges only when lines are drawn.
+export function elkGraph(sc: Scene): ElkNode {
+  const byParent = new Map<string, SceneNode[]>();
+  for (const n of sc.nodes) {
+    const l = byParent.get(n.parent);
+    if (l) l.push(n);
+    else byParent.set(n.parent, [n]);
+  }
+  const build = (n: SceneNode): ElkNode => {
+    if (n.shape !== "container") {
+      const { w, h } = sizeOf(n);
+      return { id: n.id, width: w, height: h };
+    }
+    return {
+      id: n.id,
+      layoutOptions: {
         "elk.padding": "[top=24,left=12,bottom=12,right=12]",
         "elk.nodeSize.constraints": "MINIMUM_SIZE",
-        "elk.nodeSize.minimum": `(${Math.min(280, it.label.length * 7.5 + 24)}, 40)`,
-      };
-    } else {
-      const { w, h } = sizeOf(it);
-      n.width = w;
-      n.height = h;
-    }
-    nodes.set(it.id, n);
-  }
-  const root: ElkNode = { id: "__root", layoutOptions: rootOptions, children: [], edges: [] };
-  for (const it of sorted) {
-    const parent = it.parent && nodes.has(it.parent) ? nodes.get(it.parent)! : root;
-    parent.children!.push(nodes.get(it.id)!);
-  }
-  root.edges = [...edges]
-    .filter((e) => nodes.has(e.from) && nodes.has(e.to))
-    .sort((a, b) => cmp(a.from, b.from) || cmp(a.to, b.to))
-    .map((e, i) => ({ id: `e${i}`, sources: [e.from], targets: [e.to] }));
-  const out = await elk.layout(root);
-  const placed = new Map<string, Placed>();
+        "elk.nodeSize.minimum": `(${Math.min(280, n.label.length * 7.5 + 24)}, 40)`,
+      },
+      children: (byParent.get(n.id) ?? []).map(build),
+    };
+  };
+  return {
+    id: "__root",
+    layoutOptions: rootOptions,
+    children: (byParent.get("") ?? []).map(build),
+    edges: sc.lines ? sc.edges.map((e) => ({ id: e.id, sources: [e.from], targets: [e.to] })) : [],
+  };
+}
+
+// positions flattens ELK's result; x and y are relative to the parent, as
+// React Flow's parentId expects.
+export function positions(g: ElkNode): Map<string, Placed> {
+  const out = new Map<string, Placed>();
   const walk = (n: ElkNode, parent?: string) => {
     for (const c of n.children ?? []) {
-      placed.set(c.id, { x: c.x ?? 0, y: c.y ?? 0, w: c.width ?? 0, h: c.height ?? 0, ...(parent ? { parent } : {}) });
+      out.set(c.id, { x: c.x ?? 0, y: c.y ?? 0, w: c.width ?? 0, h: c.height ?? 0, ...(parent ? { parent } : {}) });
       walk(c, c.id);
     }
   };
-  walk(out);
-  return placed;
+  walk(g);
+  return out;
+}
+
+export const layout = async (sc: Scene, engine: Engine) => positions(await engine.layout(elkGraph(sc)));
+
+// absolute is a node's position on the canvas: its own plus its parents'.
+export function absolute(placed: ReadonlyMap<string, Placed>, id: string): { x: number; y: number } | null {
+  let p = placed.get(id);
+  if (!p) return null;
+  let x = 0;
+  let y = 0;
+  for (; p; p = p.parent ? placed.get(p.parent) : undefined) {
+    x += p.x;
+    y += p.y;
+  }
+  return { x, y };
+}
+
+// triangles are uml-viewer's dependency marks (engine/hit.clj `class-triangle`):
+// 12 px equilateral, incoming with its apex above the top edge, outgoing with
+// its apex below the bottom edge, both centred. Points are relative to the box.
+export function triangles(w: number, h: number): { in: string; out: string } {
+  const half = 6;
+  const tip = +(12 * Math.sqrt(3) / 2).toFixed(2);
+  const cx = w / 2;
+  return {
+    in: `${cx},${-tip} ${cx - half},0 ${cx + half},0`,
+    out: `${cx - half},${h} ${cx + half},${h} ${cx},${h + tip}`,
+  };
+}
+
+// An ELK that can be stopped: elk-api's terminateWorker (elk-api.d.ts).
+export type Stoppable = Engine & { terminateWorker(): void };
+
+export class Superseded extends Error {
+  constructor() {
+    super("a newer layout replaced this one");
+  }
+}
+
+// superseding runs one layout at a time. A newer request terminates the
+// running one's worker (ELK cannot cancel a job) and starts a fresh engine;
+// the old promise rejects with Superseded. A failed engine is replaced on the
+// next request, so one worker error does not stop every later layout.
+export function superseding(make: () => Stoppable): Engine & { dispose(): void } {
+  let elk: Stoppable | null = null;
+  let running: { reject: (e: Error) => void } | null = null;
+  const drop = () => {
+    elk?.terminateWorker();
+    elk = null;
+  };
+  const stop = () => {
+    const r = running;
+    running = null;
+    drop();
+    r?.reject(new Superseded());
+  };
+  return {
+    layout(g) {
+      if (running) stop();
+      const mine = (elk ??= make());
+      return new Promise<ElkNode>((resolve, reject) => {
+        const job = { reject };
+        running = job;
+        mine.layout(g).then(
+          (out) => {
+            if (running !== job) return;
+            running = null;
+            resolve(out);
+          },
+          (err: Error) => {
+            if (running !== job) return;
+            running = null;
+            if (elk === mine) drop();
+            reject(err);
+          },
+        );
+      });
+    },
+    dispose: () => {
+      if (running) stop();
+      else drop();
+    },
+  };
 }

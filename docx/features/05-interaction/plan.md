@@ -1913,7 +1913,7 @@ export function keyAction(key: string, ctx: KeyContext): Action | null {
 
 **Steps:**
 
-- [ ] **Write the failing test** (replaces 04's `layout.test.ts`).
+- [x] **Write the failing test** (replaces 04's `layout.test.ts`).
 
 **Replace `web/src/layout.test.ts` with:**
 
@@ -1999,8 +1999,8 @@ describe("superseding", () => {
 });
 ````
 
-- [ ] **Run — expect FAIL:** `cd web && npx vitest run src/layout.test.ts` → `elkGraph` is not exported.
-- [ ] **Implement.**
+- [x] **Run — expect FAIL:** `cd web && npx vitest run src/layout.test.ts` → `elkGraph` is not exported.
+- [x] **Implement.**
 
 **Replace `web/src/layout.ts` with:**
 
@@ -2611,7 +2611,7 @@ export function App({ view: whole }: { view: View }) {
 }
 ````
 
-- [ ] **Shrink `tree.ts` to what the page imports; 04's tests take the rest from the test kit.**
+- [x] **Shrink `tree.ts` to what the page imports; 04's tests take the rest from the test kit.**
 
 **Replace `web/src/tree.ts` with:**
 
@@ -2762,9 +2762,9 @@ with
 
 ````
 
-- [ ] **Run — expect PASS:** `cd web && npx vitest run && npx tsc --noEmit && npm run build` → all pass, including `tree.snapshot`, `scene.snapshot`, 04's `tree.test`, `change.test` and `headline.test`.
-- [ ] **Check in a browser:** `make build`, then open `zu export -html` of `testdata/shop` and a `zu diff -html`: the same boxes as before, double-click opens, Esc goes up, the changed list centres its pick.
-- [ ] **Commit:** `git add web/src/layout.ts web/src/layout.test.ts web/src/engine.ts web/src/Canvas.tsx web/src/App.tsx web/src/tree.ts web/src/testkit.ts web/src/tree.test.ts web/src/tree.snapshot.test.ts web/src/scene.snapshot.test.ts web/src/change.test.ts && git commit -m "Draw the page from the scene"`
+- [x] **Run — expect PASS:** `cd web && npx vitest run && npx tsc --noEmit && npm run build` → all pass, including `tree.snapshot`, `scene.snapshot`, 04's `tree.test`, `change.test` and `headline.test`.
+- [x] **Check in a browser:** `make build`, then open `zu export -html` of `testdata/shop` and a `zu diff -html`: the same boxes as before, double-click opens, Esc goes up, the changed list centres its pick.
+- [x] **Commit:** `git add web/src/layout.ts web/src/layout.test.ts web/src/engine.ts web/src/Canvas.tsx web/src/App.tsx web/src/tree.ts web/src/testkit.ts web/src/tree.test.ts web/src/tree.snapshot.test.ts web/src/scene.snapshot.test.ts web/src/change.test.ts && git commit -m "Draw the page from the scene"`
 
 ---
 

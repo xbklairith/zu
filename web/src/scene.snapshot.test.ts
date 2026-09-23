@@ -9,7 +9,7 @@ import { changedSubgraph } from "./change";
 import { parseView, type View } from "./data";
 import { scene } from "./scene";
 import { DEFAULT_STATE } from "./state";
-import { leavesAt } from "./tree";
+import { leavesAt } from "./testkit";
 
 function foci(v: View): string[] {
   const decl = new Set(v.nodes.filter((n) => n.kind === "type" || n.kind === "function").map((n) => n.id));

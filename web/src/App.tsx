@@ -2,11 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { Canvas } from "./Canvas";
 import { changedSubgraph, nodeMark } from "./change";
+import { parentBox } from "./cut";
 import type { View } from "./data";
+import { pageEngine } from "./engine";
 import { Header } from "./Header";
+import { elkGraph, positions, Superseded, type Placed } from "./layout";
 import { Panel } from "./Panel";
-import { layout, scene, type Item, type Placed } from "./layout";
-import { autoDepth, parentBox } from "./tree";
+import { scene, type SceneNode } from "./scene";
+import { DEFAULT_STATE } from "./state";
 
 const PKG = "#pkg";
 
@@ -54,27 +57,33 @@ export function App({ view: whole }: { view: View }) {
   // The Change View opens on the changed subgraph (Q4); U10 toggles to all of it.
   const view = useMemo(() => (change && !full ? changedSubgraph(whole) : whole), [whole, change, full]);
   const [focus, setFocus] = useState("");
-  const [selected, setSelected] = useState("");
+  const [selected, setSelected] = useState<string | null>(null);
   const [center, setCenter] = useState<{ id: string; seq: number } | undefined>(undefined);
-  const depth = useMemo(() => autoDepth(view, focus), [view, focus]);
-  const s = useMemo(() => scene(view, focus, depth), [view, focus, depth]);
-  const [placed, setPlaced] = useState<{ focus: string; at: Map<string, Placed> } | null>(null);
+  const sc = useMemo(() => scene(view, { ...DEFAULT_STATE, focus, selected }), [view, focus, selected]);
 
+  // One engine for the page's life; a layout runs only when its ELK input changes.
+  const engine = useMemo(pageEngine, []);
+  useEffect(() => () => engine.dispose(), [engine]);
+  const graph = useMemo(() => JSON.stringify(elkGraph(sc)), [sc]);
+  const [placed, setPlaced] = useState<{ graph: string; at: Map<string, Placed> } | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
   useEffect(() => {
-    let live = true;
     performance.mark("zu-layout-start");
-    layout(s.items, s.edges).then((at) => {
-      performance.mark("zu-layout-end");
-      if (live) setPlaced({ focus, at });
-    });
-    return () => {
-      live = false;
-    };
-  }, [s, focus]);
+    engine.layout(JSON.parse(graph)).then(
+      (out) => {
+        performance.mark("zu-layout-end");
+        setFailed(null);
+        setPlaced({ graph, at: positions(out) });
+      },
+      (e: Error) => {
+        if (!(e instanceof Superseded)) setFailed(e.message);
+      },
+    );
+  }, [engine, graph]);
 
   const go = (box: string) => {
     setFocus(box);
-    setSelected("");
+    setSelected(null);
     setCenter(undefined);
   };
   const toggle = () => {
@@ -94,11 +103,10 @@ export function App({ view: whole }: { view: View }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [view, focus]);
 
-  const open = (item: Item) => {
-    if (item.shape === "box" || item.shape === "container") go(item.id);
+  const open = (n: SceneNode) => {
+    if (n.shape === "box" || n.shape === "container") go(n.id);
   };
-  const leaves = s.items.filter((i) => i.shape === "box" || i.shape === "decl");
-  const empty = s.items.length === 0 && focus !== "";
+  const boxes = sc.nodes.filter((n) => n.shape === "box" || n.shape === "decl").length;
   const pkg = focus.endsWith(PKG) ? focus.slice(0, -PKG.length) : focus;
 
   return (
@@ -106,8 +114,8 @@ export function App({ view: whole }: { view: View }) {
       <Header
         view={whole}
         focus={focus}
-        boxes={leaves.length}
-        depth={depth}
+        boxes={boxes}
+        depth={sc.depth}
         onFocus={go}
         full={change ? full : undefined}
         onToggle={toggle}
@@ -115,25 +123,22 @@ export function App({ view: whole }: { view: View }) {
       {change && <ChangedList view={whole} onPick={pick} />}
       <main className="canvas">
         {change && <Legend />}
-        {empty ? (
+        {sc.noDetail ? (
           <div className="empty">
             Declarations not included. Re-run with <code>-include {pkg}</code>
           </div>
-        ) : placed && placed.focus === focus ? (
+        ) : failed !== null ? (
+          <div className="empty" id="zu-status">
+            Layout failed: {failed}
+          </div>
+        ) : placed && placed.graph === graph ? (
           <ReactFlowProvider key={focus}>
-            <Canvas
-              view={view}
-              items={s.items}
-              edges={s.edges}
-              placed={placed.at}
-              selected={selected}
-              onSelect={setSelected}
-              onOpen={open}
-              center={center}
-            />
+            <Canvas view={view} sc={sc} placed={placed.at} onSelect={setSelected} onOpen={open} center={center} />
           </ReactFlowProvider>
         ) : (
-          <div className="empty">Laying out…</div>
+          <div className="empty" id="zu-status">
+            Laying out…
+          </div>
         )}
       </main>
       {selected && (
@@ -141,9 +146,9 @@ export function App({ view: whole }: { view: View }) {
           view={whole}
           shown={view}
           focus={focus}
-          depth={depth}
+          depth={sc.depth}
           id={selected}
-          onClose={() => setSelected("")}
+          onClose={() => setSelected(null)}
         />
       )}
     </div>

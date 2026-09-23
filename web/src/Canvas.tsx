@@ -13,15 +13,20 @@ import {
 import { useEffect, useRef } from "react";
 import "@xyflow/react/dist/style.css";
 import { edgeMark } from "./change";
+import { parentBox } from "./cut";
 import type { View } from "./data";
-import type { Item, Placed } from "./layout";
-import type { Bundle } from "./tree";
-import { boxStats, parentBox } from "./tree";
+import { absolute, triangles, type Placed } from "./layout";
+import type { Scene, SceneNode } from "./scene";
+import { boxStats } from "./tree";
 
 type Data = {
-  item: Item;
+  node: SceneNode;
+  w: number;
+  h: number;
   stats?: { packages: number; decls: number; unresolved: number };
+  row: string | null;
   pick: (id: string) => void;
+  toggle?: (id: string) => void;
 };
 type ZNode = Node<Data>;
 
@@ -34,76 +39,117 @@ function Ends() {
   );
 }
 
-function cls(base: string, item: Item, selected: boolean): string {
-  return `node ${base}${item.mark ? ` ${item.mark}` : ""}${selected ? " selected" : ""}`;
+// Marks are the triangles drawn when lines are hidden: incoming on top,
+// outgoing below, red when a pinned (violating) bundle rides them.
+function Marks({ data }: { data: Data }) {
+  const m = data.node.mark;
+  if (!m) return null;
+  const t = triangles(data.w, data.h);
+  return (
+    <svg className="marks" width={data.w} height={data.h} overflow="visible" aria-hidden="true">
+      {m.in && <polygon points={t.in} className={m.inPinned ? "pinned" : undefined} />}
+      {m.out && <polygon points={t.out} className={m.outPinned ? "pinned" : undefined} />}
+    </svg>
+  );
 }
+
+function Toggle({ data }: { data: Data }) {
+  const { node, toggle } = data;
+  if (!node.toggle || !toggle) return null;
+  const open = node.toggle === "expand";
+  return (
+    <button
+      type="button"
+      className="toggle nodrag"
+      aria-label={open ? `Open ${node.label} here` : `Close ${node.label}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        toggle(node.id);
+      }}
+    >
+      {open ? "+" : "−"}
+    </button>
+  );
+}
+
+// cls: the shape, the Change View mark (04 Part B), selection and dimming.
+const cls = (base: string, n: SceneNode, selected: boolean) =>
+  `node ${base}${n.change ? ` ${n.change}` : ""}${selected ? " selected" : ""}${n.dim ? " dim" : ""}`;
 
 function BoxNode({ data, selected }: NodeProps<ZNode>) {
   const s = data.stats;
   return (
-    <div className={cls("box", data.item, selected)} title={data.item.id}>
+    <div className={cls("box", data.node, selected)} title={data.node.id}>
       <Ends />
-      <div className="label">{data.item.label}</div>
+      <Toggle data={data} />
+      <div className="label">{data.node.label}</div>
       {s && (
         <div className="stats">
           {s.packages > 1 && `${s.packages} pkgs · `}
           {s.decls} decls{s.unresolved > 0 && ` · ${s.unresolved} unresolved`}
         </div>
       )}
+      <Marks data={data} />
     </div>
   );
 }
 
-function ContainerNode({ data }: NodeProps<ZNode>) {
+function ContainerNode({ data, selected }: NodeProps<ZNode>) {
   return (
-    <div className={cls("container", data.item, false)} title={data.item.id}>
+    <div className={cls("container", data.node, selected)} title={data.node.id}>
       <Ends />
-      <div className="label">{data.item.label}</div>
+      <Toggle data={data} />
+      <div className="label">{data.node.label}</div>
+      <Marks data={data} />
     </div>
   );
 }
 
 function OvalNode({ data, selected }: NodeProps<ZNode>) {
   return (
-    <div className={`node oval${selected ? " selected" : ""}`} title={data.item.id}>
+    <div className={cls("oval", data.node, selected)} title={data.node.id}>
       <Ends />
-      <div className="label">{data.item.label}</div>
+      <div className="label">{data.node.label}</div>
+      <Marks data={data} />
     </div>
   );
 }
 
 function OutsideNode({ data, selected }: NodeProps<ZNode>) {
   return (
-    <div className={`node outside${selected ? " selected" : ""}`}>
+    <div className={cls("outside", data.node, selected)}>
       <Ends />
-      <div className="label">{data.item.label}</div>
+      <div className="label">{data.node.label}</div>
+      <Marks data={data} />
     </div>
   );
 }
 
 function DeclNode({ data, selected }: NodeProps<ZNode>) {
+  const { node } = data;
   return (
-    <div className={cls("decl", data.item, selected)} title={data.item.id}>
+    <div className={cls("decl", node, selected)} title={node.id}>
       <Ends />
-      <div className="label">{data.item.label}</div>
-      {data.item.rows?.map((r, i) => (
+      <div className="label">{node.label}</div>
+      {node.methods.map((r, i) => (
         <div
           key={r}
-          className={`row ${data.item.rowMarks?.[i] ?? ""}`}
+          className={`row ${node.rowMarks?.[i] ?? ""}${data.row === `${node.id}.${r}` ? " selected" : ""}`}
           onClick={(e) => {
             e.stopPropagation();
-            data.pick(`${data.item.id}.${r}`);
+            data.pick(`${node.id}.${r}`);
           }}
         >
           .{r}
         </div>
       ))}
+      <Marks data={data} />
     </div>
   );
 }
 
 function ChipNode({ data }: NodeProps<ZNode>) {
-  return <div className="node chip">{data.item.label}</div>;
+  return <div className={cls("chip", data.node, false)}>{data.node.label}</div>;
 }
 
 const nodeTypes = {
@@ -117,83 +163,83 @@ const nodeTypes = {
 
 type Props = {
   view: View;
-  items: Item[];
-  edges: Bundle[];
+  sc: Scene;
   placed: Map<string, Placed>;
-  selected: string;
-  onSelect: (id: string) => void;
-  onOpen: (item: Item) => void;
+  edge?: string | null;
+  onSelect: (id: string | null) => void;
+  onOpen: (node: SceneNode) => void;
+  onToggle?: (id: string) => void;
+  onEdge?: (id: string) => void;
   center?: { id: string; seq: number }; // a node to bring into view
 };
 
-// drawnFor is the drawn item standing for id: itself, its #pkg leaf, or the
+// drawnFor is the drawn node standing for id: itself, its #pkg leaf, or the
 // nearest enclosing box on the canvas.
-function drawnFor(view: View, items: Map<string, Item>, id: string): string | null {
+function drawnFor(view: View, nodes: Map<string, SceneNode>, id: string): string | null {
   for (let b = id; b !== ""; b = parentBox(view, b)) {
-    if (items.has(b)) return b;
-    if (items.has(b + "#pkg")) return b + "#pkg";
+    if (nodes.has(b)) return b;
+    if (nodes.has(b + "#pkg")) return b + "#pkg";
   }
   return null;
 }
 
 // depth orders parents before children, as React Flow requires.
-function depth(items: Map<string, Item>, id: string): number {
+function depth(nodes: Map<string, SceneNode>, id: string): number {
   let d = 0;
-  for (let p = items.get(id)?.parent; p; p = items.get(p)?.parent) d++;
+  for (let p = nodes.get(id)?.parent; p; p = nodes.get(p)?.parent) d++;
   return d;
 }
 
-export function Canvas({ view, items, edges, placed, selected, onSelect, onOpen, center }: Props) {
-  const byId = new Map(items.map((i) => [i.id, i]));
+export function Canvas({ view, sc, placed, edge, onSelect, onOpen, onToggle, onEdge, center }: Props) {
+  const byId = new Map(sc.nodes.map((n) => [n.id, n]));
   const rf = useReactFlow();
   const box = useRef<HTMLDivElement>(null);
-  const target = center ? drawnFor(view, byId, center.id) : null;
+  const target = center ? (sc.selected ?? drawnFor(view, byId, center.id)) : null;
   // Centre from the layout, not fitView: fitView waits for DOM-measured nodes,
   // and these are sized by the layout. The canvas is measured here, after the
-  // commit that may have opened the panel beside it.
+  // commit that may have opened the panel beside it; setCenter would use React
+  // Flow's stored width, which updates only after that resize is observed.
   useEffect(() => {
     const p = target === null ? undefined : placed.get(target);
+    const at = target === null ? null : absolute(placed, target);
     const r = box.current?.getBoundingClientRect();
-    if (!p || !r || r.width === 0 || r.height === 0) return;
-    const { width, height } = r;
-    let x = p.x;
-    let y = p.y;
-    for (let q = p.parent; q; q = placed.get(q)?.parent) {
-      x += placed.get(q)?.x ?? 0;
-      y += placed.get(q)?.y ?? 0;
-    }
-    const zoom = Math.min(1.2, (0.8 * width) / p.w, (0.8 * height) / p.h);
-    void rf.setCenter(x + p.w / 2, y + p.h / 2, { zoom });
+    if (!p || !at || !r || r.width === 0 || r.height === 0) return;
+    const zoom = Math.min(1.2, (0.8 * r.width) / p.w, (0.8 * r.height) / p.h);
+    const cx = at.x + p.w / 2;
+    const cy = at.y + p.h / 2;
+    void rf.setViewport({ x: r.width / 2 - cx * zoom, y: r.height / 2 - cy * zoom, zoom });
   }, [rf, target, placed, center?.seq]);
-  const nodes: ZNode[] = [...items]
+  const nodes: ZNode[] = [...sc.nodes]
     .sort((a, b) => depth(byId, a.id) - depth(byId, b.id) || (a.id < b.id ? -1 : 1))
-    .map((item) => {
-      const p = placed.get(item.id) ?? { x: 0, y: 0, w: 90, h: 40 };
-      const stats = item.shape === "box" ? boxStats(view, item.id) : undefined;
+    .map((node) => {
+      const p = placed.get(node.id) ?? { x: 0, y: 0, w: 90, h: 40 };
+      const stats = node.shape === "box" ? boxStats(view, node.id) : undefined;
       return {
-        id: item.id,
-        type: item.shape,
+        id: node.id,
+        type: node.shape,
         position: { x: p.x, y: p.y },
         width: p.w,
         height: p.h,
         style: { width: p.w, height: p.h },
-        ...(item.parent ? { parentId: item.parent } : {}),
-        selected: item.id === selected,
+        ...(node.parent ? { parentId: node.parent, extent: "parent" as const } : {}),
+        selected: node.selected,
         draggable: false,
         connectable: false,
-        data: { item, stats, pick: onSelect },
+        data: { node, w: p.w, h: p.h, stats, row: sc.selectedRow, pick: onSelect, toggle: onToggle },
       };
     });
-  const rfEdges: Edge[] = edges.map((e) => {
+  const rfEdges: Edge[] = sc.edges.map((e) => {
     const m = edgeMark(e.status);
     const label = [m.sign, e.pairs > 1 ? String(e.pairs) : ""].filter(Boolean).join(" ");
     return {
-      id: `${e.from}->${e.to}`,
+      id: e.id,
       source: e.from,
       target: e.to,
       type: "smoothstep",
+      className: [m.cls, e.dim && "dim", e.hot && "hot", e.pinned && "pinned", e.id === edge && "selected"]
+        .filter(Boolean)
+        .join(" "),
       markerEnd: { type: MarkerType.ArrowClosed },
-      ...(m.cls ? { className: m.cls } : {}),
       ...(label ? { label } : {}),
     };
   });
@@ -206,15 +252,17 @@ export function Canvas({ view, items, edges, placed, selected, onSelect, onOpen,
         fitView={target === null}
         minZoom={0.05}
         zoomOnDoubleClick={false}
+        onlyRenderVisibleElements
         onInit={() => performance.mark("zu-drawn")}
         nodesDraggable={false}
         nodesConnectable={false}
         onNodeClick={(_, n) => onSelect(n.id)}
         onNodeDoubleClick={(_, n) => {
-          const item = byId.get(n.id);
-          if (item) onOpen(item);
+          const node = byId.get(n.id);
+          if (node) onOpen(node);
         }}
-        onPaneClick={() => onSelect("")}
+        onEdgeClick={(_, e) => onEdge?.(e.id)}
+        onPaneClick={() => onSelect(null)}
       >
         <Background />
         <Controls showInteractive={false} />

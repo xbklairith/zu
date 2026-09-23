@@ -5,7 +5,8 @@ import { expect, it } from "vitest";
 import project from "../../internal/export/testdata/shop.view.golden.json";
 import change from "../../internal/export/testdata/shop.change.golden.json";
 import { parseView, type View } from "./data";
-import { boxStats, bundles, containers, leavesAt, touchedExternals } from "./tree";
+import { bundles, containers, leavesAt, touchedExternals } from "./testkit";
+import { boxStats } from "./tree";
 
 // foci are the page root and every box a reader can drill into from it.
 function foci(v: View): string[] {

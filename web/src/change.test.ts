@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import golden from "../../internal/export/testdata/shop.change.golden.json";
 import { changedSubgraph, edgeMark, nodeMark, unchangedCount } from "./change";
 import { parseView } from "./data";
-import { scene } from "./layout";
-import { autoDepth, bundles } from "./tree";
+import { autoDepth } from "./cut";
+import { bundles } from "./testkit";
 
 const v = parseView(JSON.stringify(golden));
 const shop = "example.com/shop/internal/";
@@ -63,31 +63,5 @@ describe("changed subgraph", () => {
     // and Repo.check are drawn; the removed ReadWriter is not one of the 14.
     expect(unchangedCount(v, `${shop}store`)).toBe(10);
     expect(unchangedCount(v, `${shop}money`)).toBe(2);
-  });
-});
-
-describe("change scene", () => {
-  it("opens changed packages onto their changed declarations and a chip", () => {
-    const s = scene(v, "", autoDepth(v, ""));
-    const store = s.items.find((i) => i.id === `${shop}store`);
-    expect(store?.shape).toBe("container");
-    expect(store?.mark).toBe("st-modified");
-    const inStore = s.items.filter((i) => i.parent === `${shop}store`);
-    expect(inStore.map((i) => i.label)).toEqual(["+10 unchanged", "Order", "ReadWriter", "Repo"]);
-    const repo = inStore.find((i) => i.label === "Repo")!;
-    expect(repo.rows).toEqual(["Get", "check"]);
-    expect(repo.rowMarks).toEqual(["st-modified", "st-modified"]);
-    expect(s.items.find((i) => i.id === "example.com/shop/tools/gen")?.mark).toBe("affected");
-  });
-  it("shows changed packages folded into a package box", () => {
-    // At depth 1 the example.com/shop package box folds internal/checkout,
-    // money and store, all changed; they must not vanish silently.
-    const s = scene(v, "", 1);
-    const chip = s.items.find((i) => i.parent === "example.com/shop" && i.shape === "chip" && i.label.includes("package"));
-    expect(chip?.label).toBe("+3 changed packages");
-    const full = { ...v, nodes: v.nodes.map((n) => (n.id === "example.com/shop" ? { ...n, status: undefined, detail: false } : n)) };
-    const box = scene(full, "", 1).items.find((i) => i.id === "example.com/shop");
-    expect(box?.shape).toBe("box");
-    expect(box?.mark).toContain("has-change");
   });
 });
