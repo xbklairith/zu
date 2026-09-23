@@ -23,6 +23,7 @@ Hard-to-reverse, surprising, real trade-offs — one file each in [`docx/decisio
 - **Baseline:** `zu.baseline.json` (sorted, committed) records known violations; `check` exits 1 only on new ones; `-update-baseline` only removes fixed ones.
 - **Diff base:** `git merge-base base head` by default; the Change View shows one hop of unchanged neighbours, dimmed. No merge-base (shallow clone) → exit 3 with the fix, never a fallback to the base tip.
 - **Diff head:** `zu diff <base> [head]`, head defaults to the `HEAD` commit; `-worktree` opts in to uncommitted edits: the files the next commit would contain (tracked plus untracked, not ignored, read from disk); `-include-ignored` adds git-ignored files too, as `zu scan` sees them. Both refs are scanned fresh (no IR cache). A successful diff exits 0 whatever it finds; 1 stays reserved for new violations.
+- **Diff scope:** both refs are scanned from the repository top level (`git rev-parse --show-toplevel`), whatever the current directory. In-tree file symlinks are resolved at a ref exactly as on disk, so a disk scan and a ref scan of the same commit are byte-identical. Not compared: `go.mod` changes (dependency versions, `go`/`toolchain` lines) and other languages' toolchain and dependency files; the docs and the summary footer say so.
 - **Structural Summary (v1):** one row per changed package (+added ~modified −removed declarations), imports listed, call/embed changes as counts, Mermaid of changed packages + one hop (omitted above 30 nodes). Links (B6) deferred to the HTML Export.
 - **License:** Apache-2.0 (`LICENSE`). Public at v0.1 (scan + diff-to-CI working).
 - **Audience:** the author first, then open-source users.
@@ -34,7 +35,7 @@ Hard-to-reverse, surprising, real trade-offs — one file each in [`docx/decisio
 - **5-minute criterion:** the author, timed, on a public repo they have not read (hugo).
 - **Product focus:** zu explains a project and a code change through interactive diagrams — the diagram is the explanation. No prose or doc-comment text in the UI.
 - **Change reading order:** new violations first, then changed components bottom-up by dependency (infra → interface).
-- **Build order:** scan → diff to CI (no UI) → HTML Export (static) → interaction → Policy file. `serve` after v1 core.
+- **Build order:** scan → scan at a ref (feature 02) → diff to CI, no UI (feature 03) → HTML Export (static) → interaction → Policy file. `serve` after v1 core.
 - **UI v1:** U1, U3, U4, U5 full; U2 reduced (full re-layout allowed); U6 = uml-viewer's declutter cycle (bundled → triangles → hide members → hide boxes → none; violations stay red). Externals drawn as ovals. Focus (N hops), collapse to depth N, stdlib/external toggles; view state in the URL hash.
 - **Change View marks:** changed nodes solid, the Affected Set outlined; edges +/−, pair counts on bundles, cycle edges red; Moves dashed.
 - **Output formats:** `diff`/`check` take `-format text|markdown|json`; markdown can be pasted as a PR comment; HTML via export. The summary includes the blast-radius count and says "no structural change" when only cosmetic edits were made.

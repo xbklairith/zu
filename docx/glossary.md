@@ -57,8 +57,9 @@ docs, output and JSON.
 
 ## Move
 
-A removed and an added declaration with identical `hash`, shown as one moved node
-rather than a removal plus an addition.
+A removed and an added declaration of the same kind with identical `shape`, shown as
+one moved node rather than a removal plus an addition. It covers a rename, a
+relocation to another package, or both, as long as nothing else changed.
 
 ## Structural Summary
 
