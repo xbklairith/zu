@@ -1036,7 +1036,7 @@ targets(bundlesOver(shown ?? view, cut(shown ?? view, focus, depth)), id)
 
 **Steps:**
 
-- [ ] **Write the failing tests.**
+- [x] **Write the failing tests.**
 
 **Create `web/src/select.test.ts`:**
 
@@ -1109,8 +1109,8 @@ describe("declutter (uml-viewer's cycle)", () => {
 });
 ````
 
-- [ ] **Run — expect FAIL:** `cd web && npx vitest run src/select.test.ts src/declutter.test.ts` → modules not found.
-- [ ] **Implement.**
+- [x] **Run — expect FAIL:** `cd web && npx vitest run src/select.test.ts src/declutter.test.ts` → modules not found.
+- [x] **Implement.**
 
 **Create `web/src/select.ts`:**
 
@@ -1234,8 +1234,8 @@ export function declutter(
 }
 ````
 
-- [ ] **Run — expect PASS:** `cd web && npx vitest run src/select.test.ts src/declutter.test.ts && npx tsc --noEmit` → 7 passed.
-- [ ] **Commit:** `git add web/src/select.ts web/src/select.test.ts web/src/declutter.ts web/src/declutter.test.ts && git commit -m "Add N-hop selection and uml-viewer's declutter cycle"`
+- [x] **Run — expect PASS:** `cd web && npx vitest run src/select.test.ts src/declutter.test.ts && npx tsc --noEmit` → 7 passed.
+- [x] **Commit:** `git add web/src/select.ts web/src/select.test.ts web/src/declutter.ts web/src/declutter.test.ts && git commit -m "Add N-hop selection and uml-viewer's declutter cycle"`
 
 ---
 
