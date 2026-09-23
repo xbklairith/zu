@@ -123,8 +123,8 @@
 **Steps:**
 
 - [ ] **Test**:
-   - Head has imports `api→orders→money` and `billing→money`, and `money` is modified. Expect `orders:1`, `billing:1`, `api:2`.
-   - Changed packages themselves are not in the set.
+   - Head has imports `api→orders→money` and `billing→money`, and `money` is modified. Expect `money:0`, `orders:1`, `billing:1`, `api:2`.
+   - Changed packages are in the set at hop 0 (ADR 0009, glossary *Affected Set*: "the changed packages plus every package that imports them"; its size is the blast-radius count).
    - Cycles terminate.
    - External nodes never appear.
    - An added package's importers are included.
@@ -133,7 +133,8 @@
 - [ ] **Action**:
 
    ```go
-   // Affected returns the packages that transitively import a changed
+   // Affected returns the Affected Set (0009): the changed packages at hop 0
+   // plus the packages that transitively import one of them,
    // package over head's import edges, with their hop distance (0009).
    // changed are the package ids with status added or modified.
    func Affected(head *ir.IR, changed []string) []Hop
@@ -144,7 +145,7 @@
    }
    ```
 
-   The search is a breadth-first search over reversed `imports` edges between `package` nodes. Results are sorted by (hops, package).
+   The search is a breadth-first search over reversed `imports` edges between `package` nodes. Changed packages seed the search at hop 0. Results are sorted by (hops, package). The blast-radius count is `len(Affected(...))`.
 - [ ] **Verify**: `go test ./internal/diff` → ok.
 - [ ] **Commit**: `git add internal/diff/affected.go internal/diff/affected_test.go && git commit -m "Compute the Affected Set over imports"`
 
@@ -160,7 +161,7 @@
 **Steps:**
 
 - [ ] **Test**:
-   - **Golden.** Take the base IR from `testdata/shop` and a head IR derived from it with these edits: a renamed function, a new import, a modified method, a removed type, and a reversed import. `Summarize` + `WriteJSON` must equal the golden file, which the `-update` flag rewrites.
+   - **Golden.** Take the base IR from `testdata/shop` and a head IR from *scanning* a modified copy of it (copy the fixture into `t.TempDir()`, edit the sources, `scan.Run`), never a hand-edited IR, so `hash` and `shape` are the scanner's. The edits: a renamed function, a new import, a modified method, a removed type, and a reversed import. `Summarize` + `WriteJSON` must equal the golden file, which the `-update` flag rewrites.
    - **Repeatability.** Running it twice gives identical bytes.
    - **No change.** Base == head gives `"changed": false` and empty lists.
 - [ ] **Verify RED**: `go test ./internal/diff -run Summary` → FAIL.
@@ -200,7 +201,7 @@
    func WriteJSON(w io.Writer, s *Summary) error // two-space indent, trailing newline, empty collections as [] / {}
    ```
 
-   - **Row order, "bottom-up" (settled: change reading order).** Sort the changed packages by the length of the longest import chain to other changed packages, fewest first (leaves first), then by id. Violations would come first, but they don't exist yet.
+   - **Row order, "bottom-up" (settled: change reading order).** Sort the changed packages by the length of the longest import chain to other changed packages, fewest first (leaves first), then by id. Compute it on the condensation of head's import graph (strongly connected components as single nodes), so a cycle, which the merged build variants can create, still has a defined order: packages in one component share its rank and sort by id. Test: a two-package import cycle among changed packages. Violations would come first, but they don't exist yet.
    - **Moves** count once. Their from and to ids are left out of the added/removed counts.
 - [ ] **Verify**: `go test ./internal/diff` → ok.
 - [ ] **Commit**: `git add internal/diff/summary.go internal/diff/summary_test.go internal/diff/testdata && git commit -m "Build the Structural Summary and its JSON"`
@@ -219,7 +220,7 @@
 - [ ] **Test**:
    1. Golden text and Markdown for the Task 3 summary.
    2. The no-change summary prints `no structural change` and the footer.
-   3. Mermaid includes the changed packages plus one hop of importers, marked with `classDef dim`.
+   3. Mermaid includes the changed packages plus one hop of importers, marked with `classDef dim`. Mermaid node ids are generated (`n1`, `n2`, … in row order) and labels are quoted, so `/`, `.` and `"` in ids cannot break the diagram.
    4. With more than 30 nodes, the Mermaid block is replaced by `_Diagram omitted: N packages (limit 30)._`.
    5. A summary with 5,000 changed packages renders Markdown of at most 65,536 bytes, ending its lists with `…and N more`.
    6. The Markdown escapes `|` in ids.
@@ -233,7 +234,7 @@
      4. the package table (`Package | Change | + ~ − | Hops`);
      5. the Dependencies list (`+`, `−`, `⇄ reversed`);
      6. Moves;
-     7. `Affected: N packages (k at 1 hop, …)`;
+     7. `Affected: N packages (c changed, k at 1 hop, …)`, N = the whole Affected Set;
      8. the calls and embeds counts;
      9. the Mermaid block;
      10. the parse-error counts;
@@ -341,6 +342,7 @@
    | unknown ref, ref starting with `-`, outside a repo, bad `-format` | exit 3 |
    | a parse error at head, `-max-parse-errors 0` | summary still printed, exit 2 |
    | the same case with `-max-parse-errors 1` | exit 0 |
+   | a parse error at base only (already on the base branch), `-max-parse-errors 0` | exit 0; the footer reports `parse errors base=1` |
    | the two IRs' `policyHash` differ (via a test seam) | exit 3, `policy changed` in stderr |
    | run from a subdirectory | output byte-identical to running at the top level |
    | Ctrl-C through `interruptContext` | exit 3, nothing on stdout |
@@ -356,7 +358,7 @@
    7. **Policy hash:** if they differ, exit 3 with `policy changed between base and head; diff uses head's policy once the Policy feature lands` (0004).
    8. **Render:** `diff.Summarize`, then render to stdout.
    9. **Status line:** `zu diff: <n> packages changed, <m> affected, parse errors base=<a> head=<b>`.
-   10. **Exit:** 2 if either side's parse errors exceed N, else 0.
+   10. **Exit:** 2 if head's parse errors exceed N, else 0. Base's parse errors are pre-existing (B7): they are reported, never fail the MR.
 - [ ] **Verify**: `go test -race ./internal/cli` → ok.
 - [ ] **Smoke**: `go run ./cmd/zu diff HEAD~3 -format markdown` in the zu repository → readable Markdown, exit 0.
 - [ ] **Commit**: `git add internal/cli/diff.go internal/cli/diff_test.go internal/cli/cli.go && git commit -m "Add zu diff"`
