@@ -143,7 +143,7 @@ The Change View's full-project toggle (U10) stays in memory, as in 04: a link to
 
 **Steps:**
 
-- [ ] **Write the failing test.**
+- [x] **Write the failing test.**
 
 **Create `web/src/state.test.ts`:**
 
@@ -209,8 +209,8 @@ describe("transitions", () => {
 });
 ````
 
-- [ ] **Run — expect FAIL:** `cd web && npx vitest run src/state.test.ts` → `Cannot find module './state'`.
-- [ ] **Implement.**
+- [x] **Run — expect FAIL:** `cd web && npx vitest run src/state.test.ts` → `Cannot find module './state'`.
+- [x] **Implement.**
 
 **Create `web/src/state.ts`:**
 
@@ -338,8 +338,8 @@ export const shallower = (s: ViewState, drawn: number): ViewState =>
   ({ ...s, depth: Math.max(1, drawn - 1), toggled: [] });
 ````
 
-- [ ] **Run — expect PASS:** `cd web && npx vitest run src/state.test.ts && npx tsc --noEmit` → 7 passed.
-- [ ] **Commit:** `git add web/src/state.ts web/src/state.test.ts && git commit -m "Add the view state, its transitions and the URL hash codec"`
+- [x] **Run — expect PASS:** `cd web && npx vitest run src/state.test.ts && npx tsc --noEmit` → 7 passed.
+- [x] **Commit:** `git add web/src/state.ts web/src/state.test.ts && git commit -m "Add the view state, its transitions and the URL hash codec"`
 
 ---
 
