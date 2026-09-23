@@ -26,3 +26,9 @@ posting it to the MR is the CI pipeline's job, not zu's.
 An optional, explicitly configured language model. It may propose Policy patches and
 write prose (architecture narrative, change summary). It never produces a node, an
 edge, or a file path that reaches the diagram.
+
+## Test Corpus
+
+The pinned set of public Go repositories zu is measured against — one per size tier
+(zu itself, spf13/cobra, gohugoio/hugo, kubernetes/kubernetes). Pinned to tags so
+results repeat; fetched on demand, never committed.

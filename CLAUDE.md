@@ -4,7 +4,8 @@ Local, offline tool that renders a Go repo's component topology as an interactiv
 diagram (Mode A) and any MR as a structural delta over it (Mode B).
 
 - Requirements: `docx/core/requirements-draft.md` (IDs A*, B*, U*, N*)
-- Decisions: `docx/core/decisions.md` — read before changing analysis, IR or policy semantics
+- Decisions: `docx/core/decisions.md` (index) and `docx/decisions/NNNN-*.md` — read before changing analysis, IR or policy semantics
+- Glossary: `docx/glossary.md` — use its terms
 - Feature specs: `docx/features/NN-name/`
 
 ## Layout
