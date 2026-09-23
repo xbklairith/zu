@@ -47,21 +47,25 @@ func WorktreeFiles(ctx context.Context, dir string, includeIgnored bool) (*Listi
 		others = append(others, ignored...)
 	}
 	l := &Listing{}
-	for _, p := range others {
-		if !pruned(p) {
-			l.Extra = true
-			break
+	present := func(p string) bool {
+		// Nested repositories are listed as "d/"; deleted tracked files fail
+		// Lstat.
+		if strings.HasSuffix(p, "/") {
+			return false
+		}
+		_, err := os.Lstat(filepath.Join(dir, filepath.FromSlash(p)))
+		return err == nil
+	}
+	for _, p := range tracked {
+		if present(p) {
+			l.Files = append(l.Files, p)
 		}
 	}
-	for _, p := range append(tracked, others...) {
-		// Deleted tracked files, and nested repositories (listed as "d/").
-		if strings.HasSuffix(p, "/") {
-			continue
+	for _, p := range others {
+		if present(p) {
+			l.Files = append(l.Files, p)
+			l.Extra = l.Extra || !pruned(p)
 		}
-		if _, err := os.Lstat(filepath.Join(dir, filepath.FromSlash(p))); err != nil {
-			continue
-		}
-		l.Files = append(l.Files, p)
 	}
 	slices.Sort(l.Files)
 	l.Files = slices.Compact(l.Files)

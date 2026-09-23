@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -85,5 +86,27 @@ func TestWorktreeFilesCleanAndOutside(t *testing.T) {
 	}
 	if l, err := WorktreeFiles(context.Background(), t.TempDir(), false); l != nil || err != nil {
 		t.Fatalf("outside a repository = %+v, %v; want nil, nil", l, err)
+	}
+}
+
+func TestWorktreeFilesNestedRepoIsNotExtra(t *testing.T) {
+	dir := worktreeRepo(t)
+	run(t, dir, "add", "-A")
+	run(t, dir, "commit", "-q", "-m", "two")
+	nested := filepath.Join(dir, "n")
+	if err := os.MkdirAll(nested, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	write(t, filepath.Join(nested, "n.go"), "package n\n")
+	run(t, nested, "init", "-q")
+	run(t, nested, "add", "-A")
+	run(t, nested, "commit", "-q", "-m", "nested")
+
+	l, err := WorktreeFiles(context.Background(), dir, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if l.Extra || slices.ContainsFunc(l.Files, func(p string) bool { return strings.HasPrefix(p, "n/") }) {
+		t.Fatalf("a nested repository adds no files, so it must not count: %+v", l)
 	}
 }
