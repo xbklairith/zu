@@ -1363,7 +1363,7 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
 
 **Steps:**
 
-- [ ] **Write the failing tests** (synthetic ids that mirror the corpus shapes)
+- [x] **Write the failing tests** (synthetic ids that mirror the corpus shapes)
 
    ```ts
    import { describe, expect, it } from "vitest";
@@ -1426,9 +1426,9 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    });
    ```
 
-- [ ] **Run — expect FAIL**, then **implement `tree.ts`**. Required exports: `boxesOf(view)` (memoized box index), `leavesAt(view, focus, depth): string[]` (sorted), `autoDepth(view, focus): number`, `parentBox(view, box): string`, `bundles(view, focus, depth): {from, to, pairs}[]` (sorted by from, then to), `declLeaves(view, pkg)`, and `EXTERNAL_BUDGET = 20`, `BOX_BUDGET = 60`. The module a package belongs to is its `module` field. The segments are `id.slice(module.length + 1).split("/")`.
-- [ ] **Run — expect PASS**: `cd web && npm test` → all passed; `npm run typecheck` clean.
-- [ ] **Commit**: `git add web/src/tree.ts web/src/tree.test.ts && git commit -m "Derive the Package Tree, drill-in and auto-collapse from node ids"`
+- [x] **Run — expect FAIL**, then **implement `tree.ts`**. Required exports: `boxesOf(view)` (memoized box index), `leavesAt(view, focus, depth): string[]` (sorted), `autoDepth(view, focus): number`, `parentBox(view, box): string`, `bundles(view, focus, depth): {from, to, pairs}[]` (sorted by from, then to), `declLeaves(view, pkg)`, and `EXTERNAL_BUDGET = 20`, `BOX_BUDGET = 60`. The module a package belongs to is its `module` field. The segments are `id.slice(module.length + 1).split("/")`.
+- [x] **Run — expect PASS**: `cd web && npm test` → all passed; `npm run typecheck` clean.
+- [x] **Commit**: `git add web/src/tree.ts web/src/tree.test.ts && git commit -m "Derive the Package Tree, drill-in and auto-collapse from node ids"`
 
 ---
 
@@ -1617,7 +1617,7 @@ Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag r
 - [x] Task 5 · `zu scan -html`
 - [x] Task 6 · UI toolchain
 - [x] Task 7 · Golden View
-- [ ] Task 8 · Package Tree logic
+- [x] Task 8 · Package Tree logic
 - [ ] Task 9 · Layout
 - [ ] Task 10 · Canvas and header
 - [ ] Task 11 · Side panel
