@@ -157,7 +157,9 @@ export function methodsOf(view: View, type: string): string[] {
     .sort(cmp);
 }
 
-export type Bundle = { from: string; to: string; pairs: number };
+// status is the Change Status every edge in the bundle shares, "mixed" when
+// changed edges disagree or sit beside unchanged ones, absent when none changed.
+export type Bundle = { from: string; to: string; pairs: number; status?: string };
 
 // bundles maps edges to drawn leaves and counts distinct node pairs per leaf
 // pair. At package level these are imports; in a package's declaration view
@@ -211,22 +213,32 @@ function inside(idx: Index, leaf: string): boolean {
 }
 
 // count groups edges by their drawn ends and counts distinct node pairs.
-function count<E extends { from: string; to: string }>(
+function count<E extends { from: string; to: string; status?: string }>(
   edges: E[],
   ends: (e: E) => (string | null)[],
 ): Bundle[] {
   const pairs = new Map<string, Set<string>>();
+  const statuses = new Map<string, Set<string>>();
   for (const e of edges) {
     const [f, t] = ends(e);
     if (f === null || t === null || f === t) continue;
     const key = `${f}\u0000${t}`;
-    if (!pairs.has(key)) pairs.set(key, new Set());
+    if (!pairs.has(key)) {
+      pairs.set(key, new Set());
+      statuses.set(key, new Set());
+    }
     pairs.get(key)!.add(`${e.from}\u0000${e.to}`);
+    statuses.get(key)!.add(e.status ?? "");
   }
+  const statusOf = (st: Set<string>): string | undefined => {
+    if (st.size === 1) return [...st][0] || undefined;
+    return [...st].some((x) => x !== "") ? "mixed" : undefined;
+  };
   return [...pairs]
     .map(([k, s]) => {
       const [from, to] = k.split("\u0000");
-      return { from, to, pairs: s.size };
+      const status = statusOf(statuses.get(k)!);
+      return { from, to, pairs: s.size, ...(status ? { status } : {}) };
     })
     .sort((a, b) => cmp(a.from, b.from) || cmp(a.to, b.to));
 }

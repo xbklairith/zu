@@ -8,9 +8,12 @@ type Props = {
   boxes: number;
   depth: number;
   onFocus: (box: string) => void;
+  full?: boolean; // Change View only: showing the full project, not the changed subgraph
+  onToggle?: () => void;
 };
 
-export function Header({ view, focus, boxes, depth, onFocus }: Props) {
+export function Header({ view, focus, boxes, depth, onFocus, full, onToggle }: Props) {
+  const compare = view.links?.compare?.startsWith("https://") ? view.links.compare : null;
   const [showErrors, setShowErrors] = useState(false);
   const errors = view.honesty.parseErrors;
   return (
@@ -49,7 +52,26 @@ export function Header({ view, focus, boxes, depth, onFocus }: Props) {
           </span>
         ))}
       </nav>
-      <p className="note">{depthNote(boxes, depth)}</p>
+      <p className="note">
+        {depthNote(boxes, depth)}
+        {full !== undefined && (
+          <>
+            {" "}
+            {full ? "Showing every package." : "Showing the changed packages and their direct importers."}{" "}
+            <button type="button" className="link" onClick={onToggle}>
+              {full ? "Show changed subgraph" : "Show full project"}
+            </button>
+          </>
+        )}
+        {compare && (
+          <>
+            {" · "}
+            <a href={compare} target="_blank" rel="noopener noreferrer">
+              Compare {view.base?.commit.slice(0, 12)}…{view.head.commit.slice(0, 12)} on the host
+            </a>
+          </>
+        )}
+      </p>
     </header>
   );
 }

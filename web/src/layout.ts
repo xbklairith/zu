@@ -2,6 +2,7 @@
 // (plan Deviation 5); every input is sorted and sizes come from label lengths,
 // never from the DOM, so the same View always lays out the same way.
 import ELK, { type ElkNode } from "elkjs/lib/elk.bundled.js";
+import { nodeMark, unchangedCount } from "./change";
 import type { View } from "./data";
 import {
   EXTERNALS,
@@ -9,15 +10,20 @@ import {
   boxesOf,
   bundles,
   containers,
+  declLeaves,
   leavesAt,
   methodsOf,
+  packagesIn,
   placeOf,
   touchedExternals,
   type Bundle,
 } from "./tree";
 
-export type Shape = "container" | "box" | "oval" | "decl" | "outside";
-export type Item = { id: string; label: string; parent?: string; shape: Shape; rows?: string[] };
+export type Shape = "container" | "box" | "oval" | "decl" | "outside" | "chip";
+// mark is the Change View class (change.ts); rowMarks parallel rows.
+export type Item = {
+  id: string; label: string; parent?: string; shape: Shape; rows?: string[]; mark?: string; rowMarks?: string[];
+};
 export type Placed = { x: number; y: number; w: number; h: number; parent?: string };
 export type Scene = { items: Item[]; edges: Bundle[] };
 
@@ -53,14 +59,13 @@ export function scene(view: View, focus: string, d: number): Scene {
       const parent = pkg === focus ? undefined : pkg;
       items.push({ id, label: `${lastSegment(pkg)} (package)`, parent, shape: "box" });
     } else if (n && (n.kind === "type" || n.kind === "function")) {
-      const name = id.slice((n.parent ?? "").length + 1);
-      const rows = n.kind === "type" ? methodsOf(view, id).map((m) => m.slice(id.length + 1)) : undefined;
-      items.push({ id, label: name, shape: "decl", ...(rows && rows.length ? { rows } : {}) });
+      items.push(declItem(view, id));
     } else {
       const parent = parentOf(id);
       items.push({ id, label: label(id, parent), parent, shape: "box" });
     }
   }
+  if (view.kind === "change") markChanges(view, focus, items);
   const edges = bundles(view, focus, d);
   const drawn = new Set(items.map((i) => i.id));
   const extCount = touchedExternals(view, focus, d).length;
@@ -75,6 +80,45 @@ export function scene(view: View, focus: string, d: number): Scene {
   }
   items.sort((a, b) => cmp(a.id, b.id));
   return { items, edges };
+}
+
+function declItem(view: View, id: string, parent?: string): Item {
+  const n = boxesOf(view).byId.get(id)!;
+  const methods = n.kind === "type" ? methodsOf(view, id) : [];
+  const item: Item = { id, label: id.slice((n.parent ?? "").length + 1), shape: "decl", ...(parent ? { parent } : {}) };
+  if (methods.length) item.rows = methods.map((m) => m.slice(id.length + 1));
+  if (view.kind === "change") {
+    item.mark = nodeMark(n);
+    if (methods.length) item.rowMarks = methods.map((m) => nodeMark(boxesOf(view).byId.get(m)!));
+  }
+  return item;
+}
+
+// markChanges gives each drawn item its Change View mark and opens every
+// changed package drawn as a box onto its changed declarations, with a chip
+// counting the ones left out (Q4). A box holding a changed package that is
+// not one itself is marked "has-change".
+function markChanges(view: View, focus: string, items: Item[]) {
+  const idx = boxesOf(view);
+  if (focus !== "" && (focus.endsWith(PKG) || idx.byId.get(focus)?.kind === "package") && !idx.boxes.get(focus)?.children) {
+    return; // a declaration view: declItem already marked them
+  }
+  for (const it of [...items]) {
+    if (it.shape !== "box") continue;
+    const pkg = it.id.endsWith(PKG) ? it.id.slice(0, -PKG.length) : it.id;
+    const n = idx.byId.get(pkg);
+    if (!n || n.kind !== "package") {
+      if (packagesIn(view, it.id).some((p) => p.status)) it.mark = "has-change";
+      continue;
+    }
+    it.mark = nodeMark(n);
+    const decls = n.detail ? declLeaves(view, pkg) : [];
+    if (decls.length === 0) continue;
+    it.shape = "container";
+    for (const id of decls) items.push(declItem(view, id, it.id));
+    const more = unchangedCount(view, pkg);
+    if (more > 0) items.push({ id: `${it.id}#unchanged`, label: `+${more} unchanged`, parent: it.id, shape: "chip" });
+  }
 }
 
 // sizeOf estimates a leaf's size from its text: the label, method rows, and

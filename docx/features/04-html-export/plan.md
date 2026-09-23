@@ -1600,6 +1600,11 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
 - **Panel:** hunks inline (U12), plus the compare link.
 - **Tests:** vitest for the status → mark mapping, the changed-subgraph selection and the "+N unchanged" count, run against the B1 golden.
 
+- **Built (B3):**
+  - The opening subgraph is `changedSubgraph` in `web/src/change.ts`: changed packages, packages at hop 1, and both ends of every changed import (an added dependency on an unchanged package would otherwise vanish), plus the externals they import.
+  - "Changed packages open" means a changed package drawn as a box becomes a container holding its changed declarations and a "+N unchanged" chip; double-clicking it still opens its declaration view.
+  - Centring a changed package uses `setCenter` from the layout's own positions and the canvas's measured size. `fitView` waits for DOM-measured nodes and never resolved for these layout-sized ones.
+
 ### Task B4: Part B acceptance
 
 Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag range: size, determinism, offline, and the three browsers. Record in `acceptance.md`.
@@ -1631,7 +1636,7 @@ Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag r
 - [x] Task 12 · Part A acceptance (manual browser checks pending)
 - [x] Task B1 · `export.Change`
 - [x] Task B2 · `zu diff -html` (blocked)
-- [ ] Task B3 · Change View UI (blocked)
+- [x] Task B3 · Change View UI (blocked)
 - [ ] Task B4 · Part B acceptance (blocked)
 
 **Status:** Not Started

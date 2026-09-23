@@ -4,16 +4,18 @@ export type NodeKind = "package" | "type" | "function" | "external";
 export type ViewNode = {
   id: string; kind: NodeKind; parent?: string; module?: string; exported?: boolean;
   typeKind?: string; generated?: boolean; loc: Loc; decls?: number; unresolved?: number;
-  detail?: boolean; status?: string;
+  detail?: boolean; status?: string; movedFrom?: string; hop?: number;
 };
 export type ViewEdge = {
   from: string; to: string; kind: "imports" | "calls" | "embeds"; count: number; loc: Loc; status?: string;
 };
 export type Ref = { commit: string; dirty: boolean };
+export type Hunk = { baseStart: number; baseLines: number; headStart: number; headLines: number; lines: string[] };
 export type View = {
   schema: string; kind: "project" | "change"; tool: string; head: Ref; base?: Ref; changed?: string[];
   modules: string[]; nodes: ViewNode[]; edges: ViewEdge[]; sources: Record<string, string>;
   links?: { blob: string; compare?: string };
+  hunks?: Record<string, Hunk[]>;
   honesty: {
     parseErrors: { path: string; message: string }[]; unresolvedCalls: number;
     unresolvedImports: number; unsupported: Record<string, number>;
