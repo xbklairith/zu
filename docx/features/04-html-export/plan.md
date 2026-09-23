@@ -83,7 +83,7 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
 - `sources`: repo-relative path → file text, only for `detail` packages. Keys sorted (encoding/json does this).
 - `tool` is set by the CLI (`version.Version`), never read from a global inside `internal/export`.
 - **Change View fields.** These are part of schema `"1"`, optional, and absent in a Project View:
-  - top level: `base` (Ref), `links.compare`, `hunks` (path → `[{baseStart, baseLines, headStart, headLines, lines}]`, where each line is prefixed with `" "`, `"+"` or `"-"`);
+  - top level: `base` (Ref), `changed` (package ids, bottom-up), `links.compare`, `hunks` (path → `[{baseStart, baseLines, headStart, headLines, lines}]`, where each line is prefixed with `" "`, `"+"` or `"-"`);
   - nodes: `status` (a Change Status word: `added`, `removed` or `modified`; absent = unchanged), `movedFrom` (the removed id of a Move), `hop` (Affected Set distance, 0 = changed);
   - edges: `status` (`added`, `removed` or `reversed`, 03's words; absent = unchanged).
 
@@ -1235,7 +1235,7 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    };
    export type Ref = { commit: string; dirty: boolean };
    export type View = {
-     schema: string; kind: "project" | "change"; tool: string; head: Ref; base?: Ref;
+     schema: string; kind: "project" | "change"; tool: string; head: Ref; base?: Ref; changed?: string[];
      modules: string[]; nodes: ViewNode[]; edges: ViewEdge[]; sources: Record<string, string>;
      links?: { blob: string; compare?: string };
      honesty: {
@@ -1538,7 +1538,7 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
 
 # Part B — Change View export (blocked on 03)
 
-**Start when feature 03 (diff to CI) is merged.** Feature 02 has already shipped what Part B reads files with: `scan.Tree`, `gitref.CommitTree` and `scan.ListTree`. These tasks consume 03's plan exactly as written in `docx/features/03-diff-ci/plan.md` (revision `e0138e2`). If 03's types change while it is built, adjust here. Do not change 03 to suit 04.
+**Feature 03 is merged (d7d418a); its exported signatures match its plan.** Feature 02 has already shipped what Part B reads files with: `scan.Tree`, `gitref.CommitTree` and `scan.ListTree`. These tasks consume 03's plan exactly as written in `docx/features/03-diff-ci/plan.md` (revision `e0138e2`). If 03's types change while it is built, adjust here. Do not change 03 to suit 04.
 
 ## What 04 consumes (all defined by 02 and 03, nothing new)
 
@@ -1546,13 +1546,17 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
 |---|---|
 | Change Status of nodes and edges | `diff.Compare(base, head *ir.IR) diff.Delta` → `Nodes []NodeChange{ID, Kind, Status}` and `Edges []EdgeChange{From, To, Kind, Status}`. Anything not listed is unchanged, and `reversed` is an edge status on package imports. |
 | Moves | `Delta.Moves []Move{From, To, Kind}` (paired by `shape`, one-to-one) |
-| Affected Set | `diff.Affected(head, changed) []Hop{Package, Hops}`, which includes the changed packages at hop 0 (ADR 0009) |
+| Affected Set and row order | `diff.Summarize(base, head) *Summary`: `Affected []Hop{Package, Hops}` (changed packages at hop 0, ADR 0009) and `Packages []PackageRow` in bottom-up order. Call `Summarize` directly; the Summary's Mermaid edge list is unexported and absent from `-format json`. |
 | Both IRs and refs | the two `*ir.IR` values `zu diff` already holds, and their `Ref`s |
 | File content at base and head | the two `scan.Tree`s `zu diff` opened: `CommitTree` for base; `CommitTree` or `ListTree` (`-worktree`) for head. Both have `ReadFile(rel)`. |
 
 **Decided here: hunks are computed in Go**, with a small deterministic line diff (Myers, 3 lines of context) over base and head content read through the trees. It needs no extra git process, works the same for `-worktree`, and is testable as a pure function. `git diff` was the alternative (ADR 0005 allows it), but it would need a separate path for untracked worktree files.
 
-### Task B1: `export.Change(base, head *ir.IR, delta diff.Delta, affected []diff.Hop, baseTree, headTree scan.Tree)`
+### Task B1: `export.Change(base, head *ir.IR, delta diff.Delta, sum *diff.Summary, baseTree, headTree scan.Tree)`
+
+`sum` is `diff.Summarize(base, head)`. It supplies the Affected Set (`sum.Affected`, so no separate `affected` argument) and the bottom-up package order (`sum.Packages`), which exists only in the Summary. `delta` still supplies every edge change, because the Summary keeps only counts for calls and embeds.
+
+- **Changed order.** `View.changed` is the list of `sum.Packages[i].ID` values in their Summary order. B1 adds the `Changed []string` field (`json:"changed,omitempty"`) to `View`. It is optional in schema "1" and present only in a Change View. B3's changed list reads it as is and never re-sorts it.
 
 - **Nodes.** Every package and external of head, plus removed packages from base, each with its `status` from the delta (absent = unchanged) and its `hop` from `affected`.
 - **Moves.** The node for `Move.To` carries `movedFrom: Move.From`. The `Move.From` node is not emitted, so a Move is one node drawn dashed rather than a removal plus an addition.
@@ -1585,7 +1589,7 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
   - the changed subgraph: changed packages plus one hop, the neighbours closed and dimmed;
   - changed packages open, showing only changed declarations, plus a "+N unchanged" chip.
 - **Toggle (U10):** changed subgraph ↔ full Project View.
-- **Changed list (U11):** in the Structural Summary's bottom-up order (03, Task 3). Clicking one centres it.
+- **Changed list (U11):** `View.changed`, in the Structural Summary's bottom-up order. Clicking one centres it.
 - **Panel:** hunks inline (U12), plus the compare link.
 - **Tests:** vitest for the status → mark mapping, the changed-subgraph selection and the "+N unchanged" count, run against the B1 golden.
 
@@ -1618,7 +1622,7 @@ Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag r
 - [ ] Task 10 · Canvas and header
 - [ ] Task 11 · Side panel
 - [ ] Task 12 · Part A acceptance
-- [ ] Task B1 · `export.Change` (blocked on 03)
+- [ ] Task B1 · `export.Change`
 - [ ] Task B2 · `zu diff -html` (blocked)
 - [ ] Task B3 · Change View UI (blocked)
 - [ ] Task B4 · Part B acceptance (blocked)
