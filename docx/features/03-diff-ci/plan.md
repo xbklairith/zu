@@ -350,9 +350,9 @@ Nothing is left to do here.
 
 **Steps:**
 
-- [ ] **Bench**: run `scripts/bench-corpus.sh` in the background. Record the diff wall time and peak RSS. Expected: kubernetes peak RSS < 4 GB (REQ-041's budget), and it is recorded either way.
-- [ ] **Full check**: `set -o pipefail; make check` → exit 0.
-- [ ] **Commit**: `git add docx/features/03-diff-ci CLAUDE.md scripts/bench-corpus.sh && git commit -m "Document zu diff output and record benchmarks"`
+- [x] **Bench**: run `scripts/bench-corpus.sh` in the background. Record the diff wall time and peak RSS. Expected: kubernetes peak RSS < 4 GB (REQ-041's budget), and it is recorded either way.
+- [x] **Full check**: `set -o pipefail; make check` → exit 0.
+- [x] **Commit**: `git add docx/features/03-diff-ci CLAUDE.md scripts/bench-corpus.sh && git commit -m "Document zu diff output and record benchmarks"`
 
 ---
 
@@ -373,6 +373,6 @@ Nothing is left to do here.
 - [x] Task 5: merge-base
 - [x] Task 6: `scan.ListTree` (done in feature 02)
 - [x] Task 7: `zu diff` CLI
-- [ ] Task 8: Docs, memory, final check
+- [x] Task 8: Docs, memory, final check
 
-**Status:** In Progress
+**Status:** Complete

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Measure `zu scan` on the pinned Test Corpus (REQ-040, REQ-041), from disk and
 # from git objects (`-ref HEAD`, feature 02), and check the two IRs are identical.
+# Then time `zu diff HEAD~50` (feature 03), deepening the clone to reach it.
 # Clones shallowly into .zu/corpus/ on first use; prints Markdown rows per repo.
 # Usage: scripts/bench-corpus.sh [name...]   (names: cobra hugo kubernetes; default all)
 set -euo pipefail
@@ -44,6 +45,24 @@ measure() { # name tag mode dir [scan flags...]
   summary=$(grep '^zu scan:' "$log" | sed 's/ → .*//; s/^zu scan: //')
   echo "| $name | $tag | $mode | $wall | $rss | $summary |"
 }
+measure_diff() { # name tag dir
+  local name=$1 tag=$2 dir=$3
+  local log=".zu/corpus/$name.diff.time.log" start end rss wall summary
+  git -C "$dir" fetch -q --deepen 60 origin "refs/tags/$tag" 2>/dev/null || git -C "$dir" fetch -q --deepen 60 2>/dev/null
+  start=$(now)
+  (cd "$dir" && /usr/bin/time "$timeflag" "$OLDPWD/bin/zu" diff HEAD~50 -format json -max-parse-errors 1000000 \
+    >"$OLDPWD/.zu/corpus/$name.diff.json") 2>"$log" || true
+  end=$(now)
+  if [ "$(uname)" = Darwin ]; then
+    rss=$(awk '/maximum resident set size/ {printf "%.0f", $1/1048576}' "$log")
+  else
+    rss=$(awk -F: '/Maximum resident set size/ {printf "%.0f", $2/1024}' "$log")
+  fi
+  wall=$(python3 -c "print(f'{$end - $start:.2f}')")
+  summary=$(grep '^zu diff:' "$log" | sed 's/^zu diff: //' || true)
+  [ -n "$summary" ] || summary="FAILED: $(grep -v resident "$log" | head -1)"
+  echo "| $name | $tag~50..$tag | diff | $wall | $rss | $summary |"
+}
 parity=()
 for name in "${names[@]}"; do
   read -r url tag <<<"$(repo "$name")"
@@ -58,6 +77,7 @@ for name in "${names[@]}"; do
   else
     parity+=("$name: DIFFERENT")
   fi
+  measure_diff "$name" "$tag" "$dir"
 done
 echo
 printf 'disk vs ref IR: %s\n' "${parity[@]}"
