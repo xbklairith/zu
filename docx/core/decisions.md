@@ -54,3 +54,13 @@ if missing. The policy file is the exception and is committed.
 ## Open
 - **License** — undecided; must be settled before first distribution.
 - **Release tooling** — goreleaser (not yet installed) for N2/N4 artefacts and digests.
+
+## Product scope — grilling round 1 (2026-09-23)
+- First user: the author; the project will be published as open source.
+- Mode B surface: CI comment leads (Structural Summary with Mermaid), local UI diff view for depth.
+- zu never calls a code-host API; it writes Markdown + JSON and CI posts it.
+- Unconfigured repos: see [ADR 0001](../decisions/0001-ungrouped-view-over-auto-clustering.md).
+- Model Provider: all three features in v1 (A10 narrative, B10 change prose, `policy suggest`).
+- Metrics overlay (A7): dropped from v1 — no per-package metrics exist today.
+- v1 order: scan → diff to CI (no UI) → serve → interaction; Policy file after.
+- UI v1: U1, U3, U4, U5 full; U2 reduced (full re-layout allowed); U6 reduced (weak-edge slider only).
