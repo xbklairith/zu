@@ -359,6 +359,10 @@ button.st-removed {
   border-style: dashed;
   border-color: var(--accent);
 }
+.legend .swatch.violation {
+  border-color: var(--pin);
+  color: var(--pin);
+}
 
 .changed {
   grid-row: 3;

@@ -9,6 +9,7 @@ import { Header } from "./Header";
 import { keyAction } from "./keys";
 import { elkGraph, positions, Superseded, type Placed } from "./layout";
 import { Panel } from "./Panel";
+import { pinFor } from "./policy";
 import { reveal } from "./search";
 import { SearchBox } from "./SearchBox";
 import { DRAW_LIMIT, fitDepth, openFull, scene, type SceneNode } from "./scene";
@@ -18,15 +19,20 @@ import { useViewState } from "./useViewState";
 
 const PKG = "#pkg";
 
-function Legend() {
+function Legend({ change, policy }: { change: boolean; policy: boolean }) {
   return (
     <div className="legend" aria-label="Legend">
-      <span className="swatch st-added">added</span>
-      <span className="swatch st-removed">removed</span>
-      <span className="swatch st-modified">modified</span>
-      <span className="swatch st-moved">moved</span>
-      <span className="swatch affected">affected</span>
-      <span>edges: + added · − removed · ⇄ reversed · ± mixed</span>
+      {change && (
+        <>
+          <span className="swatch st-added">added</span>
+          <span className="swatch st-removed">removed</span>
+          <span className="swatch st-modified">modified</span>
+          <span className="swatch st-moved">moved</span>
+          <span className="swatch affected">affected</span>
+          <span>edges: + added · − removed · ⇄ reversed · ± mixed</span>
+        </>
+      )}
+      {policy && <span className="swatch violation">violates zu.policy.yaml (levels or cycle)</span>}
     </div>
   );
 }
@@ -71,7 +77,8 @@ export function App({ view: whole }: { view: View }) {
   const searchBox = useRef<HTMLInputElement>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [fit, setFit] = useState(0);
-  const requested = useMemo(() => scene(view, state), [view, state]);
+  const pin = useMemo(() => pinFor(whole), [whole]); // 06: violations stay red
+  const requested = useMemo(() => scene(view, state, { pin }), [view, state, pin]);
   // A view over DRAW_LIMIT draws the deepest depth that fits and says so; only
   // when even depth 1 is too big does the reader choose (Deviation 8).
   // "Draw depth M anyway" holds for this graph only.
@@ -79,9 +86,9 @@ export function App({ view: whole }: { view: View }) {
   const [confirmed, setConfirmed] = useState<string | null>(null);
   const fitted = useMemo(() => {
     if (confirmed === wanted) return requested;
-    const d = fitDepth(requested, (depth) => scene(view, { ...state, depth }));
-    return d === null ? null : d === requested.depth ? requested : scene(view, { ...state, depth: d });
-  }, [confirmed, wanted, requested, view, state]);
+    const d = fitDepth(requested, (depth) => scene(view, { ...state, depth }, { pin }));
+    return d === null ? null : d === requested.depth ? requested : scene(view, { ...state, depth: d }, { pin });
+  }, [confirmed, wanted, requested, view, state, pin]);
   const sc = fitted ?? requested;
   const ask = fitted === null;
   // A selected bundle edge lives here, not in the hash: its id changes with depth.
@@ -184,7 +191,7 @@ export function App({ view: whole }: { view: View }) {
       </div>
       {change && <ChangedList view={whole} onPick={pick} />}
       <main className="canvas">
-        {change && <Legend />}
+        {(change || whole.policy) && <Legend change={change} policy={whole.policy !== undefined} />}
         {sc !== requested && (
           <div className="notice" id="zu-notice" role="status">
             Collapsed to depth {sc.depth}: depth {requested.depth} has{" "}

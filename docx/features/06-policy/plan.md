@@ -4149,7 +4149,7 @@ These diffs are against `main` at 8f43cb1. If 05's `App.tsx` changes before 06 s
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
    <!-- file: web/src/policy.test.ts -->
    ```ts
@@ -4199,9 +4199,9 @@ These diffs are against `main` at 8f43cb1. If 05's `App.tsx` changes before 06 s
    });
    ```
 
-- [ ] **Run it:** `cd web && npx vitest run src/policy.test.ts`. Expected: FAIL (cannot resolve `./policy`).
+- [x] **Run it:** `cd web && npx vitest run src/policy.test.ts`. Expected: FAIL (cannot resolve `./policy`).
 
-- [ ] **Implement**
+- [x] **Implement**
 
    ```diff
    --- a/web/src/data.ts
@@ -4332,9 +4332,9 @@ These diffs are against `main` at 8f43cb1. If 05's `App.tsx` changes before 06 s
     .changed {
    ```
 
-- [ ] **Run:** `cd web && npx tsc --noEmit && npx vitest run && npx vite build`, then `go test ./web`. Expected: tsc clean; every vitest file passes (18 files, 96 tests at 8f43cb1 with this task); the build writes `dist/index.html`; `web/embed_test.go` passes.
+- [x] **Run:** `cd web && npx tsc --noEmit && npx vitest run && npx vite build`, then `go test ./web`. Expected: tsc clean; every vitest file passes (18 files, 96 tests at 8f43cb1 with this task); the build writes `dist/index.html`; `web/embed_test.go` passes.
 
-- [ ] **Browser check** (the UI's components are verified in the browser, as in 04 and 05). Open the `zu scan -html` file from Task 13, step 2. Check that:
+- [x] **Browser check** (the UI's components are verified in the browser, as in 04 and 05). Open the `zu scan -html` file from Task 13, step 2. Check that:
   - the `ir/bad → cli` edge is red at every depth and in every declutter stage;
   - with "hide edges" on, it shows as red triangles;
   - the legend shows "violates zu.policy.yaml";
@@ -4392,7 +4392,7 @@ These diffs are against `main` at 8f43cb1. If 05's `App.tsx` changes before 06 s
 - [x] Task 9 · `zu policy init`
 - [x] Task 10 · `zu diff` B7/B9
 - [x] Task 11 · View fields and the lensed export
-- [ ] Task 12 · UI: red violations via `pin`
+- [x] Task 12 · UI: red violations via `pin`
 - [ ] Task 13 · Acceptance
 
 **Status:** Not Started

@@ -5,9 +5,11 @@ export type ViewNode = {
   id: string; kind: NodeKind; parent?: string; module?: string; exported?: boolean;
   typeKind?: string; generated?: boolean; loc: Loc; decls?: number; unresolved?: number;
   detail?: boolean; status?: string; movedFrom?: string; hop?: number;
+  rank?: number; // 06: the package's Policy Level, 0 = innermost
 };
 export type ViewEdge = {
   from: string; to: string; kind: "imports" | "calls" | "embeds"; count: number; loc: Loc; status?: string;
+  violation?: "levels" | "cycle"; // 06: the Policy rule this import breaks
 };
 export type Ref = { commit: string; dirty: boolean };
 export type Hunk = { baseStart: number; baseLines: number; headStart: number; headLines: number; lines: string[] };
@@ -16,6 +18,7 @@ export type View = {
   modules: string[]; nodes: ViewNode[]; edges: ViewEdge[]; sources: Record<string, string>;
   links?: { blob: string; compare?: string };
   hunks?: Record<string, Hunk[]>;
+  policy?: { hash: string; levels: string[][] }; // 06: only when the Policy has rules
   honesty: {
     parseErrors: { path: string; message: string }[]; unresolvedCalls: number;
     unresolvedImports: number; unsupported: Record<string, number>;
