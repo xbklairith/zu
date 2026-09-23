@@ -38,10 +38,13 @@
 5. **ELK runs on the main thread in 04**, not in a Worker as the settled stack says. A `blob:` worker inside a single-file `file://` page adds CSP and browser risk, and 04 never draws more than about 60 boxes. The Worker moves to 05, which adds views that can be large.
 6. **A package's source files are the files its declarations live in.** The IR's package node records only its first file (`internal/scan/build.go:134`), so a file with no declarations (only imports or comments) is not inlined.
 7. **Drilling in replaces the canvas (navigation), it does not expand in place.** Import edges whose other end lies outside the drilled-in box go to one dimmed "outside" node whose panel lists the real targets. U2 (expand in place) stays with 05.
+8. **`-include` fails loudly.** A pattern that matches no package exits 3. A `./` pattern selects only packages of the root module, so nested modules are not swept in. This matches Go's `./...`.
+9. **Links carry the scan's position in the repository.** Scanning a subdirectory records paths relative to it, so blob links are prefixed with `git rev-parse --show-prefix`. A `-ref` scan always runs at the top level and needs no prefix.
+10. **Scanning a commit inlines the commit's source.** `zu scan -ref X -html` reads source through the scan's own `scan.Tree` (`CommitTree`), never from disk.
 
 ## Measured sizes (kubernetes v1.37.0, 2,963 packages, 25,843 import edges)
 
-The package-level View is **5.85 MB** of compact JSON (hugo: 0.28 MB), against 99 MB for the full IR. That is acceptable for one file. Declarations and source are added only for `-include` packages.
+The package-level View is **6.2 MB** (5.9 MiB) of compact JSON; hugo's is 0.28 MB. The full IR is 99 MB. A minimal React Flow + ELK bundle is about 1.85 MB, so `k8s.html` should come to about 8.1 MB. The acceptance limit is **10 MB**. Declarations and source are added only for `-include` packages.
 
 ---
 
@@ -55,7 +58,7 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
   "kind": "project",
   "tool": "v0.1.0",
   "head": {"commit": "90cb22a…", "dirty": false},
-  "modules": ["example.com/shop", "example.com/shop/tools/gen"],
+  "modules": ["example.com/shop", "example.com/shop/tools"],
   "nodes": [
     {"id": "example.com/shop/internal/store", "kind": "package", "module": "example.com/shop",
      "loc": {"path": "internal/store/db_linux.go", "line": 3}, "decls": 16, "unresolved": 4, "detail": true},
@@ -76,13 +79,19 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
 - `nodes`: every package and external, always. `type`/`function` nodes only for packages with `detail: true`. Sorted by `id`.
 - `edges`: every `imports` edge, always. `calls`/`embeds` only when both ends are in `nodes`. `count` = number of source locations, `loc` = the first. Sorted by `from`, `to`, `kind`.
 - `sources`: repo-relative path → file text, only for `detail` packages. Keys sorted (encoding/json does this).
-- Part B adds `base`, `links.compare`, and `status` on nodes and edges (see Part B).
+- `tool` is set by the CLI (`version.Version`), never read from a global inside `internal/export`.
+- **Change View fields.** These are part of schema `"1"`, optional, and absent in a Project View:
+  - top level: `base` (Ref), `links.compare`, `hunks` (path → `[{baseStart, baseLines, headStart, headLines, lines}]`, where each line is prefixed with `" "`, `"+"` or `"-"`);
+  - nodes: `status` (a Change Status word: `added`, `removed` or `modified`; absent = unchanged), `movedFrom` (the removed id of a Move), `hop` (Affected Set distance, 0 = changed);
+  - edges: `status` (`added`, `removed` or `reversed`, 03's words; absent = unchanged).
 
 ---
 
 # Part A — Project View export (unblocked)
 
 ### Task 1: `-include` patterns and the root module
+
+The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.invalid")`, so a bad pattern costs no scan time. It resolves the patterns for real after the scan, once `RootModule` is known.
 
 **Files:**
 - Create: `internal/export/include.go`, `internal/export/include_test.go`
@@ -102,27 +111,32 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
 
    func TestPatternMatch(t *testing.T) {
    	const root = "example.com/shop"
+   	const nested = "example.com/shop/tools" // a nested module, like kubernetes' hack/tools
    	cases := []struct {
-   		pat, pkg string
-   		want     bool
+   		pat, pkg, module string
+   		want             bool
    	}{
-   		{"example.com/shop/internal/store", "example.com/shop/internal/store", true},
-   		{"example.com/shop/internal/store", "example.com/shop/internal/storex", false},
-   		{"./internal/...", "example.com/shop/internal/store", true},
-   		{"./internal/...", "example.com/shop/internal", true},
-   		{"./internal/...", "example.com/shop/internalx", false},
-   		{"./...", "example.com/shop", true},
-   		{".", "example.com/shop", true},
-   		{".", "example.com/shop/internal/store", false},
-   		{"example.com/shop/tools/...", "example.com/shop/tools/gen", true},
+   		{"example.com/shop/internal/store", "example.com/shop/internal/store", root, true},
+   		{"example.com/shop/internal/store", "example.com/shop/internal/storex", root, false},
+   		{"./internal/...", "example.com/shop/internal/store", root, true},
+   		{"./internal/...", "example.com/shop/internal", root, true},
+   		{"./internal/...", "example.com/shop/internalx", root, false},
+   		{"./...", "example.com/shop", root, true},
+   		{"./...", "example.com/shop/tools/gen", nested, false}, // ./ stays in the root module, like go's ./...
+   		{"example.com/shop/...", "example.com/shop/tools/gen", nested, true},
+   		{".", "example.com/shop", root, true},
+   		{".", "example.com/shop/internal/store", root, false},
    	}
    	for _, c := range cases {
    		p, err := ParsePattern(c.pat, root)
    		if err != nil {
    			t.Fatalf("ParsePattern(%q): %v", c.pat, err)
    		}
-   		if got := p.Match(c.pkg); got != c.want {
-   			t.Errorf("%q.Match(%q) = %v, want %v", c.pat, c.pkg, got, c.want)
+   		if got := p.Match(c.pkg, c.module); got != c.want {
+   			t.Errorf("%q.Match(%q, %q) = %v, want %v", c.pat, c.pkg, c.module, got, c.want)
+   		}
+   		if p.String() != c.pat {
+   			t.Errorf("String() = %q, want %q", p.String(), c.pat)
    		}
    	}
    }
@@ -172,17 +186,22 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
    )
 
    // Pattern selects packages by import path: "a/b" exactly, "a/b/..." for a/b and
-   // everything below it. A leading "./" (or ".") means the root module.
+   // everything below it. A leading "./" (or ".") means the root module, and then
+   // only packages of that module match, as with go's ./... .
    type Pattern struct {
-   	path string
-   	tree bool
+   	src    string
+   	path   string
+   	tree   bool
+   	module string // set for ./ patterns
    }
+
+   func (p Pattern) String() string { return p.src }
 
    // ParsePattern parses one -include value. rootModule is the module at the scan
    // root, or "" when there is none.
    func ParsePattern(s, rootModule string) (Pattern, error) {
    	bad := fmt.Errorf("-include %q: want an import path, optionally ending in /... (./ means the root module)", s)
-   	p, tree := s, false
+   	p, tree, module := s, false, ""
    	if rest, ok := strings.CutSuffix(p, "/..."); ok {
    		p, tree = rest, true
    	}
@@ -191,16 +210,20 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
    			return Pattern{}, fmt.Errorf("-include %q: no module at the scan root for ./ to refer to", s)
    		}
    		p = strings.TrimSuffix(rootModule+"/"+strings.TrimPrefix(strings.TrimPrefix(p, "."), "/"), "/")
+   		module = rootModule
    	}
    	if p == "" || strings.HasPrefix(p, "/") || strings.HasSuffix(p, "/") ||
    		strings.Contains(p, "//") || strings.Contains(p, "..") {
    		return Pattern{}, bad
    	}
-   	return Pattern{path: p, tree: tree}, nil
+   	return Pattern{src: s, path: p, tree: tree, module: module}, nil
    }
 
-   // Match reports whether the package with import path pkg is selected.
-   func (p Pattern) Match(pkg string) bool {
+   // Match reports whether the package with import path pkg, in module, is selected.
+   func (p Pattern) Match(pkg, module string) bool {
+   	if p.module != "" && module != p.module {
+   		return false
+   	}
    	return pkg == p.path || p.tree && strings.HasPrefix(pkg, p.path+"/")
    }
 
@@ -332,6 +355,15 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
    	}
    }
 
+   func TestProjectRejectsAnIncludeThatMatchesNothing(t *testing.T) {
+   	doc := shopIR(t)
+   	p, _ := ParsePattern("./nosuch/...", RootModule(doc))
+   	_, err := Project(doc, []Pattern{p}, fakeRead(map[string]bool{}))
+   	if err == nil || !strings.Contains(err.Error(), "./nosuch/...") {
+   		t.Errorf("err = %v, want one naming the pattern", err)
+   	}
+   }
+
    func TestProjectRejectsNonLocalSourcePaths(t *testing.T) {
    	doc := &ir.IR{Nodes: []ir.Node{
    		{ID: "m", Kind: ir.KindPackage, Module: "m", Locations: []ir.Location{{Path: "a.go", Line: 1}}},
@@ -380,7 +412,6 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
    	"slices"
 
    	"zu/internal/ir"
-   	"zu/internal/version"
    )
 
    // ViewSchema is the version of the View document the UI reads.
@@ -391,7 +422,7 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
    type View struct {
    	Schema  string            `json:"schema"`
    	Kind    string            `json:"kind"` // "project" or "change"
-   	Tool    string            `json:"tool"`
+   	Tool    string            `json:"tool"` // set by the caller: zu's version
    	Head    ir.Ref            `json:"head"`
    	Base    *ir.Ref           `json:"base,omitempty"`
    	Modules []string          `json:"modules"`
@@ -451,7 +482,7 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
    		h.ParseErrors = []ir.ParseError{}
    	}
    	return &View{
-   		Schema: ViewSchema, Kind: kind, Tool: version.Version, Head: doc.Ref,
+   		Schema: ViewSchema, Kind: kind, Head: doc.Ref,
    		Modules: []string{}, Nodes: []Node{}, Edges: []Edge{}, Sources: map[string]string{},
    		Honesty: h,
    	}
@@ -521,13 +552,23 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
    		return ""
    	}
    	detail, decls := map[string]bool{}, map[string]int{}
+   	matched := make([]bool, len(include))
    	for i := range doc.Nodes {
    		n := &doc.Nodes[i]
    		switch n.Kind {
    		case ir.KindType, ir.KindFunction:
    			decls[pkgOf(n.ID)]++
    		case ir.KindPackage:
-   			detail[n.ID] = slices.ContainsFunc(include, func(p Pattern) bool { return p.Match(n.ID) })
+   			for j, p := range include {
+   				if p.Match(n.ID, n.Module) {
+   					detail[n.ID], matched[j] = true, true
+   				}
+   			}
+   		}
+   	}
+   	for j, ok := range matched {
+   		if !ok {
+   			return nil, fmt.Errorf("-include %s matches no package", include[j])
    		}
    	}
 
@@ -656,13 +697,13 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
 
    func TestRenderCannotBreakOutOfTheDataElement(t *testing.T) {
    	v := newView("project", shopIR(t))
-   	v.Sources["x.go"] = "s := \"</script><script>alert(1)</script><!--\" "
+   	v.Sources["x.go"] = "s := \"</script><script>alert(1)</script><!--\"\u2028"
    	var out bytes.Buffer
    	if err := Render(&out, template(t), v); err != nil {
    		t.Fatal(err)
    	}
    	s := out.String()
-   	if strings.Count(s, "</script>") != 1 || strings.Contains(s, "<!--") || strings.Contains(s, " ") {
+   	if strings.Count(s, "</script>") != 1 || strings.Contains(s, "<!--") || strings.Contains(s, "\u2028") {
    		t.Errorf("source text escaped the data element:\n%s", s)
    	}
    }
@@ -693,17 +734,20 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
    	"io"
    )
 
-   // Marker is the element Render fills. web/index.html carries it exactly once
+   // marker is the element Render fills. web/index.html carries it exactly once
    // and the built web/dist/index.html must still carry it (web/embed_test.go).
-   var Marker = []byte(`<script id="zu-data" type="application/json">{}</script>`)
+   const marker = `<script id="zu-data" type="application/json">{}</script>`
+
+   // HasMarker reports whether tmpl can take a View: it carries the marker once.
+   func HasMarker(tmpl []byte) bool { return bytes.Count(tmpl, []byte(marker)) == 1 }
 
    // Render writes tmpl with the marker's "{}" replaced by v as JSON.
-   // encoding/json's default HTML escaping turns <, > and & into < and so on,
-   // and escapes U+2028/U+2029, so no source text can close the script element or
-   // open a comment. Do not call SetEscapeHTML(false) here (ir.Encode does, for
-   // readability; this output is HTML).
+   // encoding/json's default HTML escaping turns <, > and & into \u003c, \u003e
+   // and \u0026, and escapes U+2028 and U+2029, so no source text can close the
+   // script element or open a comment. Do not call SetEscapeHTML(false) here
+   // (ir.Encode does, for readability; this output is HTML).
    func Render(w io.Writer, tmpl []byte, v *View) error {
-   	if n := bytes.Count(tmpl, Marker); n != 1 {
+   	if n := bytes.Count(tmpl, []byte(marker)); n != 1 {
    		return fmt.Errorf("UI template has %d data markers, want 1", n)
    	}
    	sortView(v)
@@ -711,8 +755,8 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
    	if err != nil {
    		return err
    	}
-   	open := len(Marker) - len("{}</script>")
-   	i := bytes.Index(tmpl, Marker)
+   	open := len(marker) - len("{}</script>")
+   	i := bytes.Index(tmpl, []byte(marker))
    	for _, part := range [][]byte{tmpl[:i+open], data, tmpl[i+open+len("{}"):]} {
    		if _, err := w.Write(part); err != nil {
    			return err
@@ -761,19 +805,21 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
    	cases := []struct {
    		name, origin, tmpl string
    		ref                ir.Ref
+   		prefix             string // git rev-parse --show-prefix of the scan root
    		want               string // "" = no links
    	}{
-   		{"github ssh", "git@github.com:xbklairith/zu.git", "", clean, "https://github.com/xbklairith/zu/blob/" + c + "/{path}#L{line}"},
-   		{"github https with token", "https://x-access-token:SECRET@github.com/o/r.git", "", clean, "https://github.com/o/r/blob/" + c + "/{path}#L{line}"},
-   		{"gitlab ssh url, subgroup", "ssh://git@gitlab.com/g/sub/r.git", "", clean, "https://gitlab.com/g/sub/r/-/blob/" + c + "/{path}#L{line}"},
-   		{"unknown host", "git@git.example.com:o/r.git", "", clean, ""},
-   		{"template wins", "git@git.example.com:o/r.git", "https://git.example.com/o/r/src/{commit}/{path}#L{line}", clean, "https://git.example.com/o/r/src/" + c + "/{path}#L{line}"},
-   		{"dirty", "git@github.com:o/r.git", "", ir.Ref{Commit: c, Dirty: true}, ""},
-   		{"no commit", "git@github.com:o/r.git", "", ir.Ref{}, ""},
-   		{"no origin", "", "", clean, ""},
+   		{"github ssh", "git@github.com:xbklairith/zu.git", "", clean, "", "https://github.com/xbklairith/zu/blob/" + c + "/{path}#L{line}"},
+   		{"github https with token", "https://x-access-token:SECRET@github.com/o/r.git", "", clean, "", "https://github.com/o/r/blob/" + c + "/{path}#L{line}"},
+   		{"gitlab ssh url, subgroup", "ssh://git@gitlab.com/g/sub/r.git", "", clean, "", "https://gitlab.com/g/sub/r/-/blob/" + c + "/{path}#L{line}"},
+   		{"unknown host", "git@git.example.com:o/r.git", "", clean, "", ""},
+   		{"scanned from a subdirectory", "git@github.com:o/r.git", "", clean, "sub/dir/", "https://github.com/o/r/blob/" + c + "/sub/dir/{path}#L{line}"},
+   		{"template wins", "git@git.example.com:o/r.git", "https://git.example.com/o/r/src/{commit}/{path}#L{line}", clean, "", "https://git.example.com/o/r/src/" + c + "/{path}#L{line}"},
+   		{"dirty", "git@github.com:o/r.git", "", ir.Ref{Commit: c, Dirty: true}, "", ""},
+   		{"no commit", "git@github.com:o/r.git", "", ir.Ref{}, "", ""},
+   		{"no origin", "", "", clean, "", ""},
    	}
    	for _, tc := range cases {
-   		l, err := ForRepo(tc.origin, tc.ref, tc.tmpl)
+   		l, err := ForRepo(tc.origin, tc.ref, tc.tmpl, tc.prefix)
    		if err != nil {
    			t.Fatalf("%s: %v", tc.name, err)
    		}
@@ -789,22 +835,32 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
 
    func TestForRepoRejectsUnsafeTemplates(t *testing.T) {
    	for _, tmpl := range []string{"http://h/{path}", "javascript:alert(1)//{path}", "https://h/no-path"} {
-   		if _, err := ForRepo("", ir.Ref{Commit: "abc"}, tmpl); err == nil {
+   		if _, err := ForRepo("", ir.Ref{Commit: "abc"}, tmpl, ""); err == nil {
    			t.Errorf("accepted -link-template %q", tmpl)
    		}
    	}
    }
    ```
 
-   In `internal/gitref/gitref_test.go` add `TestOrigin`: init a repo in `t.TempDir()`, `git remote add origin git@github.com:o/r.git`, and expect `Origin(ctx, dir) == "git@github.com:o/r.git"`; a repo with no remote gives `""`.
+   In `internal/gitref/gitref_test.go` add `TestPrefix`: `Prefix` of the repo top is `""`, and of `top/sub/dir` is `"sub/dir/"`. Also add `TestOrigin`: init a repo in `t.TempDir()`, `git remote add origin git@github.com:o/r.git`, and expect `Origin(ctx, dir) == "git@github.com:o/r.git"`; a repo with no remote gives `""`.
 
-- [ ] **Run — expect FAIL** (`undefined: ForRepo`, `undefined: Origin`)
+- [ ] **Run — expect FAIL** (`undefined: ForRepo`, `undefined: Origin`, `undefined: Prefix`)
 
    Run: `go test ./internal/export/ ./internal/gitref/`
 
-- [ ] **Implement `gitref.Origin`** (append to `internal/gitref/gitref.go`)
+- [ ] **Implement `gitref.Prefix` and `gitref.Origin`** (append to `internal/gitref/gitref.go`)
 
    ```go
+   // Prefix returns dir's path inside its repository with a trailing slash
+   // ("" at the top level, or outside a repository): git rev-parse --show-prefix.
+   func Prefix(ctx context.Context, dir string) string {
+   	out, err := git(ctx, dir, "rev-parse", "--show-prefix")
+   	if err != nil {
+   		return ""
+   	}
+   	return strings.TrimSpace(out)
+   }
+
    // Origin returns the URL of the "origin" remote, or "" when there is none.
    // It may carry credentials; callers must not copy it into output as-is.
    func Origin(ctx context.Context, dir string) string {
@@ -838,8 +894,10 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
 
    // ForRepo returns link templates for head, or nil when a link would mislead:
    // no commit, uncommitted changes, or an origin zu cannot map and no template.
-   // Only host and path of origin are used, so credentials in it never reach the file.
-   func ForRepo(origin string, head ir.Ref, template string) (*Links, error) {
+   // Only host and path of origin are used, so credentials in it never reach the
+   // file. prefix is the scan root's path inside the repository ("" at the top,
+   // else "sub/dir/"), because IR paths are relative to the scan root.
+   func ForRepo(origin string, head ir.Ref, template, prefix string) (*Links, error) {
    	if template != "" {
    		if !strings.HasPrefix(template, "https://") || !strings.Contains(template, "{path}") {
    			return nil, errors.New("-link-template must start with https:// and contain {path}")
@@ -849,14 +907,15 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
    		return nil, nil
    	}
    	if template != "" {
-   		return &Links{Blob: strings.ReplaceAll(template, "{commit}", head.Commit)}, nil
+   		t := strings.ReplaceAll(template, "{commit}", head.Commit)
+   		return &Links{Blob: strings.ReplaceAll(t, "{path}", prefix+"{path}")}, nil
    	}
    	host, repo := parseRemote(origin)
    	switch {
    	case host == "github.com":
-   		return &Links{Blob: "https://github.com/" + repo + "/blob/" + head.Commit + "/{path}#L{line}"}, nil
+   		return &Links{Blob: "https://github.com/" + repo + "/blob/" + head.Commit + "/" + prefix + "{path}#L{line}"}, nil
    	case host == "gitlab.com":
-   		return &Links{Blob: "https://gitlab.com/" + repo + "/-/blob/" + head.Commit + "/{path}#L{line}"}, nil
+   		return &Links{Blob: "https://gitlab.com/" + repo + "/-/blob/" + head.Commit + "/" + prefix + "{path}#L{line}"}, nil
    	}
    	return nil, nil
    }
@@ -897,23 +956,36 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
 ### Task 5: `zu scan -html FILE [-include P]… [-link-template T]`
 
 **Files:**
-- Modify: `internal/cli/scan.go` (flags at lines 32–35, output after the IR write at lines 76–80)
+- Modify: `internal/cli/scan.go`, as of `92527ba` / `4a6bd33`, in three places:
+  1. the flag block (lines 37–41);
+  2. the invocation checks, after the `-include-ignored`/`-ref` check (line 56);
+  3. after the IR write succeeds, before the summary line (lines 106–108).
 - Create: `internal/cli/html.go`, `internal/cli/html_test.go`
 
 **Behaviour:**
 - `scan` still writes the IR exactly as today (`-out -` still works). `-html` writes the export afterwards, atomically.
-- `-include` and `-link-template` without `-html` → exit 3. `-html -` → exit 3 (stdout carries the IR with `-out -`).
-- The UI template comes from `web.Assets()`'s `index.html`. If it is missing or still the placeholder, exit 3 with: `zu scan: this zu was built without the UI; build it with make build`.
+- **Before scanning, exit 3 on any of these,** so a bad invocation never costs a scan:
+  - `-include` or `-link-template` without `-html`;
+  - `-html -`;
+  - a malformed `-include` pattern;
+  - a `-link-template` that is not https or lacks `{path}`;
+  - a missing UI, reported as `zu scan: html: this zu was built without the UI; build it with make build`.
+- **After the scan:** `-include` patterns are resolved against the root module, and one that matches nothing exits 3 and names the pattern (Deviation 8).
+- **Source is read through `src.tree.ReadFile`, the tree the scan just read** (Deviation 10). With `-ref` that is the commit; otherwise the files git would commit, from disk.
+- **Links:** the prefix is `gitref.Prefix(src.root)` for a working-tree scan and `""` for `-ref`, whose root is the repository top (Deviation 9).
 - stderr gets one more line: `zu scan: html → FILE (N source files inlined; share it only where that code may go)`.
 - A parse-error exit 2 still happens after the HTML is written.
 
 **Steps:**
 
-- [ ] **Write the failing tests** in `internal/cli/html_test.go`. Reuse `repo`, `small`, `git` and `needGit` from `scan_test.go`, and set the `uiTemplate` seam to `internal/export/testdata/template.html`'s bytes. Cases:
-   1. `scan <dir> -html out.html -include ./a`: exit 0; `out.html` contains `"id":"example.com/m/a.F"` and `"a/a.go":`; `.zu/ir/worktree.json` still exists.
-   2. `-include ./a` without `-html` → exit 3; `-html -` → exit 3; `-include /x` → exit 3 with `-include` in stderr.
-   3. With `uiTemplate` returning the "built without the UI" error → exit 3, stderr contains `make build`, no `out.html`.
-   4. In a git repo with `origin` = `https://user:pw@github.com/o/r.git` and a clean commit: `out.html` contains `https://github.com/o/r/blob/` and does not contain `pw@`.
+- [ ] **Write the failing tests** in `internal/cli/html_test.go`. Reuse `repo`, `small`, `git` and `needGit` from `scan_test.go`. Set the `uiTemplate` seam to return `internal/export/testdata/template.html`'s bytes. Write every output under `t.TempDir()`.
+   1. `scan <dir> -html $T/out.html -include ./a`: exit 0; the file contains `"id":"example.com/m/a.F"` and `"a/a.go":`; `<dir>/.zu/ir/` still holds the IR.
+   2. **`-ref` inlines the commit.** Commit `a/a.go`, then append `// WORKTREE-EDIT` on disk. `scan <dir> -ref HEAD -html $T/out.html -include ./a`: the file does not contain `WORKTREE-EDIT` and does contain `https://github.com/o/r/blob/<commit>/a/a.go`-style links. Set origin to `git@github.com:o/r.git`.
+   3. **Exit 3 before the scan.** `-include ./a` without `-html`; `-html -`; `-include /x`; `-link-template http://h/{path}`. After each, `<dir>/.zu` does not exist.
+   4. **Exit 3 after the scan:** `-include ./nosuch/...`, with stderr containing `./nosuch/...`.
+   5. **Missing UI.** With `uiTemplate` returning the "built without the UI" error: exit 3, stderr contains `make build`, and `<dir>/.zu` does not exist.
+   6. **Credentials.** In a git repo with `origin` = `https://user:pw@github.com/o/r.git` and a clean commit, the file contains `https://github.com/o/r/blob/` and does not contain `pw@`.
+   7. **Subdirectory.** The repo has `svc/go.mod` and `svc/a/a.go`, committed, with an origin on github. `scan <top>/svc -html …` links contain `/blob/<commit>/svc/{path}`.
 
 - [ ] **Run — expect FAIL**
 
@@ -931,20 +1003,20 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
    	"fmt"
    	"io"
    	"io/fs"
-   	"os"
-   	"path/filepath"
    	"strings"
 
    	"zu/internal/export"
    	"zu/internal/gitref"
    	"zu/internal/ir"
+   	"zu/internal/version"
    	"zu/web"
    )
 
-   // Seams for tests: the built UI page and the origin remote.
+   // Seams for tests: the built UI page and the repository facts links need.
    var (
    	uiTemplate = builtTemplate
    	gitOrigin  = gitref.Origin
+   	gitPrefix  = gitref.Prefix
    )
 
    // listFlag collects a repeatable flag.
@@ -957,15 +1029,34 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
    	path     string
    	include  listFlag
    	linkTmpl string
+   	tmpl     []byte // the UI page, loaded by prepare
    }
 
-   func (o *htmlOptions) validate() error {
+   // prepare checks everything that does not need the IR, so a bad invocation
+   // fails before a scan that can take minutes.
+   func (o *htmlOptions) prepare() error {
    	switch {
-   	case o.path == "" && (len(o.include) > 0 || o.linkTmpl != ""):
-   		return errors.New("-include and -link-template need -html")
+   	case o.path == "":
+   		if len(o.include) > 0 || o.linkTmpl != "" {
+   			return errors.New("-include and -link-template need -html")
+   		}
+   		return nil
    	case o.path == "-":
    		return errors.New("-html needs a file path")
    	}
+   	for _, s := range o.include {
+   		if _, err := export.ParsePattern(s, "root.invalid"); err != nil { // syntax only
+   			return err
+   		}
+   	}
+   	if _, err := export.ForRepo("", ir.Ref{}, o.linkTmpl, ""); err != nil { // validates the template
+   		return err
+   	}
+   	tmpl, err := uiTemplate()
+   	if err != nil {
+   		return fmt.Errorf("html: %w", err)
+   	}
+   	o.tmpl = tmpl
    	return nil
    }
 
@@ -975,20 +1066,17 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
    		return nil, err
    	}
    	b, err := fs.ReadFile(assets, "index.html")
-   	if errors.Is(err, fs.ErrNotExist) || err == nil && !bytes.Contains(b, export.Marker) {
+   	if errors.Is(err, fs.ErrNotExist) || err == nil && !export.HasMarker(b) {
    		return nil, errors.New("this zu was built without the UI; build it with make build")
    	}
    	return b, err
    }
 
-   // writeHTML writes the Project View export of doc (already sorted by ir.Encode).
-   func writeHTML(ctx context.Context, dir string, doc *ir.IR, o *htmlOptions, stderr io.Writer) error {
-   	tmpl, err := uiTemplate()
-   	if err != nil {
-   		return err
-   	}
+   // writeHTML writes the Project View export of doc (already sorted by
+   // ir.Encode), reading source through the tree the scan read.
+   func writeHTML(ctx context.Context, src *source, doc *ir.IR, o *htmlOptions, stderr io.Writer) error {
    	root := export.RootModule(doc)
-   	var pats []export.Pattern
+   	pats := make([]export.Pattern, 0, len(o.include))
    	for _, s := range o.include {
    		p, err := export.ParsePattern(s, root)
    		if err != nil {
@@ -996,18 +1084,20 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
    		}
    		pats = append(pats, p)
    	}
-   	read := func(p string) ([]byte, error) {
-   		return os.ReadFile(filepath.Join(dir, filepath.FromSlash(p))) // #nosec G304 -- repo-relative IR path, checked by export
-   	}
-   	v, err := export.Project(doc, pats, read)
+   	v, err := export.Project(doc, pats, src.tree.ReadFile)
    	if err != nil {
    		return err
    	}
-   	if v.Links, err = export.ForRepo(gitOrigin(ctx, dir), doc.Ref, o.linkTmpl); err != nil {
+   	v.Tool = version.Version
+   	prefix := "" // a -ref scan runs at the repository top
+   	if src.ref == nil {
+   		prefix = gitPrefix(ctx, src.root)
+   	}
+   	if v.Links, err = export.ForRepo(gitOrigin(ctx, src.root), doc.Ref, o.linkTmpl, prefix); err != nil {
    		return err
    	}
    	var buf bytes.Buffer
-   	if err := export.Render(&buf, tmpl, v); err != nil {
+   	if err := export.Render(&buf, o.tmpl, v); err != nil {
    		return err
    	}
    	if err := writeAtomic(o.path, buf.Bytes()); err != nil {
@@ -1022,27 +1112,27 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
 - [ ] **Wire into `runScan`** (`internal/cli/scan.go`)
 
    ```go
-   	// after the existing flag definitions (line 35):
+   	// 1. after the withIgnored flag (line 41):
    	var hopts htmlOptions
    	fs.StringVar(&hopts.path, "html", "", "also write a self-contained HTML Project View to `file`")
    	fs.Var(&hopts.include, "include", "inline declarations and source of packages matching `pattern` (repeatable; ./ = root module)")
    	fs.StringVar(&hopts.linkTmpl, "link-template", "", "source link `url` with {commit} {path} {line}; overrides origin detection")
 
-   	// after the -max-parse-errors check (line 46):
-   	if err := hopts.validate(); err != nil {
+   	// 2. after the -include-ignored/-ref check (line 56), before interruptContext:
+   	if err := hopts.prepare(); err != nil {
    		fmt.Fprintf(stderr, "zu scan: %v\n", err)
    		return ExitBadInvocation
    	}
 
-   	// after the IR write succeeds and before the summary line (line 81):
+   	// 3. after the IR write succeeds (line 106), before the summary line:
    	if hopts.path != "" {
-   		if err := writeHTML(ctx, dir, doc, &hopts, stderr); err != nil {
+   		if err := writeHTML(ctx, src, doc, &hopts, stderr); err != nil {
    			fmt.Fprintf(stderr, "zu scan: html: %v\n", err)
    			return ExitBadInvocation
    		}
    	}
    ```
-   Also update the `runScan` doc comment to list the new flags.
+   Also add `[-html file [-include pattern]… [-link-template url]]` to the `runScan` doc comment. `-include` and `-include-ignored` are different flags: one selects packages to inline, the other selects files to scan. The help text says so.
 
 - [ ] **Run — expect PASS; run the whole suite and lint**
 
@@ -1205,7 +1295,7 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
 
    check: web lint test test-web ## Everything CI runs
    ```
-   Add `test-web` to `.PHONY`.
+   Add `test-web` to `.PHONY`. Change `clean` to `rm -rf bin web/dist/index.html`, since `dist/assets` is no longer built.
 
 - [ ] **Verify**
 
@@ -1229,7 +1319,7 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
 
 **Steps:**
 
-- [ ] **Write a golden test** that builds `Project(shopIR, ./internal/store, fakeRead)` and compares `json.MarshalIndent(v, "", "  ")` to `testdata/shop.view.golden.json`, with `-update` to rewrite it (same pattern as `internal/scan`'s golden). Set `version.Version` to `"test"` for the test so the golden does not depend on the build.
+- [ ] **Write a golden test** that builds `Project(shopIR, ./internal/store, read)`, where `read` reads the real fixture files, `os.ReadFile(filepath.Join("../scan/testdata/shop", p))`. The dev page and Task 11's checks then show real source (`store.go` has 43+ lines). Compare `json.MarshalIndent(v, "", "  ")` to `testdata/shop.view.golden.json`, with `-update` to rewrite it (same pattern as `internal/scan`'s golden). `Tool` stays `""`: `Project` never reads the version.
 - [ ] **Run with `-update`, review the diff, run without it**
 
    Run: `go test ./internal/export -run Golden -update && git diff --stat && go test ./internal/export`
@@ -1247,7 +1337,7 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
    Add `"resolveJsonModule": true` to `web/tsconfig.json`.
 
 - [ ] **Dev mode shows the fixture.** Vite serves only `web/` by default, so add `server: { fs: { allow: [".."] } }` to `vite.config.ts`. Then in `main.tsx`, when `readEmbedded(document)` is null and `import.meta.env.DEV`, `await import("../../internal/export/testdata/shop.view.golden.json")`. The dead branch is dropped from the build. In a build with no data, render "This page carries no zu data. Create one with `zu scan -html FILE`."
-- [ ] **Verify**: `cd web && npm test && npm run build`. Expected: 3 passed; the build succeeds and `grep -c "example.com/shop" dist/index.html` prints `0` (the fixture is not bundled).
+- [ ] **Verify**: `cd web && npm test && npm run build && ! grep -q "example.com/shop" dist/index.html && echo fixture-not-bundled`. Expected: 3 passed, then `fixture-not-bundled`.
 - [ ] **Commit**: `git add internal/export/golden_test.go internal/export/testdata/shop.view.golden.json web/src/data.test.ts web/src/main.tsx web/tsconfig.json && git commit -m "Share a golden View between the Go export and the UI"`
 
 ---
@@ -1259,6 +1349,8 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
 
 **Rules (from ADR 0008, Q4, and Deviations 1, 2 and 7):**
 - A **box id** is a module path or a module path plus one or more segments. Every package id is a box; so is every prefix between its module and itself. A package box can also contain child boxes.
+- **Modules are roots (ADR 0008), even when nested.** `example.com/shop/tools` (its own `go.mod`) is a root beside `example.com/shop`, not a box inside it. A package's segments come from its `module` field, never from string prefixes. `parentBox` of a module root is `""`. kubernetes has 38 such roots.
+- **A box that is also a package** can be expanded while holding its own package, like `example.com/shop` (the `main` package, plus `internal/…`) or the 33 kubernetes packages whose id is their module path. When it is drawn as a container, its own package appears inside it as a leaf with id `<box>#pkg`, labelled `<last segment> (package)`, and edges to that package attach there. When the box is a leaf, the box itself carries the package.
 - The **focus** is a box id, or `""` for the page root, whose children are the module roots.
 - **Leaves at relative depth d** under the focus: for each package under the focus, its ancestor-or-self box at most d levels below the focus. A package whose id equals the focus is the container, not a leaf. Its declarations appear as leaves when it has `detail`.
 - **Containers:** every box strictly between the focus and a leaf is drawn as a container around its leaves ("a package is drawn inside its nearest ancestor segment", ADR 0008). `containers(view, focus, depth)` returns them with their parent box.
@@ -1304,6 +1396,14 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
        expect(autoDepth(v, "m")).toBe(1);
        expect(leavesAt(v, "m", 1)).toHaveLength(70);
      });
+     it("a package that is also a container gets a #pkg leaf; nested modules are roots", () => {
+       const v = view([...pkgs(["ex/shop", "ex/shop/internal/a", "ex/shop/internal/b"], "ex/shop"),
+         ...pkgs(["ex/shop/tools/gen"], "ex/shop/tools")]);
+       expect(leavesAt(v, "", 1)).toEqual(["ex/shop", "ex/shop/tools"]);
+       expect(leavesAt(v, "ex/shop", 2)).toEqual(["ex/shop#pkg", "ex/shop/internal/a", "ex/shop/internal/b"]);
+       expect(parentBox(v, "ex/shop/tools")).toBe("");
+       expect(parentBox(v, "ex/shop/tools/gen")).toBe("ex/shop/tools");
+     });
      it("Esc goes to the parent box, then to the root", () => {
        const v = view(pkgs(["m/a/b"], "m"));
        expect(parentBox(v, "m/a/b")).toBe("m/a");
@@ -1339,7 +1439,7 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
 
 **Steps:**
 
-- [ ] **Write the failing test**: lay out `bundles(golden, "", autoDepth)` twice and expect equal positions (`toEqual`); every node gets finite `x` and `y`; the same input in shuffled order gives the same positions.
+- [ ] **Write the failing test**: with `d = autoDepth(golden, "")`, lay out the leaves and containers of `(golden, "", d)` and `bundles(golden, "", d)` twice and expect equal positions (`toEqual`); every node gets finite `x` and `y`; the same input in shuffled order gives the same positions.
 - [ ] **Run — expect FAIL**, then **implement** `layout(items: {id; label; parent?: string; shape: "container" | "box" | "oval" | "decl" | "outside"}[], edges): Promise<Map<id, {x, y, w, h, parent?}>>`. Positions are relative to the parent, matching React Flow's `parentId`.
 - [ ] **Run — expect PASS**: `cd web && npm test`.
 - [ ] **Commit**: `git add web/src/layout.ts web/src/layout.test.ts && git commit -m "Lay out views deterministically with ELK"`
@@ -1369,7 +1469,7 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
 
 - [ ] **Implement** the components above. Keep all logic in `tree.ts`/`layout.ts`, and keep components thin.
 - [ ] **Verify** by running the dev server against the golden (`cd web && npx vite`), then in the browser:
-  - Shop has fewer than 60 packages, so the page opens with every package drawn inside its segment containers (`internal` holds `checkout`, `money` and `store`).
+  - Shop has fewer than 60 packages, so the page opens with two module roots, `example.com/shop` and `example.com/shop/tools`, fully expanded. `example.com/shop` holds `shop (package)` and the `internal` container, which holds `checkout`, `money` and `store`.
   - Double-clicking `store` shows its declarations with `Repo` holding the methods `Get`, `Reset` and `check`.
   - Double-clicking `checkout` shows the "Declarations not included" card.
   - Esc returns up one level at a time.
@@ -1416,13 +1516,14 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
 
 - [ ] **Determinism**
 
-   Run: `bin/zu scan -out /dev/null -html /tmp/a.html -include ./... && bin/zu scan -out /dev/null -html /tmp/b.html -include ./... && shasum /tmp/a.html /tmp/b.html`
+   Run: `T=$(mktemp -d) && bin/zu scan -out $T/ir.json -html $T/a.html -include ./... && bin/zu scan -out $T/ir.json -html $T/b.html -include ./... && shasum $T/a.html $T/b.html`
    Expected: identical hashes.
 
 - [ ] **Corpus** (`scripts/bench-corpus.sh` has cloned them into `.zu/corpus/`)
 
-   Run: `bin/zu scan .zu/corpus/hugo@v0.166.0 -out /dev/null -html /tmp/hugo.html -include ./hugolib && bin/zu scan .zu/corpus/kubernetes@v1.37.0 -out /dev/null -html /tmp/k8s.html && ls -l /tmp/hugo.html /tmp/k8s.html`
-   Expected: `k8s.html` < 8 MB; hugo opens at 37 boxes and kubernetes at 38 modules plus one "111 external modules" oval.
+   `-out` must name a writable directory: `/dev/null` fails because of the atomic write's temp file.
+   Run: `T=$(mktemp -d) && bin/zu scan .zu/corpus/hugo@v0.166.0 -out $T/hugo.json -html $T/hugo.html -include ./hugolib && bin/zu scan .zu/corpus/kubernetes@v1.37.0 -out $T/k8s.json -html $T/k8s.html && ls -l $T/*.html`
+   Expected: `k8s.html` < 10 MB (estimate ≈ 8.1 MB); hugo opens at 37 boxes and kubernetes at 38 module roots plus one "111 external modules" oval.
 
 - [ ] **Offline and browsers.** Open each file from `file://` in Chrome, Firefox and Safari. Check:
   - the DevTools console shows no CSP violations;
@@ -1433,62 +1534,69 @@ Written by `internal/export`, read by `web/src/data.ts`. Keys are part of the co
 
 ---
 
-# Part B — Change View export (blocked on 02 and 03)
+# Part B — Change View export (blocked on 03)
 
-**Start only when feature 02 (scan at a ref) and feature 03 (diff to CI) are merged. Then revise these tasks against their real types.** They are written against glossary terms, so the contract below is what 04 needs from 03's spec.
+**Start when feature 03 (diff to CI) is merged.** Feature 02 has already shipped what Part B reads files with: `scan.Tree`, `gitref.CommitTree` and `scan.ListTree`. These tasks consume 03's plan exactly as written in `docx/features/03-diff-ci/plan.md` (revision `e0138e2`). If 03's types change while it is built, adjust here. Do not change 03 to suit 04.
 
-## Contract 04 needs from 03
+## What 04 consumes (all defined by 02 and 03, nothing new)
 
-```go
-// zu/internal/diff (feature 03), or wherever 03 puts it.
-type Result struct {
-	Base, Head   ir.Ref
-	BaseIR       *ir.IR
-	HeadIR       *ir.IR
-	Nodes        map[string]Status // every id in either IR: added | removed | modified | unchanged (Change Status)
-	Edges        []EdgeChange      // From, To, Kind, Status; Reversed bool on package import pairs
-	Moves        []Move            // Removed id → Added id (paired by shape, ADR 0003)
-	Affected     map[string]int    // Affected Set: package id → hop distance, 0 = changed (ADR 0009)
-	ChangedFiles []string          // files with a Meaningful Change, repo-relative, sorted
-}
+| Need | Source |
+|---|---|
+| Change Status of nodes and edges | `diff.Compare(base, head *ir.IR) diff.Delta` → `Nodes []NodeChange{ID, Kind, Status}` and `Edges []EdgeChange{From, To, Kind, Status}`. Anything not listed is unchanged, and `reversed` is an edge status on package imports. |
+| Moves | `Delta.Moves []Move{From, To, Kind}` (paired by `shape`, one-to-one) |
+| Affected Set | `diff.Affected(head, changed) []Hop{Package, Hops}`, which includes the changed packages at hop 0 (ADR 0009) |
+| Both IRs and refs | the two `*ir.IR` values `zu diff` already holds, and their `Ref`s |
+| File content at base and head | the two `scan.Tree`s `zu diff` opened: `CommitTree` for base; `CommitTree` or `ListTree` (`-worktree`) for head. Both have `ReadFile(rel)`. |
 
-// And from 02: read a file at a ref (or the worktree under -worktree).
-type ReadAt func(ref ir.Ref, path string) ([]byte, error)
-```
+**Decided here: hunks are computed in Go**, with a small deterministic line diff (Myers, 3 lines of context) over base and head content read through the trees. It needs no extra git process, works the same for `-worktree`, and is testable as a pure function. `git diff` was the alternative (ADR 0005 allows it), but it would need a separate path for untracked worktree files.
 
-To be decided in the Part B revision: whether hunks are computed in Go from base and head content or taken from `git diff` (ADR 0005 allows the git CLI).
+### Task B1: `export.Change(base, head *ir.IR, delta diff.Delta, affected []diff.Hop, baseTree, headTree scan.Tree)`
 
-### Task B1: `export.Change(result, read)`
+- **Nodes.** Every package and external of head, plus removed packages from base, each with its `status` from the delta (absent = unchanged) and its `hop` from `affected`.
+- **Moves.** The node for `Move.To` carries `movedFrom: Move.From`. The `Move.From` node is not emitted, so a Move is one node drawn dashed rather than a removal plus an addition.
+- **Declarations.** For every changed package, `detail: true`. Its declarations with a status or a `movedFrom` are included, plus removed ones from base. Unchanged declarations only count toward `decls`, so the UI can show "+N unchanged".
+- **Edges.** Head's import edges, plus removed ones from base, each with its status. Calls and embeds are included only between included declarations.
+- **Changed files** are the head locations of `added`/`modified` declarations and of Move targets. **Sources** are those files' head content, read with `headTree.ReadFile`.
+- **Hunks** cover the changed files plus the base files of removed declarations. They come from base and head content (`baseTree.ReadFile`, `headTree.ReadFile`). A file missing on one side is diffed against empty content.
+- **Meaningful Change comes from `hash` alone.** A gofmt-only or comment-only edit gives no status, so its file is never inlined (ADR 0006).
+- **Tests.** Two scanned copies of `testdata/shop` in `t.TempDir()` (not hand-edited IRs) with an add, a remove, a modify, a Move, a reversed import, and a gofmt-only edit. There is a golden of the View, and `hunks` are checked for one modified function.
 
-- Nodes and edges carry `status`. Moves become one node with status `moved` and a `from` field. Affected Set packages carry `hop`.
-- `detail` is true for changed packages. Their changed declarations are included; unchanged ones only raise the `decls` count, so the UI shows "+N unchanged".
-- Sources: head content of `ChangedFiles`, plus a `hunks` map (path → list of `{baseStart, baseLines, headStart, headLines, lines[]}`).
-- Unchanged neighbours one hop away are included at package level and dimmed.
-- Tests: the golden of a two-commit fixture repo covering add, remove, modify, a Move, a reversed import, and a gofmt-only edit (which is not a Meaningful Change: no status, no source).
+### Task B2: `zu diff <base> [head] -html FILE [-link-template T]`
 
-### Task B2: `zu diff <base> [head] -html FILE`
-
-- Reuses `htmlOptions` (no `-include`: the change decides what is inlined).
-- `links.compare` = GitHub `https://github.com/<repo>/compare/<base>...<head>`, GitLab `https://gitlab.com/<repo>/-/compare/<base>...<head>`.
-- No blob links under `-worktree` (Deviation 4). The Structural Summary still goes to stdout.
+- `htmlOptions.prepare()` is reused. `-include` is rejected, because the change decides what is inlined.
+- **Links.** `links.blob` comes from `ForRepo(origin, head ref, tmpl, "")` (diff always runs at the top level). There are none under `-worktree`, because head is dirty (Deviation 4).
+- **`links.compare`:**
+  - GitHub: `https://github.com/<repo>/compare/<base>...<head>`
+  - GitLab: `https://gitlab.com/<repo>/-/compare/<base>...<head>`
+  - Built from the merge-base and head commits, only when both are clean commits.
+- The Structural Summary still goes to stdout. The HTML is written after it, and exit codes are unchanged.
+- Tests go in `internal/cli/diff_test.go`, in the style of Task 5.
 
 ### Task B3: Change View UI
 
-- **Marks (U9 + settled marks):** changed nodes solid in the status colour; the Affected Set outlined; edges drawn + or − with pair counts; Moves dashed; a legend. Colours pass contrast in light and dark.
-- **Toggle (U10):** changed subgraph (changed packages plus one hop, dimmed) ↔ full Project View.
-- **Changed list (U11):** changed packages, bottom-up by dependency. Clicking one centres it.
-- **Panel:** hunks inline (U12), plus a compare link.
-- **Opening view (Q4):** changed packages open showing only changed declarations plus a "+N unchanged" chip.
+- **Marks (U9 plus the settled marks):**
+  - changed nodes solid in their status colour; the Affected Set outlined, with its hop in the panel;
+  - edges drawn + or −, reversed edges as ⇄, with pair counts on bundles;
+  - Moves dashed, with `movedFrom` shown in the panel;
+  - a legend. Colours pass contrast in light and dark.
+- **Opening view (Q4):**
+  - the changed subgraph: changed packages plus one hop, the neighbours closed and dimmed;
+  - changed packages open, showing only changed declarations, plus a "+N unchanged" chip.
+- **Toggle (U10):** changed subgraph ↔ full Project View.
+- **Changed list (U11):** in the Structural Summary's bottom-up order (03, Task 3). Clicking one centres it.
+- **Panel:** hunks inline (U12), plus the compare link.
+- **Tests:** vitest for the status → mark mapping, the changed-subgraph selection and the "+N unchanged" count, run against the B1 golden.
 
 ### Task B4: Part B acceptance
 
-Same as Task 12, for `zu diff`, on a real zu commit range and a hugo tag range. Record in `acceptance.md`.
+Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag range: size, determinism, offline, and the three browsers. Record in `acceptance.md`.
 
 ---
 
 ## Notes
 
-- **Task count: 16** (12 in Part A, 4 in Part B). That is above Quick mode's guideline of 15. Kept in Quick mode as the user chose; Part B will be re-planned in full once 03 lands anyway.
+- **Task count: 16** (12 in Part A, 4 in Part B), one over Quick mode's guideline of 15. Kept in Quick mode as the user chose.
+- **Revised 2026-09-24** after the scrutiny of 03 and 04. The changes: Deviations 8–10; `-ref`-aware source reading; checks before the scan; `./` scoped to the root module; the subdirectory link prefix; the `#pkg` leaf and nested-module roots; real fixture source; the 10 MB limit; Part B rewritten against 03's real types.
 - **TDD:** every task writes its failing test first (CLAUDE.md). UI components (Tasks 10–11) are verified in the browser. Their logic lives in tested pure modules.
 - **Determinism:** same IR(s) + flags + zu binary → byte-identical HTML. The Go side sorts everything it emits; ELK input is sorted; nothing records time.
 - **Security:** no network loads (CSP + `web/embed_test.go`); source rendered as text; data escaped by `encoding/json`; origin credentials never copied; links only https; source paths must be local.
@@ -1508,7 +1616,7 @@ Same as Task 12, for `zu diff`, on a real zu commit range and a hugo tag range. 
 - [ ] Task 10 · Canvas and header
 - [ ] Task 11 · Side panel
 - [ ] Task 12 · Part A acceptance
-- [ ] Task B1 · `export.Change` (blocked on 02, 03)
+- [ ] Task B1 · `export.Change` (blocked on 03)
 - [ ] Task B2 · `zu diff -html` (blocked)
 - [ ] Task B3 · Change View UI (blocked)
 - [ ] Task B4 · Part B acceptance (blocked)
