@@ -1,0 +1,187 @@
+:root {
+  --bg: #ffffff;
+  --fg: #1d2127;
+  --muted: #5d6673;
+  --line: #c9ced6;
+  --box: #eef2f7;
+  --box-border: #7d8896;
+  --container: rgba(120, 135, 155, 0.08);
+  --accent: #1f6feb;
+  --dim: #9aa3ae;
+  --code-bg: #f6f8fa;
+  --mark: #fff3bf;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15181c;
+    --fg: #e3e7ec;
+    --muted: #9aa3ae;
+    --line: #3a414b;
+    --box: #232830;
+    --box-border: #6b7684;
+    --container: rgba(160, 175, 195, 0.07);
+    --accent: #58a6ff;
+    --dim: #6b7480;
+    --code-bg: #1c2027;
+    --mark: #4a3f10;
+  }
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+code,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.app {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  grid-template-columns: 1fr auto;
+  height: 100%;
+}
+
+.header {
+  grid-column: 1 / -1;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.header h1 {
+  font-size: 15px;
+  margin: 0 0 4px;
+}
+
+.honesty {
+  display: flex;
+  gap: 16px;
+  color: var(--muted);
+}
+
+.sensitive {
+  margin-left: auto;
+}
+
+.errors {
+  margin: 4px 0;
+}
+
+.crumbs {
+  margin-top: 6px;
+}
+
+.sep,
+.note {
+  color: var(--muted);
+}
+
+.note {
+  margin: 2px 0 0;
+}
+
+.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.canvas {
+  position: relative;
+  min-height: 0;
+}
+
+.empty {
+  margin: 48px auto;
+  max-width: 420px;
+  padding: 16px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.react-flow {
+  --xy-background-color: var(--bg);
+  --xy-edge-stroke: var(--box-border);
+  --xy-edge-label-background-color: var(--bg);
+  --xy-edge-label-color: var(--fg);
+  --xy-controls-button-background-color: var(--box);
+  --xy-controls-button-color: var(--fg);
+}
+
+.react-flow__handle {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.node {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  font-size: 12px;
+  padding: 4px 8px;
+  overflow: hidden;
+}
+
+.node .label {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.node.box,
+.node.decl {
+  background: var(--box);
+  border: 1px solid var(--box-border);
+  border-radius: 6px;
+}
+
+.node.container {
+  background: var(--container);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+}
+
+.node.oval {
+  background: var(--bg);
+  border: 1px solid var(--box-border);
+  border-radius: 999px;
+  text-align: center;
+}
+
+.node.outside {
+  border: 1px dashed var(--dim);
+  border-radius: 6px;
+  color: var(--dim);
+}
+
+.node.selected {
+  outline: 2px solid var(--accent);
+}
+
+.stats,
+.row {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.row {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  line-height: 18px;
+}

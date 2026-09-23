@@ -229,3 +229,17 @@ export function touchedExternals(view: View, focus: string, d: number): string[]
   }
   return [...out].sort(cmp);
 }
+
+// boxStats sums the packages a box holds; a #pkg leaf holds only its package.
+export function boxStats(view: View, box: string): { packages: number; decls: number; unresolved: number } {
+  const idx = boxesOf(view);
+  const own = box.endsWith(PKG) ? box.slice(0, -PKG.length) : null;
+  const s = { packages: 0, decls: 0, unresolved: 0 };
+  for (const p of idx.pkgs) {
+    if (own !== null ? p.id !== own : !under(idx, p.id, box)) continue;
+    s.packages++;
+    s.decls += p.decls ?? 0;
+    s.unresolved += p.unresolved ?? 0;
+  }
+  return s;
+}

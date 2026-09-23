@@ -1469,15 +1469,15 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
 
 **Steps:**
 
-- [ ] **Implement** the components above. Keep all logic in `tree.ts`/`layout.ts`, and keep components thin.
-- [ ] **Verify** by running the dev server against the golden (`cd web && npx vite`), then in the browser:
+- [x] **Implement** the components above. Keep all logic in `tree.ts`/`layout.ts`, and keep components thin.
+- [x] **Verify** by running the dev server against the golden (`cd web && npx vite`), then in the browser:
   - Shop has fewer than 60 packages, so the page opens with two module roots, `example.com/shop` and `example.com/shop/tools`, fully expanded. `example.com/shop` holds `shop (package)` and the `internal` container, which holds `checkout`, `money` and `store`.
   - Double-clicking `store` shows its declarations with `Repo` holding the methods `Get`, `Reset` and `check`.
   - Double-clicking `checkout` shows the "Declarations not included" card.
   - Esc returns up one level at a time.
   - The honesty banner shows 1 parse error, 8 unresolved calls, 1 unresolved import, and unsupported `.sh 1, .ts 1`.
-- [ ] **Run**: `cd web && npm run typecheck && npm test && npm run build && cd .. && go test ./web/`
-- [ ] **Commit**: `git add web/src/App.tsx web/src/Canvas.tsx web/src/Header.tsx web/src/styles.css web/src/main.tsx && git commit -m "Draw the Project View with drill-in navigation and the honesty banner"`
+- [x] **Run**: `cd web && npm run typecheck && npm test && npm run build && cd .. && go test ./web/`
+- [x] **Commit**: `git add web/src/App.tsx web/src/Canvas.tsx web/src/Header.tsx web/src/styles.css web/src/main.tsx && git commit -m "Draw the Project View with drill-in navigation and the honesty banner"`
 
 ---
 
@@ -1619,7 +1619,7 @@ Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag r
 - [x] Task 7 · Golden View
 - [x] Task 8 · Package Tree logic
 - [x] Task 9 · Layout
-- [ ] Task 10 · Canvas and header
+- [x] Task 10 · Canvas and header
 - [ ] Task 11 · Side panel
 - [ ] Task 12 · Part A acceptance
 - [ ] Task B1 · `export.Change`

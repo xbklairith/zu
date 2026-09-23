@@ -1,24 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { App } from "./App";
 import { parseView, readEmbedded, type View } from "./data";
-
-function App({ view }: { view: View | null }) {
-  if (!view) {
-    return (
-      <main>
-        <p>
-          This page carries no zu data. Create one with <code>zu scan -html FILE</code>.
-        </p>
-      </main>
-    );
-  }
-  return (
-    <main>
-      <h1>zu</h1>
-      <p>{view.nodes.length} nodes</p>
-    </main>
-  );
-}
+import "./styles.css";
 
 // loadView returns the View zu embedded. The dev server, serving the bare
 // template, falls back to the Go golden; the build drops that branch.
@@ -34,6 +18,12 @@ if (!root) throw new Error("missing #root element");
 const view = await loadView();
 createRoot(root).render(
   <StrictMode>
-    <App view={view} />
+    {view ? (
+      <App view={view} />
+    ) : (
+      <p className="empty">
+        This page carries no zu data. Create one with <code>zu scan -html FILE</code>.
+      </p>
+    )}
   </StrictMode>,
 );

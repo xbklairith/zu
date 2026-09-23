@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import golden from "../../internal/export/testdata/shop.view.golden.json";
-import { autoDepth, bundles, containers, declLeaves, leavesAt, methodsOf, parentBox } from "./tree";
+import { autoDepth, boxStats, bundles, containers, declLeaves, leavesAt, methodsOf, parentBox } from "./tree";
 import { parseView } from "./data";
 import type { View } from "./data";
 
@@ -91,5 +91,9 @@ describe("the shop golden", () => {
   });
   it("the #pkg leaf drills into the package's own declarations", () => {
     expect(parentBox(v, "example.com/shop#pkg")).toBe("example.com/shop");
+  });
+  it("box stats sum the packages under a box", () => {
+    expect(boxStats(v, "example.com/shop/internal")).toEqual({ packages: 3, decls: 23, unresolved: 8 });
+    expect(boxStats(v, "example.com/shop#pkg").packages).toBe(1);
   });
 });

@@ -77,8 +77,11 @@ export function scene(view: View, focus: string, d: number): Scene {
   return { items, edges };
 }
 
+// sizeOf estimates a leaf's size from its text: the label, method rows, and
+// for boxes the stats line ("15 decls · 4 unresolved").
 export function sizeOf(item: Item): { w: number; h: number } {
-  const text = Math.max(item.label.length, ...(item.rows ?? []).map((r) => r.length + 2));
+  const stats = item.shape === "box" ? 24 : 0;
+  const text = Math.max(item.label.length, stats, ...(item.rows ?? []).map((r) => r.length + 2));
   const w = Math.min(280, Math.max(90, text * 7.5 + 24));
   return { w, h: 40 + 18 * (item.rows?.length ?? 0) };
 }
@@ -103,7 +106,12 @@ export async function layout(items: Item[], edges: Bundle[]): Promise<Map<string
   for (const it of sorted) {
     const n: ElkNode = { id: it.id, children: [] };
     if (it.shape === "container") {
-      n.layoutOptions = { "elk.padding": "[top=24,left=12,bottom=12,right=12]" };
+      // Wide enough for the label, which sits in the top padding.
+      n.layoutOptions = {
+        "elk.padding": "[top=24,left=12,bottom=12,right=12]",
+        "elk.nodeSize.constraints": "MINIMUM_SIZE",
+        "elk.nodeSize.minimum": `(${Math.min(280, it.label.length * 7.5 + 24)}, 40)`,
+      };
     } else {
       const { w, h } = sizeOf(it);
       n.width = w;
