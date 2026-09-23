@@ -65,13 +65,13 @@ func TestBuildMergesBuildVariants(t *testing.T) {
 		t.Fatalf("F = %+v", f)
 	}
 	root := tree(t, files)
-	h1 := extractFile(root, "p/f_linux.go").Decls[1].Hash
-	h2 := extractFile(root, "p/f_windows.go").Decls[1].Hash
+	h1 := extractFile(dirOf(t, root), "p/f_linux.go").Decls[1].Hash
+	h2 := extractFile(dirOf(t, root), "p/f_windows.go").Decls[1].Hash
 	if want := hashBytes([]byte(h1 + "\n" + h2 + "\n")); f.Hash != want {
 		t.Errorf("merged hash = %s, want SHA-256 over location-ordered hashes %s", f.Hash, want)
 	}
-	s1 := extractFile(root, "p/f_linux.go").Decls[1].Shape
-	s2 := extractFile(root, "p/f_windows.go").Decls[1].Shape
+	s1 := extractFile(dirOf(t, root), "p/f_linux.go").Decls[1].Shape
+	s2 := extractFile(dirOf(t, root), "p/f_windows.go").Decls[1].Shape
 	if want := hashBytes([]byte(s1 + "\n" + s2 + "\n")); f.Shape != want {
 		t.Errorf("merged shape = %s, want SHA-256 over location-ordered shapes %s", f.Shape, want)
 	}

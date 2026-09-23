@@ -130,14 +130,14 @@
 
 **Steps:**
 
-- [ ] **Action**: define the interface.
+- [x] **Action**: define the interface.
 
    ```go
    // Tree is a file tree the scanner reads: a directory on disk or a git
    // commit. Paths are slash paths relative to the tree root.
    type Tree interface {
    	// Files returns the regular files to consider, in lexical order: no
-   	// file under a pruned directory (see skipDir), plus file symlinks
+   	// file under a pruned directory (see PrunedDir), plus file symlinks
    	// whose resolved target is a regular file inside the tree. Problems
    	// with single entries go in errs; err means the tree is unusable.
    	Files() (files []string, errs []ir.ParseError, err error)
@@ -155,11 +155,13 @@
    - `walk(t Tree)` keeps everything after listing: go.mod parsing through `t.ReadFile`, `.go` and `_test.go` selection, unsupported counts, `ErrNoModule`, and module mapping.
    - `walkResult.Root` is removed; `extractAll` passes the tree through.
    - `Options` becomes `{Tree Tree; Workers int}`.
-- [ ] **Verify**: `go test ./...` → ok, with the golden file unchanged (`git diff --quiet testdata/`). Existing walk, security and CLI tests are the behaviour lock.
-- [ ] **Verify**: `grep -n '"os"' internal/scan/*.go | grep -v _test` → only `tree.go`.
-- [ ] **Commit**: `git add internal/scan/tree.go internal/scan/walk.go internal/scan/extract.go internal/scan/scan.go internal/cli/scan.go internal/scan/*_test.go internal/cli/*_test.go && git commit -m "Read scanned files through a Tree"`
+- [x] **Verify**: `go test ./...` → ok, with the golden file unchanged (`git diff --quiet testdata/`). Existing walk, security and CLI tests are the behaviour lock.
+- [x] **Verify**: `grep -n '"os"' internal/scan/*.go | grep -v _test` → only `tree.go`.
+- [x] **Commit**: `git add internal/scan/tree.go internal/scan/walk.go internal/scan/extract.go internal/scan/scan.go internal/cli/scan.go internal/scan/*_test.go internal/cli/*_test.go && git commit -m "Read scanned files through a Tree"`
 
 ---
+
+   *Done note:* `skipDir` became the exported `scan.PrunedDir` here (Task 4 uses it). The tests keep `walk(root)` through a helper in `helpers_test.go`.
 
 ### Task 4: `gitref.CommitTree`
 
@@ -293,7 +295,7 @@
 
 - [x] Task 1: `shape` field in the IR
 - [x] Task 2: Compute the shape hash
-- [ ] Task 3: `scan.Tree` and `DirTree`
+- [x] Task 3: `scan.Tree` and `DirTree`
 - [ ] Task 4: `gitref.CommitTree`
 - [ ] Task 5: Disk and ref scans are byte-identical
 - [ ] Task 6: `zu scan -ref`

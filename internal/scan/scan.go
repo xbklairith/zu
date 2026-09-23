@@ -1,5 +1,5 @@
-// Package scan parses a Go working tree into the IR. It reads only files
-// under the root, runs no processes, and opens no network connections.
+// Package scan parses a Go source tree into the IR. It reads only files
+// through a Tree, runs no processes, and opens no network connections.
 package scan
 
 import (
@@ -16,8 +16,8 @@ var DefaultPolicyHash = "sha256:" + hashBytes([]byte("{}\n"))
 
 // Options configure a scan.
 type Options struct {
-	Root    string // directory to scan
-	Workers int    // parallel parsers; 0 means GOMAXPROCS
+	Tree    Tree // what to scan: DirTree, or a commit read from git
+	Workers int  // parallel parsers; 0 means GOMAXPROCS
 }
 
 // Stats summarise a scan for the one-line report.
@@ -28,15 +28,15 @@ type Stats struct {
 	UnresolvedCalls int
 }
 
-// Run scans opts.Root. The result is unsorted; ir.Encode canonicalises it.
-// It fails only when the root is unusable or ctx is cancelled; unparseable
+// Run scans opts.Tree. The result is unsorted; ir.Encode canonicalises it.
+// It fails only when the tree is unusable or ctx is cancelled; unparseable
 // files are recorded in the IR instead.
 func Run(ctx context.Context, opts Options) (*ir.IR, Stats, error) {
-	w, err := walk(opts.Root)
+	w, err := walkTree(opts.Tree)
 	if err != nil {
 		return nil, Stats{}, err
 	}
-	facts, err := extractAll(ctx, w, opts.Workers)
+	facts, err := extractAll(ctx, opts.Tree, w, opts.Workers)
 	if err != nil {
 		return nil, Stats{}, err
 	}
@@ -63,7 +63,7 @@ func Run(ctx context.Context, opts Options) (*ir.IR, Stats, error) {
 
 // extractAll parses every file in parallel. Each worker writes only its own
 // slot, so the result order is the sorted file order regardless of timing.
-func extractAll(ctx context.Context, w *walkResult, workers int) ([]*fileFacts, error) {
+func extractAll(ctx context.Context, t Tree, w *walkResult, workers int) ([]*fileFacts, error) {
 	if workers <= 0 {
 		workers = runtime.GOMAXPROCS(0)
 	}
@@ -75,7 +75,7 @@ func extractAll(ctx context.Context, w *walkResult, workers int) ([]*fileFacts, 
 		go func() {
 			defer wg.Done()
 			for i := range next {
-				facts[i] = extractFile(w.Root, w.Files[i])
+				facts[i] = extractFile(t, w.Files[i])
 			}
 		}()
 	}

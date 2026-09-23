@@ -8,7 +8,7 @@ import (
 func extractOne(t *testing.T, src string) *fileFacts {
 	t.Helper()
 	root := tree(t, map[string]string{"p/f.go": src})
-	return extractFile(root, "p/f.go")
+	return extractFile(dirOf(t, root), "p/f.go")
 }
 
 func TestExtractBuildIgnore(t *testing.T) {
@@ -55,7 +55,7 @@ func TestExtractPackageClause(t *testing.T) {
 
 func TestExtractParseErrorUsesRelativePath(t *testing.T) {
 	root := tree(t, map[string]string{"p/bad.go": "package p\n\nfunc {\n"})
-	f := extractFile(root, "p/bad.go")
+	f := extractFile(dirOf(t, root), "p/bad.go")
 	if f.Err == nil {
 		t.Fatal("want parse error")
 	}
@@ -69,7 +69,7 @@ func TestExtractParseErrorUsesRelativePath(t *testing.T) {
 
 func TestExtractUnreadableFile(t *testing.T) {
 	root := tree(t, map[string]string{})
-	f := extractFile(root, "p/missing.go")
+	f := extractFile(dirOf(t, root), "p/missing.go")
 	if f.Err == nil || strings.Contains(f.Err.Message, root) {
 		t.Fatalf("Err = %+v", f.Err)
 	}

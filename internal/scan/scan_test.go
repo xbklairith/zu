@@ -61,7 +61,7 @@ func encode(t *testing.T, doc *ir.IR) []byte {
 
 func run(t *testing.T, root string, workers int) (*ir.IR, Stats) {
 	t.Helper()
-	doc, stats, err := Run(context.Background(), Options{Root: root, Workers: workers})
+	doc, stats, err := Run(context.Background(), Options{Tree: dirOf(t, root), Workers: workers})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,7 +195,7 @@ func TestScanHashStabilityAndLocality(t *testing.T) {
 }
 
 func TestScanRejectsBadRoot(t *testing.T) {
-	if _, _, err := Run(context.Background(), Options{Root: filepath.Join(t.TempDir(), "nope")}); err == nil {
+	if _, err := DirTree(filepath.Join(t.TempDir(), "nope")); err == nil {
 		t.Fatal("want error for missing root")
 	}
 }
@@ -203,7 +203,7 @@ func TestScanRejectsBadRoot(t *testing.T) {
 func TestScanCancelled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if _, _, err := Run(ctx, Options{Root: fixture(t, "shop")}); err == nil {
+	if _, _, err := Run(ctx, Options{Tree: dirOf(t, fixture(t, "shop"))}); err == nil {
 		t.Fatal("want error for cancelled context")
 	}
 }

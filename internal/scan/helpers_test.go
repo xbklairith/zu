@@ -22,3 +22,22 @@ func tree(t *testing.T, files map[string]string) string {
 	}
 	return root
 }
+
+// dirOf is DirTree(root) for a root the test just created.
+func dirOf(t *testing.T, root string) Tree {
+	t.Helper()
+	d, err := DirTree(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return d
+}
+
+// walk lists root on disk, as scan.Run does for a DirTree.
+func walk(root string) (*walkResult, error) {
+	d, err := DirTree(root)
+	if err != nil {
+		return nil, err
+	}
+	return walkTree(d)
+}

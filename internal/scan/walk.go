@@ -4,9 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"os"
 	"path"
-	"path/filepath"
 	"slices"
 	"strings"
 
@@ -28,9 +26,8 @@ type require struct {
 	Line int
 }
 
-// walkResult is everything the file-system pass learns.
+// walkResult is everything the listing pass learns.
 type walkResult struct {
-	Root        string // absolute, symlinks resolved
 	Files       []string
 	Modules     []*module // sorted by Dir
 	Unsupported map[string]int
@@ -47,55 +44,20 @@ var sourceExts = map[string]bool{
 	".sh": true, ".bash": true, ".proto": true, ".sql": true, ".s": true,
 }
 
-// walk lists the Go files to scan under root, discovers modules, and counts
-// unsupported source files. It never leaves root and never follows a
-// directory symlink. The only error is an unusable root.
-func walk(root string) (*walkResult, error) {
-	info, err := os.Stat(root)
+// walkTree lists the Go files to scan in t, discovers modules, and counts
+// unsupported source files. The only error is an unusable tree.
+func walkTree(t Tree) (*walkResult, error) {
+	files, errs, err := t.Files()
 	if err != nil {
 		return nil, err
 	}
-	if !info.IsDir() {
-		return nil, fmt.Errorf("%s is not a directory", root)
-	}
-	abs, err := filepath.Abs(root)
-	if err != nil {
-		return nil, err
-	}
-	if abs, err = filepath.EvalSymlinks(abs); err != nil {
-		return nil, err
-	}
-	w := &walkResult{Root: abs, Unsupported: map[string]int{}}
+	w := &walkResult{Unsupported: map[string]int{}, Errors: errs}
 	var goFiles []string
-
-	err = filepath.WalkDir(abs, func(p string, d fs.DirEntry, err error) error {
-		rel := w.rel(p)
-		if err != nil {
-			if p == abs {
-				return err
-			}
-			w.errorf(rel, "%s", ioMessage(err))
-			if d != nil && d.IsDir() {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		name := d.Name()
-		if d.IsDir() {
-			if p != abs && skipDir(name) {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		if d.Type()&fs.ModeSymlink != 0 && !w.linkedFileInside(p) {
-			return nil
-		}
-		if !d.Type().IsRegular() && d.Type()&fs.ModeSymlink == 0 {
-			return nil
-		}
+	for _, rel := range files {
+		name := path.Base(rel)
 		switch ext := path.Ext(name); {
 		case name == "go.mod":
-			w.readModule(p, rel)
+			w.readModule(t, rel)
 		case ext == ".go":
 			if !strings.HasSuffix(name, "_test.go") {
 				goFiles = append(goFiles, rel)
@@ -103,10 +65,6 @@ func walk(root string) (*walkResult, error) {
 		case sourceExts[ext]:
 			w.Unsupported[ext]++
 		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
 	}
 	if len(goFiles) > 0 && len(w.Modules) == 0 {
 		return nil, ErrNoModule
@@ -124,28 +82,8 @@ func walk(root string) (*walkResult, error) {
 	return w, nil
 }
 
-func skipDir(name string) bool {
-	return name == "vendor" || name == "testdata" ||
-		strings.HasPrefix(name, ".") || strings.HasPrefix(name, "_")
-}
-
-// linkedFileInside reports whether the symlink at p resolves to a regular
-// file inside the root. Directory symlinks are never followed.
-func (w *walkResult) linkedFileInside(p string) bool {
-	target, err := filepath.EvalSymlinks(p)
-	if err != nil {
-		return false
-	}
-	info, err := os.Stat(target)
-	if err != nil || !info.Mode().IsRegular() {
-		return false
-	}
-	r, err := filepath.Rel(w.Root, target)
-	return err == nil && r != ".." && !strings.HasPrefix(r, ".."+string(filepath.Separator))
-}
-
-func (w *walkResult) readModule(p, rel string) {
-	data, err := os.ReadFile(p) // #nosec G304 -- path comes from walking the scan root
+func (w *walkResult) readModule(t Tree, rel string) {
+	data, err := t.ReadFile(rel)
 	if err != nil {
 		w.errorf(rel, "%s", ioMessage(err))
 		return
@@ -201,14 +139,6 @@ func importPath(m *module, dir string) string {
 		sub = strings.TrimPrefix(dir, m.Dir+"/")
 	}
 	return m.Path + "/" + sub
-}
-
-func (w *walkResult) rel(p string) string {
-	r, err := filepath.Rel(w.Root, p)
-	if err != nil {
-		return filepath.Base(p)
-	}
-	return filepath.ToSlash(r)
 }
 
 func (w *walkResult) errorf(rel, format string, args ...any) {

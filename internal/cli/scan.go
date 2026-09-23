@@ -47,7 +47,12 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 
 	ctx, stop := interruptContext()
 	defer stop()
-	doc, stats, err := scan.Run(ctx, scan.Options{Root: dir})
+	tree, err := scan.DirTree(dir)
+	if err != nil {
+		fmt.Fprintf(stderr, "zu scan: %v\n", err)
+		return ExitBadInvocation
+	}
+	doc, stats, err := scan.Run(ctx, scan.Options{Tree: tree})
 	if err != nil {
 		fmt.Fprintf(stderr, "zu scan: %v\n", err)
 		return ExitBadInvocation

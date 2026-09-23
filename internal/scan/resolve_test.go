@@ -11,13 +11,14 @@ import (
 func scanTree(t *testing.T, files map[string]string) *ir.IR {
 	t.Helper()
 	root := tree(t, files)
-	w, err := walk(root)
+	d := dirOf(t, root)
+	w, err := walkTree(d)
 	if err != nil {
 		t.Fatal(err)
 	}
 	facts := make([]*fileFacts, len(w.Files))
 	for i, f := range w.Files {
-		facts[i] = extractFile(w.Root, f)
+		facts[i] = extractFile(d, f)
 	}
 	doc := assemble(w, facts)
 	ir.Sort(doc)

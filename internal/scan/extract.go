@@ -5,9 +5,7 @@ import (
 	"go/build/constraint"
 	"go/parser"
 	"go/token"
-	"os"
 	"path"
-	"path/filepath"
 
 	"zu/internal/ir"
 )
@@ -47,10 +45,10 @@ type declFact struct {
 	doc      *ast.CommentGroup // enclosing declaration's doc, for its directives
 }
 
-// extractFile parses root/rel and pulls out its facts.
-func extractFile(root, rel string) *fileFacts {
+// extractFile parses rel from t and pulls out its facts.
+func extractFile(t Tree, rel string) *fileFacts {
 	f := &fileFacts{Path: rel, Dir: path.Dir(rel)}
-	src, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(rel))) // #nosec G304 -- rel comes from walk
+	src, err := t.ReadFile(rel)
 	if err != nil {
 		f.Err = &ir.ParseError{Path: rel, Message: ioMessage(err)}
 		return f
