@@ -1158,18 +1158,18 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
 
 **Steps:**
 
-- [ ] **Add dependencies** (pinned by the lockfile)
+- [x] **Add dependencies** (pinned by the lockfile)
 
    Run: `cd web && npm install @xyflow/react@^12.11.6 elkjs@^0.12.0 && npm install -D vite-plugin-singlefile@^2.3.3 vitest@^5.0.1`
    Then add `"test": "vitest run"` to `scripts` in `web/package.json`.
 
-- [ ] **Data element in `web/index.html`**, just before `<div id="root">`. No web fonts: the export uses system font stacks only.
+- [x] **Data element in `web/index.html`**, just before `<div id="root">`. No web fonts: the export uses system font stacks only.
 
    ```html
    <script id="zu-data" type="application/json">{}</script>
    ```
 
-- [ ] **`web/vite.config.ts`**
+- [x] **`web/vite.config.ts`**
 
    ```ts
    /// <reference types="vitest/config" />
@@ -1203,7 +1203,7 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    });
    ```
 
-- [ ] **Write the failing test** `web/src/data.test.ts`. It reads the Go golden from Task 7 once that exists. For now it covers only the schema gate.
+- [x] **Write the failing test** `web/src/data.test.ts`. It reads the Go golden from Task 7 once that exists. For now it covers only the schema gate.
 
    ```ts
    import { describe, expect, it } from "vitest";
@@ -1219,7 +1219,7 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    });
    ```
 
-- [ ] **Run — expect FAIL**, then **implement `web/src/data.ts`**
+- [x] **Run — expect FAIL**, then **implement `web/src/data.ts`**
 
    ```ts
    // The View document written by internal/export (Go). Keys are the contract.
@@ -1261,7 +1261,7 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    }
    ```
 
-- [ ] **Guard the built page in Go.** Add to `web/embed_test.go` (it skips when the UI is not built, so `go test ./...` still works without it):
+- [x] **Guard the built page in Go.** Add to `web/embed_test.go` (it skips when the UI is not built, so `go test ./...` still works without it):
 
    ```go
    func TestBuiltPageIsSelfContained(t *testing.T) {
@@ -1289,7 +1289,7 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    ```
    (`<link` is checked broadly. The page needs none, and a favicon `<link>` would cause a request.)
 
-- [ ] **Makefile**: add `test-web` and make `check` build and test the UI.
+- [x] **Makefile**: add `test-web` and make `check` build and test the UI.
 
    ```make
    test-web: ## Run UI unit tests
@@ -1299,12 +1299,12 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    ```
    Add `test-web` to `.PHONY`. Change `clean` to `rm -rf bin web/dist/index.html`, since `dist/assets` is no longer built.
 
-- [ ] **Verify**
+- [x] **Verify**
 
    Run: `make web && go test ./web/ -run SelfContained -v && cd web && npm test`
    Expected: `--- PASS: TestBuiltPageIsSelfContained`; vitest `2 passed`; `web/dist/index.html` is one file and `web/dist/assets/` does not exist.
 
-- [ ] **Commit**
+- [x] **Commit**
 
    ```bash
    git add web/package.json web/package-lock.json web/vite.config.ts web/index.html web/src/data.ts web/src/data.test.ts web/embed_test.go Makefile
@@ -1615,7 +1615,7 @@ Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag r
 - [x] Task 3 · Render
 - [x] Task 4 · Links
 - [x] Task 5 · `zu scan -html`
-- [ ] Task 6 · UI toolchain
+- [x] Task 6 · UI toolchain
 - [ ] Task 7 · Golden View
 - [ ] Task 8 · Package Tree logic
 - [ ] Task 9 · Layout

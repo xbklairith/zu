@@ -2,7 +2,7 @@ VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 COMMIT  ?= $(shell git rev-parse --verify -q HEAD 2>/dev/null || echo unknown)
 LDFLAGS := -s -w -X zu/internal/version.Version=$(VERSION) -X zu/internal/version.Commit=$(COMMIT)
 
-.PHONY: build web test lint fmt check clean
+.PHONY: build web test test-web lint fmt check clean
 
 build: web ## Build the zu binary with the UI embedded
 	CGO_ENABLED=0 go build -trimpath -ldflags '$(LDFLAGS)' -o bin/zu ./cmd/zu
@@ -20,7 +20,10 @@ lint: ## Lint Go and type-check the UI
 fmt: ## Format Go sources
 	gofmt -w cmd internal web/*.go
 
-check: lint test ## Everything CI runs
+test-web: ## Run UI unit tests
+	cd web && npm test
+
+check: web lint test test-web ## Everything CI runs
 
 clean:
-	rm -rf bin web/dist/assets web/dist/index.html
+	rm -rf bin web/dist/index.html

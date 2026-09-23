@@ -1,9 +1,29 @@
-import { defineConfig } from "vite";
+/// <reference types="vitest/config" />
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
+import { viteSingleFile } from "vite-plugin-singlefile";
 
-// Output lands in dist/, which Go embeds (see embed.go). public/.gitkeep is
-// copied through so dist/ is never empty and `go build` works before a UI build.
+// The export may load nothing (decision 0006): scripts and styles are inlined
+// by viteSingleFile and this policy forbids every fetch. Build only, so dev
+// keeps HMR. public/.gitkeep is still copied through, so dist/ is never empty.
+const csp: Plugin = {
+  name: "zu-csp",
+  apply: "build",
+  transformIndexHtml: () => [
+    {
+      tag: "meta",
+      attrs: {
+        "http-equiv": "Content-Security-Policy",
+        content:
+          "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'",
+      },
+      injectTo: "head-prepend",
+    },
+  ],
+};
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), viteSingleFile(), csp],
   build: { outDir: "dist", emptyOutDir: true },
+  test: { environment: "node", include: ["src/**/*.test.ts"] },
 });
