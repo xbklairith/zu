@@ -15,7 +15,7 @@ const csp: Plugin = {
       attrs: {
         "http-equiv": "Content-Security-Policy",
         content:
-          "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'",
+          "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; worker-src blob:; base-uri 'none'; form-action 'none'",
       },
       injectTo: "head-prepend",
     },
@@ -25,6 +25,8 @@ const csp: Plugin = {
 export default defineConfig({
   plugins: [react(), viteSingleFile(), csp],
   build: { outDir: "dist", emptyOutDir: true },
+  // ELK's worker is built as a classic script and inlined as a blob: URL.
+  worker: { format: "iife" },
   // Dev mode reads the Go golden View from internal/export/testdata.
   server: { fs: { allow: [".."] } },
   test: { environment: "node", include: ["src/**/*.test.ts"] },

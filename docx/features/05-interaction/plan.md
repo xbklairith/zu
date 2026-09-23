@@ -2777,7 +2777,7 @@ with
 
 **Steps:**
 
-- [ ] **Write the failing guard.**
+- [x] **Write the failing guard.**
 
 **Edit `web/embed_test.go`:** replace
 
@@ -2801,8 +2801,8 @@ with
 	}
 ````
 
-- [ ] **Run — expect FAIL:** `make build && go test ./web/ -run SelfContained` → `CSP does not allow the inline layout worker` and `no inline worker in the page`.
-- [ ] **Implement.**
+- [x] **Run — expect FAIL:** `make build && go test ./web/ -run SelfContained` → `CSP does not allow the inline layout worker` and `no inline worker in the page`.
+- [x] **Implement.**
 
 **Edit `web/vite.config.ts`:** replace
 
@@ -2859,8 +2859,8 @@ function workerElk(): Stoppable {
 export const pageEngine = () => superseding(workerElk);
 ````
 
-- [ ] **Run — expect PASS:** `make build && go test ./web/ -run SelfContained -v` → `--- PASS: TestBuiltPageIsSelfContained`; `grep -c 'revokeObjectURL(self.location.href)' web/dist/index.html` → 1.
-- [ ] **Commit:** `git add web/embed_test.go web/vite.config.ts web/src/engine.ts && git commit -m "Lay out in an inline Web Worker"`
+- [x] **Run — expect PASS:** `make build && go test ./web/ -run SelfContained -v` → `--- PASS: TestBuiltPageIsSelfContained`; `grep -c 'revokeObjectURL(self.location.href)' web/dist/index.html` → 1.
+- [x] **Commit:** `git add web/embed_test.go web/vite.config.ts web/src/engine.ts && git commit -m "Lay out in an inline Web Worker"`
 
 ---
 

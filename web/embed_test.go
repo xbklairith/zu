@@ -37,4 +37,10 @@ func TestBuiltPageIsSelfContained(t *testing.T) {
 	if !strings.Contains(page, "Content-Security-Policy") {
 		t.Error("built page has no CSP")
 	}
+	if !strings.Contains(page, "worker-src blob:") {
+		t.Error("CSP does not allow the inline layout worker (worker-src blob:)")
+	}
+	if !strings.Contains(page, "revokeObjectURL(self.location.href)") {
+		t.Error("no inline worker in the page: ELK would lay out on the main thread")
+	}
 }
