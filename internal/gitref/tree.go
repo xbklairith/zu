@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"slices"
@@ -130,7 +131,7 @@ func (t *CommitTree) Files() ([]string, []ir.ParseError, error) {
 func (t *CommitTree) ReadFile(rel string) ([]byte, error) {
 	target, ok := t.resolve(rel)
 	if !ok {
-		return nil, fmt.Errorf("%s: no such file in the commit", rel)
+		return nil, fmt.Errorf("%s: %w", rel, fs.ErrNotExist)
 	}
 	return t.blob(t.entries[target].oid)
 }

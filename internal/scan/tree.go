@@ -3,6 +3,7 @@ package scan
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path"
@@ -22,8 +23,10 @@ type Tree interface {
 	// are never followed. Problems with single entries go in errs; err
 	// means the tree is unusable.
 	Files() (files []string, errs []ir.ParseError, err error)
-	// ReadFile returns the content of a path from Files, following the
-	// symlink if it is one.
+	// ReadFile returns the content of a path from Files, or of a file zu
+	// looks up by name such as the Policy. A symlink is followed only to a
+	// regular file inside the tree, as Files would list it; anything else
+	// (a link leaving the tree, a directory, a device) is fs.ErrNotExist.
 	ReadFile(rel string) ([]byte, error)
 }
 
@@ -144,7 +147,58 @@ func (d *dirTree) Files() ([]string, []ir.ParseError, error) {
 }
 
 func (d *dirTree) ReadFile(rel string) ([]byte, error) {
-	return os.ReadFile(filepath.Join(d.root, filepath.FromSlash(rel))) // #nosec G304 -- rel comes from Files
+	return d.readMax(rel, -1)
+}
+
+// readMax reads rel, at most limit bytes when limit >= 0. rel must be a
+// regular file or a symlink that linkedFileInside accepts: the Policy and
+// the Baseline are read by name, not from Files, so a planted link must not
+// reach outside the root.
+func (d *dirTree) readMax(rel string, limit int64) ([]byte, error) {
+	p := filepath.Join(d.root, filepath.FromSlash(rel))
+	info, err := os.Lstat(p)
+	if err != nil {
+		return nil, err
+	}
+	switch {
+	case info.Mode().IsRegular():
+	case info.Mode()&fs.ModeSymlink != 0 && d.linkedFileInside(p):
+	default:
+		return nil, &fs.PathError{Op: "read", Path: rel, Err: fs.ErrNotExist}
+	}
+	f, err := os.Open(p) // #nosec G304 -- a regular file inside the root, checked above
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	var r io.Reader = f
+	if limit >= 0 {
+		r = io.LimitReader(f, limit)
+	}
+	return io.ReadAll(r)
+}
+
+// MaxSmallFile caps the files zu reads whole by name, the Policy and the
+// Baseline. Source files have no cap.
+const MaxSmallFile = 1 << 20
+
+// ReadSmall reads rel from t and fails if it is larger than MaxSmallFile.
+// On disk it reads at most one byte more than the cap; a commit's blob is
+// read by git and then checked.
+func ReadSmall(t Tree, rel string) ([]byte, error) {
+	var data []byte
+	var err error
+	if d, ok := t.(interface {
+		readMax(string, int64) ([]byte, error)
+	}); ok {
+		data, err = d.readMax(rel, MaxSmallFile+1)
+	} else {
+		data, err = t.ReadFile(rel)
+	}
+	if err == nil && len(data) > MaxSmallFile {
+		return nil, fmt.Errorf("%s is larger than %d bytes", rel, MaxSmallFile)
+	}
+	return data, err
 }
 
 // linkedFileInside reports whether the symlink at p resolves to a regular

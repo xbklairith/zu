@@ -678,7 +678,7 @@ Pin v3.0.5, the newest release at the time of planning.
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
    <!-- file: internal/policy/glob_test.go -->
    ```go
@@ -874,9 +874,9 @@ Pin v3.0.5, the newest release at the time of planning.
     func TestScanLinksNoNetworkCode(t *testing.T) {
    ```
 
-- [ ] **Run them:** `go test ./internal/policy ./internal/gitref ./internal/scan`. Expected: FAIL (`undefined: Match`; `ReadFile(missing) = …: no such file in the commit, want fs.ErrNotExist`; `undefined: ReadSmall` and `MaxSmallFile`).
+- [x] **Run them:** `go test ./internal/policy ./internal/gitref ./internal/scan`. Expected: FAIL (`undefined: Match`; `ReadFile(missing) = …: no such file in the commit, want fs.ErrNotExist`; `undefined: ReadSmall` and `MaxSmallFile`).
 
-- [ ] **Implement**
+- [x] **Implement**
 
    <!-- file: internal/policy/glob.go -->
    ```go
@@ -1056,7 +1056,7 @@ Pin v3.0.5, the newest release at the time of planning.
     func (d *dirTree) linkedFileInside(p string) bool {
    ```
 
-- [ ] **Run them:** `go test ./internal/policy ./internal/gitref ./internal/scan`. Expected: `ok` for all three. `TestMatchIsPolynomialInStars` runs 20 matches of the 8-`**` glob in microseconds, against a 1 s bound (the old matcher needed about 11 s). `TestReadFileByNameStaysInTheTree` covers both `DirTree` and `ListTree`.
+- [x] **Run them:** `go test ./internal/policy ./internal/gitref ./internal/scan`. Expected: `ok` for all three. `TestMatchIsPolynomialInStars` runs 20 matches of the 8-`**` glob in microseconds, against a 1 s bound (the old matcher needed about 11 s). `TestReadFileByNameStaysInTheTree` covers both `DirTree` and `ListTree`.
 
 ### Task 3: The scan skips excluded files and records the hash
 
@@ -4382,7 +4382,7 @@ These diffs are against `main` at 8f43cb1. If 05's `App.tsx` changes before 06 s
 ## Progress
 
 - [x] Task 1 · Parse, normalise and hash
-- [ ] Task 2 · Exclude globs and safe by-name reads
+- [x] Task 2 · Exclude globs and safe by-name reads
 - [ ] Task 3 · The scan skips excluded files
 - [ ] Task 4 · `zu scan` and `zu diff` read the Policy
 - [ ] Task 5 · `Apply`

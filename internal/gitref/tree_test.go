@@ -2,6 +2,8 @@ package gitref
 
 import (
 	"context"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -135,5 +137,22 @@ func TestResolve(t *testing.T) {
 	}
 	if _, _, err := Resolve(ctx, t.TempDir(), "HEAD"); err == nil {
 		t.Error("Resolve outside a repository must fail")
+	}
+}
+
+// A missing file reads as fs.ErrNotExist, as on disk, so a caller can tell
+// "no Policy file at this commit" from a broken read.
+func TestCommitTreeMissingFileIsNotExist(t *testing.T) {
+	dir, commit := linkRepo(t)
+	tree, err := OpenCommit(context.Background(), dir, commit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tree.Close()
+	if _, err := tree.ReadFile("zu.policy.yaml"); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("ReadFile(missing) = %v, want fs.ErrNotExist", err)
+	}
+	if _, err := tree.ReadFile("a/a.go"); err != nil {
+		t.Fatalf("ReadFile(present) = %v", err)
 	}
 }

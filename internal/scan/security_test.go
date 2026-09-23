@@ -2,6 +2,8 @@ package scan
 
 import (
 	"bytes"
+	"errors"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -53,6 +55,51 @@ func TestSymlinksLeavingRootAreNotRead(t *testing.T) {
 	after, _ := run(t, root, 0)
 	if !bytes.Equal(encode(t, before), encode(t, after)) {
 		t.Fatal("symlinks leaving the root changed the IR")
+	}
+}
+
+// The Policy and the Baseline are read by name, not from Files: a planted
+// link such as zu.policy.yaml -> ../secret.txt must not be followed out of
+// the tree, and neither file may be read beyond MaxSmallFile.
+func TestReadFileByNameStaysInTheTree(t *testing.T) {
+	parent := t.TempDir()
+	if err := os.WriteFile(filepath.Join(parent, "secret.txt"), []byte("SECRET\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	root := filepath.Join(parent, "repo")
+	if err := os.Mkdir(root, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for rel, body := range map[string]string{
+		"go.mod":   "module example.com/m\n",
+		"big.json": strings.Repeat("x", MaxSmallFile+1),
+	} {
+		if err := os.WriteFile(filepath.Join(root, rel), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for link, target := range map[string]string{
+		"zu.policy.yaml": "../secret.txt", // leaves the tree
+		"in.mod":         "go.mod",        // stays inside
+	} {
+		if err := os.Symlink(target, filepath.Join(root, link)); err != nil {
+			t.Skipf("symlinks unsupported: %v", err)
+		}
+	}
+	list, err := ListTree(root, []string{"go.mod"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, tr := range map[string]Tree{"dir": dirOf(t, root), "list": list} {
+		if data, err := tr.ReadFile("zu.policy.yaml"); !errors.Is(err, fs.ErrNotExist) {
+			t.Errorf("%s: ReadFile through an escaping link = %q, %v; want fs.ErrNotExist", name, data, err)
+		}
+		if data, err := ReadSmall(tr, "in.mod"); err != nil || !strings.HasPrefix(string(data), "module") {
+			t.Errorf("%s: in-tree link = %q, %v", name, data, err)
+		}
+		if _, err := ReadSmall(tr, "big.json"); err == nil || !strings.Contains(err.Error(), "larger than") {
+			t.Errorf("%s: ReadSmall past the cap: %v", name, err)
+		}
 	}
 }
 
