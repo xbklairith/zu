@@ -1626,7 +1626,7 @@ Pin v3.0.5, the newest release at the time of planning.
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
    <!-- file: internal/policy/apply_test.go -->
    ```go
@@ -1747,9 +1747,9 @@ Pin v3.0.5, the newest release at the time of planning.
    }
    ```
 
-- [ ] **Run it:** `go test ./internal/policy -run Apply`. Expected: FAIL (`p.Apply undefined`).
+- [x] **Run it:** `go test ./internal/policy -run Apply`. Expected: FAIL (`p.Apply undefined`).
 
-- [ ] **Implement.** `ir.Sort` sorts merged locations, so the output does not depend on merge order. `Lens` reports whether `Apply` can change a graph at all; Task 11 uses it.
+- [x] **Implement.** `ir.Sort` sorts merged locations, so the output does not depend on merge order. `Lens` reports whether `Apply` can change a graph at all; Task 11 uses it.
 
    <!-- file: internal/policy/apply.go -->
    ```go
@@ -1890,7 +1890,7 @@ Pin v3.0.5, the newest release at the time of planning.
    }
    ```
 
-- [ ] **Run:** `go test ./internal/policy`. Expected: `ok`.
+- [x] **Run:** `go test ./internal/policy`. Expected: `ok`.
 
 ### Task 6: The rules: Levels and cycles
 
@@ -4385,7 +4385,7 @@ These diffs are against `main` at 8f43cb1. If 05's `App.tsx` changes before 06 s
 - [x] Task 2 · Exclude globs and safe by-name reads
 - [x] Task 3 · The scan skips excluded files
 - [x] Task 4 · `zu scan` and `zu diff` read the Policy
-- [ ] Task 5 · `Apply`
+- [x] Task 5 · `Apply`
 - [ ] Task 6 · Levels and cycles
 - [ ] Task 7 · Baseline
 - [ ] Task 8 · `zu check`
