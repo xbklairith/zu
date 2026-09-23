@@ -277,10 +277,12 @@
 
 **Steps:**
 
-- [ ] **Bench**: `scripts/bench-corpus.sh`, run in the background. Record wall time and peak RSS for disk scans vs ref scans on hugo and kubernetes. Expected: a ref scan stays within 2× the disk scan time, and peak RSS stays under 4 GB.
-- [ ] **Self-parity**: on a clean zu checkout (`git status --porcelain` is empty), run `go run ./cmd/zu scan -ref HEAD -out "$SCRATCH/ref.json" .` and `go run ./cmd/zu scan -out "$SCRATCH/disk.json" .`, then `cmp "$SCRATCH/ref.json" "$SCRATCH/disk.json"`. Expected: no output. Untracked files would break this, which is expected; see Notes.
-- [ ] **Full check**: `set -o pipefail; make check` → exit 0.
-- [ ] **Commit**: `git add docx/glossary.md CLAUDE.md scripts/bench-corpus.sh docx/features/02-scan-at-ref/benchmarks.md docx/features/02-scan-at-ref/plan.md && git commit -m "Document ref scans and record benchmarks"`
+- [x] **Bench**: `scripts/bench-corpus.sh`, run in the background. Record wall time and peak RSS for disk scans vs ref scans on hugo and kubernetes. Expected: a ref scan stays within 2× the disk scan time, and peak RSS stays under 4 GB.
+- [x] **Self-parity**: on a clean zu checkout (`git status --porcelain` is empty), run `go run ./cmd/zu scan -ref HEAD -out "$SCRATCH/ref.json" .` and `go run ./cmd/zu scan -out "$SCRATCH/disk.json" .`, then `cmp "$SCRATCH/ref.json" "$SCRATCH/disk.json"`. Expected: no output. Untracked files would break this, which is expected; see Notes.
+- [x] **Full check**: `set -o pipefail; make check` → exit 0.
+- [x] **Commit**: `git add docx/glossary.md CLAUDE.md scripts/bench-corpus.sh docx/features/02-scan-at-ref/benchmarks.md docx/features/02-scan-at-ref/plan.md && git commit -m "Document ref scans and record benchmarks"`
+
+   *Done note:* corpus parity is identical for cobra, hugo and kubernetes (see `benchmarks.md`). On the zu checkout, only `unsupported` differs: the disk scan also counts git-ignored `web/node_modules` and `web/dist` files, the documented exception. Every node, edge and hash matches.
 
 ---
 
@@ -303,6 +305,6 @@
 - [x] Task 4: `gitref.CommitTree`
 - [x] Task 5: Disk and ref scans are byte-identical
 - [x] Task 6: `zu scan -ref`
-- [ ] Task 7: Docs, benchmarks, final check
+- [x] Task 7: Docs, benchmarks, final check
 
-**Status:** In Progress
+**Status:** Complete
