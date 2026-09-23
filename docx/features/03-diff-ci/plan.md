@@ -255,7 +255,7 @@
 
 **Steps:**
 
-- [ ] **Test**:
+- [x] **Test**:
 
    | Test | Expected |
    |---|---|
@@ -264,8 +264,8 @@
    | `MergeBase` in a `git clone --depth 1 file://…` of a two-branch repo, with the other branch fetched shallow | `ErrNoMergeBase` |
    | `MergeBase` with a criss-cross history | the same commit as `git merge-base` |
 
-- [ ] **Verify RED**: `go test ./internal/gitref -run MergeBase` → FAIL.
-- [ ] **Action**:
+- [x] **Verify RED**: `go test ./internal/gitref -run MergeBase` → FAIL.
+- [x] **Action**:
 
    ```go
    var ErrNoMergeBase = errors.New("no merge-base: the clone lacks shared history; fetch full history (e.g. actions/checkout fetch-depth: 0, or git fetch --unshallow)")
@@ -275,8 +275,8 @@
    func MergeBase(ctx context.Context, top, a, b string) (string, error)
    ```
 
-- [ ] **Verify**: `go test -race ./internal/gitref` → ok.
-- [ ] **Commit**: `git add internal/gitref/diff.go internal/gitref/diff_test.go && git commit -m "Find merge-bases"`
+- [x] **Verify**: `go test -race ./internal/gitref` → ok.
+- [x] **Commit**: `git add internal/gitref/diff.go internal/gitref/diff_test.go && git commit -m "Find merge-bases"`
 
 ---
 
@@ -370,7 +370,7 @@ Nothing is left to do here.
 - [x] Task 2: Affected Set
 - [x] Task 3: Summary model and JSON
 - [x] Task 4: Text and Markdown renderers, with Mermaid
-- [ ] Task 5: merge-base
+- [x] Task 5: merge-base
 - [x] Task 6: `scan.ListTree` (done in feature 02)
 - [ ] Task 7: `zu diff` CLI
 - [ ] Task 8: Docs, memory, final check
