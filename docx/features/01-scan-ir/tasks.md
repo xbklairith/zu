@@ -12,8 +12,8 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
 
 ## Progress Summary
 - Total Tasks: 15
-- Completed: 13/15
-- In Progress: Task 14 — Security and privacy checks
+- Completed: 14/15
+- In Progress: Task 15 — Self-scan, benchmarks, final verification
 
 ## Tasks
 
@@ -95,10 +95,10 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
   - [x] REFACTOR
   - Linked: REQ-001–REQ-009, REQ-044
 
-- [ ] **Task 14: Security and privacy checks**
-  - [ ] RED: no absolute temp-dir prefix anywhere in the IR; `internal/scan` and `internal/ir` import no `net`; a symlink escape inside the fixture is not read
-  - [ ] GREEN
-  - [ ] REFACTOR
+- [x] **Task 14: Security and privacy checks**
+  - [x] RED: no absolute temp-dir prefix anywhere in the IR; `internal/scan` and `internal/ir` import no `net`; a symlink escape inside the fixture is not read
+  - [x] GREEN
+  - [x] REFACTOR
   - Linked: REQ-024, REQ-042, REQ-043
 
 - [ ] **Task 15: Self-scan, benchmarks, final verification**
