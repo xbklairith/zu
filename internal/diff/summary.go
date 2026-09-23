@@ -31,6 +31,10 @@ type Summary struct {
 	Nodes          []NodeChange      `json:"nodes"` // every node change, for tools
 	ParseErrors    SideErrors        `json:"parseErrors"`
 	NotCompared    string            `json:"notCompared"`
+
+	// imports are head's import edges between changed packages and their
+	// direct importers: what the Mermaid diagram draws. Not in the JSON.
+	imports []EdgeChange
 }
 
 // PackageRow is one changed package with its declaration change counts.
@@ -125,6 +129,25 @@ func Summarize(base, head *ir.IR) *Summary {
 	}
 	slices.Sort(changed)
 	s.Affected = orEmpty(Affected(head, changed))
+
+	near := map[string]bool{}
+	for id := range rows {
+		near[id] = true
+	}
+	for _, h := range s.Affected {
+		if h.Hops <= 1 {
+			near[h.Package] = true
+		}
+	}
+	for _, e := range head.Edges {
+		if e.Kind == ir.EdgeImports && near[e.From] && near[e.To] {
+			s.imports = append(s.imports, EdgeChange{From: e.From, To: e.To, Kind: e.Kind})
+		}
+	}
+	// An IR's edges are sorted only when encoded.
+	slices.SortFunc(s.imports, func(a, b EdgeChange) int {
+		return cmp.Or(strings.Compare(a.From, b.From), strings.Compare(a.To, b.To))
+	})
 
 	rank := bottomUp(head, rows)
 	s.Packages = make([]PackageRow, 0, len(rows))

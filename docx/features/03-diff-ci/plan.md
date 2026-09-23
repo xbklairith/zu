@@ -219,15 +219,15 @@
 
 **Steps:**
 
-- [ ] **Test**:
+- [x] **Test**:
    1. Golden text and Markdown for the Task 3 summary.
    2. The no-change summary prints `no structural change` and the footer.
    3. Mermaid includes the changed packages plus one hop of importers, marked with `classDef dim`. Mermaid node ids are generated (`n1`, `n2`, … in row order) and labels are quoted, so `/`, `.` and `"` in ids cannot break the diagram.
    4. With more than 30 nodes, the Mermaid block is replaced by `_Diagram omitted: N packages (limit 30)._`.
    5. A summary with 5,000 changed packages renders Markdown of at most 65,536 bytes, ending its lists with `…and N more`.
    6. The Markdown escapes `|` in ids.
-- [ ] **Verify RED**: `go test ./internal/diff -run Render` → FAIL.
-- [ ] **Action**:
+- [x] **Verify RED**: `go test ./internal/diff -run Render` → FAIL.
+- [x] **Action**:
    - `WriteText(w, s)` and `WriteMarkdown(w, s)`.
    - **Markdown layout, in order:**
      1. the title `### zu · structural change`;
@@ -242,8 +242,8 @@
      10. the parse-error counts;
      11. the `NotCompared` footer.
    - **Size budget.** Render the sections into a buffer against a byte budget of 65,536 minus the footer's length. When a list would overflow, stop it and write `…and N more`. The table is truncated before the lists are.
-- [ ] **Verify**: `go test ./internal/diff` → ok.
-- [ ] **Commit**: `git add internal/diff/render.go internal/diff/render_test.go internal/diff/testdata && git commit -m "Render the summary as text and Markdown"`
+- [x] **Verify**: `go test ./internal/diff` → ok.
+- [x] **Commit**: `git add internal/diff/render.go internal/diff/render_test.go internal/diff/testdata && git commit -m "Render the summary as text and Markdown"`
 
 ---
 
@@ -369,7 +369,7 @@ Nothing is left to do here.
 - [x] Task 1: Compare two IRs
 - [x] Task 2: Affected Set
 - [x] Task 3: Summary model and JSON
-- [ ] Task 4: Text and Markdown renderers, with Mermaid
+- [x] Task 4: Text and Markdown renderers, with Mermaid
 - [ ] Task 5: merge-base
 - [x] Task 6: `scan.ListTree` (done in feature 02)
 - [ ] Task 7: `zu diff` CLI
