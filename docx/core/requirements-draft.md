@@ -195,7 +195,7 @@ One binary, subcommands, no daemon.
 | Code | Meaning |
 | --- | --- |
 | 0 | Success, no violations |
-| 1 | Structural rule violated (`check`, `diff --strict`) |
+| 1 | Structural rule newly violated (`check`, and `diff` when the Policy has rules) |
 | 2 | Parse failure above the configured tolerance |
 | 3 | Bad invocation or unreadable config |
 

@@ -48,3 +48,5 @@ folder tree" is answered by making the tree explicit, not by hiding it: judgemen
 in Levels and Proposals, which are visibly separate from the code. `zu policy init`
 becomes a Levels suggestion, not a component map. Repos with a flat package layout get
 a flat tree. Proposals are the answer for them.
+
+**Amended 2026-09-24 (feature 06):** a Level may name any Package Tree box or package, not only a top-level segment; an id ranks itself and everything under it, and the longest ranked prefix wins. In Go the top level is usually just `internal`, `cmd` and `pkg`, too coarse to express layering. Foreign collapse merges externals under a prefix into one external node in the drawn view only; it is never a Package Tree box.

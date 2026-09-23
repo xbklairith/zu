@@ -18,7 +18,7 @@ the code's own hierarchy, never an invented one. Replaces the retired *Ungrouped
 
 ## Level
 
-A rank the Policy gives to top-level Package Tree segments, listed inner first. A
+A rank the Policy gives to Package Tree boxes or packages, listed inner first; an id ranks everything under it, and the longest ranked prefix wins. A
 dependency from a higher-ranked Level to a lower-ranked one is a violation.
 
 ## Foreign
