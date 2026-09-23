@@ -167,6 +167,31 @@ func TestScanHashStabilityAndLocality(t *testing.T) {
 	if got := strings.Join(changed, ","); got != want {
 		t.Fatalf("changed hashes = %s, want %s", got, want)
 	}
+	if err := os.WriteFile(storeGo, orig, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// A constant has no node of its own: changing it changes only its
+	// package's hash.
+	moneyGo := filepath.Join(root, "internal", "money", "money.go")
+	src, err := os.ReadFile(moneyGo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(moneyGo, []byte(strings.Replace(string(src), "const Zero Cents = 0", "const Zero Cents = 1", 1)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	after, _ = run(t, root, 0)
+	a = hashesByID(after)
+	changed = changed[:0]
+	for id, h := range b {
+		if a[id] != h {
+			changed = append(changed, id)
+		}
+	}
+	if got := strings.Join(changed, ","); got != "example.com/shop/internal/money" {
+		t.Fatalf("const change altered hashes %s, want only the money package", got)
+	}
 }
 
 func TestScanRejectsBadRoot(t *testing.T) {

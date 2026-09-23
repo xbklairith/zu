@@ -51,7 +51,7 @@ func extractFile(root, rel string) *fileFacts {
 	f := &fileFacts{Path: rel, Dir: path.Dir(rel)}
 	src, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(rel))) // #nosec G304 -- rel comes from walk
 	if err != nil {
-		f.Err = &ir.ParseError{Path: rel, Message: unwrapPath(err).Error()}
+		f.Err = &ir.ParseError{Path: rel, Message: ioMessage(err)}
 		return f
 	}
 	fset := token.NewFileSet()

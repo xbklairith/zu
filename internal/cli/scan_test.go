@@ -219,3 +219,17 @@ func TestScanInterruptedDuringGitWritesNothing(t *testing.T) {
 		t.Fatalf("interrupted scan wrote .zu (err=%v)", err)
 	}
 }
+
+func TestScanWithoutGoModExitsBadInvocation(t *testing.T) {
+	root := repo(t, map[string]string{"a/a.go": "package a\n"})
+	var stderr strings.Builder
+	if code := Run([]string{"scan", root}, io.Discard, &stderr); code != ExitBadInvocation {
+		t.Fatalf("exit = %d, want %d", code, ExitBadInvocation)
+	}
+	if !strings.Contains(stderr.String(), "no go.mod") {
+		t.Errorf("stderr = %q, want it to name the missing go.mod", stderr.String())
+	}
+	if _, err := os.Stat(filepath.Join(root, ".zu")); !os.IsNotExist(err) {
+		t.Fatalf("wrote .zu (err=%v)", err)
+	}
+}

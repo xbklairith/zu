@@ -2,6 +2,7 @@ package scan
 
 import (
 	"cmp"
+	"fmt"
 	"path"
 	"slices"
 	"strings"
@@ -69,6 +70,7 @@ func assemble(w *walkResult, facts []*fileFacts) *ir.IR {
 		b.calls(p, f, names)
 		b.embeds(p, f, names)
 	}
+	dropped := b.dropCollisions()
 	for id, ds := range b.decls {
 		b.nodes[id] = mergeDecls(id, ds[0].Pkg, ds)
 	}
@@ -79,9 +81,49 @@ func assemble(w *walkResult, facts []*fileFacts) *ir.IR {
 		b.doc.Nodes = append(b.doc.Nodes, *n)
 	}
 	for _, e := range b.edges {
-		b.doc.Edges = append(b.doc.Edges, *e)
+		if !dropped[e.From] && !dropped[e.To] {
+			b.doc.Edges = append(b.doc.Edges, *e)
+		}
 	}
 	return b.doc
+}
+
+// dropCollisions removes every declaration id that is also a package id, or
+// that declarations in two packages share: dots are legal in directory
+// names, so package m/a.b and type b of package m/a are both "m/a.b". Each
+// dropped id is reported once, at its first location; the package wins.
+func (b *builder) dropCollisions() map[string]bool {
+	dropped := map[string]bool{}
+	for id, ds := range b.decls {
+		var pkgs []string
+		for _, d := range ds {
+			if !slices.Contains(pkgs, d.Pkg) {
+				pkgs = append(pkgs, d.Pkg)
+			}
+		}
+		clash := b.ix.pkgs[id] != nil
+		if !clash && len(pkgs) == 1 {
+			continue
+		}
+		slices.Sort(pkgs)
+		first := slices.MinFunc(ds, func(x, y declAt) int {
+			return cmp.Or(cmp.Compare(x.Loc.Path, y.Loc.Path), cmp.Compare(x.Loc.Line, y.Loc.Line))
+		})
+		what := "is declared in packages " + strings.Join(pkgs, ", ")
+		if clash {
+			what = "is also the id of package " + id
+		}
+		b.doc.ParseErrors = append(b.doc.ParseErrors, ir.ParseError{
+			Path:    first.Loc.Path,
+			Message: fmt.Sprintf("node id %q %s; declarations dropped", id, what),
+		})
+		dropped[id] = true
+		delete(b.decls, id)
+	}
+	for p, ids := range b.members {
+		b.members[p] = slices.DeleteFunc(ids, func(id string) bool { return dropped[id] })
+	}
+	return dropped
 }
 
 func (b *builder) packageNode(p *pkgInfo) {

@@ -74,7 +74,7 @@ func walk(root string) (*walkResult, error) {
 			if p == abs {
 				return err
 			}
-			w.errorf(rel, "%v", unwrapPath(err))
+			w.errorf(rel, "%s", ioMessage(err))
 			if d != nil && d.IsDir() {
 				return filepath.SkipDir
 			}
@@ -107,6 +107,9 @@ func walk(root string) (*walkResult, error) {
 	})
 	if err != nil {
 		return nil, err
+	}
+	if len(goFiles) > 0 && len(w.Modules) == 0 {
+		return nil, ErrNoModule
 	}
 	slices.SortFunc(w.Modules, func(a, b *module) int { return strings.Compare(a.Dir, b.Dir) })
 	slices.Sort(goFiles)
@@ -144,12 +147,15 @@ func (w *walkResult) linkedFileInside(p string) bool {
 func (w *walkResult) readModule(p, rel string) {
 	data, err := os.ReadFile(p) // #nosec G304 -- path comes from walking the scan root
 	if err != nil {
-		w.errorf(rel, "%v", unwrapPath(err))
+		w.errorf(rel, "%s", ioMessage(err))
 		return
 	}
 	f, err := modfile.ParseLax(rel, data, nil)
 	if err != nil {
+		// Still a boundary: its files must not fall through to a parent
+		// module under a wrong import path.
 		w.errorf(rel, "%v", err)
+		w.Modules = append(w.Modules, &module{Dir: path.Dir(rel)})
 		return
 	}
 	if f.Module == nil || f.Module.Mod.Path == "" {
@@ -217,4 +223,19 @@ func unwrapPath(err error) error {
 		return pe.Err
 	}
 	return err
+}
+
+// ErrNoModule means the root holds Go files but no go.mod at or under it.
+var ErrNoModule = errors.New("no go.mod at or under the scan root; scan the module root")
+
+// ioMessage is err's message without its path. Common failures get a fixed
+// text so the IR does not depend on the OS's wording (REQ-038).
+func ioMessage(err error) string {
+	switch {
+	case errors.Is(err, fs.ErrPermission):
+		return "permission denied"
+	case errors.Is(err, fs.ErrNotExist):
+		return "file does not exist"
+	}
+	return unwrapPath(err).Error()
 }
