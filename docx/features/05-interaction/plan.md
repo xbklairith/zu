@@ -356,7 +356,7 @@ export const shallower = (s: ViewState, drawn: number): ViewState =>
 
 **Steps:**
 
-- [ ] **Add the test builders** (only `*.test.ts` import `testkit.ts`, so the build drops it).
+- [x] **Add the test builders** (only `*.test.ts` import `testkit.ts`, so the build drops it).
 
 **Create `web/src/testkit.ts`:**
 
@@ -385,7 +385,7 @@ export const view = (nodes: ViewNode[], edges: ViewEdge[] = []): View => ({
 });
 ````
 
-- [ ] **Write the failing test.**
+- [x] **Write the failing test.**
 
 **Create `web/src/cut.test.ts`:**
 
@@ -442,8 +442,8 @@ describe("cut", () => {
 });
 ````
 
-- [ ] **Run — expect FAIL:** `cd web && npx vitest run src/cut.test.ts` → `Cannot find module './cut'`.
-- [ ] **Implement.**
+- [x] **Run — expect FAIL:** `cd web && npx vitest run src/cut.test.ts` → `Cannot find module './cut'`.
+- [x] **Implement.**
 
 **Create `web/src/cut.ts`:**
 
@@ -631,8 +631,8 @@ export function autoDepth(view: View, focus: string): number {
 }
 ````
 
-- [ ] **Run — expect PASS:** `cd web && npx vitest run src/cut.test.ts && npx tsc --noEmit` → 7 passed.
-- [ ] **Commit:** `git add web/src/cut.ts web/src/cut.test.ts web/src/testkit.ts && git commit -m "Compute the drawn Package Tree cut with in-place toggles"`
+- [x] **Run — expect PASS:** `cd web && npx vitest run src/cut.test.ts && npx tsc --noEmit` → 7 passed.
+- [x] **Commit:** `git add web/src/cut.ts web/src/cut.test.ts web/src/testkit.ts && git commit -m "Compute the drawn Package Tree cut with in-place toggles"`
 
 ---
 
