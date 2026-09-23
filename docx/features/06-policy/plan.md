@@ -2969,7 +2969,7 @@ The suggestion follows ADR 0008: Levels only, never a component map. The candida
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
    <!-- file: internal/policy/suggest_test.go -->
    ```go
@@ -3106,9 +3106,9 @@ The suggestion follows ADR 0008: Levels only, never a component map. The candida
     			t.Errorf("%s: exit = %d, want %d", cmd, code, ExitBadInvocation)
    ```
 
-- [ ] **Run them:** `go test ./internal/policy ./internal/cli -run 'Suggest|InitFile|Policy'`. Expected: FAIL (`undefined: Suggest`).
+- [x] **Run them:** `go test ./internal/policy ./internal/cli -run 'Suggest|InitFile|Policy'`. Expected: FAIL (`undefined: Suggest`).
 
-- [ ] **Implement**
+- [x] **Implement**
 
    <!-- file: internal/policy/suggest.go -->
    ```go
@@ -3373,7 +3373,7 @@ The suggestion follows ADR 0008: Levels only, never a component map. The candida
     		return ExitBadInvocation
    ```
 
-- [ ] **Run:** `go test ./internal/policy ./internal/cli`. Expected: `ok`.
+- [x] **Run:** `go test ./internal/policy ./internal/cli`. Expected: `ok`.
 
 ### Task 10: `zu diff` reports new violations first and exits 1 on them (B7, B9)
 
@@ -4389,7 +4389,7 @@ These diffs are against `main` at 8f43cb1. If 05's `App.tsx` changes before 06 s
 - [x] Task 6 · Levels and cycles
 - [x] Task 7 · Baseline
 - [x] Task 8 · `zu check`
-- [ ] Task 9 · `zu policy init`
+- [x] Task 9 · `zu policy init`
 - [ ] Task 10 · `zu diff` B7/B9
 - [ ] Task 11 · View fields and the lensed export
 - [ ] Task 12 · UI: red violations via `pin`

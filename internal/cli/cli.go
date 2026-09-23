@@ -31,7 +31,7 @@ commands:
 
 // planned lists commands that are part of the CLI surface but not built yet.
 var planned = map[string]bool{
-	"serve": true, "policy": true,
+	"serve": true,
 }
 
 // Run executes the command line args (without the program name) and returns
@@ -55,6 +55,8 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		return runDiff(args[1:], stdout, stderr)
 	case cmd == "check":
 		return runCheck(args[1:], stdout, stderr)
+	case cmd == "policy":
+		return runPolicy(args[1:], stdout, stderr)
 	case planned[cmd]:
 		fmt.Fprintf(stderr, "zu %s: not implemented\n", cmd)
 		return ExitBadInvocation
