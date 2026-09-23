@@ -48,5 +48,12 @@ out, and each affected component labelled with its hop distance from the change.
 ## HTML Export
 
 A single self-contained HTML file holding a Project View or Change View together with
-the UI, the IR and the full source of the packages it shows. Opens in any browser with
+the UI, the IR and only the source worth reading: meaningfully changed files in a
+Change View, explicitly included packages in a Project View. Opens in any browser with
 no zu install, server or network. Carries the same sensitivity as the source it holds.
+
+## Meaningful Change
+
+A change to a declaration that survives formatting normalisation. Reformatting and
+comment-only edits are not meaningful changes: they neither mark a component modified
+nor pull source into an HTML Export.
