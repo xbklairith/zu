@@ -652,13 +652,13 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
 
 **Steps:**
 
-- [ ] **Create the fixture template** (stands in for `web/dist/index.html` so `go test ./...` never needs the UI built)
+- [x] **Create the fixture template** (stands in for `web/dist/index.html` so `go test ./...` never needs the UI built)
 
    ```html
    <!doctype html><html><head><title>t</title></head><body><script id="zu-data" type="application/json">{}</script><div id="root"></div></body></html>
    ```
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
    ```go
    package export
@@ -720,11 +720,11 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    }
    ```
 
-- [ ] **Run — expect FAIL** (`undefined: Render`)
+- [x] **Run — expect FAIL** (`undefined: Render`)
 
    Run: `go test ./internal/export/`
 
-- [ ] **Implement**
+- [x] **Implement**
 
    ```go
    package export
@@ -768,12 +768,12 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    }
    ```
 
-- [ ] **Run — expect PASS**
+- [x] **Run — expect PASS**
 
    Run: `go test ./internal/export/`
    Expected: `ok  zu/internal/export`
 
-- [ ] **Commit**
+- [x] **Commit**
 
    ```bash
    git add internal/export/render.go internal/export/render_test.go internal/export/testdata/template.html
@@ -1612,7 +1612,7 @@ Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag r
 
 - [x] Task 1 · `-include` patterns
 - [x] Task 2 · Project View data
-- [ ] Task 3 · Render
+- [x] Task 3 · Render
 - [ ] Task 4 · Links
 - [ ] Task 5 · `zu scan -html`
 - [ ] Task 6 · UI toolchain
