@@ -25,5 +25,7 @@ const csp: Plugin = {
 export default defineConfig({
   plugins: [react(), viteSingleFile(), csp],
   build: { outDir: "dist", emptyOutDir: true },
+  // Dev mode reads the Go golden View from internal/export/testdata.
+  server: { fs: { allow: [".."] } },
   test: { environment: "node", include: ["src/**/*.test.ts"] },
 });

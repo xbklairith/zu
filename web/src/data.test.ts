@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import golden from "../../internal/export/testdata/shop.view.golden.json";
 import { parseView } from "./data";
 
 describe("parseView", () => {
@@ -7,5 +8,9 @@ describe("parseView", () => {
   });
   it("accepts schema 1", () => {
     expect(parseView('{"schema":"1","nodes":[],"edges":[]}').schema).toBe("1");
+  });
+  it("parses the Go golden", () => {
+    const v = parseView(JSON.stringify(golden));
+    expect(v.nodes.some((n) => n.id === "example.com/shop/internal/store.Repo")).toBe(true);
   });
 });

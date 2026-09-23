@@ -1321,13 +1321,13 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
 
 **Steps:**
 
-- [ ] **Write a golden test** that builds `Project(shopIR, ./internal/store, read)`, where `read` reads the real fixture files, `os.ReadFile(filepath.Join("../scan/testdata/shop", p))`. The dev page and Task 11's checks then show real source (`store.go` has 43+ lines). Compare `json.MarshalIndent(v, "", "  ")` to `testdata/shop.view.golden.json`, with `-update` to rewrite it (same pattern as `internal/scan`'s golden). `Tool` stays `""`: `Project` never reads the version.
-- [ ] **Run with `-update`, review the diff, run without it**
+- [x] **Write a golden test** that builds `Project(shopIR, ./internal/store, read)`, where `read` reads the real fixture files, `os.ReadFile(filepath.Join("../scan/testdata/shop", p))`. The dev page and Task 11's checks then show real source (`store.go` has 43+ lines). Compare `json.MarshalIndent(v, "", "  ")` to `testdata/shop.view.golden.json`, with `-update` to rewrite it (same pattern as `internal/scan`'s golden). `Tool` stays `""`: `Project` never reads the version.
+- [x] **Run with `-update`, review the diff, run without it**
 
    Run: `go test ./internal/export -run Golden -update && git diff --stat && go test ./internal/export`
    Expected: `ok`
 
-- [ ] **UI reads the same fixture.** Add to `data.test.ts`:
+- [x] **UI reads the same fixture.** Add to `data.test.ts`:
 
    ```ts
    import golden from "../../internal/export/testdata/shop.view.golden.json";
@@ -1338,9 +1338,9 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    ```
    Add `"resolveJsonModule": true` to `web/tsconfig.json`.
 
-- [ ] **Dev mode shows the fixture.** Vite serves only `web/` by default, so add `server: { fs: { allow: [".."] } }` to `vite.config.ts`. Then in `main.tsx`, when `readEmbedded(document)` is null and `import.meta.env.DEV`, `await import("../../internal/export/testdata/shop.view.golden.json")`. The dead branch is dropped from the build. In a build with no data, render "This page carries no zu data. Create one with `zu scan -html FILE`."
-- [ ] **Verify**: `cd web && npm test && npm run build && ! grep -q "example.com/shop" dist/index.html && echo fixture-not-bundled`. Expected: 3 passed, then `fixture-not-bundled`.
-- [ ] **Commit**: `git add internal/export/golden_test.go internal/export/testdata/shop.view.golden.json web/src/data.test.ts web/src/main.tsx web/tsconfig.json && git commit -m "Share a golden View between the Go export and the UI"`
+- [x] **Dev mode shows the fixture.** Vite serves only `web/` by default, so add `server: { fs: { allow: [".."] } }` to `vite.config.ts`. Then in `main.tsx`, when `readEmbedded(document)` is null and `import.meta.env.DEV`, `await import("../../internal/export/testdata/shop.view.golden.json")`. The dead branch is dropped from the build. In a build with no data, render "This page carries no zu data. Create one with `zu scan -html FILE`."
+- [x] **Verify**: `cd web && npm test && npm run build && ! grep -q "example.com/shop" dist/index.html && echo fixture-not-bundled`. Expected: 3 passed, then `fixture-not-bundled`.
+- [x] **Commit**: `git add internal/export/golden_test.go internal/export/testdata/shop.view.golden.json web/src/data.test.ts web/src/main.tsx web/tsconfig.json && git commit -m "Share a golden View between the Go export and the UI"`
 
 ---
 
@@ -1616,7 +1616,7 @@ Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag r
 - [x] Task 4 · Links
 - [x] Task 5 · `zu scan -html`
 - [x] Task 6 · UI toolchain
-- [ ] Task 7 · Golden View
+- [x] Task 7 · Golden View
 - [ ] Task 8 · Package Tree logic
 - [ ] Task 9 · Layout
 - [ ] Task 10 · Canvas and header

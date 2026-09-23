@@ -1,0 +1,395 @@
+{
+  "schema": "1",
+  "kind": "project",
+  "tool": "",
+  "head": {
+    "commit": "",
+    "dirty": false
+  },
+  "modules": [
+    "example.com/shop",
+    "example.com/shop/tools"
+  ],
+  "nodes": [
+    {
+      "id": "example.com/shop",
+      "kind": "package",
+      "module": "example.com/shop",
+      "loc": {
+        "path": "main.go",
+        "line": 1
+      },
+      "decls": 1
+    },
+    {
+      "id": "example.com/shop/internal/checkout",
+      "kind": "package",
+      "module": "example.com/shop",
+      "loc": {
+        "path": "internal/checkout/checkout.go",
+        "line": 2
+      },
+      "decls": 5,
+      "unresolved": 4
+    },
+    {
+      "id": "example.com/shop/internal/money",
+      "kind": "package",
+      "module": "example.com/shop",
+      "loc": {
+        "path": "internal/money/money.go",
+        "line": 2
+      },
+      "decls": 3
+    },
+    {
+      "id": "example.com/shop/internal/store",
+      "kind": "package",
+      "module": "example.com/shop",
+      "loc": {
+        "path": "internal/store/db_linux.go",
+        "line": 3
+      },
+      "decls": 15,
+      "unresolved": 4,
+      "detail": true
+    },
+    {
+      "id": "example.com/shop/internal/store.Open",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store",
+      "exported": true,
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 40
+      }
+    },
+    {
+      "id": "example.com/shop/internal/store.Order",
+      "kind": "type",
+      "parent": "example.com/shop/internal/store",
+      "exported": true,
+      "typeKind": "struct",
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 25
+      }
+    },
+    {
+      "id": "example.com/shop/internal/store.Page",
+      "kind": "type",
+      "parent": "example.com/shop/internal/store",
+      "exported": true,
+      "typeKind": "struct",
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 63
+      }
+    },
+    {
+      "id": "example.com/shop/internal/store.Page.Len",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store.Page",
+      "exported": true,
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 68
+      }
+    },
+    {
+      "id": "example.com/shop/internal/store.ReadWriter",
+      "kind": "type",
+      "parent": "example.com/shop/internal/store",
+      "exported": true,
+      "typeKind": "interface",
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 19
+      }
+    },
+    {
+      "id": "example.com/shop/internal/store.Reader",
+      "kind": "type",
+      "parent": "example.com/shop/internal/store",
+      "exported": true,
+      "typeKind": "interface",
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 14
+      }
+    },
+    {
+      "id": "example.com/shop/internal/store.Repo",
+      "kind": "type",
+      "parent": "example.com/shop/internal/store",
+      "exported": true,
+      "typeKind": "struct",
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 31
+      }
+    },
+    {
+      "id": "example.com/shop/internal/store.Repo.Get",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store.Repo",
+      "exported": true,
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 43
+      }
+    },
+    {
+      "id": "example.com/shop/internal/store.Repo.Reset",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store.Repo",
+      "exported": true,
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 57
+      }
+    },
+    {
+      "id": "example.com/shop/internal/store.Repo.check",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store.Repo",
+      "exported": false,
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 51
+      }
+    },
+    {
+      "id": "example.com/shop/internal/store.Status",
+      "kind": "type",
+      "parent": "example.com/shop/internal/store",
+      "exported": true,
+      "typeKind": "other",
+      "generated": true,
+      "loc": {
+        "path": "internal/store/zz_generated.go",
+        "line": 9
+      }
+    },
+    {
+      "id": "example.com/shop/internal/store.Status.String",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store.Status",
+      "exported": true,
+      "generated": true,
+      "loc": {
+        "path": "internal/store/zz_generated.go",
+        "line": 11
+      }
+    },
+    {
+      "id": "example.com/shop/internal/store.dialect",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store",
+      "exported": false,
+      "loc": {
+        "path": "internal/store/db_linux.go",
+        "line": 5
+      }
+    },
+    {
+      "id": "example.com/shop/internal/store.init",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store",
+      "exported": false,
+      "loc": {
+        "path": "internal/store/db_linux.go",
+        "line": 7
+      }
+    },
+    {
+      "id": "example.com/shop/internal/store.register",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store",
+      "exported": false,
+      "loc": {
+        "path": "internal/store/register.go",
+        "line": 3
+      }
+    },
+    {
+      "id": "example.com/shop/tools/gen",
+      "kind": "package",
+      "module": "example.com/shop/tools",
+      "loc": {
+        "path": "tools/gen/gen.go",
+        "line": 1
+      },
+      "decls": 1
+    },
+    {
+      "id": "github.com/lib/pq",
+      "kind": "external",
+      "loc": {
+        "path": "go.mod",
+        "line": 6
+      }
+    },
+    {
+      "id": "golang.org/x/sync",
+      "kind": "external",
+      "loc": {
+        "path": "go.mod",
+        "line": 7
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "example.com/shop",
+      "to": "example.com/shop/internal/checkout",
+      "kind": "imports",
+      "count": 1,
+      "loc": {
+        "path": "main.go",
+        "line": 6
+      }
+    },
+    {
+      "from": "example.com/shop/internal/checkout",
+      "to": "example.com/shop/internal/money",
+      "kind": "imports",
+      "count": 1,
+      "loc": {
+        "path": "internal/checkout/checkout.go",
+        "line": 7
+      }
+    },
+    {
+      "from": "example.com/shop/internal/checkout",
+      "to": "example.com/shop/internal/store",
+      "kind": "imports",
+      "count": 1,
+      "loc": {
+        "path": "internal/checkout/checkout.go",
+        "line": 8
+      }
+    },
+    {
+      "from": "example.com/shop/internal/checkout",
+      "to": "golang.org/x/sync",
+      "kind": "imports",
+      "count": 1,
+      "loc": {
+        "path": "internal/checkout/checkout.go",
+        "line": 9
+      }
+    },
+    {
+      "from": "example.com/shop/internal/store",
+      "to": "example.com/shop/internal/money",
+      "kind": "imports",
+      "count": 1,
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 10
+      }
+    },
+    {
+      "from": "example.com/shop/internal/store",
+      "to": "github.com/lib/pq",
+      "kind": "imports",
+      "count": 1,
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 8
+      }
+    },
+    {
+      "from": "example.com/shop/internal/store.ReadWriter",
+      "to": "example.com/shop/internal/store.Reader",
+      "kind": "embeds",
+      "count": 1,
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 20
+      }
+    },
+    {
+      "from": "example.com/shop/internal/store.Repo",
+      "to": "github.com/lib/pq",
+      "kind": "embeds",
+      "count": 1,
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 34
+      }
+    },
+    {
+      "from": "example.com/shop/internal/store.Repo.Get",
+      "to": "example.com/shop/internal/store.Repo.check",
+      "kind": "calls",
+      "count": 1,
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 48
+      }
+    },
+    {
+      "from": "example.com/shop/internal/store.Repo.Reset",
+      "to": "example.com/shop/internal/store.Open",
+      "kind": "calls",
+      "count": 1,
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 58
+      }
+    },
+    {
+      "from": "example.com/shop/internal/store.init",
+      "to": "example.com/shop/internal/store.register",
+      "kind": "calls",
+      "count": 1,
+      "loc": {
+        "path": "internal/store/db_linux.go",
+        "line": 7
+      }
+    },
+    {
+      "from": "example.com/shop/internal/store.register",
+      "to": "example.com/shop/internal/store.dialect",
+      "kind": "calls",
+      "count": 1,
+      "loc": {
+        "path": "internal/store/register.go",
+        "line": 3
+      }
+    },
+    {
+      "from": "example.com/shop/tools/gen",
+      "to": "example.com/shop/internal/money",
+      "kind": "imports",
+      "count": 1,
+      "loc": {
+        "path": "tools/gen/gen.go",
+        "line": 3
+      }
+    }
+  ],
+  "sources": {
+    "internal/store/db_linux.go": "//go:build linux\n\npackage store\n\nfunc dialect() string { return \"linux\" }\n\nfunc init() { register() }\n",
+    "internal/store/db_windows.go": "//go:build windows\n\npackage store\n\nfunc dialect() string { return \"windows\" }\n",
+    "internal/store/register.go": "package store\n\nfunc register() { _ = dialect() }\n\nfunc init() {}\n",
+    "internal/store/store.go": "// Package store keeps orders.\npackage store\n\nimport (\n\t\"database/sql\"\n\t\"sync\"\n\n\t\"github.com/lib/pq\"\n\n\t\"example.com/shop/internal/money\"\n)\n\n// Reader reads orders.\ntype Reader interface {\n\tGet(id int) (Order, error)\n}\n\n// ReadWriter reads and writes orders.\ntype ReadWriter interface {\n\tReader\n\tPut(o Order) error\n}\n\n// Order is one order.\ntype Order struct {\n\tID    int\n\tTotal money.Cents\n}\n\n// Repo stores orders in memory.\ntype Repo struct {\n\tsync.Mutex\n\t*sql.DB\n\tpq.Driver\n\tcache map[int]Order\n\thook  func()\n}\n\n// Open returns an empty Repo.\nfunc Open() *Repo { return \u0026Repo{cache: map[int]Order{}} }\n\n// Get returns one order.\nfunc (r *Repo) Get(id int) (Order, error) {\n\tr.Lock()\n\tdefer r.Unlock()\n\to := r.cache[id]\n\tr.hook()\n\treturn o, r.check(o)\n}\n\nfunc (r *Repo) check(o Order) error {\n\t_ = money.Add(o.Total, money.Zero)\n\treturn nil\n}\n\n// Reset replaces the receiver, so its calls are not certain.\nfunc (r *Repo) Reset() {\n\tr = Open()\n\tr.check(Order{})\n}\n\n// Page is one page of results.\ntype Page[T any] struct {\n\tItems []T\n}\n\n// Len is the page size.\nfunc (p *Page[T]) Len() int { return len(p.Items) }\n",
+    "internal/store/zz_generated.go": "// Copyright 2026 The Shop Authors.\n// SPDX-License-Identifier: Apache-2.0\n\n// Code generated by stringer. DO NOT EDIT.\n\npackage store\n\n// Status is an order status.\ntype Status int\n\nfunc (s Status) String() string { return \"status\" }\n"
+  },
+  "honesty": {
+    "parseErrors": [
+      {
+        "path": "bad/bad.go",
+        "message": "bad/bad.go:3:6: expected 'IDENT', found '{'"
+      }
+    ],
+    "unresolvedCalls": 8,
+    "unresolvedImports": 1,
+    "unsupported": {
+      ".sh": 1,
+      ".ts": 1
+    }
+  }
+}
