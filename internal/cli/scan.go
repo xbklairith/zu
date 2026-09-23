@@ -18,24 +18,27 @@ import (
 	"zu/internal/scan"
 )
 
-// Seams for tests: how the command learns of Ctrl-C, how it reads HEAD, and
-// how it resolves a ref.
+// Seams for tests: how the command learns of Ctrl-C, how it reads HEAD, how
+// it resolves a ref and opens a commit, and how it lists the working tree.
 var (
 	interruptContext = func() (context.Context, context.CancelFunc) {
 		return signal.NotifyContext(context.Background(), os.Interrupt)
 	}
-	gitHead    = gitref.Head
-	gitResolve = gitref.Resolve
+	gitHead     = gitref.Head
+	gitResolve  = gitref.Resolve
+	openCommit  = gitref.OpenCommit
+	gitWorktree = gitref.WorktreeFiles
 )
 
-// runScan implements `zu scan [dir] [-ref commit] [-out -|path]
-// [-max-parse-errors N]`. Flags may come before or after dir.
+// runScan implements `zu scan [dir] [-ref commit | -include-ignored]
+// [-out -|path] [-max-parse-errors N]`. Flags may come before or after dir.
 func runScan(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("zu scan", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	out := fs.String("out", "", "write the IR to `path` instead of .zu/ir/ (- for stdout)")
 	maxErrs := fs.Int("max-parse-errors", 0, "exit 2 when more than `N` files fail to parse")
 	refName := fs.String("ref", "", "scan `commit` from git objects (whole repository) instead of the working tree")
+	withIgnored := fs.Bool("include-ignored", false, "in a git working tree, also scan files git ignores")
 	dir, err := parseWithDir(fs, args)
 	if err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
@@ -47,18 +50,22 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "zu scan: -max-parse-errors must be >= 0")
 		return ExitBadInvocation
 	}
+	if *withIgnored && *refName != "" {
+		fmt.Fprintln(stderr, "zu scan: -include-ignored applies to the working tree, not to -ref")
+		return ExitBadInvocation
+	}
 
 	ctx, stop := interruptContext()
 	defer stop()
-	src, err := openSource(ctx, dir, *refName)
+	src, err := openSource(ctx, dir, *refName, *withIgnored)
 	if err != nil {
 		fmt.Fprintf(stderr, "zu scan: %v\n", err)
 		return ExitBadInvocation
 	}
 	defer src.close()
 	doc, stats, err := scan.Run(ctx, scan.Options{Tree: src.tree})
-	if err == nil {
-		err = src.err()
+	if treeErr := src.err(); treeErr != nil {
+		err = treeErr // the cause; a scan error would only be its symptom
 	}
 	if err != nil {
 		fmt.Fprintf(stderr, "zu scan: %v\n", err)
@@ -68,6 +75,7 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 		doc.Ref = *src.ref
 	} else {
 		doc.Ref.Commit, doc.Ref.Dirty = gitHead(ctx, dir)
+		doc.Ref.Dirty = doc.Ref.Commit != "" && (doc.Ref.Dirty || src.extra)
 	}
 	dir = src.root
 	if err := ctx.Err(); err != nil {
@@ -105,30 +113,46 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 	return ExitOK
 }
 
-// source is what one scan reads: the directory on disk, or a commit read
-// from git objects at the repository's top level.
+// source is what one scan reads: the working tree, or a commit read from
+// git objects at the repository's top level.
 type source struct {
 	tree  scan.Tree
 	root  string  // where default output goes
 	ref   *ir.Ref // known up front for a commit; nil for the working tree
+	extra bool    // the working tree has files HEAD lacks: the IR is dirty
 	err   func() error
 	close func()
 }
 
-func openSource(ctx context.Context, dir, ref string) (*source, error) {
+// openSource opens the commit ref names or, without one, the working tree:
+// inside a git repository only the files the next commit would contain (and
+// ignored ones if asked), elsewhere every file under dir.
+func openSource(ctx context.Context, dir, ref string, withIgnored bool) (*source, error) {
 	if ref == "" {
-		tree, err := scan.DirTree(dir)
+		listing, err := gitWorktree(ctx, dir, withIgnored)
+		if err != nil {
+			return nil, err
+		}
+		var tree scan.Tree
+		if listing == nil {
+			tree, err = scan.DirTree(dir)
+		} else {
+			tree, err = scan.ListTree(dir, listing.Files)
+		}
 		if err != nil {
 			return nil, err
 		}
 		none := func() error { return nil }
-		return &source{tree: tree, root: dir, err: none, close: func() {}}, nil
+		return &source{
+			tree: tree, root: dir, extra: listing != nil && listing.Extra,
+			err: none, close: func() {},
+		}, nil
 	}
 	top, commit, err := gitResolve(ctx, dir, ref)
 	if err != nil {
 		return nil, err
 	}
-	tree, err := gitref.OpenCommit(ctx, top, commit)
+	tree, err := openCommit(ctx, top, commit)
 	if err != nil {
 		return nil, err
 	}

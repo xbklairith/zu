@@ -1,15 +1,18 @@
 package cli
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
+	"zu/internal/gitref"
 	"zu/internal/ir"
 )
 
@@ -107,7 +110,7 @@ func TestScanNamesOutputByCommit(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(dir, ".zu", "ir", "worktree.json")); err != nil {
 		t.Fatal("repo without commits must write worktree.json")
 	}
-	git(t, dir, "add", "go.mod", "a/a.go")
+	git(t, dir, "add", "go.mod", "a/a.go", "web/app.ts")
 	git(t, dir, "commit", "-q", "-m", "one")
 	head := git(t, dir, "rev-parse", "HEAD")
 
@@ -314,5 +317,112 @@ func TestScanRefInterrupted(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(dir, ".zu")); !os.IsNotExist(err) {
 		t.Fatalf("interrupted scan wrote .zu (err=%v)", err)
+	}
+}
+
+// fileRepo commits small and a .gitignore, then adds an untracked and an
+// ignored Go file.
+func fileRepo(t *testing.T) (dir, head string) {
+	t.Helper()
+	needGit(t)
+	dir = repo(t, small)
+	put := func(rel, body string) {
+		p := filepath.Join(dir, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	put(".gitignore", "/gen/\n")
+	git(t, dir, "init", "-q")
+	git(t, dir, "add", "-A")
+	git(t, dir, "commit", "-q", "-m", "one")
+	put("gen/g.go", "package gen\n\nfunc Gen() {}\n")
+	return dir, git(t, dir, "rev-parse", "HEAD")
+}
+
+// nodeIDs lists the IR's node ids.
+func nodeIDs(doc *ir.IR) []string {
+	var ids []string
+	for _, n := range doc.Nodes {
+		ids = append(ids, n.ID)
+	}
+	return ids
+}
+
+func TestScanWorktreeSkipsIgnoredFiles(t *testing.T) {
+	dir, head := fileRepo(t)
+	if code, _, errOut := run("scan", dir); code != ExitOK {
+		t.Fatalf("exit %d: %s", code, errOut)
+	}
+	clean := filepath.Join(dir, ".zu", "ir", head[:12]+".json")
+	doc := readIR(t, clean)
+	if doc.Ref.Dirty || slices.Contains(nodeIDs(doc), "example.com/m/gen") {
+		t.Fatalf("an ignored file must not be scanned or make the IR dirty: ref %+v, nodes %v", doc.Ref, nodeIDs(doc))
+	}
+	disk, err := os.ReadFile(clean)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if code, _, errOut := run("scan", "-ref", "HEAD", "-out", filepath.Join(dir, "ref.json"), dir); code != ExitOK {
+		t.Fatalf("exit %d: %s", code, errOut)
+	}
+	ref, err := os.ReadFile(filepath.Join(dir, "ref.json"))
+	if err != nil || !bytes.Equal(disk, ref) {
+		t.Fatalf("a clean working tree must scan exactly as its HEAD (err=%v)", err)
+	}
+
+	if code, _, errOut := run("scan", "-include-ignored", dir); code != ExitOK {
+		t.Fatalf("exit %d: %s", code, errOut)
+	}
+	doc = readIR(t, filepath.Join(dir, ".zu", "ir", head[:12]+"-dirty.json"))
+	if !doc.Ref.Dirty || !slices.Contains(nodeIDs(doc), "example.com/m/gen") {
+		t.Fatalf("-include-ignored must scan gen and label the IR dirty: ref %+v, nodes %v", doc.Ref, nodeIDs(doc))
+	}
+}
+
+func TestScanWorktreeUntrackedIsDirty(t *testing.T) {
+	dir, head := fileRepo(t)
+	if err := os.WriteFile(filepath.Join(dir, "a", "new.go"), []byte("package a\n\nfunc New() {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if code, _, errOut := run("scan", dir); code != ExitOK {
+		t.Fatalf("exit %d: %s", code, errOut)
+	}
+	doc := readIR(t, filepath.Join(dir, ".zu", "ir", head[:12]+"-dirty.json"))
+	if !slices.Contains(nodeIDs(doc), "example.com/m/a.New") {
+		t.Fatalf("an untracked file must be scanned: %v", nodeIDs(doc))
+	}
+	if _, err := os.Stat(filepath.Join(dir, ".zu", "ir", head[:12]+".json")); !os.IsNotExist(err) {
+		t.Fatal("a scan with an untracked file must not be labelled as the clean commit")
+	}
+}
+
+func TestScanIncludeIgnoredWithRef(t *testing.T) {
+	dir, _ := fileRepo(t)
+	if code, _, errOut := run("scan", "-ref", "HEAD", "-include-ignored", dir); code != ExitBadInvocation || errOut == "" {
+		t.Fatalf("exit %d, stderr %q; want %d with a reason", code, errOut, ExitBadInvocation)
+	}
+}
+
+func TestScanRefClosedTreeWritesNothing(t *testing.T) {
+	dir, _ := fileRepo(t)
+	old := openCommit
+	t.Cleanup(func() { openCommit = old })
+	openCommit = func(ctx context.Context, top, commit string) (*gitref.CommitTree, error) {
+		tree, err := old(ctx, top, commit)
+		if err == nil {
+			_ = tree.Close() // the blob reader dies before any file is read
+		}
+		return tree, err
+	}
+	code, _, errOut := run("scan", "-ref", "HEAD", dir)
+	if code != ExitBadInvocation || !strings.Contains(errOut, "closed") {
+		t.Fatalf("exit %d, stderr %q; want %d naming the failed tree, not a symptom", code, errOut, ExitBadInvocation)
+	}
+	if _, err := os.Stat(filepath.Join(dir, ".zu")); !os.IsNotExist(err) {
+		t.Fatalf("a scan whose tree failed wrote .zu (err=%v)", err)
 	}
 }

@@ -196,7 +196,8 @@ func (t *CommitTree) blob(oid string) ([]byte, error) {
 		return nil, t.err
 	}
 	if t.cmd == nil {
-		return nil, errors.New("commit tree is closed")
+		t.err = errors.New("commit tree is closed")
+		return nil, t.err
 	}
 	b, err := t.readObject(oid)
 	if err != nil {
