@@ -42,8 +42,8 @@ func shopCopy(t *testing.T) string {
 	return dst
 }
 
-// edit replaces old with new in root/rel, failing if old is absent.
-func edit(t *testing.T, root, rel, old, new string) {
+// edit replaces old with repl in root/rel, failing if old is absent.
+func edit(t *testing.T, root, rel, old, repl string) {
 	t.Helper()
 	p := filepath.Join(root, filepath.FromSlash(rel))
 	b, err := os.ReadFile(p)
@@ -53,7 +53,7 @@ func edit(t *testing.T, root, rel, old, new string) {
 	if !bytes.Contains(b, []byte(old)) {
 		t.Fatalf("%s does not contain %q", rel, old)
 	}
-	if err := os.WriteFile(p, bytes.Replace(b, []byte(old), []byte(new), 1), 0o644); err != nil {
+	if err := os.WriteFile(p, bytes.Replace(b, []byte(old), []byte(repl), 1), 0o644); err != nil {
 		t.Fatal(err)
 	}
 }
