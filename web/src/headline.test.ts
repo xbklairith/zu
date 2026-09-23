@@ -34,6 +34,8 @@ describe("header", () => {
   it("notes the depth and an over-budget level", () => {
     expect(depthNote(5, 3)).toBe("5 boxes at depth 3. Double-click to open a box, Esc to go up.");
     expect(depthNote(5, 2, false)).toBe("5 boxes at depth 2 (chosen). Double-click to open a box, Esc to go up.");
+    expect(depthNote(5, 2, false, 4)).toBe("5 boxes at depth 2 (collapsed from 4). Double-click to open a box, Esc to go up.");
+    expect(depthNote(5, 2, false, 2)).toBe("5 boxes at depth 2 (chosen). Double-click to open a box, Esc to go up.");
     expect(depthNote(70, 1)).toBe("70 boxes at depth 1. Double-click to open a box, Esc to go up. More than 60 boxes, drawn anyway.");
   });
 });

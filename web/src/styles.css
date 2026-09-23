@@ -520,3 +520,18 @@ button.st-removed {
 .search .hits li.at {
   background: var(--mark);
 }
+
+/* Deviation 8: the view was collapsed to fit the layout limit. */
+.notice {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 16px);
+  padding: 4px 8px;
+  font-size: 12px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}

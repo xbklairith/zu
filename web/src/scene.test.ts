@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { knownIds, openFull, scene } from "./scene";
+import { DRAW_LIMIT, fitDepth, knownIds, openFull, scene, tooBig } from "./scene";
 import { changedSubgraph } from "./change";
 import { DEFAULT_STATE, up, type ViewState } from "./state";
 import { decl, edge, exts, pkgs, view } from "./testkit";
@@ -97,6 +97,26 @@ describe("scene", () => {
     const ch = { ...v, kind: "change" as const, nodes: v.nodes.map((n) => (n.id === "m/api" ? { ...n, status: "modified" } : n)) };
     const sub = changedSubgraph(ch);
     expect(["", "m/api", "m/core", "m/lone"].map((f) => openFull(sub, f))).toEqual([false, false, true, true]);
+  });
+  it("limits a layout to 2,000 nodes or 500 drawn edges (Deviation 8)", () => {
+    const big = (nodes: number, edges: number, lines = true) =>
+      tooBig({ nodes: Array(nodes).fill(null), edges: Array(edges).fill(null), lines });
+    expect(DRAW_LIMIT).toEqual({ nodes: 2000, edges: 500 });
+    expect([big(2000, 500), big(2001, 0), big(10, 501), big(10, 501, false)]).toEqual([false, true, true, false]);
+    expect(tooBig(at({ depth: 2 }))).toBe(false);
+  });
+  it("draws the deepest depth that fits, or asks when even depth 1 does not (Deviation 8)", () => {
+    const sized = (edges: number[]) => (depth: number) =>
+      ({ depth, nodes: [], edges: Array(edges[depth - 1]).fill(null), lines: true });
+    const k8s = sized([184, 379, 505, 1712]);
+    expect(fitDepth(k8s(4), k8s)).toBe(2);
+    expect(fitDepth(k8s(2), k8s)).toBe(2);
+    expect(fitDepth({ ...k8s(4), lines: false }, k8s)).toBe(4);
+    const huge = sized([600, 900]);
+    expect(fitDepth(huge(2), huge)).toBeNull();
+    const tight = { nodes: 2000, edges: 2 };
+    expect([1, 2].map((d) => at({ depth: d }).edges.length)).toEqual([1, 3]);
+    expect(fitDepth(at({ depth: 2 }), (d) => at({ depth: d }), tight)).toBe(1);
   });
   it("is independent of input order", () => {
     const w = { ...v, nodes: [...v.nodes].reverse(), edges: [...v.edges].reverse() };

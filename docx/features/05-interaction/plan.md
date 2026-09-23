@@ -4053,7 +4053,7 @@ with
 
 **Steps:**
 
-- [ ] **Write the failing test.**
+- [x] **Write the failing test.**
 
 **Edit `web/src/scene.test.ts`:** replace
 
@@ -4113,8 +4113,8 @@ with
     expect(depthNote(5, 2, false, 2)).toBe("5 boxes at depth 2 (chosen). Double-click to open a box, Esc to go up.");
 ````
 
-- [ ] **Run — expect FAIL:** `cd web && npx vitest run src/scene.test.ts src/headline.test.ts` → `DRAW_LIMIT`, `tooBig` and `fitDepth` are not exported, and the note lacks "(collapsed from 4)".
-- [ ] **Implement.**
+- [x] **Run — expect FAIL:** `cd web && npx vitest run src/scene.test.ts src/headline.test.ts` → `DRAW_LIMIT`, `tooBig` and `fitDepth` are not exported, and the note lacks "(collapsed from 4)".
+- [x] **Implement.**
 
 **Edit `web/src/scene.ts`:** replace
 
@@ -4354,8 +4354,8 @@ with
 }
 ````
 
-- [ ] **Run — expect PASS:** `cd web && npx vitest run && npx tsc --noEmit && npm run build`.
-- [ ] **Commit:** `git add web/src/scene.ts web/src/scene.test.ts web/src/headline.ts web/src/headline.test.ts web/src/Header.tsx web/src/App.tsx web/src/styles.css && git commit -m "Collapse a large view to the deepest depth that fits"`
+- [x] **Run — expect PASS:** `cd web && npx vitest run && npx tsc --noEmit && npm run build`.
+- [x] **Commit:** `git add web/src/scene.ts web/src/scene.test.ts web/src/headline.ts web/src/headline.test.ts web/src/Header.tsx web/src/App.tsx web/src/styles.css && git commit -m "Collapse a large view to the deepest depth that fits"`
 
 ---
 

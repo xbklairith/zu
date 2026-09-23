@@ -11,7 +11,7 @@ import { elkGraph, positions, Superseded, type Placed } from "./layout";
 import { Panel } from "./Panel";
 import { reveal } from "./search";
 import { SearchBox } from "./SearchBox";
-import { openFull, scene, type SceneNode } from "./scene";
+import { DRAW_LIMIT, fitDepth, openFull, scene, type SceneNode } from "./scene";
 import { deeper, drill, nextStage, select, shallower, toggle, up } from "./state";
 import { Toolbar } from "./Toolbar";
 import { useViewState } from "./useViewState";
@@ -71,7 +71,19 @@ export function App({ view: whole }: { view: View }) {
   const searchBox = useRef<HTMLInputElement>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [fit, setFit] = useState(0);
-  const sc = useMemo(() => scene(view, state), [view, state]);
+  const requested = useMemo(() => scene(view, state), [view, state]);
+  // A view over DRAW_LIMIT draws the deepest depth that fits and says so; only
+  // when even depth 1 is too big does the reader choose (Deviation 8).
+  // "Draw depth M anyway" holds for this graph only.
+  const wanted = useMemo(() => JSON.stringify(elkGraph(requested)), [requested]);
+  const [confirmed, setConfirmed] = useState<string | null>(null);
+  const fitted = useMemo(() => {
+    if (confirmed === wanted) return requested;
+    const d = fitDepth(requested, (depth) => scene(view, { ...state, depth }));
+    return d === null ? null : d === requested.depth ? requested : scene(view, { ...state, depth: d });
+  }, [confirmed, wanted, requested, view, state]);
+  const sc = fitted ?? requested;
+  const ask = fitted === null;
   // A selected bundle edge lives here, not in the hash: its id changes with depth.
   const [edgeId, setEdgeId] = useState<string | null>(null);
   const edge = sc.edges.find((e) => e.id === edgeId) ?? null;
@@ -96,6 +108,7 @@ export function App({ view: whole }: { view: View }) {
   const [placed, setPlaced] = useState<{ graph: string; at: Map<string, Placed> } | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   useEffect(() => {
+    if (ask) return;
     performance.mark("zu-layout-start");
     engine.layout(JSON.parse(graph)).then(
       (out) => {
@@ -107,7 +120,7 @@ export function App({ view: whole }: { view: View }) {
         if (!(e instanceof Superseded)) setFailed(e.message);
       },
     );
-  }, [engine, graph]);
+  }, [engine, graph, ask]);
 
   const go = (box: string) => {
     update((s) => drill(s, box));
@@ -160,6 +173,7 @@ export function App({ view: whole }: { view: View }) {
         boxes={boxes}
         depth={sc.depth}
         auto={state.depth === null}
+        from={requested.depth}
         onFocus={go}
         full={change ? full : undefined}
         onToggle={flip}
@@ -171,9 +185,41 @@ export function App({ view: whole }: { view: View }) {
       {change && <ChangedList view={whole} onPick={pick} />}
       <main className="canvas">
         {change && <Legend />}
+        {sc !== requested && (
+          <div className="notice" id="zu-notice" role="status">
+            Collapsed to depth {sc.depth}: depth {requested.depth} has{" "}
+            {requested.lines && requested.edges.length > DRAW_LIMIT.edges
+              ? `${requested.edges.length} edges`
+              : `${requested.nodes.length} boxes`}{" "}
+            <button type="button" onClick={() => setConfirmed(wanted)}>
+              Draw depth {requested.depth} anyway
+            </button>{" "}
+            <button type="button" onClick={() => update((s) => ({ ...s, lines: false }))}>
+              Hide edges
+            </button>
+          </div>
+        )}
         {sc.noDetail ? (
           <div className="empty">
             Declarations not included. Re-run with <code>-include {pkg}</code>
+          </div>
+        ) : ask ? (
+          <div className="empty ask" id="zu-status">
+            <p>
+              Even depth 1 is too big to lay out quickly. Draw {sc.nodes.length} boxes and{" "}
+              {sc.lines ? sc.edges.length : 0} edges at depth {sc.depth}? Layout may take minutes.
+            </p>
+            <button type="button" onClick={() => update((s) => ({ ...s, lines: false }))}>
+              Hide edges
+            </button>{" "}
+            {state.focus !== "" && (
+              <button type="button" onClick={() => update((s) => up(s, parentBox(view, s.focus)))}>
+                Go back one level
+              </button>
+            )}{" "}
+            <button type="button" onClick={() => setConfirmed(wanted)}>
+              Draw anyway
+            </button>
           </div>
         ) : failed !== null ? (
           <div className="empty" id="zu-status">

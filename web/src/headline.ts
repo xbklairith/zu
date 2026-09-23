@@ -47,7 +47,10 @@ export function breadcrumb(view: View, focus: string): Crumb[] {
 }
 
 // auto is false when the reader chose the depth (A6), which the note says.
-export function depthNote(boxes: number, depth: number, auto = true): string {
-  const note = `${boxes} boxes at depth ${depth}${auto ? "" : " (chosen)"}. Double-click to open a box, Esc to go up.`;
+// from is the requested depth; when a large view was drawn shallower
+// (Deviation 8), the note says that instead.
+export function depthNote(boxes: number, depth: number, auto = true, from = depth): string {
+  const how = from !== depth ? ` (collapsed from ${from})` : auto ? "" : " (chosen)";
+  const note = `${boxes} boxes at depth ${depth}${how}. Double-click to open a box, Esc to go up.`;
   return boxes > BOX_BUDGET ? `${note} More than ${BOX_BUDGET} boxes, drawn anyway.` : note;
 }

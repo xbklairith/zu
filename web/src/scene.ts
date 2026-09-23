@@ -220,6 +220,22 @@ function markChanges(
   return found;
 }
 
+// DRAW_LIMIT is the most the page lays out at once (Deviation 8): ELK's time
+// grows with the edges it routes, and hidden lines are not laid out.
+export const DRAW_LIMIT = { nodes: 2000, edges: 500 };
+type Sized = { nodes: readonly unknown[]; edges: readonly unknown[]; lines: boolean };
+export const tooBig = (sc: Sized, limit = DRAW_LIMIT): boolean =>
+  sc.nodes.length > limit.nodes || (sc.lines && sc.edges.length > limit.edges);
+
+// fitDepth is the depth to draw for the requested scene (Deviation 8): its own
+// when it fits, else the deepest shallower depth that does, as at() draws it;
+// null when even depth 1 is too big and the reader has to choose.
+export function fitDepth(requested: Sized & { depth: number }, at: (depth: number) => Sized, limit = DRAW_LIMIT): number | null {
+  if (!tooBig(requested, limit)) return requested.depth;
+  for (let d = requested.depth - 1; d >= 1; d--) if (!tooBig(at(d), limit)) return d;
+  return null;
+}
+
 // knownIds says which ids a URL hash may name: boxes as a focus, boxes with
 // children as toggles, and anything scene() can anchor as a selection.
 export const knownIds = (view: View): Known => ({
