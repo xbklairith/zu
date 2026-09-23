@@ -43,6 +43,13 @@ The automation extension cannot open `file://`, so the files were served by a lo
   - clicking `.Get` shows `store.go` scrolled to line 43, highlighted;
   - Esc goes up one level;
   - `checkout` shows "Declarations not included. Re-run with -include …".
+  - The banner shows 0 parse errors, not the golden's 1: the golden's `bad/bad.go`
+    is written into a copy by `internal/scan/scan_test.go` and is not on disk.
+- **Links** (`zu scan -ref HEAD -html … -include ./internal/export`, a clean commit):
+  selecting `ForRepo` shows "View at 0aaff9ccabdf" →
+  `https://github.com/xbklairith/zu/blob/0aaff9c…/internal/export/links.go#L16`,
+  which is the `func ForRepo` line at that commit, with `target="_blank"` and
+  `rel="noopener noreferrer"`.
 - **Timing, kubernetes** (`performance.mark`, ms after navigation start):
 
   | mark | ms |
