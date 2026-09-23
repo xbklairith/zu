@@ -343,3 +343,68 @@ func TestDiffHTMLKeepsTheParseFailureExit(t *testing.T) {
 		t.Errorf("html not written before the parse-failure exit: %v", err)
 	}
 }
+
+// A change that adds a Levels violation exits 1 and lists it first; one
+// already at base is pre-existing (B7, B9).
+func TestDiffNewViolationExitsOne(t *testing.T) {
+	needGit(t)
+	dir := repo(t, map[string]string{
+		"go.mod":        "module example.com/m\n",
+		"a/a.go":        "package a\n",
+		"b/b.go":        "package b\n\nimport _ \"example.com/m/a\"\n",
+		policy.FileName: "levels: [example.com/m/b, example.com/m/a]\n", // b inner: b → a is known
+	})
+	git(t, dir, "init", "-q", "-b", "main")
+	git(t, dir, "add", "-A")
+	git(t, dir, "commit", "-q", "-m", "base")
+	git(t, dir, "checkout", "-q", "-b", "feat")
+	t.Chdir(dir)
+	code, out, errOut := run("diff", "main")
+	if code != ExitOK || !strings.Contains(out, "No new violations · 0 fixed, 1 pre-existing") {
+		t.Fatalf("known only: exit %d, stdout %q, stderr %q", code, out, errOut)
+	}
+
+	writeFile(t, dir, "b/c/c.go", "package c\n\nimport _ \"example.com/m/a\"\n")
+	git(t, dir, "add", "-A")
+	git(t, dir, "commit", "-q", "-m", "add c")
+	code, out, errOut = run("diff", "main", "-format", "json")
+	if code != ExitViolation || !strings.Contains(errOut, "1 new violations") {
+		t.Fatalf("new violation: exit %d, stderr %q", code, errOut)
+	}
+	s := summaryOf(t, out)
+	if s.Violations == nil || len(s.Violations.New) != 1 || s.Violations.New[0].From != "example.com/m/b/c" || s.Violations.Known != 1 {
+		t.Fatalf("violations = %+v", s.Violations)
+	}
+}
+
+// A level naming a package the MR deletes is a warning, not a stop: check
+// enforces it on the tree that has the stale name. The MR that also fixes
+// the Policy passes cleanly, since head's Policy governs both sides.
+func TestDiffWarnsWhenALevelNamesNoPackage(t *testing.T) {
+	needGit(t)
+	dir := repo(t, map[string]string{
+		"go.mod":        "module example.com/m\n",
+		"a/a.go":        "package a\n",
+		"b/b.go":        "package b\n",
+		"c/c.go":        "package c\n",
+		policy.FileName: "levels: [example.com/m/a, example.com/m/b, example.com/m/c]\n",
+	})
+	git(t, dir, "init", "-q", "-b", "main")
+	git(t, dir, "add", "-A")
+	git(t, dir, "commit", "-q", "-m", "base")
+	git(t, dir, "checkout", "-q", "-b", "feat")
+	git(t, dir, "rm", "-q", "c/c.go")
+	git(t, dir, "commit", "-q", "-m", "delete c")
+	t.Chdir(dir)
+	code, _, errOut := run("diff", "main")
+	if code != ExitOK || !strings.Contains(errOut, "warning") || !strings.Contains(errOut, `"example.com/m/c"`) {
+		t.Fatalf("deleted ranked package: exit %d, stderr %q", code, errOut)
+	}
+
+	writeFile(t, dir, policy.FileName, "levels: [example.com/m/a, example.com/m/b]\n")
+	git(t, dir, "commit", "-q", "-am", "drop c from the levels")
+	code, _, errOut = run("diff", "main")
+	if code != ExitOK || strings.Contains(errOut, "warning") {
+		t.Fatalf("Policy fixed in the same MR: exit %d, stderr %q", code, errOut)
+	}
+}

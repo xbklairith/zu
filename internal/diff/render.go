@@ -18,6 +18,9 @@ func WriteText(w io.Writer, s *Summary) error {
 	var b strings.Builder
 	b.WriteString("zu · structural change\n")
 	b.WriteString(refLine(s) + "\n")
+	if s.Violations != nil {
+		b.WriteString("\n" + violationsBlock(s.Violations, false, len(s.Violations.New)) + "\n")
+	}
 	if !s.Changed {
 		b.WriteString("no structural change\n")
 	} else {
@@ -55,7 +58,7 @@ func WriteText(w io.Writer, s *Summary) error {
 func WriteMarkdown(w io.Writer, s *Summary) error {
 	footer := "\n" + NotCompared + "\n"
 	budget := markdownBudget - len(footer)
-	all := max(len(s.Imports), len(s.Moves))
+	all := max(len(s.Imports), len(s.Moves), newCount(s))
 	body := markdownBody(s, len(s.Packages), all)
 	if len(body) > budget {
 		// Largest table that fits with every list whole, else no table and
@@ -93,6 +96,9 @@ func markdownBody(s *Summary, rows, items int) string {
 	var b strings.Builder
 	b.WriteString("### zu · structural change\n\n")
 	b.WriteString(refLine(s) + "\n\n")
+	if s.Violations != nil {
+		b.WriteString(violationsBlock(s.Violations, true, items) + "\n")
+	}
 	if !s.Changed {
 		b.WriteString("no structural change\n\n")
 		b.WriteString(parseErrorsLine(s) + "\n")

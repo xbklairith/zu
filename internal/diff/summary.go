@@ -23,7 +23,8 @@ type Summary struct {
 	Base           ir.Ref            `json:"base"`
 	Head           ir.Ref            `json:"head"`
 	Changed        bool              `json:"changed"`
-	Packages       []PackageRow      `json:"packages"` // changed packages, bottom-up
+	Violations     *ViolationDelta   `json:"violations,omitempty"` // only when the Policy has rules
+	Packages       []PackageRow      `json:"packages"`             // changed packages, bottom-up
 	Imports        []EdgeChange      `json:"imports"`
 	EdgeCounts     map[string]Counts `json:"edgeCounts"` // "calls", "embeds"
 	Moves          []Move            `json:"moves"`

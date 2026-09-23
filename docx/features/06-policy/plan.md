@@ -3383,7 +3383,7 @@ The suggestion follows ADR 0008: Levels only, never a component map. The candida
 
 **Steps:**
 
-- [ ] **Write the failing tests.** 03's goldens (`internal/diff/testdata/shop.summary.*`) must stay byte-identical, because without rules there is no section.
+- [x] **Write the failing tests.** 03's goldens (`internal/diff/testdata/shop.summary.*`) must stay byte-identical, because without rules there is no section.
 
    <!-- file: internal/diff/violations_test.go -->
    ```go
@@ -3536,9 +3536,9 @@ The suggestion follows ADR 0008: Levels only, never a component map. The candida
 
    `TestDiffWarnsWhenALevelNamesNoPackage` is the scrutiny's M1 scenario: an MR deletes a ranked package (exit 0 with a warning), then also fixes the Policy (exit 0, no warning).
 
-- [ ] **Run them:** `go test ./internal/diff ./internal/cli -run 'Violation|Level'`. Expected: FAIL (`undefined: Violations`).
+- [x] **Run them:** `go test ./internal/diff ./internal/cli -run 'Violation|Level'`. Expected: FAIL (`undefined: Violations`).
 
-- [ ] **Implement**
+- [x] **Implement**
 
    <!-- file: internal/diff/violations.go -->
    ```go
@@ -3694,7 +3694,7 @@ The suggestion follows ADR 0008: Levels only, never a component map. The candida
     
    ```
 
-- [ ] **Update 03's output contract** (`output.md` is what CI jobs rely on): head's Policy for both sides, exit 1's meaning, exit 3 without "changed policy", the `violations` JSON field and its place after `changed`, and the Markdown section order.
+- [x] **Update 03's output contract** (`output.md` is what CI jobs rely on): head's Policy for both sides, exit 1's meaning, exit 3 without "changed policy", the `violations` JSON field and its place after `changed`, and the Markdown section order.
 
    ```diff
    --- a/docx/features/03-diff-ci/output.md
@@ -3784,7 +3784,7 @@ The suggestion follows ADR 0008: Levels only, never a component map. The candida
     
    ```
 
-- [ ] **Run:** `go test ./internal/diff ./internal/cli`. Expected: `ok`, with no golden rewritten.
+- [x] **Run:** `go test ./internal/diff ./internal/cli`. Expected: `ok`, with no golden rewritten.
 
 ### Task 11: The View carries ranks and violations; the export draws through the lens
 
@@ -4390,7 +4390,7 @@ These diffs are against `main` at 8f43cb1. If 05's `App.tsx` changes before 06 s
 - [x] Task 7 · Baseline
 - [x] Task 8 · `zu check`
 - [x] Task 9 · `zu policy init`
-- [ ] Task 10 · `zu diff` B7/B9
+- [x] Task 10 · `zu diff` B7/B9
 - [ ] Task 11 · View fields and the lensed export
 - [ ] Task 12 · UI: red violations via `pin`
 - [ ] Task 13 · Acceptance

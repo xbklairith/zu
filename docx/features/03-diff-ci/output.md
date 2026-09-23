@@ -23,7 +23,10 @@ Flags may come before or after the refs.
 | `-max-parse-errors N` | exit 2 when head has more than N files that fail to parse (default 0) |
 
 Both sides are scanned from the repository top level, whatever the current
-directory, so running from a subdirectory gives the same output. Nothing is written
+directory, so running from a subdirectory gives the same output. Both are scanned
+under head's `zu.policy.yaml` (under `-worktree`, the working tree's; ADR 0004): its
+`exclude` applies to base too, and base's violations are evaluated under head's rules.
+The MR that adds or edits the Policy is diffed like any other. Nothing is written
 to `.zu/`; the summary goes to stdout and one status line to stderr:
 
 ```
@@ -35,9 +38,9 @@ zu diff: <n> packages changed, <m> affected, parse errors base=<a> head=<b>
 | Code | When |
 |---|---|
 | 0 | the summary was printed, whatever it contains |
-| 1 | reserved for new rule violations (the Policy feature) |
+| 1 | head's Policy has rules (`levels` or `cycles: true`) and the change adds violations: present in head, absent in base, both under head's rules. The summary was printed. Exit 2 wins over 1 |
 | 2 | the summary was printed, but head has more parse errors than `-max-parse-errors`. Base's parse errors already exist on the base branch: they are reported and never fail the MR |
-| 3 | bad invocation: unknown or option-like ref, not a git repository, bad flag or format, `-include-ignored` without `-worktree`, `-worktree` with a head ref, no merge-base, changed policy, or Ctrl-C. Nothing is printed on stdout |
+| 3 | bad invocation: unknown or option-like ref, not a git repository, bad flag or format, `-include-ignored` without `-worktree`, `-worktree` with a head ref, no merge-base, a `zu.policy.yaml` that does not parse or validate, or Ctrl-C. Nothing is printed on stdout. A Level that names no package in head is only a warning on stderr; `zu check` fails on it |
 
 ## The merge-base requirement
 
@@ -76,6 +79,11 @@ tree) the output is byte-identical.
   "base": {"commit": "<merge-base id>", "dirty": false},
   "head": {"commit": "<head id>", "dirty": false},
   "changed": true,
+  "violations": {
+    "new": [{"rule": "levels", "from": "example.com/shop/internal/money", "to": "example.com/shop"}],
+    "fixed": [],
+    "known": 0
+  },
   "packages": [
     {"id": "example.com/shop/internal/store", "status": "modified",
      "added": 0, "modified": 3, "removed": 1, "hops": 0}
@@ -101,6 +109,7 @@ tree) the output is byte-identical.
 | `summaryVersion` | `"1"`. A tool should refuse a version it does not know |
 | `base`, `head` | the IR refs compared. `base.commit` is the merge-base. `head.dirty` is true under `-worktree` when a tracked file is modified or an untracked (or included ignored) file is read |
 | `changed` | false when nothing below differs |
+| `violations` | present only when head's Policy has rules. `new`: violations in head and not in base; `fixed`: in base and not in head; `known`: how many are in both. Each violation is `{"rule", "from", "to"}`: `levels` names two packages, an import from an inner level to an outer one; `cycle` names two sibling Package Tree boxes, one arc of a cycle between them. Lists are sorted by (rule, from, to) and never `null` |
 | `packages` | one row per changed package, in reading order: bottom-up by imports (leaves first; one import cycle shares a rank), then by id. `status` is `added`, `modified` or `removed`; `added`/`modified`/`removed` count the package's declarations (types and functions, methods included) with that status, Moves excluded; `hops` is 0 |
 | `imports` | changed import edges, sorted by (from, to). `status` is `added`, `removed` or `reversed`; a reversed pair (`a→b` removed, `b→a` added) is one entry in head's direction |
 | `edgeCounts` | added and removed `calls` and `embeds` edges, as counts only |
@@ -122,24 +131,26 @@ For an MR comment, at most 65,536 bytes. Sections, in order:
 
 1. `### zu · structural change`
 2. `base <12> (merge-base) → head <12>`, with ` (worktree)` after head when it is dirty
-3. the counts line: packages, declarations `+added ~modified −removed`, dependency changes, moves
-4. the package table: `Package | Change | + ~ − | Hops`, ids in code spans with `|` escaped
-5. **Dependencies**: `+`, `−` and `⇄ … (reversed)` lines
-6. **Moves**
-7. `Affected: N packages (c changed, k at 1 hop, …)`, N being the whole Affected Set
-8. `Calls: +a −r · Embeds: +a −r`
-9. a Mermaid `flowchart BT` of the changed packages plus their direct importers
+3. only when head's Policy has rules: **New violations (N)** with one ``- <rule> `from` → `to` `` line each, then
+   `F fixed, K pre-existing`; or `No new violations · F fixed, K pre-existing`
+4. the counts line: packages, declarations `+added ~modified −removed`, dependency changes, moves
+5. the package table: `Package | Change | + ~ − | Hops`, ids in code spans with `|` escaped
+6. **Dependencies**: `+`, `−` and `⇄ … (reversed)` lines
+7. **Moves**
+8. `Affected: N packages (c changed, k at 1 hop, …)`, N being the whole Affected Set
+9. `Calls: +a −r · Embeds: +a −r`
+10. a Mermaid `flowchart BT` of the changed packages plus their direct importers
    (dimmed with `classDef dim`) and head's imports between them. Node ids are
    generated (`n1`, `n2`, … in row order) and labels quoted, so no package id can
    break it. Above 30 packages it is replaced by
    `_Diagram omitted: N packages (limit 30)._`
-10. `Parse errors: base a, head b`
-11. the not-compared footer
+11. `Parse errors: base a, head b`
+12. the not-compared footer
 
 When the whole comment would exceed the budget, the package table is cut first, then
-the lists, each ending with `…and N more`. The counts, the Affected line and the
-footer are always kept. With no change, sections 3–9 are replaced by
-`no structural change`.
+the lists (the new violations among them), each ending with `…and N more`. The counts,
+the Affected line and the footer are always kept. With no change, sections 4–10 are
+replaced by `no structural change`; the violations section stays.
 
 ## Text
 

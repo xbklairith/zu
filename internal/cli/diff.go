@@ -31,6 +31,8 @@ func loadPolicy(tree scan.Tree) (*policy.Policy, error) {
 // [-worktree [-include-ignored]] [-max-parse-errors N] [-html file
 // [-link-template T]]`: the Structural Summary of head against the
 // merge-base of base and head, and optionally the Change View export.
+// Exit 2 when head fails to parse, else 1 when the change adds violations
+// of the Policy's rules, else 0.
 func runDiff(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("zu diff", flag.ContinueOnError)
 	fs.SetOutput(stderr)
@@ -115,8 +117,16 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 	if err := ctx.Err(); err != nil {
 		return bad("%v", err)
 	}
+	// check enforces this; a diff must not fail an MR that deletes or
+	// renames a package a level names.
+	if err := pol.Validate(headDoc); err != nil {
+		fmt.Fprintf(stderr, "zu diff: warning: %v (zu check fails on it)\n", err)
+	}
 
 	s := diff.Summarize(baseDoc, headDoc)
+	if pol.Rules() {
+		s.Violations = diff.Violations(pol.Check(baseDoc), pol.Check(headDoc))
+	}
 	var buf bytes.Buffer
 	switch *format {
 	case "markdown":
@@ -144,6 +154,10 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 	// never failing the MR.
 	if len(headDoc.ParseErrors) > *maxErrs {
 		return ExitParseFailure
+	}
+	if s.Violations != nil && len(s.Violations.New) > 0 {
+		fmt.Fprintf(stderr, "zu diff: %d new violations of %s (B9)\n", len(s.Violations.New), policy.FileName)
+		return ExitViolation
 	}
 	return ExitOK
 }
