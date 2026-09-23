@@ -125,6 +125,16 @@ the clone for, rather than a tag pair: the corpus clone is shallow at v0.166.0.
   from the layout's positions and the canvas's measured size, without animation,
   because hidden tabs never run the animation frames.
 
+- A changed package folded into a package box drawn at the leaf depth was
+  invisible: hugo's `config/security` inside `config`, for example. That box now
+  gets a "+N changed packages" chip when it opens, and is marked `has-change`
+  when it stays a box. There is a test for it.
+- The status colours were checked against WCAG AA for text (4.5:1) on `--box`,
+  `--bg` and `--code-bg`. Light modified (4.33) and moved (4.49), and dark
+  removed (4.42) and moved (4.42), fell short on `--box`. They were changed;
+  the lowest ratio is now 5.83. The hunk text on its green and red backgrounds
+  is at least 10.7:1.
+
 ## Pending manual checks
 
 The same as Part A: `file://` in Chrome, Firefox and Safari, and first paint in a

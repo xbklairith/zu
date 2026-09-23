@@ -96,8 +96,8 @@ function declItem(view: View, id: string, parent?: string): Item {
 
 // markChanges gives each drawn item its Change View mark and opens every
 // changed package drawn as a box onto its changed declarations, with a chip
-// counting the ones left out (Q4). A box holding a changed package that is
-// not one itself is marked "has-change".
+// counting the ones left out (Q4). A box that folds changed packages into it
+// is marked "has-change", or, when it opens, gets a chip counting them.
 function markChanges(view: View, focus: string, items: Item[]) {
   const idx = boxesOf(view);
   if (focus !== "" && (focus.endsWith(PKG) || idx.byId.get(focus)?.kind === "package") && !idx.boxes.get(focus)?.children) {
@@ -112,12 +112,21 @@ function markChanges(view: View, focus: string, items: Item[]) {
       continue;
     }
     it.mark = nodeMark(n);
+    // A package box drawn at the leaf depth folds its subpackages into it.
+    const folded = it.id.endsWith(PKG) ? 0 : packagesIn(view, it.id).filter((p) => p.id !== pkg && p.status).length;
     const decls = n.detail ? declLeaves(view, pkg) : [];
-    if (decls.length === 0) continue;
+    if (decls.length === 0) {
+      if (folded > 0) it.mark = `${it.mark} has-change`.trim();
+      continue;
+    }
     it.shape = "container";
     for (const id of decls) items.push(declItem(view, id, it.id));
     const more = unchangedCount(view, pkg);
     if (more > 0) items.push({ id: `${it.id}#unchanged`, label: `+${more} unchanged`, parent: it.id, shape: "chip" });
+    if (folded > 0) {
+      const label = `+${folded} changed package${folded > 1 ? "s" : ""}`;
+      items.push({ id: `${it.id}#folded`, label, parent: it.id, shape: "chip" });
+    }
   }
 }
 

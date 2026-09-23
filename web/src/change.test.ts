@@ -79,4 +79,15 @@ describe("change scene", () => {
     expect(repo.rowMarks).toEqual(["st-modified", "st-modified"]);
     expect(s.items.find((i) => i.id === "example.com/shop/tools/gen")?.mark).toBe("affected");
   });
+  it("shows changed packages folded into a package box", () => {
+    // At depth 1 the example.com/shop package box folds internal/checkout,
+    // money and store, all changed; they must not vanish silently.
+    const s = scene(v, "", 1);
+    const chip = s.items.find((i) => i.parent === "example.com/shop" && i.shape === "chip" && i.label.includes("package"));
+    expect(chip?.label).toBe("+3 changed packages");
+    const full = { ...v, nodes: v.nodes.map((n) => (n.id === "example.com/shop" ? { ...n, status: undefined, detail: false } : n)) };
+    const box = scene(full, "", 1).items.find((i) => i.id === "example.com/shop");
+    expect(box?.shape).toBe("box");
+    expect(box?.mark).toContain("has-change");
+  });
 });
