@@ -18,6 +18,14 @@ import (
 	"zu/internal/scan"
 )
 
+// Seams for tests: how the command learns of Ctrl-C, and how it reads HEAD.
+var (
+	interruptContext = func() (context.Context, context.CancelFunc) {
+		return signal.NotifyContext(context.Background(), os.Interrupt)
+	}
+	gitHead = gitref.Head
+)
+
 // runScan implements `zu scan [dir] [-out -|path] [-max-parse-errors N]`.
 // Flags may come before or after dir.
 func runScan(args []string, stdout, stderr io.Writer) int {
@@ -37,14 +45,20 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 		return ExitBadInvocation
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, stop := interruptContext()
 	defer stop()
 	doc, stats, err := scan.Run(ctx, scan.Options{Root: dir})
 	if err != nil {
 		fmt.Fprintf(stderr, "zu scan: %v\n", err)
 		return ExitBadInvocation
 	}
-	doc.Ref.Commit, doc.Ref.Dirty = gitref.Head(ctx, dir)
+	doc.Ref.Commit, doc.Ref.Dirty = gitHead(ctx, dir)
+	if err := ctx.Err(); err != nil {
+		// An interrupted git looks like "no commit"; writing that would
+		// mislabel the IR as the worktree.
+		fmt.Fprintf(stderr, "zu scan: %v\n", err)
+		return ExitBadInvocation
+	}
 
 	var buf bytes.Buffer
 	if err := ir.Encode(&buf, doc); err != nil {

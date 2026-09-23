@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -194,5 +196,26 @@ func TestScanBadInvocation(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(missing, ".zu")); !os.IsNotExist(err) {
 		t.Fatal("nothing may be written for a bad invocation")
+	}
+}
+
+func TestScanInterruptedDuringGitWritesNothing(t *testing.T) {
+	root := repo(t, small)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	oldCtx, oldHead := interruptContext, gitHead
+	t.Cleanup(func() { interruptContext, gitHead = oldCtx, oldHead })
+	interruptContext = func() (context.Context, context.CancelFunc) { return ctx, cancel }
+	gitHead = func(context.Context, string) (string, bool) {
+		cancel() // Ctrl-C arrives while git runs; git then reports no commit
+		return "", false
+	}
+
+	var stderr strings.Builder
+	if code := Run([]string{"scan", root}, io.Discard, &stderr); code != ExitBadInvocation {
+		t.Fatalf("exit = %d, want %d; stderr:\n%s", code, ExitBadInvocation, stderr.String())
+	}
+	if _, err := os.Stat(filepath.Join(root, ".zu")); !os.IsNotExist(err) {
+		t.Fatalf("interrupted scan wrote .zu (err=%v)", err)
 	}
 }
