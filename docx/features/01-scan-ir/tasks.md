@@ -12,8 +12,8 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
 
 ## Progress Summary
 - Total Tasks: 15
-- Completed: 3/15
-- In Progress: Task 4 — File header facts
+- Completed: 4/15
+- In Progress: Task 5 — Declaration facts
 
 ## Tasks
 
@@ -35,10 +35,10 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
   - [x] REFACTOR
   - Linked: REQ-023, REQ-024, REQ-027, REQ-028
 
-- [ ] **Task 4: File header facts** (`extract.go`)
-  - [ ] RED: `//go:build ignore` and `ignore && x` are skipped, while `linux` and `!windows` are parsed; generated after a licence header → true; a comment after the package clause → false; parse error → message with the path relative to the root
-  - [ ] GREEN
-  - [ ] REFACTOR
+- [x] **Task 4: File header facts** (`extract.go`)
+  - [x] RED: `//go:build ignore` and `ignore && x` are skipped, while `linux` and `!windows` are parsed; generated after a licence header → true; a comment after the package clause → false; parse error → message with the path relative to the root
+  - [x] GREEN
+  - [x] REFACTOR
   - Linked: REQ-007, REQ-025, REQ-032, REQ-043
 
 - [ ] **Task 5: Declaration facts**

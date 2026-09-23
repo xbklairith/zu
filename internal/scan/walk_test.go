@@ -41,11 +41,11 @@ func TestWalkSkipsAndOrders(t *testing.T) {
 
 func TestWalkModulesAndImportPaths(t *testing.T) {
 	root := tree(t, map[string]string{
-		"go.mod":             "module example.com/m\n\nrequire (\n\tgithub.com/x/y v1.0.0\n\tgithub.com/x/y/v2 v2.0.0\n)\n",
-		"root.go":            "package m\n",
-		"svc/s.go":           "package svc\n",
-		"tools/go.mod":       "module example.com/m/tools\n",
-		"tools/gen/g.go":     "package gen\n",
+		"go.mod":         "module example.com/m\n\nrequire (\n\tgithub.com/x/y v1.0.0\n\tgithub.com/x/y/v2 v2.0.0\n)\n",
+		"root.go":        "package m\n",
+		"svc/s.go":       "package svc\n",
+		"tools/go.mod":   "module example.com/m/tools\n",
+		"tools/gen/g.go": "package gen\n",
 	})
 	w, err := walk(root)
 	if err != nil {
