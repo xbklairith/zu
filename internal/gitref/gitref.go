@@ -45,3 +45,23 @@ func git(ctx context.Context, dir string, args ...string) (string, error) {
 	out, err := cmd.Output()
 	return string(out), err
 }
+
+// Prefix returns dir's path inside its repository with a trailing slash
+// ("" at the top level, or outside a repository): git rev-parse --show-prefix.
+func Prefix(ctx context.Context, dir string) string {
+	out, err := git(ctx, dir, "rev-parse", "--show-prefix")
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(out)
+}
+
+// Origin returns the URL of the "origin" remote, or "" when there is none.
+// It may carry credentials; callers must not copy it into output as-is.
+func Origin(ctx context.Context, dir string) string {
+	out, err := git(ctx, dir, "remote", "get-url", "origin")
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(out)
+}

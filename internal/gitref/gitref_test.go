@@ -126,3 +126,34 @@ func TestHeadRunsNoRepoConfiguredCodeAndWritesNothing(t *testing.T) {
 		t.Fatal(".git/index was rewritten")
 	}
 }
+
+func TestPrefix(t *testing.T) {
+	needGit(t)
+	top := t.TempDir()
+	run(t, top, "init", "-q")
+	sub := filepath.Join(top, "sub", "dir")
+	if err := os.MkdirAll(sub, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	if got := Prefix(ctx, top); got != "" {
+		t.Errorf("Prefix(top) = %q, want \"\"", got)
+	}
+	if got := Prefix(ctx, sub); got != "sub/dir/" {
+		t.Errorf("Prefix(sub/dir) = %q, want \"sub/dir/\"", got)
+	}
+}
+
+func TestOrigin(t *testing.T) {
+	needGit(t)
+	dir := t.TempDir()
+	run(t, dir, "init", "-q")
+	ctx := context.Background()
+	if got := Origin(ctx, dir); got != "" {
+		t.Errorf("Origin without a remote = %q, want \"\"", got)
+	}
+	run(t, dir, "remote", "add", "origin", "git@github.com:o/r.git")
+	if got := Origin(ctx, dir); got != "git@github.com:o/r.git" {
+		t.Errorf("Origin = %q", got)
+	}
+}

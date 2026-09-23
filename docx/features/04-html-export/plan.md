@@ -790,7 +790,7 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
    ```go
    package export
@@ -846,11 +846,11 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
 
    In `internal/gitref/gitref_test.go` add `TestPrefix`: `Prefix` of the repo top is `""`, and of `top/sub/dir` is `"sub/dir/"`. Also add `TestOrigin`: init a repo in `t.TempDir()`, `git remote add origin git@github.com:o/r.git`, and expect `Origin(ctx, dir) == "git@github.com:o/r.git"`; a repo with no remote gives `""`.
 
-- [ ] **Run — expect FAIL** (`undefined: ForRepo`, `undefined: Origin`, `undefined: Prefix`)
+- [x] **Run — expect FAIL** (`undefined: ForRepo`, `undefined: Origin`, `undefined: Prefix`)
 
    Run: `go test ./internal/export/ ./internal/gitref/`
 
-- [ ] **Implement `gitref.Prefix` and `gitref.Origin`** (append to `internal/gitref/gitref.go`)
+- [x] **Implement `gitref.Prefix` and `gitref.Origin`** (append to `internal/gitref/gitref.go`)
 
    ```go
    // Prefix returns dir's path inside its repository with a trailing slash
@@ -874,7 +874,7 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    }
    ```
 
-- [ ] **Implement `links.go`**
+- [x] **Implement `links.go`** (as built, the `Links` type lives in `view.go`, added in Task 2 so `View` compiles)
 
    ```go
    package export
@@ -941,12 +941,12 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    }
    ```
 
-- [ ] **Run — expect PASS**
+- [x] **Run — expect PASS**
 
    Run: `go test ./internal/export/ ./internal/gitref/`
    Expected: both `ok`
 
-- [ ] **Commit**
+- [x] **Commit**
 
    ```bash
    git add internal/export/links.go internal/export/links_test.go internal/gitref/gitref.go internal/gitref/gitref_test.go
@@ -1613,7 +1613,7 @@ Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag r
 - [x] Task 1 · `-include` patterns
 - [x] Task 2 · Project View data
 - [x] Task 3 · Render
-- [ ] Task 4 · Links
+- [x] Task 4 · Links
 - [ ] Task 5 · `zu scan -html`
 - [ ] Task 6 · UI toolchain
 - [ ] Task 7 · Golden View
