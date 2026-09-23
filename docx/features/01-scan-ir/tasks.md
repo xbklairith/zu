@@ -12,8 +12,8 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
 
 ## Progress Summary
 - Total Tasks: 15
-- Completed: 11/15
-- In Progress: Task 12 — scan.Run, golden fixture, determinism
+- Completed: 12/15
+- In Progress: Task 13 — CLI `zu scan`
 
 ## Tasks
 
@@ -83,10 +83,10 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
   - [x] REFACTOR
   - Linked: REQ-015, REQ-016, REQ-021, REQ-022, REQ-026, REQ-032
 
-- [ ] **Task 12: scan.Run, golden fixture, determinism**
-  - [ ] RED: `testdata/shop` golden (all cases in design §Testing); GOMAXPROCS 1 vs 8 byte-equal; gofmt / re-wrap / comment copy gives equal hashes; a one-statement edit changes exactly one function hash plus its package hash
-  - [ ] GREEN: worker pool, fixed slots, `grouping:"tree"`, default `policyHash`
-  - [ ] REFACTOR
+- [x] **Task 12: scan.Run, golden fixture, determinism**
+  - [x] RED: `testdata/shop` golden (all cases in design §Testing); GOMAXPROCS 1 vs 8 byte-equal; gofmt / re-wrap / comment copy gives equal hashes; a one-statement edit changes exactly one function hash plus its package hash
+  - [x] GREEN: worker pool, fixed slots, `grouping:"tree"`, default `policyHash`
+  - [x] REFACTOR
   - Linked: REQ-001, REQ-007, REQ-012, REQ-038, REQ-039, and the end-to-end check of REQ-013–REQ-037
 
 - [ ] **Task 13: CLI `zu scan`** (`internal/cli/scan.go`)

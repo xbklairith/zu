@@ -1,0 +1,664 @@
+{
+  "schemaVersion": "1",
+  "ref": {
+    "commit": "",
+    "dirty": false
+  },
+  "grouping": "tree",
+  "policyHash": "sha256:ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+  "nodes": [
+    {
+      "id": "example.com/shop",
+      "kind": "package",
+      "module": "example.com/shop",
+      "hash": "a8955dc1d4f2d6f067908b329095a72728e247fbee35fcbccf57634f4ae383f5",
+      "locations": [
+        {
+          "path": "main.go",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop.main",
+      "kind": "function",
+      "parent": "example.com/shop",
+      "exported": false,
+      "hash": "3755818cd2acdccf6ffbdedf5e25e271142ca068f9e4703494474bcd0eed6877",
+      "locations": [
+        {
+          "path": "main.go",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/checkout",
+      "kind": "package",
+      "module": "example.com/shop",
+      "hash": "fe684652b4df6132374ecb24e8997d923062f620637fd76bbc663e80b0769b1e",
+      "locations": [
+        {
+          "path": "internal/checkout/checkout.go",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/checkout.Cart",
+      "kind": "type",
+      "parent": "example.com/shop/internal/checkout",
+      "exported": true,
+      "typeKind": "struct",
+      "hash": "a4f700f600d119d77af7b96ec6e62dd3aefd445dd42ac5a00a6873bbec679c2a",
+      "locations": [
+        {
+          "path": "internal/checkout/checkout.go",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/checkout.Line",
+      "kind": "type",
+      "parent": "example.com/shop/internal/checkout",
+      "exported": true,
+      "typeKind": "struct",
+      "hash": "1c63561db82f75f602f7290c3cc4807b9ea5efe4c612a961a9acc57f19fdae09",
+      "locations": [
+        {
+          "path": "internal/checkout/checkout.go",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/checkout.Place",
+      "kind": "function",
+      "parent": "example.com/shop/internal/checkout",
+      "exported": true,
+      "hash": "7022e1abb5278e4cde58d583ea464e694109ed8218275bfb329001e9bbf631ca",
+      "locations": [
+        {
+          "path": "internal/checkout/checkout.go",
+          "line": 34
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/checkout.Total",
+      "kind": "function",
+      "parent": "example.com/shop/internal/checkout",
+      "exported": true,
+      "hash": "c9cb21db57190f4cb0ce5fd161e6e5784e0270b145892337f188804a2f90c26b",
+      "locations": [
+        {
+          "path": "internal/checkout/checkout.go",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/checkout.validate",
+      "kind": "function",
+      "parent": "example.com/shop/internal/checkout",
+      "exported": false,
+      "hash": "749e073ad4de76f3ace03827969c10e07cc3e608ebcb91568b8c585c6d8974ff",
+      "locations": [
+        {
+          "path": "internal/checkout/checkout.go",
+          "line": 44
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/money",
+      "kind": "package",
+      "module": "example.com/shop",
+      "hash": "42b67daef3793556b610cc650e390bf9904c368c506738d24c18ee6553933236",
+      "locations": [
+        {
+          "path": "internal/money/money.go",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/money.Add",
+      "kind": "function",
+      "parent": "example.com/shop/internal/money",
+      "exported": true,
+      "hash": "f6bb8d861f5184d14a65f3194c1d29dedc23a89e088c527b03a5297e335a4887",
+      "locations": [
+        {
+          "path": "internal/money/money.go",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/money.Cents",
+      "kind": "type",
+      "parent": "example.com/shop/internal/money",
+      "exported": true,
+      "typeKind": "other",
+      "hash": "585898f2ed91a2f36178b34a64df73cd9c98d44191ec9c62c21ca7ceecaad2dc",
+      "locations": [
+        {
+          "path": "internal/money/money.go",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/money.Currency",
+      "kind": "type",
+      "parent": "example.com/shop/internal/money",
+      "exported": true,
+      "typeKind": "other",
+      "hash": "8847771dde98f8e185b4f1b1498da4b1d25eb12912b66ecc20882b140a605ae4",
+      "locations": [
+        {
+          "path": "internal/money/money.go",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/store",
+      "kind": "package",
+      "module": "example.com/shop",
+      "hash": "4f7d908f166c43c49644a7d3f3953595500bc7364e53b6281961632c0a3888da",
+      "locations": [
+        {
+          "path": "internal/store/db_linux.go",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/store.Open",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store",
+      "exported": true,
+      "hash": "a51ef9eae846965d676e2a1c7687e00fd0d21c3c1cf3adf2f6af29ca89acd34c",
+      "locations": [
+        {
+          "path": "internal/store/store.go",
+          "line": 40
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/store.Order",
+      "kind": "type",
+      "parent": "example.com/shop/internal/store",
+      "exported": true,
+      "typeKind": "struct",
+      "hash": "14c51534b85833ac77e8e74db00988691112afe413cb5843db3bf769a3aa4a7a",
+      "locations": [
+        {
+          "path": "internal/store/store.go",
+          "line": 25
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/store.Page",
+      "kind": "type",
+      "parent": "example.com/shop/internal/store",
+      "exported": true,
+      "typeKind": "struct",
+      "hash": "2f2656bb06013fa824825ccebb6a3afa75661326f8b4b12dc9b783b27699e0a8",
+      "locations": [
+        {
+          "path": "internal/store/store.go",
+          "line": 63
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/store.Page.Len",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store.Page",
+      "exported": true,
+      "hash": "c38d57b5e81d2971b60a0ace27e80d46e162f9baea960316c8f5b95791577097",
+      "locations": [
+        {
+          "path": "internal/store/store.go",
+          "line": 68
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/store.ReadWriter",
+      "kind": "type",
+      "parent": "example.com/shop/internal/store",
+      "exported": true,
+      "typeKind": "interface",
+      "hash": "8555d57666106979710b8565b9486052a35734917797b80d1902fde93db76456",
+      "locations": [
+        {
+          "path": "internal/store/store.go",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/store.Reader",
+      "kind": "type",
+      "parent": "example.com/shop/internal/store",
+      "exported": true,
+      "typeKind": "interface",
+      "hash": "2de0248078838297d22ac18f1a86b3632ff79b983f30259172b1e75c54e5d639",
+      "locations": [
+        {
+          "path": "internal/store/store.go",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/store.Repo",
+      "kind": "type",
+      "parent": "example.com/shop/internal/store",
+      "exported": true,
+      "typeKind": "struct",
+      "hash": "d16935b2610e6f66cf51fc2e2c20627373f03b4a6923e0c378515f1cec5cb6f4",
+      "locations": [
+        {
+          "path": "internal/store/store.go",
+          "line": 31
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/store.Repo.Get",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store.Repo",
+      "exported": true,
+      "hash": "a8cea5e27afd62b6ee1e20e6cc492ed645a8e20726814cdcb5504ca2ca7cdc2c",
+      "locations": [
+        {
+          "path": "internal/store/store.go",
+          "line": 43
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/store.Repo.Reset",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store.Repo",
+      "exported": true,
+      "hash": "5358523aeab74bb035f77515d76e1ded13e6156950530f99552e763868bed804",
+      "locations": [
+        {
+          "path": "internal/store/store.go",
+          "line": 57
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/store.Repo.check",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store.Repo",
+      "exported": false,
+      "hash": "af3069ff2b149b9786b38af4f862f420d27202671b9aa96280042cebdb4a3289",
+      "locations": [
+        {
+          "path": "internal/store/store.go",
+          "line": 51
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/store.Status",
+      "kind": "type",
+      "parent": "example.com/shop/internal/store",
+      "exported": true,
+      "typeKind": "other",
+      "generated": true,
+      "hash": "dec01fc0f7655a9e0d7b01242993854ba8aeebbba473c9270d0c152a67ae97cf",
+      "locations": [
+        {
+          "path": "internal/store/zz_generated.go",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/store.Status.String",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store.Status",
+      "exported": true,
+      "generated": true,
+      "hash": "7a2d4c231dc32a6d745a14c6e4ec44247ebc972f8c5360af6262d8463544e26a",
+      "locations": [
+        {
+          "path": "internal/store/zz_generated.go",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/store.dialect",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store",
+      "exported": false,
+      "hash": "6118e504a6ed01477d9dbd1618f5401e5a7fcae3c8378fddb0b34cfd99aef3a7",
+      "locations": [
+        {
+          "path": "internal/store/db_linux.go",
+          "line": 5
+        },
+        {
+          "path": "internal/store/db_windows.go",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/store.init",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store",
+      "exported": false,
+      "hash": "6a9c1d49a780f719b2e392a095d383c57c19d1ada932af5766a4a1ea6e18d6f6",
+      "locations": [
+        {
+          "path": "internal/store/db_linux.go",
+          "line": 7
+        },
+        {
+          "path": "internal/store/register.go",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/internal/store.register",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store",
+      "exported": false,
+      "hash": "f770bcafbf7189f112c6995cc876004d3fa306f46a435ffafc5a4343c53c879f",
+      "locations": [
+        {
+          "path": "internal/store/register.go",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/tools/gen",
+      "kind": "package",
+      "module": "example.com/shop/tools",
+      "hash": "977eda87fa9dce50e9e06906fbc06c79fbaf8363621f63f963f94575d1830084",
+      "locations": [
+        {
+          "path": "tools/gen/gen.go",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "example.com/shop/tools/gen.main",
+      "kind": "function",
+      "parent": "example.com/shop/tools/gen",
+      "exported": false,
+      "hash": "9f9d3980e7ada80c8d5aa6bb4f85a7e55c3ddb8160ef5f66570076cc887da52a",
+      "locations": [
+        {
+          "path": "tools/gen/gen.go",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "github.com/lib/pq",
+      "kind": "external",
+      "locations": [
+        {
+          "path": "go.mod",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "golang.org/x/sync",
+      "kind": "external",
+      "locations": [
+        {
+          "path": "go.mod",
+          "line": 7
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "example.com/shop",
+      "to": "example.com/shop/internal/checkout",
+      "kind": "imports",
+      "locations": [
+        {
+          "path": "main.go",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "from": "example.com/shop.main",
+      "to": "example.com/shop/internal/checkout.Total",
+      "kind": "calls",
+      "locations": [
+        {
+          "path": "main.go",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "from": "example.com/shop/internal/checkout",
+      "to": "example.com/shop/internal/money",
+      "kind": "imports",
+      "locations": [
+        {
+          "path": "internal/checkout/checkout.go",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "from": "example.com/shop/internal/checkout",
+      "to": "example.com/shop/internal/store",
+      "kind": "imports",
+      "locations": [
+        {
+          "path": "internal/checkout/checkout.go",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "from": "example.com/shop/internal/checkout",
+      "to": "golang.org/x/sync",
+      "kind": "imports",
+      "locations": [
+        {
+          "path": "internal/checkout/checkout.go",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "from": "example.com/shop/internal/checkout.Cart",
+      "to": "example.com/shop/internal/store.Order",
+      "kind": "embeds",
+      "locations": [
+        {
+          "path": "internal/checkout/checkout.go",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "from": "example.com/shop/internal/checkout.Place",
+      "to": "example.com/shop/internal/checkout.validate",
+      "kind": "calls",
+      "locations": [
+        {
+          "path": "internal/checkout/checkout.go",
+          "line": 40
+        }
+      ]
+    },
+    {
+      "from": "example.com/shop/internal/checkout.Place",
+      "to": "example.com/shop/internal/store.Open",
+      "kind": "calls",
+      "locations": [
+        {
+          "path": "internal/checkout/checkout.go",
+          "line": 35
+        }
+      ]
+    },
+    {
+      "from": "example.com/shop/internal/store",
+      "to": "example.com/shop/internal/money",
+      "kind": "imports",
+      "locations": [
+        {
+          "path": "internal/store/store.go",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "from": "example.com/shop/internal/store",
+      "to": "github.com/lib/pq",
+      "kind": "imports",
+      "locations": [
+        {
+          "path": "internal/store/store.go",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "from": "example.com/shop/internal/store.ReadWriter",
+      "to": "example.com/shop/internal/store.Reader",
+      "kind": "embeds",
+      "locations": [
+        {
+          "path": "internal/store/store.go",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "from": "example.com/shop/internal/store.Repo",
+      "to": "github.com/lib/pq",
+      "kind": "embeds",
+      "locations": [
+        {
+          "path": "internal/store/store.go",
+          "line": 34
+        }
+      ]
+    },
+    {
+      "from": "example.com/shop/internal/store.Repo.Get",
+      "to": "example.com/shop/internal/store.Repo.check",
+      "kind": "calls",
+      "locations": [
+        {
+          "path": "internal/store/store.go",
+          "line": 48
+        }
+      ]
+    },
+    {
+      "from": "example.com/shop/internal/store.Repo.Reset",
+      "to": "example.com/shop/internal/store.Open",
+      "kind": "calls",
+      "locations": [
+        {
+          "path": "internal/store/store.go",
+          "line": 58
+        }
+      ]
+    },
+    {
+      "from": "example.com/shop/internal/store.Repo.check",
+      "to": "example.com/shop/internal/money.Add",
+      "kind": "calls",
+      "locations": [
+        {
+          "path": "internal/store/store.go",
+          "line": 52
+        }
+      ]
+    },
+    {
+      "from": "example.com/shop/internal/store.init",
+      "to": "example.com/shop/internal/store.register",
+      "kind": "calls",
+      "locations": [
+        {
+          "path": "internal/store/db_linux.go",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "from": "example.com/shop/internal/store.register",
+      "to": "example.com/shop/internal/store.dialect",
+      "kind": "calls",
+      "locations": [
+        {
+          "path": "internal/store/register.go",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "from": "example.com/shop/tools/gen",
+      "to": "example.com/shop/internal/money",
+      "kind": "imports",
+      "locations": [
+        {
+          "path": "tools/gen/gen.go",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "from": "example.com/shop/tools/gen.main",
+      "to": "example.com/shop/internal/money.Add",
+      "kind": "calls",
+      "locations": [
+        {
+          "path": "tools/gen/gen.go",
+          "line": 5
+        }
+      ]
+    }
+  ],
+  "unresolvedCalls": {
+    "example.com/shop/internal/checkout": 4,
+    "example.com/shop/internal/store": 4
+  },
+  "unresolvedImports": {
+    "example.com/shop/internal/missing": 1
+  },
+  "parseErrors": [
+    {
+      "path": "bad/bad.go",
+      "message": "bad/bad.go:3:6: expected 'IDENT', found '{'"
+    }
+  ],
+  "unsupported": {
+    ".sh": 1,
+    ".ts": 1
+  }
+}
