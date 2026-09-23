@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import golden from "../../internal/export/testdata/shop.view.golden.json";
 import { parseView } from "./data";
+import { bundlesOver } from "./bundle";
+import { cut } from "./cut";
 import { calls, imports, targets } from "./facts";
 
 const v = parseView(JSON.stringify(golden));
@@ -29,7 +31,7 @@ describe("panel facts", () => {
     expect(c.in).toEqual([]);
   });
   it("lists the real targets behind an aggregate node", () => {
-    const t = targets(v, "example.com/shop/internal", 1, "outside");
+    const t = targets(bundlesOver(v, cut(v, "example.com/shop/internal", 1)), "outside");
     expect(t.map((r) => r.id)).toEqual(["example.com/shop", "example.com/shop/tools/gen"]);
   });
 });

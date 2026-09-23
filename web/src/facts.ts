@@ -1,7 +1,8 @@
 // What the side panel lists about a selection: edges grouped by the node at
 // the other end, with counts.
 import type { View } from "./data";
-import { boxesOf, packageEnds, packagesIn } from "./tree";
+import type { Bundle } from "./bundle";
+import { index, packagesIn } from "./cut";
 
 export type Row = { id: string; count: number };
 
@@ -27,24 +28,26 @@ function across(view: View, kinds: string[], inside: (id: string) => boolean): {
 // imports lists the packages a box imports from outside it and its importers.
 export function imports(view: View, box: string): { out: Row[]; in: Row[] } {
   const pkgs = new Set(packagesIn(view, box).map((p) => p.id));
-  if (pkgs.size === 0 && boxesOf(view).byId.get(box)?.kind === "external") pkgs.add(box);
+  if (pkgs.size === 0 && index(view).node.get(box)?.kind === "external") pkgs.add(box);
   return across(view, ["imports"], (id) => pkgs.has(id));
 }
 
 // calls lists a declaration's calls and embeds; a type's methods count as the type.
 export function calls(view: View, decl: string): { out: Row[]; in: Row[] } {
-  const byId = boxesOf(view).byId;
+  const byId = index(view).node;
   const inside = (id: string) => id === decl || byId.get(id)?.parent === decl;
   return across(view, ["calls", "embeds"], inside);
 }
 
-// targets lists the real nodes behind an aggregate ("outside", "externals").
-export function targets(view: View, focus: string, d: number, agg: string): Row[] {
-  const { drawn, end } = packageEnds(view, focus, d);
+// targets lists the real nodes behind an aggregate ("outside", "externals"):
+// the far ends of the drawn bundles that touch it.
+export function targets(bundles: readonly Bundle[], agg: string): Row[] {
   const ids: string[] = [];
-  for (const e of drawn) {
-    if (end(e.from) === agg) ids.push(e.from);
-    if (end(e.to) === agg) ids.push(e.to);
+  for (const b of bundles) {
+    for (const e of b.members) {
+      if (b.from === agg) ids.push(e.from);
+      if (b.to === agg) ids.push(e.to);
+    }
   }
   return group(ids);
 }

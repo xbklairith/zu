@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import { bundlesOver } from "./bundle";
+import { cut } from "./cut";
 import type { Hunk, Loc, View, ViewNode } from "./data";
 import { calls, imports, targets, type Row } from "./facts";
 import { linkFor } from "./links";
@@ -132,7 +134,7 @@ export function Panel({ view, shown, focus, depth, id, onClose }: Props) {
   const node = view.nodes.find((n) => n.id === (id.endsWith(PKG) ? id.slice(0, -PKG.length) : id));
   let body: React.ReactNode;
   if (id === OUTSIDE || id === EXTERNALS) {
-    body = <Rows title={id === OUTSIDE ? "Packages outside this box" : "External modules"} rows={targets(shown ?? view, focus, depth, id)} />;
+    body = <Rows title={id === OUTSIDE ? "Packages outside this box" : "External modules"} rows={targets(bundlesOver(shown ?? view, cut(shown ?? view, focus, depth)), id)} />;
   } else if (node?.kind === "type" || node?.kind === "function") {
     const c = calls(view, node.id);
     const text = view.sources[node.loc.path];

@@ -1,0 +1,2260 @@
+{
+ "project (root) d=1": {
+  "leaves": [
+   "example.com/shop",
+   "example.com/shop/tools"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop",
+    "to": "github.com/lib/pq",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop",
+    "to": "golang.org/x/sync",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/tools",
+    "to": "example.com/shop",
+    "pairs": 1
+   }
+  ],
+  "touched": [
+   "github.com/lib/pq",
+   "golang.org/x/sync"
+  ],
+  "stats": [
+   [
+    "example.com/shop",
+    {
+     "packages": 4,
+     "decls": 24,
+     "unresolved": 8
+    }
+   ],
+   [
+    "example.com/shop/tools",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "project (root) d=2": {
+  "leaves": [
+   "example.com/shop#pkg",
+   "example.com/shop/internal",
+   "example.com/shop/tools/gen"
+  ],
+  "containers": [
+   {
+    "id": "example.com/shop",
+    "parent": ""
+   },
+   {
+    "id": "example.com/shop/tools",
+    "parent": ""
+   }
+  ],
+  "bundles": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "github.com/lib/pq",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "golang.org/x/sync",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "example.com/shop/internal",
+    "pairs": 1
+   }
+  ],
+  "touched": [
+   "github.com/lib/pq",
+   "golang.org/x/sync"
+  ],
+  "stats": [
+   [
+    "example.com/shop#pkg",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal",
+    {
+     "packages": 3,
+     "decls": 23,
+     "unresolved": 8
+    }
+   ],
+   [
+    "example.com/shop/tools/gen",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "project (root) d=3": {
+  "leaves": [
+   "example.com/shop#pkg",
+   "example.com/shop/internal/checkout",
+   "example.com/shop/internal/money",
+   "example.com/shop/internal/store",
+   "example.com/shop/tools/gen"
+  ],
+  "containers": [
+   {
+    "id": "example.com/shop",
+    "parent": ""
+   },
+   {
+    "id": "example.com/shop/internal",
+    "parent": "example.com/shop"
+   },
+   {
+    "id": "example.com/shop/tools",
+    "parent": ""
+   }
+  ],
+  "bundles": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   }
+  ],
+  "touched": [
+   "github.com/lib/pq",
+   "golang.org/x/sync"
+  ],
+  "stats": [
+   [
+    "example.com/shop#pkg",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/checkout",
+    {
+     "packages": 1,
+     "decls": 5,
+     "unresolved": 4
+    }
+   ],
+   [
+    "example.com/shop/internal/money",
+    {
+     "packages": 1,
+     "decls": 3,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store",
+    {
+     "packages": 1,
+     "decls": 15,
+     "unresolved": 4
+    }
+   ],
+   [
+    "example.com/shop/tools/gen",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "project example.com/shop d=1": {
+  "leaves": [
+   "example.com/shop#pkg",
+   "example.com/shop/internal"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "github.com/lib/pq",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "golang.org/x/sync",
+    "pairs": 1
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal",
+    "pairs": 1
+   }
+  ],
+  "touched": [
+   "github.com/lib/pq",
+   "golang.org/x/sync"
+  ],
+  "stats": [
+   [
+    "example.com/shop#pkg",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal",
+    {
+     "packages": 3,
+     "decls": 23,
+     "unresolved": 8
+    }
+   ]
+  ]
+ },
+ "project example.com/shop d=2": {
+  "leaves": [
+   "example.com/shop#pkg",
+   "example.com/shop/internal/checkout",
+   "example.com/shop/internal/money",
+   "example.com/shop/internal/store"
+  ],
+  "containers": [
+   {
+    "id": "example.com/shop/internal",
+    "parent": ""
+   }
+  ],
+  "bundles": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   }
+  ],
+  "touched": [
+   "github.com/lib/pq",
+   "golang.org/x/sync"
+  ],
+  "stats": [
+   [
+    "example.com/shop#pkg",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/checkout",
+    {
+     "packages": 1,
+     "decls": 5,
+     "unresolved": 4
+    }
+   ],
+   [
+    "example.com/shop/internal/money",
+    {
+     "packages": 1,
+     "decls": 3,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store",
+    {
+     "packages": 1,
+     "decls": 15,
+     "unresolved": 4
+    }
+   ]
+  ]
+ },
+ "project example.com/shop d=3": {
+  "leaves": [
+   "example.com/shop#pkg",
+   "example.com/shop/internal/checkout",
+   "example.com/shop/internal/money",
+   "example.com/shop/internal/store"
+  ],
+  "containers": [
+   {
+    "id": "example.com/shop/internal",
+    "parent": ""
+   }
+  ],
+  "bundles": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   }
+  ],
+  "touched": [
+   "github.com/lib/pq",
+   "golang.org/x/sync"
+  ],
+  "stats": [
+   [
+    "example.com/shop#pkg",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/checkout",
+    {
+     "packages": 1,
+     "decls": 5,
+     "unresolved": 4
+    }
+   ],
+   [
+    "example.com/shop/internal/money",
+    {
+     "packages": 1,
+     "decls": 3,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store",
+    {
+     "packages": 1,
+     "decls": 15,
+     "unresolved": 4
+    }
+   ]
+  ]
+ },
+ "project example.com/shop#pkg d=1": {
+  "leaves": [],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": []
+ },
+ "project example.com/shop#pkg d=2": {
+  "leaves": [],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": []
+ },
+ "project example.com/shop#pkg d=3": {
+  "leaves": [],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": []
+ },
+ "project example.com/shop/internal d=1": {
+  "leaves": [
+   "example.com/shop/internal/checkout",
+   "example.com/shop/internal/money",
+   "example.com/shop/internal/store"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   }
+  ],
+  "touched": [
+   "github.com/lib/pq",
+   "golang.org/x/sync"
+  ],
+  "stats": [
+   [
+    "example.com/shop/internal/checkout",
+    {
+     "packages": 1,
+     "decls": 5,
+     "unresolved": 4
+    }
+   ],
+   [
+    "example.com/shop/internal/money",
+    {
+     "packages": 1,
+     "decls": 3,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store",
+    {
+     "packages": 1,
+     "decls": 15,
+     "unresolved": 4
+    }
+   ]
+  ]
+ },
+ "project example.com/shop/internal d=2": {
+  "leaves": [
+   "example.com/shop/internal/checkout",
+   "example.com/shop/internal/money",
+   "example.com/shop/internal/store"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   }
+  ],
+  "touched": [
+   "github.com/lib/pq",
+   "golang.org/x/sync"
+  ],
+  "stats": [
+   [
+    "example.com/shop/internal/checkout",
+    {
+     "packages": 1,
+     "decls": 5,
+     "unresolved": 4
+    }
+   ],
+   [
+    "example.com/shop/internal/money",
+    {
+     "packages": 1,
+     "decls": 3,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store",
+    {
+     "packages": 1,
+     "decls": 15,
+     "unresolved": 4
+    }
+   ]
+  ]
+ },
+ "project example.com/shop/internal d=3": {
+  "leaves": [
+   "example.com/shop/internal/checkout",
+   "example.com/shop/internal/money",
+   "example.com/shop/internal/store"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   }
+  ],
+  "touched": [
+   "github.com/lib/pq",
+   "golang.org/x/sync"
+  ],
+  "stats": [
+   [
+    "example.com/shop/internal/checkout",
+    {
+     "packages": 1,
+     "decls": 5,
+     "unresolved": 4
+    }
+   ],
+   [
+    "example.com/shop/internal/money",
+    {
+     "packages": 1,
+     "decls": 3,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store",
+    {
+     "packages": 1,
+     "decls": 15,
+     "unresolved": 4
+    }
+   ]
+  ]
+ },
+ "project example.com/shop/internal/checkout d=1": {
+  "leaves": [],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": []
+ },
+ "project example.com/shop/internal/checkout d=2": {
+  "leaves": [],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": []
+ },
+ "project example.com/shop/internal/checkout d=3": {
+  "leaves": [],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": []
+ },
+ "project example.com/shop/internal/money d=1": {
+  "leaves": [],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": []
+ },
+ "project example.com/shop/internal/money d=2": {
+  "leaves": [],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": []
+ },
+ "project example.com/shop/internal/money d=3": {
+  "leaves": [],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": []
+ },
+ "project example.com/shop/internal/store d=1": {
+  "leaves": [
+   "example.com/shop/internal/store.Open",
+   "example.com/shop/internal/store.Order",
+   "example.com/shop/internal/store.Page",
+   "example.com/shop/internal/store.ReadWriter",
+   "example.com/shop/internal/store.Reader",
+   "example.com/shop/internal/store.Repo",
+   "example.com/shop/internal/store.Status",
+   "example.com/shop/internal/store.dialect",
+   "example.com/shop/internal/store.init",
+   "example.com/shop/internal/store.register"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop/internal/store.ReadWriter",
+    "to": "example.com/shop/internal/store.Reader",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store.Repo",
+    "to": "example.com/shop/internal/store.Open",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store.init",
+    "to": "example.com/shop/internal/store.register",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store.register",
+    "to": "example.com/shop/internal/store.dialect",
+    "pairs": 1
+   }
+  ],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop/internal/store.Open",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.Order",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.Page",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.ReadWriter",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.Reader",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.Repo",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.Status",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.dialect",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.init",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.register",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "project example.com/shop/internal/store d=2": {
+  "leaves": [
+   "example.com/shop/internal/store.Open",
+   "example.com/shop/internal/store.Order",
+   "example.com/shop/internal/store.Page",
+   "example.com/shop/internal/store.ReadWriter",
+   "example.com/shop/internal/store.Reader",
+   "example.com/shop/internal/store.Repo",
+   "example.com/shop/internal/store.Status",
+   "example.com/shop/internal/store.dialect",
+   "example.com/shop/internal/store.init",
+   "example.com/shop/internal/store.register"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop/internal/store.ReadWriter",
+    "to": "example.com/shop/internal/store.Reader",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store.Repo",
+    "to": "example.com/shop/internal/store.Open",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store.init",
+    "to": "example.com/shop/internal/store.register",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store.register",
+    "to": "example.com/shop/internal/store.dialect",
+    "pairs": 1
+   }
+  ],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop/internal/store.Open",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.Order",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.Page",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.ReadWriter",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.Reader",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.Repo",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.Status",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.dialect",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.init",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.register",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "project example.com/shop/internal/store d=3": {
+  "leaves": [
+   "example.com/shop/internal/store.Open",
+   "example.com/shop/internal/store.Order",
+   "example.com/shop/internal/store.Page",
+   "example.com/shop/internal/store.ReadWriter",
+   "example.com/shop/internal/store.Reader",
+   "example.com/shop/internal/store.Repo",
+   "example.com/shop/internal/store.Status",
+   "example.com/shop/internal/store.dialect",
+   "example.com/shop/internal/store.init",
+   "example.com/shop/internal/store.register"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop/internal/store.ReadWriter",
+    "to": "example.com/shop/internal/store.Reader",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store.Repo",
+    "to": "example.com/shop/internal/store.Open",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store.init",
+    "to": "example.com/shop/internal/store.register",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/store.register",
+    "to": "example.com/shop/internal/store.dialect",
+    "pairs": 1
+   }
+  ],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop/internal/store.Open",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.Order",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.Page",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.ReadWriter",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.Reader",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.Repo",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.Status",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.dialect",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.init",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.register",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "project example.com/shop/tools d=1": {
+  "leaves": [
+   "example.com/shop/tools/gen"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "outside",
+    "pairs": 1
+   }
+  ],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop/tools/gen",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "project example.com/shop/tools d=2": {
+  "leaves": [
+   "example.com/shop/tools/gen"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "outside",
+    "pairs": 1
+   }
+  ],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop/tools/gen",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "project example.com/shop/tools d=3": {
+  "leaves": [
+   "example.com/shop/tools/gen"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "outside",
+    "pairs": 1
+   }
+  ],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop/tools/gen",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "project example.com/shop/tools/gen d=1": {
+  "leaves": [],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": []
+ },
+ "project example.com/shop/tools/gen d=2": {
+  "leaves": [],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": []
+ },
+ "project example.com/shop/tools/gen d=3": {
+  "leaves": [],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": []
+ },
+ "change (root) d=1": {
+  "leaves": [
+   "example.com/shop",
+   "example.com/shop/tools"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop",
+    "to": "github.com/lib/pq",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop",
+    "to": "golang.org/x/sync",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/tools",
+    "to": "example.com/shop",
+    "pairs": 1
+   }
+  ],
+  "touched": [
+   "github.com/lib/pq",
+   "golang.org/x/sync"
+  ],
+  "stats": [
+   [
+    "example.com/shop",
+    {
+     "packages": 4,
+     "decls": 23,
+     "unresolved": 9
+    }
+   ],
+   [
+    "example.com/shop/tools",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 1
+    }
+   ]
+  ]
+ },
+ "change (root) d=2": {
+  "leaves": [
+   "example.com/shop#pkg",
+   "example.com/shop/internal",
+   "example.com/shop/tools/gen"
+  ],
+  "containers": [
+   {
+    "id": "example.com/shop",
+    "parent": ""
+   },
+   {
+    "id": "example.com/shop/tools",
+    "parent": ""
+   }
+  ],
+  "bundles": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal",
+    "pairs": 2,
+    "status": "mixed"
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "github.com/lib/pq",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "golang.org/x/sync",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "example.com/shop/internal",
+    "pairs": 1
+   }
+  ],
+  "touched": [
+   "github.com/lib/pq",
+   "golang.org/x/sync"
+  ],
+  "stats": [
+   [
+    "example.com/shop#pkg",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal",
+    {
+     "packages": 3,
+     "decls": 22,
+     "unresolved": 9
+    }
+   ],
+   [
+    "example.com/shop/tools/gen",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 1
+    }
+   ]
+  ]
+ },
+ "change (root) d=3": {
+  "leaves": [
+   "example.com/shop#pkg",
+   "example.com/shop/internal/checkout",
+   "example.com/shop/internal/money",
+   "example.com/shop/internal/store",
+   "example.com/shop/tools/gen"
+  ],
+  "containers": [
+   {
+    "id": "example.com/shop",
+    "parent": ""
+   },
+   {
+    "id": "example.com/shop/internal",
+    "parent": "example.com/shop"
+   },
+   {
+    "id": "example.com/shop/tools",
+    "parent": ""
+   }
+  ],
+  "bundles": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": "added"
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   }
+  ],
+  "touched": [
+   "github.com/lib/pq",
+   "golang.org/x/sync"
+  ],
+  "stats": [
+   [
+    "example.com/shop#pkg",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/checkout",
+    {
+     "packages": 1,
+     "decls": 5,
+     "unresolved": 4
+    }
+   ],
+   [
+    "example.com/shop/internal/money",
+    {
+     "packages": 1,
+     "decls": 3,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store",
+    {
+     "packages": 1,
+     "decls": 14,
+     "unresolved": 5
+    }
+   ],
+   [
+    "example.com/shop/tools/gen",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 1
+    }
+   ]
+  ]
+ },
+ "change example.com/shop d=1": {
+  "leaves": [
+   "example.com/shop#pkg",
+   "example.com/shop/internal"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal",
+    "pairs": 2,
+    "status": "mixed"
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "github.com/lib/pq",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "golang.org/x/sync",
+    "pairs": 1
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal",
+    "pairs": 1
+   }
+  ],
+  "touched": [
+   "github.com/lib/pq",
+   "golang.org/x/sync"
+  ],
+  "stats": [
+   [
+    "example.com/shop#pkg",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal",
+    {
+     "packages": 3,
+     "decls": 22,
+     "unresolved": 9
+    }
+   ]
+  ]
+ },
+ "change example.com/shop d=2": {
+  "leaves": [
+   "example.com/shop#pkg",
+   "example.com/shop/internal/checkout",
+   "example.com/shop/internal/money",
+   "example.com/shop/internal/store"
+  ],
+  "containers": [
+   {
+    "id": "example.com/shop/internal",
+    "parent": ""
+   }
+  ],
+  "bundles": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": "added"
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   }
+  ],
+  "touched": [
+   "github.com/lib/pq",
+   "golang.org/x/sync"
+  ],
+  "stats": [
+   [
+    "example.com/shop#pkg",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/checkout",
+    {
+     "packages": 1,
+     "decls": 5,
+     "unresolved": 4
+    }
+   ],
+   [
+    "example.com/shop/internal/money",
+    {
+     "packages": 1,
+     "decls": 3,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store",
+    {
+     "packages": 1,
+     "decls": 14,
+     "unresolved": 5
+    }
+   ]
+  ]
+ },
+ "change example.com/shop d=3": {
+  "leaves": [
+   "example.com/shop#pkg",
+   "example.com/shop/internal/checkout",
+   "example.com/shop/internal/money",
+   "example.com/shop/internal/store"
+  ],
+  "containers": [
+   {
+    "id": "example.com/shop/internal",
+    "parent": ""
+   }
+  ],
+  "bundles": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": "added"
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   }
+  ],
+  "touched": [
+   "github.com/lib/pq",
+   "golang.org/x/sync"
+  ],
+  "stats": [
+   [
+    "example.com/shop#pkg",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/checkout",
+    {
+     "packages": 1,
+     "decls": 5,
+     "unresolved": 4
+    }
+   ],
+   [
+    "example.com/shop/internal/money",
+    {
+     "packages": 1,
+     "decls": 3,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store",
+    {
+     "packages": 1,
+     "decls": 14,
+     "unresolved": 5
+    }
+   ]
+  ]
+ },
+ "change example.com/shop#pkg d=1": {
+  "leaves": [
+   "example.com/shop.main"
+  ],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop.main",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "change example.com/shop#pkg d=2": {
+  "leaves": [
+   "example.com/shop.main"
+  ],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop.main",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "change example.com/shop#pkg d=3": {
+  "leaves": [
+   "example.com/shop.main"
+  ],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop.main",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "change example.com/shop/internal d=1": {
+  "leaves": [
+   "example.com/shop/internal/checkout",
+   "example.com/shop/internal/money",
+   "example.com/shop/internal/store"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 2,
+    "status": "mixed"
+   }
+  ],
+  "touched": [
+   "github.com/lib/pq",
+   "golang.org/x/sync"
+  ],
+  "stats": [
+   [
+    "example.com/shop/internal/checkout",
+    {
+     "packages": 1,
+     "decls": 5,
+     "unresolved": 4
+    }
+   ],
+   [
+    "example.com/shop/internal/money",
+    {
+     "packages": 1,
+     "decls": 3,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store",
+    {
+     "packages": 1,
+     "decls": 14,
+     "unresolved": 5
+    }
+   ]
+  ]
+ },
+ "change example.com/shop/internal d=2": {
+  "leaves": [
+   "example.com/shop/internal/checkout",
+   "example.com/shop/internal/money",
+   "example.com/shop/internal/store"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 2,
+    "status": "mixed"
+   }
+  ],
+  "touched": [
+   "github.com/lib/pq",
+   "golang.org/x/sync"
+  ],
+  "stats": [
+   [
+    "example.com/shop/internal/checkout",
+    {
+     "packages": 1,
+     "decls": 5,
+     "unresolved": 4
+    }
+   ],
+   [
+    "example.com/shop/internal/money",
+    {
+     "packages": 1,
+     "decls": 3,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store",
+    {
+     "packages": 1,
+     "decls": 14,
+     "unresolved": 5
+    }
+   ]
+  ]
+ },
+ "change example.com/shop/internal d=3": {
+  "leaves": [
+   "example.com/shop/internal/checkout",
+   "example.com/shop/internal/money",
+   "example.com/shop/internal/store"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 2,
+    "status": "mixed"
+   }
+  ],
+  "touched": [
+   "github.com/lib/pq",
+   "golang.org/x/sync"
+  ],
+  "stats": [
+   [
+    "example.com/shop/internal/checkout",
+    {
+     "packages": 1,
+     "decls": 5,
+     "unresolved": 4
+    }
+   ],
+   [
+    "example.com/shop/internal/money",
+    {
+     "packages": 1,
+     "decls": 3,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store",
+    {
+     "packages": 1,
+     "decls": 14,
+     "unresolved": 5
+    }
+   ]
+  ]
+ },
+ "change example.com/shop/internal/checkout d=1": {
+  "leaves": [
+   "example.com/shop/internal/checkout.Total"
+  ],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop/internal/checkout.Total",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "change example.com/shop/internal/checkout d=2": {
+  "leaves": [
+   "example.com/shop/internal/checkout.Total"
+  ],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop/internal/checkout.Total",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "change example.com/shop/internal/checkout d=3": {
+  "leaves": [
+   "example.com/shop/internal/checkout.Total"
+  ],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop/internal/checkout.Total",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "change example.com/shop/internal/money d=1": {
+  "leaves": [
+   "example.com/shop/internal/money.Plus"
+  ],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop/internal/money.Plus",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "change example.com/shop/internal/money d=2": {
+  "leaves": [
+   "example.com/shop/internal/money.Plus"
+  ],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop/internal/money.Plus",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "change example.com/shop/internal/money d=3": {
+  "leaves": [
+   "example.com/shop/internal/money.Plus"
+  ],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop/internal/money.Plus",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "change example.com/shop/internal/store d=1": {
+  "leaves": [
+   "example.com/shop/internal/store.Order",
+   "example.com/shop/internal/store.ReadWriter",
+   "example.com/shop/internal/store.Repo"
+  ],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop/internal/store.Order",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.ReadWriter",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.Repo",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "change example.com/shop/internal/store d=2": {
+  "leaves": [
+   "example.com/shop/internal/store.Order",
+   "example.com/shop/internal/store.ReadWriter",
+   "example.com/shop/internal/store.Repo"
+  ],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop/internal/store.Order",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.ReadWriter",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.Repo",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "change example.com/shop/internal/store d=3": {
+  "leaves": [
+   "example.com/shop/internal/store.Order",
+   "example.com/shop/internal/store.ReadWriter",
+   "example.com/shop/internal/store.Repo"
+  ],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop/internal/store.Order",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.ReadWriter",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ],
+   [
+    "example.com/shop/internal/store.Repo",
+    {
+     "packages": 0,
+     "decls": 0,
+     "unresolved": 0
+    }
+   ]
+  ]
+ },
+ "change example.com/shop/tools d=1": {
+  "leaves": [
+   "example.com/shop/tools/gen"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "outside",
+    "pairs": 1
+   }
+  ],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop/tools/gen",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 1
+    }
+   ]
+  ]
+ },
+ "change example.com/shop/tools d=2": {
+  "leaves": [
+   "example.com/shop/tools/gen"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "outside",
+    "pairs": 1
+   }
+  ],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop/tools/gen",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 1
+    }
+   ]
+  ]
+ },
+ "change example.com/shop/tools d=3": {
+  "leaves": [
+   "example.com/shop/tools/gen"
+  ],
+  "containers": [],
+  "bundles": [
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "outside",
+    "pairs": 1
+   }
+  ],
+  "touched": [],
+  "stats": [
+   [
+    "example.com/shop/tools/gen",
+    {
+     "packages": 1,
+     "decls": 1,
+     "unresolved": 1
+    }
+   ]
+  ]
+ },
+ "change example.com/shop/tools/gen d=1": {
+  "leaves": [],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": []
+ },
+ "change example.com/shop/tools/gen d=2": {
+  "leaves": [],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": []
+ },
+ "change example.com/shop/tools/gen d=3": {
+  "leaves": [],
+  "containers": [],
+  "bundles": [],
+  "touched": [],
+  "stats": []
+ }
+}

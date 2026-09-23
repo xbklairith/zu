@@ -651,7 +651,7 @@ export function autoDepth(view: View, focus: string): number {
 
 **Steps:**
 
-- [ ] **Freeze 04's tree API** (this test runs against 04's own `tree.ts`).
+- [x] **Freeze 04's tree API** (this test runs against 04's own `tree.ts`).
 
 **Create `web/src/tree.snapshot.test.ts`:**
 
@@ -700,8 +700,8 @@ it("reproduces 04's tree on the shop goldens", async () => {
 
 **Run (writes the snapshot):** `cd web && npx vitest run -u src/tree.snapshot.test.ts`
 
-- [ ] Review `web/src/__snapshots__/tree04.json` (about 41 KB: leaves, containers, bundles with status, touched externals and stats per focus) and commit it with this task.
-- [ ] **Write the failing test.**
+- [x] Review `web/src/__snapshots__/tree04.json` (about 41 KB: leaves, containers, bundles with status, touched externals and stats per focus) and commit it with this task.
+- [x] **Write the failing test.**
 
 **Create `web/src/bundle.test.ts`:**
 
@@ -750,8 +750,8 @@ describe("bundlesOver", () => {
 });
 ````
 
-- [ ] **Run — expect FAIL:** `cd web && npx vitest run src/bundle.test.ts` → `Cannot find module './bundle'`.
-- [ ] **Implement.**
+- [x] **Run — expect FAIL:** `cd web && npx vitest run src/bundle.test.ts` → `Cannot find module './bundle'`.
+- [x] **Implement.**
 
 **Create `web/src/bundle.ts`:**
 
@@ -841,7 +841,7 @@ export function externalsOf(view: View, bundles: readonly Bundle[]): string[] {
 }
 ````
 
-- [ ] **Move 04's tree onto the cut** (04's `tree.test.ts` stays as it is).
+- [x] **Move 04's tree onto the cut** (04's `tree.test.ts` stays as it is).
 
 **Replace `web/src/tree.ts` with:**
 
@@ -909,7 +909,7 @@ export function boxStats(view: View, box: string): { packages: number; decls: nu
 }
 ````
 
-- [ ] **Point facts at the drawn bundles.** First the test:
+- [x] **Point facts at the drawn bundles.** First the test:
 
 **Edit `web/src/facts.test.ts`:** replace
 
@@ -937,7 +937,7 @@ with
 targets(bundlesOver(v, cut(v, "example.com/shop/internal", 1)), "outside")
 ````
 
-- [ ] **Run — expect FAIL:** `cd web && npx vitest run src/facts.test.ts` → `targets` is called with the old arguments.
+- [x] **Run — expect FAIL:** `cd web && npx vitest run src/facts.test.ts` → `targets` is called with the old arguments.
 **Replace `web/src/facts.ts` with:**
 
 ````ts
@@ -1022,8 +1022,8 @@ with
 targets(bundlesOver(shown ?? view, cut(shown ?? view, focus, depth)), id)
 ````
 
-- [ ] **Run — expect PASS:** `cd web && npx vitest run && npx tsc --noEmit` → all of 04's tests, `tree.snapshot` and `bundle.test` pass.
-- [ ] **Commit:** `git add web/src/bundle.ts web/src/bundle.test.ts web/src/tree.ts web/src/tree.snapshot.test.ts web/src/__snapshots__/tree04.json web/src/facts.ts web/src/facts.test.ts web/src/Panel.tsx && git commit -m "Bundle edges over a cut and rebuild 04's tree on it"`
+- [x] **Run — expect PASS:** `cd web && npx vitest run && npx tsc --noEmit` → all of 04's tests, `tree.snapshot` and `bundle.test` pass.
+- [x] **Commit:** `git add web/src/bundle.ts web/src/bundle.test.ts web/src/tree.ts web/src/tree.snapshot.test.ts web/src/__snapshots__/tree04.json web/src/facts.ts web/src/facts.test.ts web/src/Panel.tsx && git commit -m "Bundle edges over a cut and rebuild 04's tree on it"`
 
 ---
 
