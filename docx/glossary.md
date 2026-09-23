@@ -61,6 +61,12 @@ A removed and an added declaration of the same kind with identical `shape`, show
 one moved node rather than a removal plus an addition. It covers a rename, a
 relocation to another package, or both, as long as nothing else changed.
 
+## Shape
+
+A declaration's hash with its own name and its receiver's type name blanked out.
+Renaming a declaration, or the type its methods hang on, keeps its shape; changing
+anything else changes it. Equal shapes identify a Move.
+
 ## Structural Summary
 
 The Mode B output meant for a merge request: the packages a change touches, the

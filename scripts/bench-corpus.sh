@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Measure `zu scan` on the pinned Test Corpus (REQ-040, REQ-041).
-# Clones shallowly into .zu/corpus/ on first use; prints one Markdown row per repo.
+# Measure `zu scan` on the pinned Test Corpus (REQ-040, REQ-041), from disk and
+# from git objects (`-ref HEAD`, feature 02), and check the two IRs are identical.
+# Clones shallowly into .zu/corpus/ on first use; prints Markdown rows per repo.
 # Usage: scripts/bench-corpus.sh [name...]   (names: cobra hugo kubernetes; default all)
 set -euo pipefail
 
@@ -25,17 +26,14 @@ case "$(uname)" in
   *) timeflag=-v ;;
 esac
 
-echo "| repo | tag | wall s | max RSS MB | summary |"
-echo "|---|---|---|---|---|"
-for name in "${names[@]}"; do
-  read -r url tag <<<"$(repo "$name")"
-  dir=".zu/corpus/$name@$tag"
-  if [ ! -d "$dir" ]; then
-    git clone -q --depth 1 --branch "$tag" "$url" "$dir" 2>/dev/null
-  fi
-  log=".zu/corpus/$name.time.log"
+echo "| repo | tag | mode | wall s | max RSS MB | summary |"
+echo "|---|---|---|---|---|---|"
+measure() { # name tag mode dir [scan flags...]
+  local name=$1 tag=$2 mode=$3 dir=$4
+  shift 4
+  local log=".zu/corpus/$name.$mode.time.log" start end rss wall summary
   start=$(now)
-  /usr/bin/time "$timeflag" bin/zu scan "$dir" -out ".zu/corpus/$name.json" -max-parse-errors 1000000 2>"$log" || true
+  /usr/bin/time "$timeflag" bin/zu scan "$@" "$dir" -out ".zu/corpus/$name.$mode.json" -max-parse-errors 1000000 2>"$log" || true
   end=$(now)
   if [ "$(uname)" = Darwin ]; then
     rss=$(awk '/maximum resident set size/ {printf "%.0f", $1/1048576}' "$log")
@@ -44,5 +42,22 @@ for name in "${names[@]}"; do
   fi
   wall=$(python3 -c "print(f'{$end-$start:.2f}')")
   summary=$(grep '^zu scan:' "$log" | sed 's/ → .*//; s/^zu scan: //')
-  echo "| $name | $tag | $wall | $rss | $summary |"
+  echo "| $name | $tag | $mode | $wall | $rss | $summary |"
+}
+parity=()
+for name in "${names[@]}"; do
+  read -r url tag <<<"$(repo "$name")"
+  dir=".zu/corpus/$name@$tag"
+  if [ ! -d "$dir" ]; then
+    git clone -q --depth 1 --branch "$tag" "$url" "$dir" 2>/dev/null
+  fi
+  measure "$name" "$tag" disk "$dir"
+  measure "$name" "$tag" ref "$dir" -ref HEAD
+  if cmp -s ".zu/corpus/$name.disk.json" ".zu/corpus/$name.ref.json"; then
+    parity+=("$name: identical")
+  else
+    parity+=("$name: DIFFERENT")
+  fi
 done
+echo
+printf 'disk vs ref IR: %s\n' "${parity[@]}"

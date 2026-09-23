@@ -11,8 +11,8 @@ diagram (Mode A) and any MR as a structural delta over it (Mode B).
 ## Layout
 - `cmd/zu` — entrypoint; `internal/cli` — subcommands and exit codes (0 ok, 1 violation, 2 parse failure, 3 bad invocation)
 - `internal/ir` — IR schema and canonical `Encode`; `internal/version` — build identity via ldflags
-- `internal/scan` — walk → extract (one parse per file, AST dropped) → index/resolve → build; golden fixture in `testdata/shop` (`go test ./internal/scan -update` rewrites `shop.golden.json` — review the diff)
-- `internal/gitref` — HEAD commit + dirty via the git CLI (the only process zu runs)
+- `internal/scan` — reads a `Tree` (`DirTree` on disk; links resolved by `ResolveLinks`) → walk → extract (one parse per file, AST dropped) → index/resolve → build; golden fixture in `testdata/shop` (`go test ./internal/scan -update` rewrites `shop.golden.json` — review the diff); `parity_test.go` proves disk and commit scans are byte-identical
+- `internal/gitref` — the git CLI (the only process zu runs): HEAD commit + dirty, `Resolve` a ref, `CommitTree` reads a commit from git objects (`ls-tree` + one `cat-file --batch`)
 - `scripts/bench-corpus.sh` — Test Corpus benchmarks (clones into `.zu/corpus/`)
 - `web/` — Vite + React UI; `web/dist` is embedded by `web/embed.go`
 
