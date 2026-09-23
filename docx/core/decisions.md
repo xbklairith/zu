@@ -16,7 +16,7 @@ Hard-to-reverse, surprising, real trade-offs — one file each in [`docx/decisio
 - **Stack:** Go 1.24, CGO off; UI React 19 + `@xyflow/react` + ELK.js in a Worker, Vite-built, `go:embed`ed. Revisit Cytoscape if collapsed views exceed ~1,500 nodes.
 - **Storage:** generated IRs and caches in git-ignored `.zu/`; the Policy file is committed.
 - **Policy file:** one `zu.policy.yaml` at repo root; tests excluded by default; generated and vendored code excluded by glob.
-- **License:** Apache-2.0. Public at v0.1 (scan + diff-to-CI working).
+- **License:** Apache-2.0 (`LICENSE`). Public at v0.1 (scan + diff-to-CI working).
 - **Audience:** the author first, then open-source users.
 - **Mode B surface:** Structural Summary for CI leads; local UI diff view for depth. zu never calls a code-host API and ships no CI snippets — the JSON/Markdown output is documented.
 - **Links (B6):** host detected from the `origin` remote (GitHub/GitLab), `-link-template` override.
