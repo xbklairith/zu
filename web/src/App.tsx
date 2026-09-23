@@ -9,6 +9,7 @@ import { Header } from "./Header";
 import { keyAction } from "./keys";
 import { elkGraph, positions, Superseded, type Placed } from "./layout";
 import { Panel } from "./Panel";
+import { reveal } from "./search";
 import { openFull, scene, type SceneNode } from "./scene";
 import { deeper, drill, nextStage, select, shallower, toggle, up } from "./state";
 import { useViewState } from "./useViewState";
@@ -66,6 +67,21 @@ export function App({ view: whole }: { view: View }) {
   }, [change, full, view, state.focus]);
   const [center, setCenter] = useState<{ id: string; seq: number } | undefined>(undefined);
   const sc = useMemo(() => scene(view, state), [view, state]);
+  // A selected bundle edge lives here, not in the hash: its id changes with depth.
+  const [edgeId, setEdgeId] = useState<string | null>(null);
+  const edge = sc.edges.find((e) => e.id === edgeId) ?? null;
+  const choose = (id: string | null) => {
+    setEdgeId(null);
+    update((s) => select(s, id));
+  };
+  // jump draws, selects and centres id (U5, A9), leaving the changed subgraph
+  // when id is outside it.
+  const jump = (id: string) => {
+    setEdgeId(null);
+    if (change && !full && !view.nodes.some((n) => n.id === id)) setFull(true);
+    update((s) => reveal(whole, id, s));
+    setCenter((c) => ({ id, seq: (c?.seq ?? 0) + 1 }));
+  };
 
   // One engine for the page's life; a layout runs only when its ELK input
   // changes, so selecting and dimming never lay out again.
@@ -110,7 +126,7 @@ export function App({ view: whole }: { view: View }) {
         typing: e.target instanceof HTMLInputElement,
         mod: e.metaKey || e.ctrlKey || e.altKey,
       });
-      if (a === "clearSelection") update((s) => select(s, null));
+      if (a === "clearSelection") choose(null);
       else if (a === "up") update((s) => up(s, parentBox(view, s.focus)));
       else if (a === "declutter") update((s) => ({ ...s, stage: nextStage(s.stage) }));
       else if (a === "deeper") update((s) => deeper(s, sc.depth));
@@ -155,7 +171,12 @@ export function App({ view: whole }: { view: View }) {
               view={view}
               sc={sc}
               placed={placed.at}
-              onSelect={(id) => update((s) => select(s, id))}
+              edge={edgeId}
+              onSelect={choose}
+              onEdge={(id) => {
+                setEdgeId(id);
+                update((s) => select(s, null));
+              }}
               onOpen={open}
               onToggle={(id) => update((s) => toggle(s, id))}
               center={center}
@@ -167,14 +188,14 @@ export function App({ view: whole }: { view: View }) {
           </div>
         )}
       </main>
-      {state.selected && (
+      {(state.selected !== null || edge !== null) && (
         <Panel
           view={whole}
-          shown={view}
-          focus={state.focus}
-          depth={sc.depth}
           id={state.selected}
-          onClose={() => update((s) => select(s, null))}
+          edge={edge}
+          bundles={sc.bundles}
+          onReveal={jump}
+          onClose={() => choose(null)}
         />
       )}
     </div>

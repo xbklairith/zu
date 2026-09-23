@@ -1,23 +1,25 @@
 import { useEffect, useRef } from "react";
-import { bundlesOver } from "./bundle";
-import { cut } from "./cut";
+import type { Bundle } from "./bundle";
 import type { Hunk, Loc, View, ViewNode } from "./data";
 import { calls, imports, targets, type Row } from "./facts";
 import { linkFor } from "./links";
+import type { SceneEdge } from "./scene";
 import { EXTERNALS, OUTSIDE, boxStats } from "./tree";
 
 const PKG = "#pkg";
 
+// The panel shows a selected node (id) or a selected bundle edge. Every id it
+// lists is a link: reveal draws and selects it (U5, full).
 type Props = {
   view: View; // the whole View: facts list every edge
-  shown?: View; // what the canvas draws, for aggregate targets (default view)
-  focus: string;
-  depth: number;
-  id: string;
+  id: string | null;
+  edge: SceneEdge | null;
+  bundles: Bundle[]; // the scene's bundles: an aggregate's real targets come from them
+  onReveal: (id: string) => void;
   onClose: () => void;
 };
 
-function Rows({ title, rows }: { title: string; rows: Row[] }) {
+function Rows({ title, rows, onReveal }: { title: string; rows: Row[]; onReveal: (id: string) => void }) {
   return (
     <section>
       <h3>
@@ -29,7 +31,9 @@ function Rows({ title, rows }: { title: string; rows: Row[] }) {
         <ul className="rows">
           {rows.map((r) => (
             <li key={r.id}>
-              <code>{r.id}</code>
+              <button type="button" className="link" onClick={() => onReveal(r.id)}>
+                <code>{r.id}</code>
+              </button>
               {r.count > 1 && <span className="muted"> ×{r.count}</span>}
             </li>
           ))}
@@ -130,11 +134,47 @@ function Source({ text, line }: { text: string; line: number }) {
   );
 }
 
-export function Panel({ view, shown, focus, depth, id, onClose }: Props) {
-  const node = view.nodes.find((n) => n.id === (id.endsWith(PKG) ? id.slice(0, -PKG.length) : id));
+// Members lists the IR edges a bundle carries, each with where it is written.
+function Members({ view, edge, onReveal }: { view: View; edge: SceneEdge; onReveal: (id: string) => void }) {
+  return (
+    <section>
+      <h3>
+        {edge.pairs} {edge.pairs === 1 ? "pair" : "pairs"} ({edge.members.length} edges)
+      </h3>
+      <ul className="rows">
+        {edge.members.map((m, i) => (
+          <li key={i}>
+            <button type="button" className="link" onClick={() => onReveal(m.from)}>
+              <code>{m.from}</code>
+            </button>
+            {` ${m.kind} `}
+            <button type="button" className="link" onClick={() => onReveal(m.to)}>
+              <code>{m.to}</code>
+            </button>
+            {m.count > 1 && <span className="muted"> ×{m.count}</span>}
+            {m.status && <span className={`muted edge-${m.status}`}> {m.status}</span>}
+            <Where view={view} loc={m.loc} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+export function Panel({ view, id, edge, bundles, onReveal, onClose }: Props) {
+  const title = edge ? `${edge.from} → ${edge.to}` : (id ?? "");
+  const node = id === null ? undefined : view.nodes.find((n) => n.id === (id.endsWith(PKG) ? id.slice(0, -PKG.length) : id));
   let body: React.ReactNode;
-  if (id === OUTSIDE || id === EXTERNALS) {
-    body = <Rows title={id === OUTSIDE ? "Packages outside this box" : "External modules"} rows={targets(bundlesOver(shown ?? view, cut(shown ?? view, focus, depth)), id)} />;
+  if (edge) {
+    body = <Members view={view} edge={edge} onReveal={onReveal} />;
+  } else if (id === OUTSIDE || id === EXTERNALS) {
+    body = (
+      <Rows
+        title={id === OUTSIDE ? "Packages outside this box" : "External modules"}
+        rows={targets(bundles, id)}
+        onReveal={onReveal}
+      />
+    );
   } else if (node?.kind === "type" || node?.kind === "function") {
     const c = calls(view, node.id);
     const text = view.sources[node.loc.path];
@@ -143,8 +183,8 @@ export function Panel({ view, shown, focus, depth, id, onClose }: Props) {
         <p className="muted">{node.typeKind ? `${node.kind} (${node.typeKind})` : node.kind}</p>
         {node.status !== "removed" && <Where view={view} loc={node.loc} />}
         <Change view={view} node={node} />
-        <Rows title="Calls and embeds out" rows={c.out} />
-        <Rows title="Called or embedded by" rows={c.in} />
+        <Rows title="Calls and embeds out" rows={c.out} onReveal={onReveal} />
+        <Rows title="Called or embedded by" rows={c.in} onReveal={onReveal} />
         {text !== undefined && node.status !== "removed" && <Source text={text} line={node.loc.line} />}
       </>
     );
@@ -152,10 +192,10 @@ export function Panel({ view, shown, focus, depth, id, onClose }: Props) {
     body = (
       <>
         <p className="muted">external module</p>
-        <Rows title="Imported by" rows={imports(view, node.id).in} />
+        <Rows title="Imported by" rows={imports(view, node.id).in} onReveal={onReveal} />
       </>
     );
-  } else {
+  } else if (id !== null) {
     const s = boxStats(view, id);
     const f = imports(view, id);
     body = (
@@ -165,15 +205,15 @@ export function Panel({ view, shown, focus, depth, id, onClose }: Props) {
         <p className="muted">
           {s.packages} packages · {s.decls} declarations · {s.unresolved} unresolved calls
         </p>
-        <Rows title="Imports" rows={f.out} />
-        <Rows title="Imported by" rows={f.in} />
+        <Rows title="Imports" rows={f.out} onReveal={onReveal} />
+        <Rows title="Imported by" rows={f.in} onReveal={onReveal} />
       </>
     );
   }
   return (
     <aside className="panel">
       <header>
-        <code className="id">{id}</code>
+        <code className="id">{title}</code>
         <button type="button" className="link" onClick={onClose} aria-label="Close panel">
           ×
         </button>

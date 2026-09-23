@@ -3315,7 +3315,7 @@ with
 
 **Steps:**
 
-- [ ] **Implement** (the logic is `reveal`, `targets` and `scene`, tested in Tasks 3, 5 and 6).
+- [x] **Implement** (the logic is `reveal`, `targets` and `scene`, tested in Tasks 3, 5 and 6).
 
 **Edit `web/src/Panel.tsx`:** replace
 
@@ -3604,9 +3604,9 @@ with
       )}
 ````
 
-- [ ] **Run — expect PASS:** `cd web && npx vitest run && npx tsc --noEmit && npm run build`.
-- [ ] **Check in a browser:** click a bundle → its members; click a member id → the canvas goes there and centres it; on a Change View, a member outside the subgraph switches to the full project.
-- [ ] **Commit:** `git add web/src/Panel.tsx web/src/App.tsx && git commit -m "Link every id in the side panel and show bundle members"`
+- [x] **Run — expect PASS:** `cd web && npx vitest run && npx tsc --noEmit && npm run build`.
+- [x] **Check in a browser:** click a bundle → its members; click a member id → the canvas goes there and centres it; on a Change View, a member outside the subgraph switches to the full project.
+- [x] **Commit:** `git add web/src/Panel.tsx web/src/App.tsx && git commit -m "Link every id in the side panel and show bundle members"`
 
 ---
 
