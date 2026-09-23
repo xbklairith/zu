@@ -1,17 +1,30 @@
 package scan
 
 import (
+	"cmp"
 	"path"
+	"slices"
+	"strings"
 
 	"zu/internal/ir"
 )
 
 // builder accumulates nodes and edges; maps give lookup, ir.Sort gives order.
 type builder struct {
-	ix    *index
-	doc   *ir.IR
-	nodes map[string]*ir.Node
-	edges map[edgeID]*ir.Edge
+	ix      *index
+	doc     *ir.IR
+	nodes   map[string]*ir.Node
+	edges   map[edgeID]*ir.Edge
+	decls   map[string][]declAt // node id → every declaration of it
+	members map[string][]string // package id → ids of its types and functions
+}
+
+// declAt is one declaration of a node, kept until merging.
+type declAt struct {
+	declFact
+	Pkg       string
+	Loc       ir.Location
+	Generated bool
 }
 
 type edgeID struct {
@@ -29,8 +42,10 @@ func assemble(w *walkResult, facts []*fileFacts) *ir.IR {
 			Unsupported:       w.Unsupported,
 			ParseErrors:       append([]ir.ParseError(nil), w.Errors...),
 		},
-		nodes: map[string]*ir.Node{},
-		edges: map[edgeID]*ir.Edge{},
+		nodes:   map[string]*ir.Node{},
+		edges:   map[edgeID]*ir.Edge{},
+		decls:   map[string][]declAt{},
+		members: map[string][]string{},
 	}
 	for _, f := range facts {
 		if f.Err != nil {
@@ -43,9 +58,22 @@ func assemble(w *walkResult, facts []*fileFacts) *ir.IR {
 		}
 		p := b.ix.pkgs[importPath(w.moduleFor(f.Dir), f.Dir)]
 		b.packageNode(p)
+		for _, d := range f.Decls {
+			id := declID(p.ID, d.Recv, d.Name)
+			if b.decls[id] == nil {
+				b.members[p.ID] = append(b.members[p.ID], id)
+			}
+			b.decls[id] = append(b.decls[id], declAt{d, p.ID, ir.Location{Path: f.Path, Line: d.Line}, f.Generated})
+		}
 		names := b.imports(p, f)
 		b.calls(p, f, names)
 		b.embeds(p, f, names)
+	}
+	for id, ds := range b.decls {
+		b.nodes[id] = mergeDecls(id, ds[0].Pkg, ds)
+	}
+	for _, p := range b.ix.pkgs {
+		b.nodes[p.ID].Hash = b.packageHash(p)
 	}
 	for _, n := range b.nodes {
 		b.doc.Nodes = append(b.doc.Nodes, *n)
@@ -176,6 +204,51 @@ func declID(pkg, recv, name string) string {
 		return pkg + "." + name
 	}
 	return pkg + "." + recv + "." + name
+}
+
+// mergeDecls builds one node from every declaration sharing an id (build
+// variants, repeated init). A single declaration keeps its own hash; several
+// hash to SHA-256 over their hashes in location order.
+func mergeDecls(id, pkg string, ds []declAt) *ir.Node {
+	slices.SortFunc(ds, func(a, b declAt) int {
+		return cmp.Or(cmp.Compare(a.Loc.Path, b.Loc.Path), cmp.Compare(a.Loc.Line, b.Loc.Line))
+	})
+	first := ds[0]
+	exported := first.Exported
+	n := &ir.Node{ID: id, Kind: first.Kind, Parent: pkg, Exported: &exported, TypeKind: first.TypeKind, Generated: true}
+	if first.Recv != "" {
+		n.Parent = declID(pkg, "", first.Recv)
+	}
+	var hashes strings.Builder
+	for _, d := range ds {
+		n.Locations = append(n.Locations, d.Loc)
+		n.Generated = n.Generated && d.Generated
+		if d.TypeKind != n.TypeKind {
+			n.TypeKind = ir.TypeOther
+		}
+		hashes.WriteString(d.Hash + "\n")
+	}
+	n.Hash = first.Hash
+	if len(ds) > 1 {
+		n.Hash = hashBytes([]byte(hashes.String()))
+	}
+	return n
+}
+
+// packageHash is SHA-256 over the sorted "id hash" lines of the package's
+// members plus one "#decls" line for its const, var and import declarations.
+func (b *builder) packageHash(p *pkgInfo) string {
+	var other []string
+	for _, f := range p.Files {
+		other = append(other, f.OtherHashes...)
+	}
+	slices.Sort(other)
+	lines := []string{"#decls " + hashBytes([]byte(strings.Join(other, "\n")))}
+	for _, id := range b.members[p.ID] {
+		lines = append(lines, id+" "+b.nodes[id].Hash)
+	}
+	slices.Sort(lines)
+	return hashBytes([]byte(strings.Join(lines, "\n") + "\n"))
 }
 
 // external ensures the node for a required module, located at the require

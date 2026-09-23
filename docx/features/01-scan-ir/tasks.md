@@ -12,8 +12,8 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
 
 ## Progress Summary
 - Total Tasks: 15
-- Completed: 10/15
-- In Progress: Task 11 — Build and merge
+- Completed: 11/15
+- In Progress: Task 12 — scan.Run, golden fixture, determinism
 
 ## Tasks
 
@@ -77,10 +77,10 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
   - [x] REFACTOR
   - Linked: REQ-037
 
-- [ ] **Task 11: Build and merge** (`build.go`)
-  - [ ] RED: same id in two files → one node with both locations and hash = SHA over sorted per-declaration hashes; `generated` only if every declaration is generated; `typeKind` disagreement → other; package node at its first file's package clause with module; package hash over members plus `#decls`; edges merged, with locations appended
-  - [ ] GREEN
-  - [ ] REFACTOR
+- [x] **Task 11: Build and merge** (`build.go`)
+  - [x] RED: same id in two files → one node with both locations and hash = SHA over sorted per-declaration hashes; `generated` only if every declaration is generated; `typeKind` disagreement → other; package node at its first file's package clause with module; package hash over members plus `#decls`; edges merged, with locations appended
+  - [x] GREEN
+  - [x] REFACTOR
   - Linked: REQ-015, REQ-016, REQ-021, REQ-022, REQ-026, REQ-032
 
 - [ ] **Task 12: scan.Run, golden fixture, determinism**
