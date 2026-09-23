@@ -1441,10 +1441,10 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
 
 **Steps:**
 
-- [ ] **Write the failing test**: with `d = autoDepth(golden, "")`, lay out the leaves and containers of `(golden, "", d)` and `bundles(golden, "", d)` twice and expect equal positions (`toEqual`); every node gets finite `x` and `y`; the same input in shuffled order gives the same positions.
-- [ ] **Run — expect FAIL**, then **implement** `layout(items: {id; label; parent?: string; shape: "container" | "box" | "oval" | "decl" | "outside"}[], edges): Promise<Map<id, {x, y, w, h, parent?}>>`. Positions are relative to the parent, matching React Flow's `parentId`.
-- [ ] **Run — expect PASS**: `cd web && npm test`.
-- [ ] **Commit**: `git add web/src/layout.ts web/src/layout.test.ts && git commit -m "Lay out views deterministically with ELK"`
+- [x] **Write the failing test**: with `d = autoDepth(golden, "")`, lay out the leaves and containers of `(golden, "", d)` and `bundles(golden, "", d)` twice and expect equal positions (`toEqual`); every node gets finite `x` and `y`; the same input in shuffled order gives the same positions.
+- [x] **Run — expect FAIL**, then **implement** `layout(items: {id; label; parent?: string; shape: "container" | "box" | "oval" | "decl" | "outside"}[], edges): Promise<Map<id, {x, y, w, h, parent?}>>`. Positions are relative to the parent, matching React Flow's `parentId`.
+- [x] **Run — expect PASS**: `cd web && npm test`.
+- [x] **Commit**: `git add web/src/layout.ts web/src/layout.test.ts && git commit -m "Lay out views deterministically with ELK"`
 
 ---
 
@@ -1618,7 +1618,7 @@ Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag r
 - [x] Task 6 · UI toolchain
 - [x] Task 7 · Golden View
 - [x] Task 8 · Package Tree logic
-- [ ] Task 9 · Layout
+- [x] Task 9 · Layout
 - [ ] Task 10 · Canvas and header
 - [ ] Task 11 · Side panel
 - [ ] Task 12 · Part A acceptance
