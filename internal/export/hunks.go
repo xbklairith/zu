@@ -2,8 +2,8 @@ package export
 
 import "strings"
 
-// context is the number of unchanged lines kept around each change.
-const context = 3
+// contextLines is the number of unchanged lines kept around each change.
+const contextLines = 3
 
 // Hunk is one region of a unified line diff. Each line carries its marker:
 // " " unchanged, "-" only in base, "+" only in head. A side with no lines
@@ -138,17 +138,17 @@ func group(ops []op) []Hunk {
 			i++
 			continue
 		}
-		start := max(i-context, 0)
+		start := max(i-contextLines, 0)
 		end := i // one past the last change in this hunk
 		for j := i; j < len(ops); j++ {
 			if ops[j].kind != ' ' {
-				if j-end > 2*context {
+				if j-end > 2*contextLines {
 					break
 				}
 				end = j + 1
 			}
 		}
-		stop := min(end+context, len(ops))
+		stop := min(end+contextLines, len(ops))
 		hunks = append(hunks, hunkOf(ops, start, stop))
 		i = end
 	}

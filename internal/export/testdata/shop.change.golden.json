@@ -1,0 +1,462 @@
+{
+  "schema": "1",
+  "kind": "change",
+  "tool": "",
+  "head": {
+    "commit": "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
+    "dirty": false
+  },
+  "base": {
+    "commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "dirty": false
+  },
+  "modules": [
+    "example.com/shop",
+    "example.com/shop/tools"
+  ],
+  "nodes": [
+    {
+      "id": "example.com/shop",
+      "kind": "package",
+      "module": "example.com/shop",
+      "loc": {
+        "path": "main.go",
+        "line": 1
+      },
+      "decls": 1,
+      "detail": true,
+      "status": "modified",
+      "hop": 0
+    },
+    {
+      "id": "example.com/shop.main",
+      "kind": "function",
+      "parent": "example.com/shop",
+      "exported": false,
+      "loc": {
+        "path": "main.go",
+        "line": 11
+      },
+      "status": "modified"
+    },
+    {
+      "id": "example.com/shop/internal/checkout",
+      "kind": "package",
+      "module": "example.com/shop",
+      "loc": {
+        "path": "internal/checkout/checkout.go",
+        "line": 2
+      },
+      "decls": 5,
+      "unresolved": 4,
+      "detail": true,
+      "status": "modified",
+      "hop": 0
+    },
+    {
+      "id": "example.com/shop/internal/checkout.Total",
+      "kind": "function",
+      "parent": "example.com/shop/internal/checkout",
+      "exported": true,
+      "loc": {
+        "path": "internal/checkout/checkout.go",
+        "line": 22
+      },
+      "status": "modified"
+    },
+    {
+      "id": "example.com/shop/internal/money",
+      "kind": "package",
+      "module": "example.com/shop",
+      "loc": {
+        "path": "internal/money/money.go",
+        "line": 2
+      },
+      "decls": 3,
+      "detail": true,
+      "status": "modified",
+      "hop": 0
+    },
+    {
+      "id": "example.com/shop/internal/money.Plus",
+      "kind": "function",
+      "parent": "example.com/shop/internal/money",
+      "exported": true,
+      "loc": {
+        "path": "internal/money/money.go",
+        "line": 18
+      },
+      "movedFrom": "example.com/shop/internal/money.Add"
+    },
+    {
+      "id": "example.com/shop/internal/store",
+      "kind": "package",
+      "module": "example.com/shop",
+      "loc": {
+        "path": "internal/store/db_linux.go",
+        "line": 3
+      },
+      "decls": 14,
+      "unresolved": 5,
+      "detail": true,
+      "status": "modified",
+      "hop": 0
+    },
+    {
+      "id": "example.com/shop/internal/store.Order",
+      "kind": "type",
+      "parent": "example.com/shop/internal/store",
+      "exported": true,
+      "typeKind": "struct",
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 19
+      },
+      "status": "modified"
+    },
+    {
+      "id": "example.com/shop/internal/store.ReadWriter",
+      "kind": "type",
+      "parent": "example.com/shop/internal/store",
+      "exported": true,
+      "typeKind": "interface",
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 19
+      },
+      "status": "removed"
+    },
+    {
+      "id": "example.com/shop/internal/store.Repo",
+      "kind": "type",
+      "parent": "example.com/shop/internal/store",
+      "exported": true,
+      "typeKind": "struct",
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 25
+      }
+    },
+    {
+      "id": "example.com/shop/internal/store.Repo.Get",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store.Repo",
+      "exported": true,
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 37
+      },
+      "status": "modified"
+    },
+    {
+      "id": "example.com/shop/internal/store.Repo.check",
+      "kind": "function",
+      "parent": "example.com/shop/internal/store.Repo",
+      "exported": false,
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 46
+      },
+      "status": "modified"
+    },
+    {
+      "id": "example.com/shop/tools/gen",
+      "kind": "package",
+      "module": "example.com/shop/tools",
+      "loc": {
+        "path": "tools/gen/gen.go",
+        "line": 1
+      },
+      "decls": 1,
+      "unresolved": 1,
+      "hop": 1
+    },
+    {
+      "id": "github.com/lib/pq",
+      "kind": "external",
+      "loc": {
+        "path": "go.mod",
+        "line": 6
+      }
+    },
+    {
+      "id": "golang.org/x/sync",
+      "kind": "external",
+      "loc": {
+        "path": "go.mod",
+        "line": 7
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "example.com/shop",
+      "to": "example.com/shop/internal/checkout",
+      "kind": "imports",
+      "count": 1,
+      "loc": {
+        "path": "main.go",
+        "line": 6
+      }
+    },
+    {
+      "from": "example.com/shop",
+      "to": "example.com/shop/internal/money",
+      "kind": "imports",
+      "count": 1,
+      "loc": {
+        "path": "main.go",
+        "line": 7
+      },
+      "status": "added"
+    },
+    {
+      "from": "example.com/shop.main",
+      "to": "example.com/shop/internal/checkout.Total",
+      "kind": "calls",
+      "count": 1,
+      "loc": {
+        "path": "main.go",
+        "line": 12
+      }
+    },
+    {
+      "from": "example.com/shop/internal/checkout",
+      "to": "example.com/shop/internal/money",
+      "kind": "imports",
+      "count": 1,
+      "loc": {
+        "path": "internal/checkout/checkout.go",
+        "line": 7
+      }
+    },
+    {
+      "from": "example.com/shop/internal/checkout",
+      "to": "example.com/shop/internal/store",
+      "kind": "imports",
+      "count": 1,
+      "loc": {
+        "path": "internal/checkout/checkout.go",
+        "line": 8
+      }
+    },
+    {
+      "from": "example.com/shop/internal/checkout",
+      "to": "golang.org/x/sync",
+      "kind": "imports",
+      "count": 1,
+      "loc": {
+        "path": "internal/checkout/checkout.go",
+        "line": 9
+      }
+    },
+    {
+      "from": "example.com/shop/internal/money",
+      "to": "example.com/shop/internal/store",
+      "kind": "imports",
+      "count": 1,
+      "loc": {
+        "path": "internal/money/money.go",
+        "line": 4
+      },
+      "status": "reversed"
+    },
+    {
+      "from": "example.com/shop/internal/store",
+      "to": "github.com/lib/pq",
+      "kind": "imports",
+      "count": 1,
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 8
+      }
+    },
+    {
+      "from": "example.com/shop/internal/store.Repo",
+      "to": "github.com/lib/pq",
+      "kind": "embeds",
+      "count": 1,
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 28
+      }
+    },
+    {
+      "from": "example.com/shop/internal/store.Repo.Get",
+      "to": "example.com/shop/internal/store.Repo.check",
+      "kind": "calls",
+      "count": 1,
+      "loc": {
+        "path": "internal/store/store.go",
+        "line": 43
+      }
+    },
+    {
+      "from": "example.com/shop/tools/gen",
+      "to": "example.com/shop/internal/money",
+      "kind": "imports",
+      "count": 1,
+      "loc": {
+        "path": "tools/gen/gen.go",
+        "line": 3
+      }
+    }
+  ],
+  "sources": {
+    "internal/checkout/checkout.go": "// Package checkout prices carts.\npackage checkout\n\nimport (\n\t\"errors\"\n\n\t. \"example.com/shop/internal/money\"\n\tst \"example.com/shop/internal/store\"\n\t\"golang.org/x/sync/errgroup\"\n)\n\n// Cart is what a customer buys.\ntype Cart struct {\n\tst.Order\n\tLines []Line\n}\n\n// Line is one priced item.\ntype Line struct{ Price Cents }\n\n// Total sums a cart.\nfunc Total(c *Cart) Cents {\n\tif c == nil {\n\t\treturn 0\n\t}\n\tvar sum Cents\n\tfor _, l := range c.Lines {\n\t\tsum = Plus(sum, l.Price)\n\t}\n\treturn sum\n}\n\n// Place validates and stores a cart.\nfunc Place(c *Cart) error {\n\trepo := st.Open()\n\tif _, err := repo.Get(c.ID); err != nil {\n\t\treturn err\n\t}\n\tvar g errgroup.Group\n\tg.Go(func() error { return validate(c) })\n\treturn errors.New(\"todo\")\n}\n\nfunc validate(c *Cart) error {\n\tvalidate := func(*Cart) error { return nil }\n\treturn validate(c)\n}\n",
+    "internal/money/money.go": "// Package money holds amounts.\npackage money\n\nimport \"example.com/shop/internal/store\"\n\nvar _ store.Order\n\n// Cents is an amount in cents.\ntype Cents int64\n\n// Currency is an ISO code.\ntype Currency = string\n\n// Zero is no money.\nconst Zero Cents = 0\n\n// Add returns the sum.\nfunc Plus(a, b Cents) Cents { return a + b }\n",
+    "internal/store/store.go": "// Package store keeps orders.\npackage store\n\nimport (\n\t\"database/sql\"\n\t\"sync\"\n\n\t\"github.com/lib/pq\"\n\n)\n\n// Reader reads orders.\ntype Reader interface {\n\tGet(id int) (Order, error)\n}\n\n\n// Order is one order.\ntype Order struct {\n\tID    int\n\tTotal int64\n}\n\n// Repo stores orders in memory.\ntype Repo struct {\n\tsync.Mutex\n\t*sql.DB\n\tpq.Driver\n\tcache map[int]Order\n\thook  func()\n}\n\n// Open returns an empty Repo.\nfunc Open() *Repo { return \u0026Repo{cache: map[int]Order{}} }\n\n// Get returns one order.\nfunc (r *Repo) Get(id int) (Order, error) {\n\tr.Lock()\n\tdefer r.Unlock()\n\to := r.cache[id]\n\tr.hook()\n\tr.hook()\n\treturn o, r.check(o)\n}\n\nfunc (r *Repo) check(o Order) error {\n\treturn nil\n}\n\n// Reset replaces the receiver, so its calls are not certain.\nfunc (r *Repo) Reset() {\n\tr = Open()\n\tr.check(Order{})\n}\n\n// Page is one page of results.\ntype Page[T any] struct {\n\tItems []T\n}\n\n// Len is the page size.\nfunc (p *Page[T]) Len() int { return len(p.Items) }\n",
+    "main.go": "package main\n\nimport (\n\t\"fmt\"\n\n\t\"example.com/shop/internal/checkout\"\n\t\"example.com/shop/internal/money\"\n\t_ \"example.com/shop/internal/missing\"\n)\n\nfunc main() {\n\tfmt.Println(checkout.Total(nil), money.Zero)\n}\n"
+  },
+  "honesty": {
+    "parseErrors": [],
+    "unresolvedCalls": 10,
+    "unresolvedImports": 1,
+    "unsupported": {
+      ".sh": 1,
+      ".ts": 1
+    }
+  },
+  "changed": [
+    "example.com/shop/internal/store",
+    "example.com/shop/internal/money",
+    "example.com/shop/internal/checkout",
+    "example.com/shop"
+  ],
+  "hunks": {
+    "internal/checkout/checkout.go": [
+      {
+        "baseStart": 25,
+        "baseLines": 7,
+        "headStart": 25,
+        "headLines": 7,
+        "lines": [
+          " \t}",
+          " \tvar sum Cents",
+          " \tfor _, l := range c.Lines {",
+          "-\t\tsum = Add(sum, l.Price)",
+          "+\t\tsum = Plus(sum, l.Price)",
+          " \t}",
+          " \treturn sum",
+          " }"
+        ]
+      }
+    ],
+    "internal/money/money.go": [
+      {
+        "baseStart": 1,
+        "baseLines": 6,
+        "headStart": 1,
+        "headLines": 10,
+        "lines": [
+          " // Package money holds amounts.",
+          " package money",
+          " ",
+          "+import \"example.com/shop/internal/store\"",
+          "+",
+          "+var _ store.Order",
+          "+",
+          " // Cents is an amount in cents.",
+          " type Cents int64",
+          " "
+        ]
+      },
+      {
+        "baseStart": 11,
+        "baseLines": 4,
+        "headStart": 15,
+        "headLines": 4,
+        "lines": [
+          " const Zero Cents = 0",
+          " ",
+          " // Add returns the sum.",
+          "-func Add(a, b Cents) Cents { return a + b }",
+          "+func Plus(a, b Cents) Cents { return a + b }"
+        ]
+      }
+    ],
+    "internal/store/store.go": [
+      {
+        "baseStart": 7,
+        "baseLines": 7,
+        "headStart": 7,
+        "headLines": 6,
+        "lines": [
+          " ",
+          " \t\"github.com/lib/pq\"",
+          " ",
+          "-\t\"example.com/shop/internal/money\"",
+          " )",
+          " ",
+          " // Reader reads orders."
+        ]
+      },
+      {
+        "baseStart": 15,
+        "baseLines": 16,
+        "headStart": 14,
+        "headLines": 11,
+        "lines": [
+          " \tGet(id int) (Order, error)",
+          " }",
+          " ",
+          "-// ReadWriter reads and writes orders.",
+          "-type ReadWriter interface {",
+          "-\tReader",
+          "-\tPut(o Order) error",
+          "-}",
+          " ",
+          " // Order is one order.",
+          " type Order struct {",
+          " \tID    int",
+          "-\tTotal money.Cents",
+          "+\tTotal int64",
+          " }",
+          " ",
+          " // Repo stores orders in memory."
+        ]
+      },
+      {
+        "baseStart": 45,
+        "baseLines": 11,
+        "headStart": 39,
+        "headLines": 11,
+        "lines": [
+          " \tdefer r.Unlock()",
+          " \to := r.cache[id]",
+          " \tr.hook()",
+          "+\tr.hook()",
+          " \treturn o, r.check(o)",
+          " }",
+          " ",
+          " func (r *Repo) check(o Order) error {",
+          "-\t_ = money.Add(o.Total, money.Zero)",
+          " \treturn nil",
+          " }",
+          " "
+        ]
+      }
+    ],
+    "main.go": [
+      {
+        "baseStart": 4,
+        "baseLines": 9,
+        "headStart": 4,
+        "headLines": 10,
+        "lines": [
+          " \t\"fmt\"",
+          " ",
+          " \t\"example.com/shop/internal/checkout\"",
+          "+\t\"example.com/shop/internal/money\"",
+          " \t_ \"example.com/shop/internal/missing\"",
+          " )",
+          " ",
+          " func main() {",
+          "-\tfmt.Println(checkout.Total(nil))",
+          "+\tfmt.Println(checkout.Total(nil), money.Zero)",
+          " }"
+        ]
+      }
+    ]
+  }
+}

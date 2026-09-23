@@ -1567,6 +1567,13 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
 - **Meaningful Change comes from `hash` alone.** A gofmt-only or comment-only edit gives no status, so its file is never inlined (ADR 0006).
 - **Tests.** Two scanned copies of `testdata/shop` in `t.TempDir()` (not hand-edited IRs) with an add, a remove, a modify, a Move, a reversed import, and a gofmt-only edit. There is a golden of the View, and `hunks` are checked for one modified function.
 
+- **Built (B1), with four choices the text above leaves open:**
+  - A type that holds a changed method is drawn even when unchanged, so the method has a row to sit in.
+  - A Move target's package gets `detail: true` even if it is otherwise unchanged; `changed` stays the Summary's list.
+  - Removed externals from base are drawn too, so a removed import edge never dangles.
+  - The base files of Move sources get hunks as well: the moved text left them.
+  - `hunks` is `Hunks(base, head []byte) []Hunk` in `internal/export/hunks.go`; `hop` is a pointer, so hop 0 survives `omitempty`.
+
 ### Task B2: `zu diff <base> [head] -html FILE [-link-template T]`
 
 - `htmlOptions.prepare()` is reused. `-include` is rejected, because the change decides what is inlined.
@@ -1622,7 +1629,7 @@ Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag r
 - [x] Task 10 · Canvas and header
 - [x] Task 11 · Side panel
 - [x] Task 12 · Part A acceptance (manual browser checks pending)
-- [ ] Task B1 · `export.Change`
+- [x] Task B1 · `export.Change`
 - [ ] Task B2 · `zu diff -html` (blocked)
 - [ ] Task B3 · Change View UI (blocked)
 - [ ] Task B4 · Part B acceptance (blocked)

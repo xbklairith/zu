@@ -14,18 +14,7 @@ type ReadFunc func(path string) ([]byte, error)
 // Project builds the Project View: every package and external with its import
 // edges, plus declarations, calls, embeds and source for included packages.
 func Project(doc *ir.IR, include []Pattern, read ReadFunc) (*View, error) {
-	byID := make(map[string]*ir.Node, len(doc.Nodes))
-	for i := range doc.Nodes {
-		byID[doc.Nodes[i].ID] = &doc.Nodes[i]
-	}
-	pkgOf := func(id string) string { // walks method → type → package
-		for n := byID[id]; n != nil; n = byID[n.Parent] {
-			if n.Kind == ir.KindPackage {
-				return n.ID
-			}
-		}
-		return ""
-	}
+	pkgOf := packageOf(nodesByID(doc))
 	detail, decls := map[string]bool{}, map[string]int{}
 	matched := make([]bool, len(include))
 	for i := range doc.Nodes {

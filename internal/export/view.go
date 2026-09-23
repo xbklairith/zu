@@ -24,6 +24,8 @@ type View struct {
 	Sources map[string]string `json:"sources"`
 	Links   *Links            `json:"links,omitempty"`
 	Honesty Honesty           `json:"honesty"`
+	Changed []string          `json:"changed,omitempty"` // Change View: changed packages, bottom-up
+	Hunks   map[string][]Hunk `json:"hunks,omitempty"`   // Change View: line diffs of changed files
 }
 
 // Node is an IR node reduced to what a view draws.
@@ -40,6 +42,8 @@ type Node struct {
 	Unresolved int         `json:"unresolved,omitempty"` // packages: Unresolved Calls
 	Detail     bool        `json:"detail,omitempty"`     // packages: declarations and source are in this file
 	Status     string      `json:"status,omitempty"`     // Change View only
+	MovedFrom  string      `json:"movedFrom,omitempty"`  // Change View: the Move's base id
+	Hop        *int        `json:"hop,omitempty"`        // Change View: distance in the Affected Set
 }
 
 // Edge is an IR edge with its location count instead of every location.
