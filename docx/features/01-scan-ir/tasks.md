@@ -12,15 +12,15 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
 
 ## Progress Summary
 - Total Tasks: 15
-- Completed: 0/15
-- In Progress: —
+- Completed: 1/15
+- In Progress: Task 2 — gitref.Head
 
 ## Tasks
 
-- [ ] **Task 1: IR types and canonical encoding** (`internal/ir`)
-  - [ ] RED: `Encode` of an unsorted IR gives sorted nodes, edges and locations; the field order follows REQ-010; empty collections are `[]`/`{}`; two-space indent and a trailing newline; `exported:false` is kept; `SchemaVersion == "1"`
-  - [ ] GREEN: types, `Sort`, `Encode`
-  - [ ] REFACTOR
+- [x] **Task 1: IR types and canonical encoding** (`internal/ir`)
+  - [x] RED: `Encode` of an unsorted IR gives sorted nodes, edges and locations; the field order follows REQ-010; empty collections are `[]`/`{}`; two-space indent and a trailing newline; `exported:false` is kept; `SchemaVersion == "1"`
+  - [x] GREEN: types, `Sort`, `Encode`
+  - [x] REFACTOR
   - Linked: REQ-010, REQ-011, REQ-013, REQ-018, REQ-039, REQ-045, REQ-046
 
 - [ ] **Task 2: gitref.Head** (`internal/gitref`)
