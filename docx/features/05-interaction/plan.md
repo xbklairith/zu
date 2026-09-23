@@ -1254,7 +1254,7 @@ export function declutter(
 
 **Steps:**
 
-- [ ] **Freeze 04's canvas** (this version of the test runs 04's `layout.ts` `scene`).
+- [x] **Freeze 04's canvas** (this version of the test runs 04's `layout.ts` `scene`).
 
 **Create `web/src/scene.snapshot.test.ts`:**
 
@@ -1308,8 +1308,8 @@ it("reproduces 04's canvas on the shop goldens", async () => {
 
 **Run (writes the snapshot):** `cd web && npx vitest run -u src/scene.snapshot.test.ts`
 
-- [ ] Review `web/src/__snapshots__/scene04.json` (about 140 KB) and commit it with this task.
-- [ ] **Write the failing test.**
+- [x] Review `web/src/__snapshots__/scene04.json` (about 140 KB) and commit it with this task.
+- [x] **Write the failing test.**
 
 **Create `web/src/scene.test.ts`:**
 
@@ -1455,8 +1455,8 @@ describe("scene", () => {
 });
 ````
 
-- [ ] **Run — expect FAIL:** `cd web && npx vitest run src/scene.test.ts` → `Cannot find module './scene'`.
-- [ ] **Implement.**
+- [x] **Run — expect FAIL:** `cd web && npx vitest run src/scene.test.ts` → `Cannot find module './scene'`.
+- [x] **Implement.**
 
 **Create `web/src/scene.ts`:**
 
@@ -1692,7 +1692,7 @@ export const knownIds = (view: View): Known => ({
 });
 ````
 
-- [ ] **Point the snapshot test at the new scene.**
+- [x] **Point the snapshot test at the new scene.**
 
 **Edit `web/src/scene.snapshot.test.ts`:** replace
 
@@ -1731,8 +1731,8 @@ with
     })),
 ````
 
-- [ ] **Run — expect PASS:** `cd web && npx vitest run && npx tsc --noEmit` → `scene.test` 18 passed; `scene.snapshot` matches 04's canvas.
-- [ ] **Commit:** `git add web/src/scene.ts web/src/scene.test.ts web/src/scene.snapshot.test.ts web/src/__snapshots__/scene04.json && git commit -m "Compute the scene the canvas draws from the view state"`
+- [x] **Run — expect PASS:** `cd web && npx vitest run && npx tsc --noEmit` → `scene.test` 18 passed; `scene.snapshot` matches 04's canvas.
+- [x] **Commit:** `git add web/src/scene.ts web/src/scene.test.ts web/src/scene.snapshot.test.ts web/src/__snapshots__/scene04.json && git commit -m "Compute the scene the canvas draws from the view state"`
 
 ---
 

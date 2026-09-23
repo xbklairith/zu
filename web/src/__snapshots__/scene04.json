@@ -1,0 +1,7052 @@
+{
+ "project (root) d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop",
+    "label": "example.com/shop",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "example.com/shop",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "example.com/shop",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "example.com/shop/internal",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "example.com/shop/internal",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "example.com/shop/internal",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/tools",
+    "label": "example.com/shop/tools",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "example.com/shop/tools",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project (root) d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop",
+    "label": "example.com/shop",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/tools",
+    "label": "example.com/shop/tools",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/tools",
+    "to": "example.com/shop",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project (root) d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop",
+    "label": "example.com/shop",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "example.com/shop",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "example.com/shop",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/tools",
+    "label": "example.com/shop/tools",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "example.com/shop/tools",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "example.com/shop/internal",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project (root) d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop",
+    "label": "example.com/shop",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "example.com/shop",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "example.com/shop",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "example.com/shop/internal",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "example.com/shop/internal",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "example.com/shop/internal",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/tools",
+    "label": "example.com/shop/tools",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "example.com/shop/tools",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project example.com/shop d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "example.com/shop/internal",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "example.com/shop/internal",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "example.com/shop/internal",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project example.com/shop d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project example.com/shop d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "example.com/shop/internal",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "example.com/shop/internal",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "example.com/shop/internal",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project example.com/shop d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "example.com/shop/internal",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "example.com/shop/internal",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "example.com/shop/internal",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project example.com/shop#pkg d=auto": {
+  "nodes": [],
+  "edges": []
+ },
+ "project example.com/shop#pkg d=1": {
+  "nodes": [],
+  "edges": []
+ },
+ "project example.com/shop#pkg d=2": {
+  "nodes": [],
+  "edges": []
+ },
+ "project example.com/shop#pkg d=3": {
+  "nodes": [],
+  "edges": []
+ },
+ "project example.com/shop/internal d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project example.com/shop/internal d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project example.com/shop/internal d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project example.com/shop/internal d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project example.com/shop/internal/checkout d=auto": {
+  "nodes": [],
+  "edges": []
+ },
+ "project example.com/shop/internal/checkout d=1": {
+  "nodes": [],
+  "edges": []
+ },
+ "project example.com/shop/internal/checkout d=2": {
+  "nodes": [],
+  "edges": []
+ },
+ "project example.com/shop/internal/checkout d=3": {
+  "nodes": [],
+  "edges": []
+ },
+ "project example.com/shop/internal/money d=auto": {
+  "nodes": [],
+  "edges": []
+ },
+ "project example.com/shop/internal/money d=1": {
+  "nodes": [],
+  "edges": []
+ },
+ "project example.com/shop/internal/money d=2": {
+  "nodes": [],
+  "edges": []
+ },
+ "project example.com/shop/internal/money d=3": {
+  "nodes": [],
+  "edges": []
+ },
+ "project example.com/shop/internal/store d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/store.Open",
+    "label": "Open",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Page",
+    "label": "Page",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "Len"
+    ],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Reader",
+    "label": "Reader",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "Reset",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Status",
+    "label": "Status",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "String"
+    ],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.dialect",
+    "label": "dialect",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.init",
+    "label": "init",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.register",
+    "label": "register",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/internal/store.ReadWriter",
+    "to": "example.com/shop/internal/store.Reader",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store.Repo",
+    "to": "example.com/shop/internal/store.Open",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store.init",
+    "to": "example.com/shop/internal/store.register",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store.register",
+    "to": "example.com/shop/internal/store.dialect",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project example.com/shop/internal/store d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/store.Open",
+    "label": "Open",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Page",
+    "label": "Page",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "Len"
+    ],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Reader",
+    "label": "Reader",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "Reset",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Status",
+    "label": "Status",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "String"
+    ],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.dialect",
+    "label": "dialect",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.init",
+    "label": "init",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.register",
+    "label": "register",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/internal/store.ReadWriter",
+    "to": "example.com/shop/internal/store.Reader",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store.Repo",
+    "to": "example.com/shop/internal/store.Open",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store.init",
+    "to": "example.com/shop/internal/store.register",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store.register",
+    "to": "example.com/shop/internal/store.dialect",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project example.com/shop/internal/store d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/store.Open",
+    "label": "Open",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Page",
+    "label": "Page",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "Len"
+    ],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Reader",
+    "label": "Reader",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "Reset",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Status",
+    "label": "Status",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "String"
+    ],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.dialect",
+    "label": "dialect",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.init",
+    "label": "init",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.register",
+    "label": "register",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/internal/store.ReadWriter",
+    "to": "example.com/shop/internal/store.Reader",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store.Repo",
+    "to": "example.com/shop/internal/store.Open",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store.init",
+    "to": "example.com/shop/internal/store.register",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store.register",
+    "to": "example.com/shop/internal/store.dialect",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project example.com/shop/internal/store d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/store.Open",
+    "label": "Open",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Page",
+    "label": "Page",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "Len"
+    ],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Reader",
+    "label": "Reader",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "Reset",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Status",
+    "label": "Status",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "String"
+    ],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.dialect",
+    "label": "dialect",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.init",
+    "label": "init",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.register",
+    "label": "register",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/internal/store.ReadWriter",
+    "to": "example.com/shop/internal/store.Reader",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store.Repo",
+    "to": "example.com/shop/internal/store.Open",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store.init",
+    "to": "example.com/shop/internal/store.register",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/store.register",
+    "to": "example.com/shop/internal/store.dialect",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project example.com/shop/tools d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "outside",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project example.com/shop/tools d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "outside",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project example.com/shop/tools d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "outside",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project example.com/shop/tools d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "outside",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "project example.com/shop/tools/gen d=auto": {
+  "nodes": [],
+  "edges": []
+ },
+ "project example.com/shop/tools/gen d=1": {
+  "nodes": [],
+  "edges": []
+ },
+ "project example.com/shop/tools/gen d=2": {
+  "nodes": [],
+  "edges": []
+ },
+ "project example.com/shop/tools/gen d=3": {
+  "nodes": [],
+  "edges": []
+ },
+ "change (root) d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop",
+    "label": "example.com/shop",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "example.com/shop",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "example.com/shop#pkg",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "example.com/shop",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout#unchanged",
+    "label": "+4 unchanged",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money#unchanged",
+    "label": "+2 unchanged",
+    "parent": "example.com/shop/internal/money",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "example.com/shop/internal/money",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store#unchanged",
+    "label": "+10 unchanged",
+    "parent": "example.com/shop/internal/store",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   },
+   {
+    "id": "example.com/shop/tools",
+    "label": "example.com/shop/tools",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "example.com/shop/tools",
+    "shape": "box",
+    "rows": [],
+    "mark": "affected",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": "added"
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "change (root) d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop",
+    "label": "example.com/shop",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop#folded",
+    "label": "+3 changed packages",
+    "parent": "example.com/shop",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "example.com/shop",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/tools",
+    "label": "example.com/shop/tools",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/tools",
+    "to": "example.com/shop",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "change (root) d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop",
+    "label": "example.com/shop",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "example.com/shop",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "example.com/shop#pkg",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "example.com/shop",
+    "shape": "box",
+    "rows": [],
+    "mark": "has-change",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/tools",
+    "label": "example.com/shop/tools",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "example.com/shop/tools",
+    "shape": "box",
+    "rows": [],
+    "mark": "affected",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal",
+    "pairs": 2,
+    "status": "mixed"
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "example.com/shop/internal",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "change (root) d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop",
+    "label": "example.com/shop",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "example.com/shop",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "example.com/shop#pkg",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "example.com/shop",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout#unchanged",
+    "label": "+4 unchanged",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money#unchanged",
+    "label": "+2 unchanged",
+    "parent": "example.com/shop/internal/money",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "example.com/shop/internal/money",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store#unchanged",
+    "label": "+10 unchanged",
+    "parent": "example.com/shop/internal/store",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   },
+   {
+    "id": "example.com/shop/tools",
+    "label": "example.com/shop/tools",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "example.com/shop/tools",
+    "shape": "box",
+    "rows": [],
+    "mark": "affected",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": "added"
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "change example.com/shop d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "example.com/shop#pkg",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout#unchanged",
+    "label": "+4 unchanged",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money#unchanged",
+    "label": "+2 unchanged",
+    "parent": "example.com/shop/internal/money",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "example.com/shop/internal/money",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store#unchanged",
+    "label": "+10 unchanged",
+    "parent": "example.com/shop/internal/store",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": "added"
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "change example.com/shop d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "example.com/shop#pkg",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "has-change",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal",
+    "pairs": 2,
+    "status": "mixed"
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "change example.com/shop d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "example.com/shop#pkg",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout#unchanged",
+    "label": "+4 unchanged",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money#unchanged",
+    "label": "+2 unchanged",
+    "parent": "example.com/shop/internal/money",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "example.com/shop/internal/money",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store#unchanged",
+    "label": "+10 unchanged",
+    "parent": "example.com/shop/internal/store",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": "added"
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "change example.com/shop d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "example.com/shop#pkg",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout#unchanged",
+    "label": "+4 unchanged",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money#unchanged",
+    "label": "+2 unchanged",
+    "parent": "example.com/shop/internal/money",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "example.com/shop/internal/money",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store#unchanged",
+    "label": "+10 unchanged",
+    "parent": "example.com/shop/internal/store",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": "added"
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "change example.com/shop#pkg d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "change example.com/shop#pkg d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "change example.com/shop#pkg d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "change example.com/shop#pkg d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "change example.com/shop/internal d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout#unchanged",
+    "label": "+4 unchanged",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money#unchanged",
+    "label": "+2 unchanged",
+    "parent": "example.com/shop/internal/money",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "example.com/shop/internal/money",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store#unchanged",
+    "label": "+10 unchanged",
+    "parent": "example.com/shop/internal/store",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 2,
+    "status": "mixed"
+   }
+  ]
+ },
+ "change example.com/shop/internal d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout#unchanged",
+    "label": "+4 unchanged",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money#unchanged",
+    "label": "+2 unchanged",
+    "parent": "example.com/shop/internal/money",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "example.com/shop/internal/money",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store#unchanged",
+    "label": "+10 unchanged",
+    "parent": "example.com/shop/internal/store",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 2,
+    "status": "mixed"
+   }
+  ]
+ },
+ "change example.com/shop/internal d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout#unchanged",
+    "label": "+4 unchanged",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money#unchanged",
+    "label": "+2 unchanged",
+    "parent": "example.com/shop/internal/money",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "example.com/shop/internal/money",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store#unchanged",
+    "label": "+10 unchanged",
+    "parent": "example.com/shop/internal/store",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 2,
+    "status": "mixed"
+   }
+  ]
+ },
+ "change example.com/shop/internal d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout#unchanged",
+    "label": "+4 unchanged",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money#unchanged",
+    "label": "+2 unchanged",
+    "parent": "example.com/shop/internal/money",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "example.com/shop/internal/money",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store#unchanged",
+    "label": "+10 unchanged",
+    "parent": "example.com/shop/internal/store",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 2,
+    "status": "mixed"
+   }
+  ]
+ },
+ "change example.com/shop/internal/checkout d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "change example.com/shop/internal/checkout d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "change example.com/shop/internal/checkout d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "change example.com/shop/internal/checkout d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "change example.com/shop/internal/money d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "change example.com/shop/internal/money d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "change example.com/shop/internal/money d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "change example.com/shop/internal/money d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "change example.com/shop/internal/store d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   }
+  ],
+  "edges": []
+ },
+ "change example.com/shop/internal/store d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   }
+  ],
+  "edges": []
+ },
+ "change example.com/shop/internal/store d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   }
+  ],
+  "edges": []
+ },
+ "change example.com/shop/internal/store d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   }
+  ],
+  "edges": []
+ },
+ "change example.com/shop/tools d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "affected",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "outside",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "change example.com/shop/tools d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "affected",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "outside",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "change example.com/shop/tools d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "affected",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "outside",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "change example.com/shop/tools d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "affected",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "outside",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "change example.com/shop/tools/gen d=auto": {
+  "nodes": [],
+  "edges": []
+ },
+ "change example.com/shop/tools/gen d=1": {
+  "nodes": [],
+  "edges": []
+ },
+ "change example.com/shop/tools/gen d=2": {
+  "nodes": [],
+  "edges": []
+ },
+ "change example.com/shop/tools/gen d=3": {
+  "nodes": [],
+  "edges": []
+ },
+ "subgraph (root) d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop",
+    "label": "example.com/shop",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "example.com/shop",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "example.com/shop#pkg",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "example.com/shop",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout#unchanged",
+    "label": "+4 unchanged",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money#unchanged",
+    "label": "+2 unchanged",
+    "parent": "example.com/shop/internal/money",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "example.com/shop/internal/money",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store#unchanged",
+    "label": "+10 unchanged",
+    "parent": "example.com/shop/internal/store",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   },
+   {
+    "id": "example.com/shop/tools",
+    "label": "example.com/shop/tools",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "example.com/shop/tools",
+    "shape": "box",
+    "rows": [],
+    "mark": "affected",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": "added"
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "subgraph (root) d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop",
+    "label": "example.com/shop",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop#folded",
+    "label": "+3 changed packages",
+    "parent": "example.com/shop",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "example.com/shop",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/tools",
+    "label": "example.com/shop/tools",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/tools",
+    "to": "example.com/shop",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "subgraph (root) d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop",
+    "label": "example.com/shop",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "example.com/shop",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "example.com/shop#pkg",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "example.com/shop",
+    "shape": "box",
+    "rows": [],
+    "mark": "has-change",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/tools",
+    "label": "example.com/shop/tools",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "example.com/shop/tools",
+    "shape": "box",
+    "rows": [],
+    "mark": "affected",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal",
+    "pairs": 2,
+    "status": "mixed"
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "example.com/shop/internal",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "subgraph (root) d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop",
+    "label": "example.com/shop",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "example.com/shop",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "example.com/shop#pkg",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "example.com/shop",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout#unchanged",
+    "label": "+4 unchanged",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money#unchanged",
+    "label": "+2 unchanged",
+    "parent": "example.com/shop/internal/money",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "example.com/shop/internal/money",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store#unchanged",
+    "label": "+10 unchanged",
+    "parent": "example.com/shop/internal/store",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   },
+   {
+    "id": "example.com/shop/tools",
+    "label": "example.com/shop/tools",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "example.com/shop/tools",
+    "shape": "box",
+    "rows": [],
+    "mark": "affected",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": "added"
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "subgraph example.com/shop d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "example.com/shop#pkg",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout#unchanged",
+    "label": "+4 unchanged",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money#unchanged",
+    "label": "+2 unchanged",
+    "parent": "example.com/shop/internal/money",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "example.com/shop/internal/money",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store#unchanged",
+    "label": "+10 unchanged",
+    "parent": "example.com/shop/internal/store",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": "added"
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "subgraph example.com/shop d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "example.com/shop#pkg",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "has-change",
+    "rowMarks": []
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal",
+    "pairs": 2,
+    "status": "mixed"
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "subgraph example.com/shop d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "example.com/shop#pkg",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout#unchanged",
+    "label": "+4 unchanged",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money#unchanged",
+    "label": "+2 unchanged",
+    "parent": "example.com/shop/internal/money",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "example.com/shop/internal/money",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store#unchanged",
+    "label": "+10 unchanged",
+    "parent": "example.com/shop/internal/store",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": "added"
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "subgraph example.com/shop d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop#pkg",
+    "label": "shop (package)",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "example.com/shop#pkg",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal",
+    "label": "internal",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout#unchanged",
+    "label": "+4 unchanged",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money#unchanged",
+    "label": "+2 unchanged",
+    "parent": "example.com/shop/internal/money",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "example.com/shop/internal/money",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "example.com/shop/internal",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store#unchanged",
+    "label": "+10 unchanged",
+    "parent": "example.com/shop/internal/store",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop#pkg",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": "added"
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "subgraph example.com/shop#pkg d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "subgraph example.com/shop#pkg d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "subgraph example.com/shop#pkg d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "subgraph example.com/shop#pkg d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop.main",
+    "label": "main",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "subgraph example.com/shop/internal d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout#unchanged",
+    "label": "+4 unchanged",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money#unchanged",
+    "label": "+2 unchanged",
+    "parent": "example.com/shop/internal/money",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "example.com/shop/internal/money",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store#unchanged",
+    "label": "+10 unchanged",
+    "parent": "example.com/shop/internal/store",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 2,
+    "status": "mixed"
+   }
+  ]
+ },
+ "subgraph example.com/shop/internal d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout#unchanged",
+    "label": "+4 unchanged",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money#unchanged",
+    "label": "+2 unchanged",
+    "parent": "example.com/shop/internal/money",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "example.com/shop/internal/money",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store#unchanged",
+    "label": "+10 unchanged",
+    "parent": "example.com/shop/internal/store",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 2,
+    "status": "mixed"
+   }
+  ]
+ },
+ "subgraph example.com/shop/internal d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout#unchanged",
+    "label": "+4 unchanged",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money#unchanged",
+    "label": "+2 unchanged",
+    "parent": "example.com/shop/internal/money",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "example.com/shop/internal/money",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store#unchanged",
+    "label": "+10 unchanged",
+    "parent": "example.com/shop/internal/store",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 2,
+    "status": "mixed"
+   }
+  ]
+ },
+ "subgraph example.com/shop/internal d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout",
+    "label": "checkout",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout#unchanged",
+    "label": "+4 unchanged",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "example.com/shop/internal/checkout",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money",
+    "label": "money",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money#unchanged",
+    "label": "+2 unchanged",
+    "parent": "example.com/shop/internal/money",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "example.com/shop/internal/money",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store",
+    "label": "store",
+    "parent": "",
+    "shape": "container",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store#unchanged",
+    "label": "+10 unchanged",
+    "parent": "example.com/shop/internal/store",
+    "shape": "chip",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "example.com/shop/internal/store",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   },
+   {
+    "id": "github.com/lib/pq",
+    "label": "github.com/lib/pq",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "golang.org/x/sync",
+    "label": "golang.org/x/sync",
+    "parent": "",
+    "shape": "oval",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/money",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/checkout",
+    "to": "golang.org/x/sync",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "example.com/shop/internal/money",
+    "to": "example.com/shop/internal/store",
+    "pairs": 1,
+    "status": "reversed"
+   },
+   {
+    "from": "example.com/shop/internal/store",
+    "to": "github.com/lib/pq",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/checkout",
+    "pairs": 1,
+    "status": ""
+   },
+   {
+    "from": "outside",
+    "to": "example.com/shop/internal/money",
+    "pairs": 2,
+    "status": "mixed"
+   }
+  ]
+ },
+ "subgraph example.com/shop/internal/checkout d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "subgraph example.com/shop/internal/checkout d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "subgraph example.com/shop/internal/checkout d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "subgraph example.com/shop/internal/checkout d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/checkout.Total",
+    "label": "Total",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "subgraph example.com/shop/internal/money d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "subgraph example.com/shop/internal/money d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "subgraph example.com/shop/internal/money d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "subgraph example.com/shop/internal/money d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/money.Plus",
+    "label": "Plus",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-moved",
+    "rowMarks": []
+   }
+  ],
+  "edges": []
+ },
+ "subgraph example.com/shop/internal/store d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   }
+  ],
+  "edges": []
+ },
+ "subgraph example.com/shop/internal/store d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   }
+  ],
+  "edges": []
+ },
+ "subgraph example.com/shop/internal/store d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   }
+  ],
+  "edges": []
+ },
+ "subgraph example.com/shop/internal/store d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop/internal/store.Order",
+    "label": "Order",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-modified",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.ReadWriter",
+    "label": "ReadWriter",
+    "parent": "",
+    "shape": "decl",
+    "rows": [],
+    "mark": "st-removed",
+    "rowMarks": []
+   },
+   {
+    "id": "example.com/shop/internal/store.Repo",
+    "label": "Repo",
+    "parent": "",
+    "shape": "decl",
+    "rows": [
+     "Get",
+     "check"
+    ],
+    "mark": "",
+    "rowMarks": [
+     "st-modified",
+     "st-modified"
+    ]
+   }
+  ],
+  "edges": []
+ },
+ "subgraph example.com/shop/tools d=auto": {
+  "nodes": [
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "affected",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "outside",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "subgraph example.com/shop/tools d=1": {
+  "nodes": [
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "affected",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "outside",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "subgraph example.com/shop/tools d=2": {
+  "nodes": [
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "affected",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "outside",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "subgraph example.com/shop/tools d=3": {
+  "nodes": [
+   {
+    "id": "example.com/shop/tools/gen",
+    "label": "gen",
+    "parent": "",
+    "shape": "box",
+    "rows": [],
+    "mark": "affected",
+    "rowMarks": []
+   },
+   {
+    "id": "outside",
+    "label": "outside",
+    "parent": "",
+    "shape": "outside",
+    "rows": [],
+    "mark": "",
+    "rowMarks": []
+   }
+  ],
+  "edges": [
+   {
+    "from": "example.com/shop/tools/gen",
+    "to": "outside",
+    "pairs": 1,
+    "status": ""
+   }
+  ]
+ },
+ "subgraph example.com/shop/tools/gen d=auto": {
+  "nodes": [],
+  "edges": []
+ },
+ "subgraph example.com/shop/tools/gen d=1": {
+  "nodes": [],
+  "edges": []
+ },
+ "subgraph example.com/shop/tools/gen d=2": {
+  "nodes": [],
+  "edges": []
+ },
+ "subgraph example.com/shop/tools/gen d=3": {
+  "nodes": [],
+  "edges": []
+ }
+}
