@@ -1,6 +1,7 @@
 package scan
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -42,6 +43,10 @@ type dirTree struct {
 // DirTree is the directory at root. It fails if root is missing or is not a
 // directory.
 func DirTree(root string) (Tree, error) {
+	return openDir(root)
+}
+
+func openDir(root string) (*dirTree, error) {
 	info, err := os.Stat(root)
 	if err != nil {
 		return nil, err
@@ -57,6 +62,52 @@ func DirTree(root string) (Tree, error) {
 		return nil, err
 	}
 	return &dirTree{root: abs}, nil
+}
+
+// listTree is a directory on disk restricted to a list of files, such as
+// the ones git would commit.
+type listTree struct {
+	*dirTree
+	listed []string
+}
+
+// ListTree is the directory at root, restricted to files: slash paths
+// relative to root, in any order. Of those, Files keeps what DirTree would:
+// regular files and in-tree file symlinks outside pruned directories. Listed
+// paths missing from disk are skipped.
+func ListTree(root string, files []string) (Tree, error) {
+	d, err := openDir(root)
+	if err != nil {
+		return nil, err
+	}
+	return &listTree{dirTree: d, listed: files}, nil
+}
+
+func (l *listTree) Files() ([]string, []ir.ParseError, error) {
+	var files []string
+	var errs []ir.ParseError
+	listed := slices.Sorted(slices.Values(l.listed))
+	for _, rel := range slices.Compact(listed) {
+		dirs := strings.Split(rel, "/")
+		if slices.ContainsFunc(dirs[:len(dirs)-1], PrunedDir) {
+			continue
+		}
+		p := filepath.Join(l.root, filepath.FromSlash(rel))
+		info, err := os.Lstat(p)
+		switch {
+		case errors.Is(err, fs.ErrNotExist):
+			continue
+		case err != nil:
+			errs = append(errs, ir.ParseError{Path: rel, Message: ioMessage(err)})
+			continue
+		case info.Mode().IsRegular():
+		case info.Mode()&fs.ModeSymlink != 0 && l.linkedFileInside(p):
+		default:
+			continue
+		}
+		files = append(files, rel)
+	}
+	return files, errs, nil
 }
 
 func (d *dirTree) Files() ([]string, []ir.ParseError, error) {

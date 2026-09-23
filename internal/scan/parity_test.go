@@ -82,6 +82,7 @@ func parityRepo(t *testing.T) (root, commit string) {
 	link("links/dangling.go", "nope.go")
 	link("links/abs.go", filepath.Join(root, "main.go")) // absolute, back into the checkout
 	link("links/loop.go", "loop.go")
+	put(".gitignore", "/ignored/\n")
 
 	git := func(args ...string) string {
 		out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput()
@@ -130,16 +131,44 @@ func TestRefScanMatchesDiskScan(t *testing.T) {
 	if err := ref.Err(); err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Equal(a, b) {
-		al, bl := strings.Split(string(a), "\n"), strings.Split(string(b), "\n")
-		for i := range min(len(al), len(bl)) {
-			if al[i] != bl[i] {
-				t.Fatalf("disk and ref IRs differ at line %d:\ndisk: %s\nref:  %s", i+1, al[i], bl[i])
-			}
-		}
-		t.Fatalf("disk IR has %d lines, ref IR %d", len(al), len(bl))
+	same(t, "disk", a, "ref", b)
+
+	// An ignored file changes a plain directory scan but not a scan of the
+	// files git lists.
+	if err := os.MkdirAll(filepath.Join(root, "ignored"), 0o755); err != nil {
+		t.Fatal(err)
 	}
+	if err := os.WriteFile(filepath.Join(root, "ignored", "g.go"), []byte("package ignored\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Equal(encode(disk), b) {
+		t.Fatal("the ignored file must change a plain directory scan; the check below proves nothing")
+	}
+	l, err := gitref.WorktreeFiles(ctx, root, false)
+	if err != nil || l == nil || l.Extra {
+		t.Fatalf("WorktreeFiles = %+v, %v", l, err)
+	}
+	listed, err := scan.ListTree(root, l.Files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	same(t, "worktree", encode(listed), "ref", b)
 	if !bytes.Contains(a, []byte(`"links/viadir.go"`)) {
 		t.Error("fixture lost its link cases; parity proves nothing")
 	}
+}
+
+// same fails at the first line where two IRs differ.
+func same(t *testing.T, an string, a []byte, bn string, b []byte) {
+	t.Helper()
+	if bytes.Equal(a, b) {
+		return
+	}
+	al, bl := strings.Split(string(a), "\n"), strings.Split(string(b), "\n")
+	for i := range min(len(al), len(bl)) {
+		if al[i] != bl[i] {
+			t.Fatalf("%s and %s IRs differ at line %d:\n%s: %s\n%s: %s", an, bn, i+1, an, al[i], bn, bl[i])
+		}
+	}
+	t.Fatalf("%s IR has %d lines, %s IR %d", an, len(al), bn, len(bl))
 }
