@@ -69,7 +69,7 @@ requirement, decision record or round-1 answer each one comes from.
 | REQ-024 | The system SHALL NOT follow a symbolic link to a directory, and SHALL NOT read any file whose resolved path lies outside the scanned root. | T6, Privacy and security |
 | REQ-025 | The system SHALL parse every remaining `.go` file regardless of GOOS, GOARCH or other build tags, except files constrained by `//go:build ignore`. | T5, 0007 |
 | REQ-026 | The system SHALL merge declarations that share an id (e.g. the same function in `_linux.go` and `_windows.go` files, or several `init` functions) into one node holding every location, with `hash` = SHA-256 over the per-declaration hashes (each computed as in REQ-022) sorted by location `(path, line)`. | T5, 0007 |
-| REQ-027 | The system SHALL discover every `go.mod` under the root (outside skipped directories) and assign each package to the module of its nearest enclosing `go.mod`; its import path SHALL be that module's path joined with the package directory's path relative to the module root. | T8 |
+| REQ-027 | The system SHALL discover every `go.mod` under the root (outside skipped directories) and assign each package to the module of its nearest enclosing `go.mod`; its import path SHALL be that module's path joined with the package directory's path relative to the module root. A `go.mod` without a `module` directive is a boundary: files under it (down to the next `go.mod`) are not scanned, and it is reported as a parse error only if it has other content. | T8 |
 | REQ-028 | The system SHALL count non-Go source files by extension in `unsupported`, and SHALL NOT create nodes for them. | Language support, R2 Q8 |
 
 ### Conditional Requirements — resolution

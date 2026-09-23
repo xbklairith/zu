@@ -17,7 +17,7 @@ import (
 
 // module is one go.mod found under the root.
 type module struct {
-	Path     string    // module path from the module directive
+	Path     string    // module path; "" for a go.mod without one (a boundary only)
 	Dir      string    // slash path relative to the root; "." for the root
 	Requires []require // in go.mod order
 }
@@ -111,11 +111,12 @@ func walk(root string) (*walkResult, error) {
 	slices.SortFunc(w.Modules, func(a, b *module) int { return strings.Compare(a.Dir, b.Dir) })
 	slices.Sort(goFiles)
 	for _, f := range goFiles {
-		if w.moduleFor(path.Dir(f)) == nil {
+		switch m := w.moduleFor(path.Dir(f)); {
+		case m == nil:
 			w.errorf(f, "no enclosing go.mod")
-			continue
+		case m.Path != "": // a path-less go.mod fences its files off
+			w.Files = append(w.Files, f)
 		}
-		w.Files = append(w.Files, f)
 	}
 	return w, nil
 }
@@ -152,7 +153,13 @@ func (w *walkResult) readModule(p, rel string) {
 		return
 	}
 	if f.Module == nil || f.Module.Mod.Path == "" {
-		w.errorf(rel, "missing module directive")
+		// Any go.mod is a module boundary, as for the go command. An empty
+		// one is a common way to fence a directory off from its parent
+		// module; one with other content is reported as malformed.
+		if len(f.Syntax.Stmt) > 0 {
+			w.errorf(rel, "missing module directive")
+		}
+		w.Modules = append(w.Modules, &module{Dir: path.Dir(rel)})
 		return
 	}
 	m := &module{Path: f.Module.Mod.Path, Dir: path.Dir(rel)}

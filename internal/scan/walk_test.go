@@ -144,3 +144,25 @@ func TestWalkRootMustBeADirectory(t *testing.T) {
 		t.Fatal("want error for file root")
 	}
 }
+
+func TestWalkEmptyGoModFencesOffDirectory(t *testing.T) {
+	root := tree(t, map[string]string{
+		"go.mod":              "module example.com/m\n",
+		"a.go":                "package m\n",
+		"fenced/go.mod":       "",
+		"fenced/x.go":         "package x\n",
+		"fenced/sub/y.go":     "package sub\n",
+		"fenced/inner/go.mod": "module example.com/inner\n",
+		"fenced/inner/i.go":   "package inner\n",
+	})
+	w, err := walk(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(w.Files, []string{"a.go", "fenced/inner/i.go"}) {
+		t.Fatalf("Files = %v", w.Files)
+	}
+	if len(w.Errors) != 0 {
+		t.Fatalf("an empty go.mod is a module boundary, not an error: %+v", w.Errors)
+	}
+}

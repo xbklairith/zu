@@ -93,7 +93,7 @@ func (ix *index) classify(from *module, importPath string) target {
 		return target{Class: importInternal, Pkg: p}
 	}
 	for _, m := range ix.w.Modules {
-		if hasPathPrefix(importPath, m.Path) {
+		if m.Path != "" && hasPathPrefix(importPath, m.Path) {
 			return target{Class: importUnresolved}
 		}
 	}
