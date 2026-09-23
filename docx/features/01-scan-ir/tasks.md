@@ -115,5 +115,10 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
   locations are deduplicated; `(*fp)()` counts as unresolved; the longest module path wins
   across requires and discovered modules; `for r = range` counts as reassigning the receiver;
   Ctrl-C during git exits 3 without writing.
-- Residual risk: a `clean` filter configured in `.git/config` still runs when git computes
-  dirtiness. Config is not cloned, so this only matters for a copied `.git` directory.
+- Spec review fixes: colliding node ids are dropped and reported (package wins); a malformed
+  `go.mod` is a boundary; `.go` files with no `go.mod` at or under the root exit 3; read
+  errors use OS-independent text; the constant-change locality check is now end to end; docs
+  marked approved, acceptance criteria ticked with evidence.
+- Residual risk: `git status` still runs clean filters named by `.gitattributes` (e.g. git-lfs
+  from the user's global config). A hostile filter command needs a planted `.git/config`,
+  which cloning never copies.

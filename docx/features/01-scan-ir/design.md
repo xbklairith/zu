@@ -1,7 +1,7 @@
 # Design: 01 · scan → IR
 
 **Created:** 2026-09-23
-**Status:** Draft — awaiting approval
+**Status:** Approved 2026-09-23 · implemented; updated after the code and spec reviews
 **Requirements:** [requirements.md](requirements.md) (REQ-001–REQ-046)
 
 ## Architecture Overview
@@ -81,8 +81,15 @@ output side effects.
   A package's module is its nearest enclosing `go.mod`. Import path =
   `module path + "/" + rel(dir, module root)`, or just the module path at the module
   root.
-- `.go` files outside any module get a parse error ("no enclosing go.mod"). They are not
-  analysed.
+- A `go.mod` that fails to parse, or has no `module` directive, is a boundary: its files
+  are not scanned (they must not fall through to a parent module under a wrong import
+  path). A parse failure or a non-empty directive-less file is a parse error.
+- If the root holds `.go` files but no `go.mod` at or under it, the walk fails with
+  `ErrNoModule` and the CLI exits 3 (scanning a subdirectory of a module, e.g. `zu scan
+  internal`). The walk never looks above the root (REQ-024).
+- Otherwise `.go` files outside any module get a parse error ("no enclosing go.mod").
+- Read errors are reported with a fixed text for permission and not-found failures, so the
+  IR does not depend on the OS's wording (REQ-038).
 
 ### 2. Extract, per file, in parallel
 - Workers fill `facts[i]` for file `i` in the sorted list, so merge order never depends
@@ -143,8 +150,10 @@ output side effects.
 - **Imports**, per file. The effective name is the explicit name, or else the target's
   package clause name:
   - internal package → `imports` edge;
-  - under a discovered module but not scanned → `unresolvedImports[path]++`;
-  - longest-prefix `require` match → edge to `external:<module>`;
+  - otherwise the longest matching module path wins, discovered or required (a discovered
+    module wins a tie):
+    - a discovered module → not scanned → `unresolvedImports[path]++`;
+    - a `require` → edge to `external:<module>`;
   - first element has no dot → stdlib, ignored;
   - anything else → `unresolvedImports`.
   - For external and stdlib packages, the guessed effective name is the last path
@@ -177,8 +186,13 @@ output side effects.
   `"other"` on disagreement.
 - Package node: located at the `package` clause of its first file, with `module` set,
   and its hash from the sorted `(id, hash)` pairs of its members plus `#decls`.
-- External node: `id = module path`, located at the `require` line; it appears only
-  when something references it.
+- External node: `id = module path`, located at the `require` line of every `go.mod` that
+  led to it; it appears only when something references it. It carries no version.
+- **Id collisions** (REQ-014): before merging, any declaration id that is also a package
+  id, or that declarations in two packages share, is dropped with its edges and reported
+  once as a parse error at its first location. The package node always survives.
+- A method's `parent` is its receiver type id even when that type has no node (its file
+  failed to parse or is ignored). Consumers tolerate it (REQ-015, 0008).
 
 ## API Contracts
 
@@ -186,7 +200,7 @@ output side effects.
 ```
 zu scan [dir] [-out -|<path>] [-max-parse-errors N]
 stderr: zu scan: 412 packages, 3120 files, 0 parse errors, 1830 unresolved calls, unsupported: .proto=12 .sh=4
-exit:   0 ok · 2 parse errors > N (IR still written) · 3 bad dir/flag (nothing written)
+exit:   0 ok · 2 parse errors > N (IR still written) · 3 bad dir/flag, no go.mod, or interrupted (nothing written)
 ```
 Default output: `<dir>/.zu/ir/<commit12>[-dirty].json` or `<dir>/.zu/ir/worktree.json`.
 
@@ -228,17 +242,23 @@ Default output: `<dir>/.zu/ir/<commit12>[-dirty].json` or `<dir>/.zu/ir/worktree
 |---|---|
 | dir missing, not a dir, or unreadable; bad flag | stderr reason, nothing written, exit 3 |
 | file fails to parse | `parseErrors` entry, keep going; exit 2 if the count is over N |
-| unreadable file or directory mid-walk | recorded as a parse error with the OS message, relative path only |
-| malformed `go.mod` | parse error; that module's packages are still scanned, with no `require`s |
+| unreadable file or directory mid-walk | recorded as a parse error, relative path only; permission and not-found failures use fixed text |
+| malformed `go.mod` | parse error; it is a boundary, so its files are not scanned |
+| `.go` files but no `go.mod` at or under the root | stderr reason, nothing written, exit 3 |
+| two nodes would share an id | the declarations are dropped with their edges; one parse error per id |
 | git missing, errors, or no repo | `commit: ""`, output `worktree.json`; not an error |
 | write fails | stderr, exit 3; the temp file is removed; no partial IR (REQ-044) |
-| Ctrl-C | context cancelled; workers stop; nothing written |
+| Ctrl-C (during the scan or the git lookup) | context cancelled; workers stop; nothing written; exit 3 |
 
 ## Security Considerations
 - The walk never leaves the root: directory symlinks are not followed, and file symlinks
   are checked (REQ-024).
-- The only process run is `git`, via `exec.Command("git", "-C", dir, …)` with fixed
-  arguments and no shell (REQ-042). No network code is linked in; a test checks the
+- The only process run is `git`, via `exec.Command("git", "-C", dir, "-c",
+  "core.fsmonitor=false", "-c", "core.untrackedCache=false", "--no-optional-locks", …)`
+  with `GIT_OPTIONAL_LOCKS=0`, fixed arguments and no shell (REQ-042). That stops a repo's
+  config from running an fsmonitor hook and stops `git status` from rewriting the index.
+  Clean filters (e.g. git-lfs) named by `.gitattributes` still run from the user's git
+  config; a hostile filter needs a planted `.git/config`, which cloning never copies. No network code is linked in; a test checks the
   import graph of `internal/scan` has no `net` package.
 - Every path in the IR is `filepath.ToSlash(rel(root, p))`. A test scans a fixture under
   `t.TempDir()` and asserts the absolute prefix never appears in the output (REQ-043).

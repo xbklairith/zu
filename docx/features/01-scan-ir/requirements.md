@@ -1,7 +1,7 @@
 # Requirements: 01 · scan → IR
 
 **Created:** 2026-09-23
-**Status:** Draft — awaiting approval
+**Status:** Approved 2026-09-23 · implemented; amended after the code and spec reviews (REQ-009, REQ-014, REQ-015, REQ-022, REQ-027, REQ-029–REQ-031, REQ-042)
 
 ## Overview
 
@@ -39,7 +39,7 @@ requirement, decision record or round-1 answer each one comes from.
 | REQ-006 | WHEN a scan completes THEN the system SHALL print one summary line to stderr stating counts of packages, files parsed, parse errors, unresolved calls, and unsupported files per extension. | Language support |
 | REQ-007 | WHEN a `.go` file fails to parse THEN the system SHALL record its repo-relative path and the parser's message in `parseErrors`, continue scanning the remaining files, and still write the IR. | T12, IR contract |
 | REQ-008 | WHEN the number of parse errors exceeds the tolerance (default 0, set by `-max-parse-errors N`) THEN the system SHALL exit with code 2 after writing the IR. | T12, exit codes |
-| REQ-009 | WHEN `dir` does not exist, is not a directory, or is unreadable, or a flag is invalid THEN the system SHALL print the reason to stderr, write nothing, and exit with code 3. | exit codes |
+| REQ-009 | WHEN `dir` does not exist, is not a directory, or is unreadable, or contains `.go` files but no `go.mod` at or under it, or a flag is invalid, or the scan is interrupted (Ctrl-C) THEN the system SHALL print the reason to stderr, write nothing, and exit with code 3. | exit codes, spec review |
 
 ### Ubiquitous Requirements — IR content
 
@@ -49,17 +49,17 @@ requirement, decision record or round-1 answer each one comes from.
 | REQ-011 | The IR SHALL record `ref` once at top level as `{commit, dirty}`, where `commit` is the full HEAD commit id, or `""` outside a git repository or in a repository with no commits; `dirty` is true only when tracked files have uncommitted modifications. | T11 |
 | REQ-012 | The IR SHALL set `grouping` to `"tree"` and `policyHash` to the fixed hash of the built-in default (empty) Policy, and SHALL NOT contain nodes for import-path segments that are not packages. | M1, 0008, 0004 |
 | REQ-013 | The IR SHALL contain nodes of exactly four kinds: `package`, `type`, `function` (including methods), and `external`. | T1, T9 |
-| REQ-014 | The system SHALL identify a `package` node by its import path, a `type` node by `<import path>.<Type>`, a function by `<import path>.<Func>`, and a method by `<import path>.<Type>.<Method>` — for both value and pointer receivers, and ignoring type parameters. | 0003, T1 |
-| REQ-015 | The system SHALL set each `type` and top-level `function` node's `parent` to its package id, and each method's `parent` to its receiver type id; `package` and `external` nodes SHALL have no `parent`. | A3 |
+| REQ-014 | The system SHALL identify a `package` node by its import path, a `type` node by `<import path>.<Type>`, a function by `<import path>.<Func>`, and a method by `<import path>.<Type>.<Method>` — for both value and pointer receivers, and ignoring type parameters. IF a type, function or method id equals a package id, or declarations in two packages share an id (possible because directory names may contain dots: package `m/a.b` and type `b` of package `m/a`), THEN the system SHALL keep the package node, drop every such declaration together with the edges touching its id, and record one `parseErrors` entry per dropped id at its first location. | 0003, T1, spec review |
+| REQ-015 | The system SHALL set each `type` and top-level `function` node's `parent` to its package id, and each method's `parent` to its receiver type id; `package` and `external` nodes SHALL have no `parent`. A method's `parent` MAY name a type with no node (its declaring file failed to parse or is `//go:build ignore`); consumers SHALL tolerate that and SHALL NOT invent the missing node. | A3, 0008, spec review |
 | REQ-016 | The system SHALL record on every `package` node the path of the Go module it belongs to, as `module`. | T1, T8 |
 | REQ-017 | The system SHALL NOT create nodes for constants, variables, function literals, or declarations named `_`. | T1 |
 | REQ-018 | The IR SHALL contain edges of exactly three kinds: `imports` (package → package or external), `calls` (function → function), and `embeds` (type → type or external). | T3, A4 |
 | REQ-019 | The system SHALL store edges only at their finest level — no aggregated package-to-package `calls` or `embeds` edges. | T4 |
 | REQ-020 | The system SHALL give every node and every edge at least one location `{path, line}`, where `path` is relative to the scanned root and uses forward slashes. | IR rules |
 | REQ-021 | The system SHALL locate a `package` node at the `package` clause of its first file in path order, a `type` or `function` node at its declaring identifier, an `external` node at its `require` line in `go.mod`, and an edge at each import spec, call expression or embedded field that justifies it. | IR rules, T9 |
+| REQ-022 | The system SHALL record on every `package`, `type` and `function` node a `hash`: SHA-256 of the declaration re-printed with `go/printer` against an empty `FileSet` after removing every comment except compiler directives (`//go:…` other than `//go:build`, and `//export`), so line breaks and ordinary comments do not affect it, and with the parentheses of a single-spec declaration dropped; for a package, SHA-256 over the sorted `(id, hash)` pairs of its members plus one pair `("#decls", h)`, where `h` is the SHA-256 over, in sorted order, the hashes of its `const`, `var`, `import` and blank (`_`) declarations (one per declaration, hashed as above) and one hash per file covering its package clause name, normalised `//go:build` constraint, cgo preamble and every directive line. | T10, Meaningful Change, design |
 | REQ-045 | The system SHALL record on every `type` and `function` node `exported: true` when its name (for a method, the method name) starts with an upper-case letter, else `exported: false`. | M5 |
 | REQ-046 | The system SHALL record on every `type` node `typeKind`: `"struct"` or `"interface"` when its type expression is a struct or interface type (including generic types), otherwise `"other"` (aliases, named basic, func, map, slice and similar types); a merged node whose declarations disagree SHALL get `"other"`. | M5, 0007 |
-| REQ-022 | The system SHALL record on every `package`, `type` and `function` node a `hash`: SHA-256 of the declaration re-printed with `go/printer` against an empty `FileSet` after removing every comment except compiler directives (`//go:…` other than `//go:build`, and `//export`), so line breaks and ordinary comments do not affect it, and with the parentheses of a single-spec declaration dropped; for a package, SHA-256 over the sorted `(id, hash)` pairs of its members plus one pair `("#decls", h)`, where `h` is the SHA-256 over, in sorted order, the hashes of its `const`, `var`, `import` and blank (`_`) declarations (one per declaration, hashed as above) and one hash per file covering its package clause name, normalised `//go:build` constraint, cgo preamble and every directive line. | T10, Meaningful Change, design |
 
 ### Ubiquitous Requirements — what is scanned
 
@@ -69,15 +69,15 @@ requirement, decision record or round-1 answer each one comes from.
 | REQ-024 | The system SHALL NOT follow a symbolic link to a directory, and SHALL NOT read any file whose resolved path lies outside the scanned root. | T6, Privacy and security |
 | REQ-025 | The system SHALL parse every remaining `.go` file regardless of GOOS, GOARCH or other build tags, except files constrained by `//go:build ignore`. | T5, 0007 |
 | REQ-026 | The system SHALL merge declarations that share an id (e.g. the same function in `_linux.go` and `_windows.go` files, or several `init` functions) into one node holding every location, with `hash` = SHA-256 over the per-declaration hashes (each computed as in REQ-022) sorted by location `(path, line)`. | T5, 0007 |
-| REQ-027 | The system SHALL discover every `go.mod` under the root (outside skipped directories) and assign each package to the module of its nearest enclosing `go.mod`; its import path SHALL be that module's path joined with the package directory's path relative to the module root. A `go.mod` without a `module` directive is a boundary: files under it (down to the next `go.mod`) are not scanned, and it is reported as a parse error only if it has other content. | T8 |
+| REQ-027 | The system SHALL discover every `go.mod` under the root (outside skipped directories) and assign each package to the module of its nearest enclosing `go.mod`; its import path SHALL be that module's path joined with the package directory's path relative to the module root. A `go.mod` without a `module` directive, or one that fails to parse, is a boundary: files under it (down to the next `go.mod`) are not scanned. One that fails to parse, or has content but no `module` directive, is reported as a parse error; an empty one is not. | T8 |
 | REQ-028 | The system SHALL count non-Go source files by extension in `unsupported`, and SHALL NOT create nodes for them. | Language support, R2 Q8 |
 
 ### Conditional Requirements — resolution
 
 | ID | Requirement | Trace |
 |---|---|---|
-| REQ-029 | IF an import path belongs to a discovered module THEN the system SHALL emit an `imports` edge to that package's node; IF no package with that path was scanned THEN it SHALL count the import in `unresolvedImports` instead. | T8 |
-| REQ-030 | IF an import path matches a `require` of the importing package's module (longest prefix) THEN the system SHALL emit an `imports` edge to the `external` node for that module path. | T9 |
+| REQ-029 | IF an import path belongs to a discovered module, and no `require` of the importing module matches a longer prefix of it, THEN the system SHALL emit an `imports` edge to that package's node; IF no package with that path was scanned THEN it SHALL count the import in `unresolvedImports` instead. | T8 |
+| REQ-030 | IF an import path matches a `require` of the importing package's module (longest prefix), and no discovered module matches an equal or longer prefix, THEN the system SHALL emit an `imports` edge to the `external` node for that module path. | T9 |
 | REQ-031 | IF an import path's first element contains no `.` and it matches no discovered module THEN the system SHALL treat it as standard library and emit no node, edge or count for it. | T9 |
 | REQ-032 | IF a file is generated by the Go convention (a line matching `^// Code generated .* DO NOT EDIT\.$` in any comment before the `package` clause, as `ast.IsGenerated` checks) THEN the system SHALL mark every node declared in that file `generated: true`, and a merged node SHALL be marked only if all of its declarations are. | T7 |
 | REQ-033 | IF a call has the form `p.F()` where `p` is a non-shadowed import name of an internal package and `F` is a top-level function of that package THEN the system SHALL emit a `calls` edge. | T14, 0002 |
@@ -106,7 +106,7 @@ requirement, decision record or round-1 answer each one comes from.
 
 | ID | Requirement | Trace |
 |---|---|---|
-| REQ-042 | The system SHALL NOT open any network connection or execute any process other than `git` during a scan. | A1, offline goal |
+| REQ-042 | The system SHALL NOT open any network connection or directly execute any process other than `git` during a scan, and SHALL run `git` with fsmonitor, the untracked cache and optional locks disabled. (Clean filters named by `.gitattributes`, such as git-lfs, may still be run by `git` itself from the user's git config.) | A1, offline goal |
 | REQ-043 | The system SHALL NOT write any absolute path, user name, or host name into the IR. | Storage, privacy |
 | REQ-044 | The system SHALL write the IR file atomically (temporary file in the same directory, then rename), so an interrupted scan never leaves a partial IR. | IR contract |
 
@@ -119,14 +119,14 @@ requirement, decision record or round-1 answer each one comes from.
 
 ## Acceptance Criteria
 
-- [ ] A fixture module under `internal/scan/testdata/` covering every node kind, edge kind, `exported` and `typeKind` value, merge case, generated file, nested module, external module, skipped directory and parse error produces an IR equal to its committed golden file (REQ-001–REQ-037, REQ-045, REQ-046).
-- [ ] Scanning the same fixture twice, with GOMAXPROCS=1 and GOMAXPROCS=8, produces byte-identical output (REQ-038, REQ-039).
-- [ ] Reformatting a fixture file with `gofmt` and editing only its comments leaves every `hash` unchanged; re-wrapping a parameter list leaves it unchanged; changing one statement changes exactly that function's hash and its package's hash; changing a constant changes only its package's hash (REQ-022).
-- [ ] A symlink inside the fixture that points outside the root is not followed, and the scan still succeeds (REQ-024).
-- [ ] A fixture with one unparseable file writes the IR with one `parseErrors` entry and exits 2; with `-max-parse-errors 1` it exits 0 (REQ-007, REQ-008).
-- [ ] `zu scan /nonexistent` exits 3 and writes nothing (REQ-009).
-- [ ] `zu scan` on zu's own repository succeeds with zero parse errors, and the IR contains no absolute paths (REQ-043).
-- [ ] The hugo scan time and kubernetes peak memory are measured with a script and recorded in `docx/features/01-scan-ir/benchmarks.md` (REQ-040, REQ-041).
+- [x] A fixture module under `internal/scan/testdata/` covering every node kind, edge kind, `exported` and `typeKind` value, merge case, generated file, nested module, external module, skipped directory and parse error produces an IR equal to its committed golden file (REQ-001–REQ-037, REQ-045, REQ-046). — *Evidence:* `TestScanGolden` (`internal/scan/scan_test.go`)
+- [x] Scanning the same fixture twice, with GOMAXPROCS=1 and GOMAXPROCS=8, produces byte-identical output (REQ-038, REQ-039). — *Evidence:* `TestScanDeterministicAcrossWorkers`
+- [x] Reformatting a fixture file with `gofmt` and editing only its ordinary (non-directive) comments leaves every `hash` unchanged; re-wrapping a parameter list leaves it unchanged; changing one statement changes exactly that function's hash and its package's hash; changing a constant changes only its package's hash (REQ-022). — *Evidence:* `TestScanHashStabilityAndLocality`, `TestMeaningfulChangesOutsideDeclarationsChangePackageHash`
+- [x] A symlink inside the fixture that points outside the root is not followed, and the scan still succeeds (REQ-024). — *Evidence:* `TestSymlinksLeavingRootAreNotRead`
+- [x] A fixture with one unparseable file writes the IR with one `parseErrors` entry and exits 2; with `-max-parse-errors 1` it exits 0 (REQ-007, REQ-008). — *Evidence:* `TestScanParseErrorTolerance` (`internal/cli`)
+- [x] `zu scan /nonexistent` exits 3 and writes nothing (REQ-009). — *Evidence:* `TestScanBadInvocation` ("missing dir")
+- [x] `zu scan` on zu's own repository succeeds with zero parse errors, and the IR contains no absolute paths (REQ-043). — *Evidence:* `TestSelfScan`, `TestIRHasNoAbsolutePaths`
+- [x] The hugo scan time and kubernetes peak memory are measured with a script and recorded in `docx/features/01-scan-ir/benchmarks.md` (REQ-040, REQ-041). — *Evidence:* `benchmarks.md` (hugo 0.37 s, kubernetes 818 MB)
 
 ## Out of Scope
 
