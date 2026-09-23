@@ -9,6 +9,7 @@ import (
 	"io"
 
 	"zu/internal/diff"
+	"zu/internal/gitref"
 	"zu/internal/ir"
 	"zu/internal/scan"
 )
@@ -19,8 +20,9 @@ var scanTree = func(ctx context.Context, tree scan.Tree) (*ir.IR, scan.Stats, er
 }
 
 // runDiff implements `zu diff <base> [head] [-format text|markdown|json]
-// [-worktree [-include-ignored]] [-max-parse-errors N]`: the Structural
-// Summary of head against the merge-base of base and head.
+// [-worktree [-include-ignored]] [-max-parse-errors N] [-html file
+// [-link-template T]]`: the Structural Summary of head against the
+// merge-base of base and head, and optionally the Change View export.
 func runDiff(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("zu diff", flag.ContinueOnError)
 	fs.SetOutput(stderr)
@@ -28,6 +30,10 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 	worktree := fs.Bool("worktree", false, "compare the working tree (the files the next commit would contain) instead of HEAD")
 	withIgnored := fs.Bool("include-ignored", false, "with -worktree, also read files git ignores")
 	maxErrs := fs.Int("max-parse-errors", 0, "exit 2 when head has more than `N` files that fail to parse")
+	var hopts htmlOptions
+	fs.StringVar(&hopts.path, "html", "", "also write a self-contained HTML Change View to `file`")
+	fs.StringVar(&hopts.linkTmpl, "link-template", "", "with -html, link source to `url` with {commit}, {path} and {line}")
+	fs.Var(&hopts.include, "include", "not accepted: the change decides what -html inlines")
 	refs, err := parsePositional(fs, args)
 	bad := func(format string, a ...any) int {
 		fmt.Fprintf(stderr, "zu diff: "+format+"\n", a...)
@@ -48,6 +54,11 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 		return bad("-include-ignored applies only with -worktree")
 	case *worktree && len(refs) == 2:
 		return bad("-worktree compares the working tree; it takes no head ref")
+	case len(hopts.include) > 0:
+		return bad("-include does not apply: the change decides what -html inlines")
+	}
+	if err := hopts.prepare(); err != nil {
+		return bad("%v", err)
 	}
 	headName := "HEAD"
 	if len(refs) == 2 {
@@ -70,18 +81,26 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 	}
 
 	// One side at a time, so peak memory is two IRs, not two scans.
-	baseDoc, err := scanCommit(ctx, top, mb)
+	// The trees stay open while -html needs to read changed files.
+	baseDoc, baseTree, err := scanCommit(ctx, top, mb)
 	if err != nil {
 		return bad("base %s: %v", mb[:min(12, len(mb))], err)
 	}
+	defer baseTree.Close()
+	if hopts.path == "" {
+		_ = baseTree.Close()
+	}
 	baseDoc.Ref = ir.Ref{Commit: mb}
 	var headDoc *ir.IR
+	var headTree scan.Tree
 	if *worktree {
-		headDoc, err = scanWorktree(ctx, top, headCommit, *withIgnored)
+		headDoc, headTree, err = scanWorktree(ctx, top, headCommit, *withIgnored)
 	} else {
-		headDoc, err = scanCommit(ctx, top, headCommit)
+		var t *gitref.CommitTree
+		headDoc, t, err = scanCommit(ctx, top, headCommit)
 		if err == nil {
-			headDoc.Ref = ir.Ref{Commit: headCommit}
+			defer t.Close()
+			headDoc.Ref, headTree = ir.Ref{Commit: headCommit}, t
 		}
 	}
 	if err != nil {
@@ -112,6 +131,12 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 	}
 	fmt.Fprintf(stderr, "zu diff: %d packages changed, %d affected, parse errors base=%d head=%d\n",
 		len(s.Packages), len(s.Affected), len(baseDoc.ParseErrors), len(headDoc.ParseErrors))
+	if hopts.path != "" {
+		c := changeSides{top: top, base: baseDoc, head: headDoc, baseTree: baseTree, headTree: headTree}
+		if err := writeChangeHTML(ctx, c, s, &hopts, stderr); err != nil {
+			return bad("html: %v", err)
+		}
+	}
 	// Base's parse errors already exist on the base branch (B7): reported,
 	// never failing the MR.
 	if len(headDoc.ParseErrors) > *maxErrs {
@@ -120,41 +145,45 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 	return ExitOK
 }
 
-// scanCommit scans one commit from git objects.
-func scanCommit(ctx context.Context, top, commit string) (*ir.IR, error) {
+// scanCommit scans one commit from git objects. On success the tree is left
+// open for reading files, and the caller closes it.
+func scanCommit(ctx context.Context, top, commit string) (*ir.IR, *gitref.CommitTree, error) {
 	tree, err := openCommit(ctx, top, commit)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	defer tree.Close()
 	doc, _, err := scanTree(ctx, tree)
 	if treeErr := tree.Err(); treeErr != nil {
 		err = treeErr // the cause; a scan error would only be its symptom
 	}
-	return doc, err
+	if err != nil {
+		_ = tree.Close()
+		return nil, nil, err
+	}
+	return doc, tree, nil
 }
 
 // scanWorktree scans the files the next commit would contain, labelled as
 // zu scan labels them.
-func scanWorktree(ctx context.Context, top, head string, withIgnored bool) (*ir.IR, error) {
+func scanWorktree(ctx context.Context, top, head string, withIgnored bool) (*ir.IR, scan.Tree, error) {
 	l, err := gitWorktree(ctx, top, withIgnored)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if l == nil {
-		return nil, fmt.Errorf("%s is not a git working tree", top)
+		return nil, nil, fmt.Errorf("%s is not a git working tree", top)
 	}
 	tree, err := scan.ListTree(top, l.Files)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	doc, _, err := scanTree(ctx, tree)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	_, modified := gitHead(ctx, top)
 	doc.Ref = ir.Ref{Commit: head, Dirty: modified || l.Extra}
-	return doc, nil
+	return doc, tree, nil
 }
 
 // parsePositional parses flags anywhere among the positional arguments.

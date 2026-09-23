@@ -1630,7 +1630,7 @@ Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag r
 - [x] Task 11 · Side panel
 - [x] Task 12 · Part A acceptance (manual browser checks pending)
 - [x] Task B1 · `export.Change`
-- [ ] Task B2 · `zu diff -html` (blocked)
+- [x] Task B2 · `zu diff -html` (blocked)
 - [ ] Task B3 · Change View UI (blocked)
 - [ ] Task B4 · Part B acceptance (blocked)
 

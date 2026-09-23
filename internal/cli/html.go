@@ -9,9 +9,11 @@ import (
 	"io/fs"
 	"strings"
 
+	"zu/internal/diff"
 	"zu/internal/export"
 	"zu/internal/gitref"
 	"zu/internal/ir"
+	"zu/internal/scan"
 	"zu/internal/version"
 	"zu/web"
 )
@@ -100,6 +102,44 @@ func writeHTML(ctx context.Context, src *source, doc *ir.IR, o *htmlOptions, std
 	if v.Links, err = export.ForRepo(gitOrigin(ctx, src.root), doc.Ref, o.linkTmpl, prefix); err != nil {
 		return err
 	}
+	return renderView("scan", v, o, stderr)
+}
+
+// changeSides are the two scanned sides of zu diff, trees still open.
+type changeSides struct {
+	top                string
+	base, head         *ir.IR
+	baseTree, headTree scan.Tree
+}
+
+// writeChangeHTML writes the Change View export of base → head. Links point at
+// head, and at the host's compare page when both sides are clean commits.
+func writeChangeHTML(ctx context.Context, c changeSides, sum *diff.Summary, o *htmlOptions, stderr io.Writer) error {
+	v, err := export.Change(c.base, c.head, diff.Compare(c.base, c.head), sum, c.baseTree, c.headTree)
+	if err != nil {
+		return err
+	}
+	for _, t := range []scan.Tree{c.baseTree, c.headTree} {
+		if ct, ok := t.(*gitref.CommitTree); ok && ct.Err() != nil {
+			return ct.Err()
+		}
+	}
+	v.Tool = version.Version
+	origin := gitOrigin(ctx, c.top) // diff always runs at the repository top
+	if v.Links, err = export.ForRepo(origin, c.head.Ref, o.linkTmpl, ""); err != nil {
+		return err
+	}
+	if cmp := export.CompareURL(origin, c.base.Ref, c.head.Ref); cmp != "" {
+		if v.Links == nil {
+			v.Links = &export.Links{}
+		}
+		v.Links.Compare = cmp
+	}
+	return renderView("diff", v, o, stderr)
+}
+
+// renderView writes v into the UI page at o.path and says what it inlined.
+func renderView(cmd string, v *export.View, o *htmlOptions, stderr io.Writer) error {
 	var buf bytes.Buffer
 	if err := export.Render(&buf, o.tmpl, v); err != nil {
 		return err
@@ -107,7 +147,7 @@ func writeHTML(ctx context.Context, src *source, doc *ir.IR, o *htmlOptions, std
 	if err := writeAtomic(o.path, buf.Bytes()); err != nil {
 		return err
 	}
-	fmt.Fprintf(stderr, "zu scan: html → %s (%d source files inlined; share it only where that code may go)\n",
-		o.path, len(v.Sources))
+	fmt.Fprintf(stderr, "zu %s: html → %s (%d source files inlined; share it only where that code may go)\n",
+		cmd, o.path, len(v.Sources))
 	return nil
 }

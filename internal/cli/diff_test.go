@@ -239,3 +239,87 @@ func TestDiffInterrupted(t *testing.T) {
 		t.Fatalf("exit %d, stdout %q, stderr %q", code, out, errOut)
 	}
 }
+
+func TestDiffHTMLWritesTheChangeView(t *testing.T) {
+	withUI(t)
+	dir := diffRepo(t)
+	git(t, dir, "remote", "add", "origin", "git@github.com:o/r.git")
+	base := git(t, dir, "rev-parse", "main")
+	head := git(t, dir, "rev-parse", "HEAD")
+	out := filepath.Join(t.TempDir(), "change.html")
+
+	code, stdout, errOut := run("diff", "main", "-html", out)
+	if code != ExitOK {
+		t.Fatalf("exit %d: %s", code, errOut)
+	}
+	if !strings.Contains(stdout, "example.com/m/a") {
+		t.Errorf("the Structural Summary is no longer on stdout:\n%s", stdout)
+	}
+	s := readFile(t, out)
+	for _, want := range []string{
+		`"kind":"change"`,
+		`"changed":["example.com/m/a"]`,
+		`"a/a.go":[{"baseStart":1`,
+		`"+func F() int { return 2 }"`,
+		`"compare":"https://github.com/o/r/compare/` + base + `...` + head + `"`,
+		`"blob":"https://github.com/o/r/blob/` + head + `/{path}#L{line}"`,
+	} {
+		if !strings.Contains(s, want) {
+			t.Errorf("html lacks %s", want)
+		}
+	}
+	if !strings.Contains(errOut, "zu diff: html → "+out+" (1 source files inlined") {
+		t.Errorf("stderr = %q", errOut)
+	}
+}
+
+func TestDiffHTMLWorktreeHasNoLinks(t *testing.T) {
+	withUI(t)
+	dir := diffRepo(t)
+	git(t, dir, "remote", "add", "origin", "git@github.com:o/r.git")
+	writeFile(t, dir, "a/a.go", "package a\n\nfunc F() int { return 3 }\n\nfunc G() {}\n")
+	out := filepath.Join(t.TempDir(), "change.html")
+	if code, _, errOut := run("diff", "main", "-worktree", "-html", out); code != ExitOK {
+		t.Fatalf("exit %d: %s", code, errOut)
+	}
+	s := readFile(t, out)
+	if strings.Contains(s, `"links"`) {
+		t.Error("a dirty head must not link to the host")
+	}
+	if !strings.Contains(s, `"+func F() int { return 3 }"`) {
+		t.Error("the worktree edit is not in the hunks")
+	}
+}
+
+func TestDiffHTMLBadInvocations(t *testing.T) {
+	withUI(t)
+	diffRepo(t)
+	out := filepath.Join(t.TempDir(), "change.html")
+	for _, args := range [][]string{
+		{"diff", "main", "-html", out, "-include", "./a"},
+		{"diff", "main", "-link-template", "https://h/{path}"},
+		{"diff", "main", "-html", "-"},
+	} {
+		if code, _, errOut := run(args...); code != ExitBadInvocation {
+			t.Errorf("%v: exit %d, want %d (%s)", args, code, ExitBadInvocation, errOut)
+		}
+	}
+	if _, err := os.Stat(out); err == nil {
+		t.Error("a bad invocation wrote the html")
+	}
+}
+
+func TestDiffHTMLKeepsTheParseFailureExit(t *testing.T) {
+	withUI(t)
+	dir := diffRepo(t)
+	writeFile(t, dir, "c/c.go", "package c\n\nfunc {\n")
+	git(t, dir, "add", "-A")
+	git(t, dir, "commit", "-qm", "broken")
+	out := filepath.Join(t.TempDir(), "change.html")
+	if code, _, errOut := run("diff", "main", "-html", out); code != ExitParseFailure {
+		t.Fatalf("exit %d, want %d: %s", code, ExitParseFailure, errOut)
+	}
+	if _, err := os.Stat(out); err != nil {
+		t.Errorf("html not written before the parse-failure exit: %v", err)
+	}
+}

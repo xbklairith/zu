@@ -36,6 +36,22 @@ func ForRepo(origin string, head ir.Ref, template, prefix string) (*Links, error
 	return nil, nil
 }
 
+// CompareURL returns the host's page comparing base with head, or "" when
+// either side is not a clean commit or the origin is not GitHub or GitLab.
+func CompareURL(origin string, base, head ir.Ref) string {
+	if base.Commit == "" || base.Dirty || head.Commit == "" || head.Dirty {
+		return ""
+	}
+	host, repo := parseRemote(origin)
+	switch host {
+	case "github.com":
+		return "https://github.com/" + repo + "/compare/" + base.Commit + "..." + head.Commit
+	case "gitlab.com":
+		return "https://gitlab.com/" + repo + "/-/compare/" + base.Commit + "..." + head.Commit
+	}
+	return ""
+}
+
 // parseRemote returns host and repository path from an https, ssh or scp-style
 // remote URL, dropping any user or password.
 func parseRemote(origin string) (host, repo string) {

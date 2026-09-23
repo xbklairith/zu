@@ -47,3 +47,23 @@ func TestForRepoRejectsUnsafeTemplates(t *testing.T) {
 		}
 	}
 }
+
+func TestCompareURL(t *testing.T) {
+	b, h := ir.Ref{Commit: "bbbb"}, ir.Ref{Commit: "hhhh"}
+	cases := []struct {
+		name, origin string
+		base, head   ir.Ref
+		want         string
+	}{
+		{"github ssh", "git@github.com:o/r.git", b, h, "https://github.com/o/r/compare/bbbb...hhhh"},
+		{"gitlab https with credentials", "https://u:secret@gitlab.com/g/r.git", b, h, "https://gitlab.com/g/r/-/compare/bbbb...hhhh"},
+		{"dirty head", "git@github.com:o/r.git", b, ir.Ref{Commit: "hhhh", Dirty: true}, ""},
+		{"no base commit", "git@github.com:o/r.git", ir.Ref{}, h, ""},
+		{"unknown host", "git@example.com:o/r.git", b, h, ""},
+	}
+	for _, c := range cases {
+		if got := CompareURL(c.origin, c.base, c.head); got != c.want {
+			t.Errorf("%s: CompareURL = %q, want %q", c.name, got, c.want)
+		}
+	}
+}
