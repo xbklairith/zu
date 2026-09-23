@@ -1,5 +1,7 @@
 # 04 · HTML Export — Plan
 
+**Status:** approved 2026-09-24. Start Part A after feature 03 is merged; Part B also needs 03's `internal/diff`.
+
 > **Mode:** Quick (single-file)
 > **For Claude:** Use `dev-workflow:spec-driven-implementation` to execute task-by-task. Quick mode is auto-detected from this file's presence.
 > **Upgrade path:** If scope grows, run `/dev-workflow:spec full` to convert to a 3-file spec (requirements + design + tasks).
@@ -22,7 +24,7 @@
 
 ---
 
-## Deviations from settled answers (found while planning — confirm at approval)
+## Deviations from settled answers (found while planning — approved 2026-09-24 with the plan)
 
 1. **Q4 auto-collapse is relative to the drilled-in box, and module roots are depth 1 below the page root.** The measured Test Corpus makes "deepest level with ≤ 60 boxes" well-defined only this way:
 
