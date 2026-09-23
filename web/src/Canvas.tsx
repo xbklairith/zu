@@ -15,7 +15,11 @@ import type { Item, Placed } from "./layout";
 import type { Bundle } from "./tree";
 import { boxStats } from "./tree";
 
-type Data = { item: Item; stats?: { packages: number; decls: number; unresolved: number } };
+type Data = {
+  item: Item;
+  stats?: { packages: number; decls: number; unresolved: number };
+  pick: (id: string) => void;
+};
 type ZNode = Node<Data>;
 
 function Ends() {
@@ -76,7 +80,14 @@ function DeclNode({ data, selected }: NodeProps<ZNode>) {
       <Ends />
       <div className="label">{data.item.label}</div>
       {data.item.rows?.map((r) => (
-        <div key={r} className="row">
+        <div
+          key={r}
+          className="row"
+          onClick={(e) => {
+            e.stopPropagation();
+            data.pick(`${data.item.id}.${r}`);
+          }}
+        >
           .{r}
         </div>
       ))}
@@ -121,7 +132,7 @@ export function Canvas({ view, items, edges, placed, selected, onSelect, onOpen 
         selected: item.id === selected,
         draggable: false,
         connectable: false,
-        data: { item, stats },
+        data: { item, stats, pick: onSelect },
       };
     });
   const rfEdges: Edge[] = edges.map((e) => ({

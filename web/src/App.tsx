@@ -3,6 +3,7 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { Canvas } from "./Canvas";
 import type { View } from "./data";
 import { Header } from "./Header";
+import { Panel } from "./Panel";
 import { layout, scene, type Item, type Placed } from "./layout";
 import { autoDepth, parentBox } from "./tree";
 
@@ -66,6 +67,15 @@ export function App({ view }: { view: View }) {
           <div className="empty">Laying out…</div>
         )}
       </main>
+      {selected && (
+        <Panel
+          view={view}
+          focus={focus}
+          depth={depth}
+          id={selected}
+          onClose={() => setSelected("")}
+        />
+      )}
     </div>
   );
 }

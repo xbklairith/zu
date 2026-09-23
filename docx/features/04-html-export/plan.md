@@ -1494,16 +1494,16 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
 
 **Steps:**
 
-- [ ] **Write the failing tests** for `linkFor`:
+- [x] **Write the failing tests** for `linkFor`:
   - GitHub template plus `internal/a b/x.go` gives `…/internal/a%20b/x.go#L12`.
   - A template that is not https gives `null`.
   - `links` undefined gives `null`.
-- [ ] **Run — expect FAIL**, implement `links.ts`, then `Panel.tsx`.
-- [ ] **Verify** in the dev server:
+- [x] **Run — expect FAIL**, implement `links.ts`, then `Panel.tsx`.
+- [x] **Verify** in the dev server:
   - Selecting `store.Repo.Get` shows `store.go` scrolled to line 43, highlighted.
   - A source line containing `<b>` renders literally.
-- [ ] **Run**: `cd web && npm run typecheck && npm test`
-- [ ] **Commit**: `git add web/src/Panel.tsx web/src/links.ts web/src/links.test.ts && git commit -m "Show source, edges and host links in the side panel"`
+- [x] **Run**: `cd web && npm run typecheck && npm test`
+- [x] **Commit**: `git add web/src/Panel.tsx web/src/links.ts web/src/links.test.ts && git commit -m "Show source, edges and host links in the side panel"`
 
 ---
 
@@ -1620,7 +1620,7 @@ Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag r
 - [x] Task 8 · Package Tree logic
 - [x] Task 9 · Layout
 - [x] Task 10 · Canvas and header
-- [ ] Task 11 · Side panel
+- [x] Task 11 · Side panel
 - [ ] Task 12 · Part A acceptance
 - [ ] Task B1 · `export.Change`
 - [ ] Task B2 · `zu diff -html` (blocked)

@@ -175,6 +175,14 @@ export function bundles(view: View, focus: string, d: number): Bundle[] {
     };
     return count(view.edges.filter((e) => e.kind !== "imports"), (e) => [declOf(e.from), declOf(e.to)]);
   }
+  const { drawn, end } = packageEnds(view, focus, d);
+  return count(drawn, (e) => [end(e.from), end(e.to)]);
+}
+
+// packageEnds returns the import edges a package-level focus draws and the
+// map from a node id to the drawn leaf it attaches to.
+export function packageEnds(view: View, focus: string, d: number) {
+  const idx = boxesOf(view);
   const map = (id: string): string | null => {
     const n = idx.byId.get(id);
     if (!n) return null;
@@ -191,9 +199,11 @@ export function bundles(view: View, focus: string, d: number): Bundle[] {
   for (const e of drawn) {
     for (const id of [e.from, e.to]) if (idx.byId.get(id)?.kind === "external") touched.add(id);
   }
-  const ext = (id: string | null) =>
-    id !== null && touched.has(id) && touched.size > EXTERNAL_BUDGET ? EXTERNALS : id;
-  return count(drawn, (e) => [ext(map(e.from)), ext(map(e.to))]);
+  const end = (id: string): string | null => {
+    const m = map(id);
+    return m !== null && touched.has(m) && touched.size > EXTERNAL_BUDGET ? EXTERNALS : m;
+  };
+  return { drawn, end };
 }
 
 function inside(idx: Index, leaf: string): boolean {
