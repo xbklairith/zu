@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"zu/internal/ir"
+	"zu/internal/policy"
 	"zu/internal/version"
 )
 
@@ -24,6 +25,7 @@ func TestVersionReportsAppCommitAndSchema(t *testing.T) {
 		"version " + version.Version,
 		"commit " + version.Commit,
 		"ir-schema " + ir.SchemaVersion,
+		"policy-format " + policy.Format,
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("output %q missing %q", out, want)
@@ -67,7 +69,7 @@ func TestUnknownCommandIsBadInvocation(t *testing.T) {
 }
 
 func TestPlannedCommandsReportNotImplemented(t *testing.T) {
-	for _, cmd := range []string{"serve", "check", "policy"} {
+	for _, cmd := range []string{"serve", "policy"} {
 		code, _, errOut := run(cmd)
 		if code != ExitBadInvocation {
 			t.Errorf("%s: exit = %d, want %d", cmd, code, ExitBadInvocation)

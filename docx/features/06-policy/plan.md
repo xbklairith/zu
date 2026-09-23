@@ -2588,7 +2588,7 @@ Pin v3.0.5, the newest release at the time of planning.
 
 **Steps:**
 
-- [ ] **Write the failing test.** It needs no git: outside a repository `openSource` reads the directory.
+- [x] **Write the failing test.** It needs no git: outside a repository `openSource` reads the directory.
 
    <!-- file: internal/cli/check_test.go -->
    ```go
@@ -2761,9 +2761,9 @@ Pin v3.0.5, the newest release at the time of planning.
     			t.Errorf("%s: exit = %d, want %d", cmd, code, ExitBadInvocation)
    ```
 
-- [ ] **Run it:** `go test ./internal/cli -run 'Check|Planned|Version'`. Expected: FAIL (`zu check: not implemented`; the version output lacks `policy-format`).
+- [x] **Run it:** `go test ./internal/cli -run 'Check|Planned|Version'`. Expected: FAIL (`zu check: not implemented`; the version output lacks `policy-format`).
 
-- [ ] **Implement**
+- [x] **Implement**
 
    <!-- file: internal/cli/check.go -->
    ```go
@@ -2957,7 +2957,7 @@ Pin v3.0.5, the newest release at the time of planning.
     		return ExitBadInvocation
    ```
 
-- [ ] **Run:** `go test ./internal/cli`. Expected: `ok`.
+- [x] **Run:** `go test ./internal/cli`. Expected: `ok`.
 
 ### Task 9: `zu policy init`
 
@@ -4388,7 +4388,7 @@ These diffs are against `main` at 8f43cb1. If 05's `App.tsx` changes before 06 s
 - [x] Task 5 · `Apply`
 - [x] Task 6 · Levels and cycles
 - [x] Task 7 · Baseline
-- [ ] Task 8 · `zu check`
+- [x] Task 8 · `zu check`
 - [ ] Task 9 · `zu policy init`
 - [ ] Task 10 · `zu diff` B7/B9
 - [ ] Task 11 · View fields and the lensed export
