@@ -11,6 +11,7 @@ Hard-to-reverse, surprising, real trade-offs — one file each in [`docx/decisio
 - [0004](../decisions/0004-policy-hash-and-head-policy.md) Policy hash over parsed rules; diff uses head's policy
 - [0005](../decisions/0005-git-cli-for-refs.md) git CLI for reading refs
 - [0006](../decisions/0006-self-contained-html-export.md) Self-contained HTML file is the primary deliverable, carrying only code worth reading
+- [0007](../decisions/0007-scan-all-build-variants.md) Scan every build variant; merge duplicate declarations
 
 ## Settled choices (not decision records)
 - **Stack:** Go 1.24, CGO off; UI React 19 + `@xyflow/react` + ELK.js in a Worker, Vite-built, `go:embed`ed. Revisit Cytoscape if collapsed views exceed ~1,500 nodes.

@@ -57,3 +57,21 @@ no zu install, server or network. Carries the same sensitivity as the source it 
 A change to a declaration that survives formatting normalisation. Reformatting and
 comment-only edits are not meaningful changes: they neither mark a component modified
 nor pull source into an HTML Export.
+
+## IR
+
+The intermediate representation `zu scan` writes: every package, type and function of
+a repository at one ref, the dependencies between them, and a source location for each.
+The only thing any view reads. Same inputs, byte-identical IR.
+
+## Certain Call
+
+A call zu can attribute to one declaration from syntax alone: `pkg.F()` through an
+import, `F()` within the same package, or `r.M()` on a method's own receiver. Only
+certain calls become `calls` edges.
+
+## Unresolved Call
+
+Any other call into this repository's code — through a variable, field, interface or
+function value. Never drawn; counted per package, so a view can say how much it is not
+showing.
