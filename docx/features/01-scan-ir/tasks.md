@@ -12,8 +12,8 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
 
 ## Progress Summary
 - Total Tasks: 15
-- Completed: 8/15
-- In Progress: Task 9 — Call resolution
+- Completed: 9/15
+- In Progress: Task 10 — Embed resolution
 
 ## Tasks
 
@@ -65,10 +65,10 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
   - [x] REFACTOR
   - Linked: REQ-018, REQ-029, REQ-030, REQ-031
 
-- [ ] **Task 9: Call resolution**
-  - [ ] RED: `p.F` → edge; `p.T(x)` conversion dropped; external `x.F` dropped; package-var `v.M()` → unresolved; bare `F` → edge; bare type conversion dropped; dot import → unresolved; recv `r.M` in the method set → edge, a func field → unresolved
-  - [ ] GREEN
-  - [ ] REFACTOR
+- [x] **Task 9: Call resolution**
+  - [x] RED: `p.F` → edge; `p.T(x)` conversion dropped; external `x.F` dropped; package-var `v.M()` → unresolved; bare `F` → edge; bare type conversion dropped; dot import → unresolved; recv `r.M` in the method set → edge, a func field → unresolved
+  - [x] GREEN
+  - [x] REFACTOR
   - Linked: REQ-019, REQ-033, REQ-034, REQ-035, REQ-036
 
 - [ ] **Task 10: Embed resolution**

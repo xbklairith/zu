@@ -43,7 +43,8 @@ func assemble(w *walkResult, facts []*fileFacts) *ir.IR {
 		}
 		p := b.ix.pkgs[importPath(w.moduleFor(f.Dir), f.Dir)]
 		b.packageNode(p)
-		b.imports(p, f)
+		names := b.imports(p, f)
+		b.calls(p, f, names)
 	}
 	for _, n := range b.nodes {
 		b.doc.Nodes = append(b.doc.Nodes, *n)
@@ -64,9 +65,14 @@ func (b *builder) packageNode(p *pkgInfo) {
 	}
 }
 
-func (b *builder) imports(p *pkgInfo, f *fileFacts) {
+// imports adds the file's import edges and returns its import names.
+func (b *builder) imports(p *pkgInfo, f *fileFacts) map[string]target {
+	names := map[string]target{}
 	for _, imp := range f.Imports {
 		t := b.ix.resolveImport(p.Module, imp.Path, imp.Name)
+		if t.Name != "_" && t.Name != "." {
+			names[t.Name] = t
+		}
 		loc := ir.Location{Path: f.Path, Line: imp.Line}
 		switch t.Class {
 		case importInternal:
@@ -78,6 +84,74 @@ func (b *builder) imports(p *pkgInfo, f *fileFacts) {
 			b.doc.UnresolvedImports[imp.Path]++
 		}
 	}
+	return names
+}
+
+// calls turns certain call sites into edges and counts the rest.
+func (b *builder) calls(p *pkgInfo, f *fileFacts, names map[string]target) {
+	for _, c := range f.Calls {
+		from := declID(p.ID, c.FromRecv, c.FromName)
+		to, counted := b.resolveCall(p, c, names)
+		switch {
+		case to != "":
+			b.edge(from, to, ir.EdgeCalls, ir.Location{Path: f.Path, Line: c.Line})
+		case counted:
+			b.doc.UnresolvedCalls[p.ID]++
+		}
+	}
+}
+
+// resolveCall returns the callee id for a certain call, or reports whether
+// an uncertain call counts as unresolved (false: builtin, conversion, or a
+// call outside this repository).
+func (b *builder) resolveCall(p *pkgInfo, c callSite, names map[string]target) (to string, unresolved bool) {
+	switch c.Kind {
+	case callBare:
+		switch {
+		case p.Funcs[c.Name]:
+			return declID(p.ID, "", c.Name), false
+		case p.Types[c.Name], builtins[c.Name]:
+			return "", false
+		}
+	case callQualified:
+		t, ok := names[c.X]
+		switch {
+		case !ok:
+		case t.Class == importInternal && t.Pkg.Funcs[c.Name]:
+			return declID(t.Pkg.ID, "", c.Name), false
+		case t.Class == importInternal && t.Pkg.Types[c.Name]:
+			return "", false
+		case t.Class == importExternal, t.Class == importStdlib:
+			return "", false
+		}
+	case callRecv:
+		if p.Methods[c.FromRecv][c.Name] {
+			return declID(p.ID, c.FromRecv, c.Name), false
+		}
+	}
+	return "", true
+}
+
+// builtins are predeclared functions and types; calling or converting to
+// one is never a dependency.
+var builtins = map[string]bool{
+	"append": true, "cap": true, "clear": true, "close": true, "complex": true,
+	"copy": true, "delete": true, "imag": true, "len": true, "make": true,
+	"max": true, "min": true, "new": true, "panic": true, "print": true,
+	"println": true, "real": true, "recover": true,
+	"any": true, "bool": true, "byte": true, "comparable": true, "complex64": true,
+	"complex128": true, "error": true, "float32": true, "float64": true,
+	"int": true, "int8": true, "int16": true, "int32": true, "int64": true,
+	"rune": true, "string": true, "uint": true, "uint8": true, "uint16": true,
+	"uint32": true, "uint64": true, "uintptr": true,
+}
+
+// declID is the node id of a type, function or method in package pkg.
+func declID(pkg, recv, name string) string {
+	if recv == "" {
+		return pkg + "." + name
+	}
+	return pkg + "." + recv + "." + name
 }
 
 // external ensures the node for a required module, located at the require
