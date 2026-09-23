@@ -74,7 +74,7 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 		return ExitBadInvocation
 	}
 	defer src.close()
-	doc, _, stats, err := scanSource(ctx, src)
+	doc, pol, stats, err := scanSource(ctx, src)
 	if err != nil {
 		fmt.Fprintf(stderr, "zu scan: %v\n", err)
 		return ExitBadInvocation
@@ -112,7 +112,7 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 		return ExitBadInvocation
 	}
 	if hopts.path != "" {
-		if err := writeHTML(ctx, src, doc, &hopts, stderr); err != nil {
+		if err := writeHTML(ctx, src, doc, pol, &hopts, stderr); err != nil {
 			fmt.Fprintf(stderr, "zu scan: html: %v\n", err)
 			return ExitBadInvocation
 		}

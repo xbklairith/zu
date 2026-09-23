@@ -13,6 +13,7 @@ import (
 	"zu/internal/export"
 	"zu/internal/gitref"
 	"zu/internal/ir"
+	"zu/internal/policy"
 	"zu/internal/scan"
 	"zu/internal/version"
 	"zu/web"
@@ -79,8 +80,9 @@ func builtTemplate() ([]byte, error) {
 }
 
 // writeHTML writes the Project View export of doc (already sorted by
-// ir.Encode), reading source through the tree the scan read.
-func writeHTML(ctx context.Context, src *source, doc *ir.IR, o *htmlOptions, stderr io.Writer) error {
+// ir.Encode) as the Policy draws it, reading source through the tree the
+// scan read.
+func writeHTML(ctx context.Context, src *source, doc *ir.IR, pol *policy.Policy, o *htmlOptions, stderr io.Writer) error {
 	root := export.RootModule(doc)
 	pats := make([]export.Pattern, 0, len(o.include))
 	for _, s := range o.include {
@@ -90,10 +92,11 @@ func writeHTML(ctx context.Context, src *source, doc *ir.IR, o *htmlOptions, std
 		}
 		pats = append(pats, p)
 	}
-	v, err := export.Project(doc, pats, src.tree.ReadFile)
+	v, err := export.Project(pol.Apply(doc), pats, src.tree.ReadFile)
 	if err != nil {
 		return err
 	}
+	export.Mark(v, pol, doc)
 	v.Tool = version.Version
 	prefix := "" // a -ref scan runs at the repository top
 	if src.ref == nil {
@@ -110,15 +113,24 @@ type changeSides struct {
 	top                string
 	base, head         *ir.IR
 	baseTree, headTree scan.Tree
+	pol                *policy.Policy // head's, which the hash check proved is base's
 }
 
 // writeChangeHTML writes the Change View export of base → head. Links point at
 // head, and at the host's compare page when both sides are clean commits.
 func writeChangeHTML(ctx context.Context, c changeSides, sum *diff.Summary, o *htmlOptions, stderr io.Writer) error {
-	v, err := export.Change(c.base, c.head, diff.Compare(c.base, c.head), sum, c.baseTree, c.headTree)
+	base, head := c.base, c.head
+	if c.pol.Lens() {
+		// The View draws both sides as the Policy does, so its changed list
+		// must come from the same IRs; the printed Summary stays whole.
+		base, head = c.pol.Apply(base), c.pol.Apply(head)
+		sum = diff.Summarize(base, head)
+	}
+	v, err := export.Change(base, head, diff.Compare(base, head), sum, c.baseTree, c.headTree)
 	if err != nil {
 		return err
 	}
+	export.Mark(v, c.pol, c.head)
 	for _, t := range []scan.Tree{c.baseTree, c.headTree} {
 		if ct, ok := t.(*gitref.CommitTree); ok && ct.Err() != nil {
 			return ct.Err()

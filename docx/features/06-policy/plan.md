@@ -3796,7 +3796,7 @@ The fixture Policy lives in `internal/export/testdata/` and is read with `policy
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
    <!-- file: internal/export/testdata/shop.policy.yaml -->
    ```yaml
@@ -3954,9 +3954,9 @@ The fixture Policy lives in `internal/export/testdata/` and is read with `policy
    }
    ```
 
-- [ ] **Run them:** `go test ./internal/export ./internal/cli -run 'Mark|DrawsThe'`. Expected: FAIL (`undefined: Mark`).
+- [x] **Run them:** `go test ./internal/export ./internal/cli -run 'Mark|DrawsThe'`. Expected: FAIL (`undefined: Mark`).
 
-- [ ] **Implement**
+- [x] **Implement**
 
    <!-- file: internal/export/policy.go -->
    ```go
@@ -4135,7 +4135,7 @@ The fixture Policy lives in `internal/export/testdata/` and is read with `policy
     		}
    ```
 
-- [ ] **Run:** `go test ./internal/export ./internal/cli`. Expected: `ok`, with 04's goldens unchanged.
+- [x] **Run:** `go test ./internal/export ./internal/cli`. Expected: `ok`, with 04's goldens unchanged.
 
 ### Task 12: Violations drawn red through 05's `pin` hook
 
@@ -4391,7 +4391,7 @@ These diffs are against `main` at 8f43cb1. If 05's `App.tsx` changes before 06 s
 - [x] Task 8 · `zu check`
 - [x] Task 9 · `zu policy init`
 - [x] Task 10 · `zu diff` B7/B9
-- [ ] Task 11 · View fields and the lensed export
+- [x] Task 11 · View fields and the lensed export
 - [ ] Task 12 · UI: red violations via `pin`
 - [ ] Task 13 · Acceptance
 

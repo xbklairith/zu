@@ -1,0 +1,7 @@
+# The Policy the export tests mark the shop View with. It lives here, not in
+# ../scan/testdata/shop, so the scan fixture, its golden and parity stay 01's.
+levels:
+  - example.com/shop/internal/store
+  - example.com/shop/internal/money
+cycles: true
+foreign: [github.com/lib]

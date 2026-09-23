@@ -145,7 +145,7 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 	fmt.Fprintf(stderr, "zu diff: %d packages changed, %d affected, parse errors base=%d head=%d\n",
 		len(s.Packages), len(s.Affected), len(baseDoc.ParseErrors), len(headDoc.ParseErrors))
 	if hopts.path != "" {
-		c := changeSides{top: top, base: baseDoc, head: headDoc, baseTree: baseTree, headTree: head.tree}
+		c := changeSides{top: top, base: baseDoc, head: headDoc, baseTree: baseTree, headTree: head.tree, pol: pol}
 		if err := writeChangeHTML(ctx, c, s, &hopts, stderr); err != nil {
 			return bad("html: %v", err)
 		}

@@ -26,6 +26,7 @@ type View struct {
 	Honesty Honesty           `json:"honesty"`
 	Changed []string          `json:"changed,omitempty"` // Change View: changed packages, bottom-up
 	Hunks   map[string][]Hunk `json:"hunks,omitempty"`   // Change View: line diffs of changed files
+	Policy  *PolicyInfo       `json:"policy,omitempty"`  // only when the Policy has rules
 }
 
 // Node is an IR node reduced to what a view draws.
@@ -44,6 +45,7 @@ type Node struct {
 	Status     string      `json:"status,omitempty"`     // Change View only
 	MovedFrom  string      `json:"movedFrom,omitempty"`  // Change View: the Move's base id
 	Hop        *int        `json:"hop,omitempty"`        // Change View: distance in the Affected Set
+	Rank       *int        `json:"rank,omitempty"`       // packages: the Policy Level, 0 = innermost
 }
 
 // Edge is an IR edge with its location count instead of every location.
@@ -54,6 +56,8 @@ type Edge struct {
 	Count  int         `json:"count"`
 	Loc    ir.Location `json:"loc"`
 	Status string      `json:"status,omitempty"`
+	// Violation is the rule this import breaks ("levels" or "cycle").
+	Violation string `json:"violation,omitempty"`
 }
 
 // Honesty is what the view is not showing, always displayed in the header.
