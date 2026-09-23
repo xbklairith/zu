@@ -44,7 +44,7 @@
 
 **Steps:**
 
-- [ ] **Test**: build small `ir.IR` values inline and cover each of these:
+- [x] **Test**: build small `ir.IR` values inline and cover each of these:
 
    | Case | Expected |
    |---|---|
@@ -56,11 +56,13 @@
    | one removed and one added `function` with equal `shape`, different id | one Move `{from, to}`; neither appears in added/removed |
    | two removed and one added with the same `shape` | no Move (one-to-one only) |
    | equal `shape` but different `kind` | no Move |
+   | equal `shape`, both package and name change | no Move |
+   | equal `shape`, same package or same name (including dotted paths such as `example.com`) | Move |
    | a package whose only change is a `const` | package `modified` with 0 declaration changes |
    | `external` nodes | compared by id only (they have no hash) |
 
-- [ ] **Verify RED**: `go test ./internal/diff` → FAIL (package missing).
-- [ ] **Action**:
+- [x] **Verify RED**: `go test ./internal/diff` → FAIL (package missing).
+- [x] **Action**:
 
    ```go
    // Package diff compares two IRs. It is pure: no I/O, and the same input
@@ -109,8 +111,8 @@
    - moves by from.
 
    A reversed pair is reported once, as the head direction. `Reversed` is an edge status only.
-- [ ] **Verify**: `go test ./internal/diff` → ok.
-- [ ] **Commit**: `git add internal/diff/diff.go internal/diff/diff_test.go && git commit -m "Compare two IRs"`
+- [x] **Verify**: `go test ./internal/diff` → ok.
+- [x] **Commit**: `git add internal/diff/diff.go internal/diff/diff_test.go && git commit -m "Compare two IRs"`
 
 ---
 
@@ -357,14 +359,14 @@ Nothing is left to do here.
 ## Notes
 
 - **The head IR under `-worktree`** uses exactly `zu scan`'s file selection and dirty rule, so `zu scan` and `zu diff -worktree` agree. Its ignored files follow `-include-ignored`.
-- **Open decision: trivial-body Moves.** Two unrelated small declarations, such as `func Stop() {}` removed from package `x` and `func Reset() {}` added to package `y`, have equal `shape` and would pair as a Move. Options: pair only when the package or the name stays the same, or require a minimum body size. Decide in Task 1 before writing its tests.
+- **Trivial-body Moves (settled by steering, 2026-09-24):** a Move also needs the package or the name to stay the same. `func Stop() {}` removed from package `x` and `func Reset() {}` added to package `y` stay a removal and an addition. A minimum body size was rejected as arbitrary. See ADR 0003, Consequences.
 - **Removed packages** can't be in the Affected Set: nothing at head imports them.
 - **No `.zu/` writes:** `zu diff` writes only stdout and stderr. IRs stay in memory.
 - **Exit 1 stays unused** until the Policy feature adds violations.
 
 ## Progress
 
-- [ ] Task 1: Compare two IRs
+- [x] Task 1: Compare two IRs
 - [ ] Task 2: Affected Set
 - [ ] Task 3: Summary model and JSON
 - [ ] Task 4: Text and Markdown renderers, with Mermaid
@@ -373,4 +375,4 @@ Nothing is left to do here.
 - [ ] Task 7: `zu diff` CLI
 - [ ] Task 8: Docs, memory, final check
 
-**Status:** Not Started
+**Status:** In Progress

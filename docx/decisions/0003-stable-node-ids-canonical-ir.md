@@ -31,5 +31,5 @@ share the same `shape` and draws that pair as one dashed arrow. The pairing live
 the view; ids and the IR diff are unchanged (amended 2026-09-23, from the tool
 comparison, C7). `hash` covers the declared name and receiver, so it cannot pair a
 rename; each declaration node therefore also carries `shape`, its hash with its own
-name and receiver type name blanked (amended 2026-09-24, feature 02 review). Moving a declaration between files in the same package is
+name and receiver type name blanked (amended 2026-09-24, feature 02 review). A pair is a Move only when it also keeps its package or its name; when both change, equal shapes more likely mean two small look-alike bodies, and a false Move would tell a reviewer that changed code is unchanged (amended 2026-09-24, feature 03). Moving a declaration between files in the same package is
 not a change. Output ordering is part of the IR contract and must be tested.
