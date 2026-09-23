@@ -32,14 +32,19 @@ var (
 )
 
 // runScan implements `zu scan [dir] [-ref commit | -include-ignored]
-// [-out -|path] [-max-parse-errors N]`. Flags may come before or after dir.
+// [-out -|path] [-max-parse-errors N] [-html file [-include pattern]…
+// [-link-template url]]`. Flags may come before or after dir.
 func runScan(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("zu scan", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	out := fs.String("out", "", "write the IR to `path` instead of .zu/ir/ (- for stdout)")
 	maxErrs := fs.Int("max-parse-errors", 0, "exit 2 when more than `N` files fail to parse")
 	refName := fs.String("ref", "", "scan `commit` from git objects (whole repository) instead of the working tree")
-	withIgnored := fs.Bool("include-ignored", false, "in a git working tree, also scan files git ignores")
+	withIgnored := fs.Bool("include-ignored", false, "in a git working tree, also scan files git ignores (not -include)")
+	var hopts htmlOptions
+	fs.StringVar(&hopts.path, "html", "", "also write a self-contained HTML Project View to `file`")
+	fs.Var(&hopts.include, "include", "with -html, inline declarations and source of packages matching `pattern` (repeatable; ./ = root module; not -include-ignored)")
+	fs.StringVar(&hopts.linkTmpl, "link-template", "", "source link `url` with {commit} {path} {line}; overrides origin detection")
 	dir, err := parseWithDir(fs, args)
 	if err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
@@ -53,6 +58,10 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 	}
 	if *withIgnored && *refName != "" {
 		fmt.Fprintln(stderr, "zu scan: -include-ignored applies to the working tree, not to -ref")
+		return ExitBadInvocation
+	}
+	if err := hopts.prepare(); err != nil {
+		fmt.Fprintf(stderr, "zu scan: %v\n", err)
 		return ExitBadInvocation
 	}
 
@@ -103,6 +112,12 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		fmt.Fprintf(stderr, "zu scan: write: %v\n", err)
 		return ExitBadInvocation
+	}
+	if hopts.path != "" {
+		if err := writeHTML(ctx, src, doc, &hopts, stderr); err != nil {
+			fmt.Fprintf(stderr, "zu scan: html: %v\n", err)
+			return ExitBadInvocation
+		}
 	}
 
 	fmt.Fprintf(stderr, "zu scan: %d packages, %d files, %d parse errors, %d unresolved calls, unsupported: %s%s\n",

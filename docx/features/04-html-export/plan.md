@@ -980,7 +980,7 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
 
 **Steps:**
 
-- [ ] **Write the failing tests** in `internal/cli/html_test.go`. Reuse `repo`, `small`, `git` and `needGit` from `scan_test.go`. Set the `uiTemplate` seam to return `internal/export/testdata/template.html`'s bytes. Write every output under `t.TempDir()`.
+- [x] **Write the failing tests** in `internal/cli/html_test.go`. Reuse `repo`, `small`, `git` and `needGit` from `scan_test.go`. Set the `uiTemplate` seam to return `internal/export/testdata/template.html`'s bytes. Write every output under `t.TempDir()`.
    1. `scan <dir> -html $T/out.html -include ./a`: exit 0; the file contains `"id":"example.com/m/a.F"` and `"a/a.go":`; `<dir>/.zu/ir/` still holds the IR.
    2. **`-ref` inlines the commit.** Commit `a/a.go`, then append `// WORKTREE-EDIT` on disk. `scan <dir> -ref HEAD -html $T/out.html -include ./a`: the file does not contain `WORKTREE-EDIT` and does contain `https://github.com/o/r/blob/<commit>/a/a.go`-style links. Set origin to `git@github.com:o/r.git`.
    3. **Exit 3 before the scan.** `-include ./a` without `-html`; `-html -`; `-include /x`; `-link-template http://h/{path}`. After each, `<dir>/.zu` does not exist.
@@ -989,11 +989,11 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    6. **Credentials.** In a git repo with `origin` = `https://user:pw@github.com/o/r.git` and a clean commit, the file contains `https://github.com/o/r/blob/` and does not contain `pw@`.
    7. **Subdirectory.** The repo has `svc/go.mod` and `svc/a/a.go`, committed, with an origin on github. `scan <top>/svc -html …` links contain `/blob/<commit>/svc/{path}`.
 
-- [ ] **Run — expect FAIL**
+- [x] **Run — expect FAIL**
 
    Run: `go test ./internal/cli/ -run HTML`
 
-- [ ] **Implement `internal/cli/html.go`**
+- [x] **Implement `internal/cli/html.go`**
 
    ```go
    package cli
@@ -1111,7 +1111,7 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    }
    ```
 
-- [ ] **Wire into `runScan`** (`internal/cli/scan.go`)
+- [x] **Wire into `runScan`** (`internal/cli/scan.go`)
 
    ```go
    	// 1. after the withIgnored flag (line 41):
@@ -1136,12 +1136,12 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    ```
    Also add `[-html file [-include pattern]… [-link-template url]]` to the `runScan` doc comment. `-include` and `-include-ignored` are different flags: one selects packages to inline, the other selects files to scan. The help text says so.
 
-- [ ] **Run — expect PASS; run the whole suite and lint**
+- [x] **Run — expect PASS; run the whole suite and lint**
 
    Run: `go test -race ./... && golangci-lint run ./...`
    Expected: all `ok`, no lint findings.
 
-- [ ] **Commit**
+- [x] **Commit**
 
    ```bash
    git add internal/cli/scan.go internal/cli/html.go internal/cli/html_test.go
@@ -1614,7 +1614,7 @@ Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag r
 - [x] Task 2 · Project View data
 - [x] Task 3 · Render
 - [x] Task 4 · Links
-- [ ] Task 5 · `zu scan -html`
+- [x] Task 5 · `zu scan -html`
 - [ ] Task 6 · UI toolchain
 - [ ] Task 7 · Golden View
 - [ ] Task 8 · Package Tree logic
