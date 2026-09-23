@@ -58,7 +58,76 @@ func extractFile(root, rel string) *fileFacts {
 	f.PkgName = file.Name.Name
 	f.PkgLine = fset.Position(file.Package).Line
 	f.Generated = ast.IsGenerated(file)
+	for _, decl := range file.Decls {
+		switch d := decl.(type) {
+		case *ast.GenDecl:
+			if d.Tok == token.TYPE {
+				for _, spec := range d.Specs {
+					ts := spec.(*ast.TypeSpec)
+					f.addDecl(fset, ts.Name, "", ir.KindType, typeKind(ts))
+				}
+			}
+		case *ast.FuncDecl:
+			f.addDecl(fset, d.Name, recvBase(d), ir.KindFunction, "")
+		}
+	}
 	return f
+}
+
+func (f *fileFacts) addDecl(fset *token.FileSet, name *ast.Ident, recv string, kind ir.NodeKind, tk string) {
+	if name.Name == "_" {
+		return
+	}
+	f.Decls = append(f.Decls, declFact{
+		Name:     name.Name,
+		Recv:     recv,
+		Kind:     kind,
+		Exported: ast.IsExported(name.Name),
+		TypeKind: tk,
+		Line:     fset.Position(name.Pos()).Line,
+	})
+}
+
+// typeKind classifies a type declaration; aliases are always "other".
+func typeKind(ts *ast.TypeSpec) string {
+	if ts.Assign.IsValid() {
+		return ir.TypeOther
+	}
+	switch ts.Type.(type) {
+	case *ast.StructType:
+		return ir.TypeStruct
+	case *ast.InterfaceType:
+		return ir.TypeInterface
+	}
+	return ir.TypeOther
+}
+
+// recvBase returns the receiver's base type name with any pointer and type
+// parameters stripped, or "" for a plain function.
+func recvBase(d *ast.FuncDecl) string {
+	if d.Recv == nil || len(d.Recv.List) == 0 {
+		return ""
+	}
+	return baseTypeName(d.Recv.List[0].Type)
+}
+
+func baseTypeName(e ast.Expr) string {
+	for {
+		switch x := e.(type) {
+		case *ast.StarExpr:
+			e = x.X
+		case *ast.ParenExpr:
+			e = x.X
+		case *ast.IndexExpr:
+			e = x.X
+		case *ast.IndexListExpr:
+			e = x.X
+		case *ast.Ident:
+			return x.Name
+		default:
+			return ""
+		}
+	}
 }
 
 // buildIgnored reports whether the file's //go:build line is the tag ignore

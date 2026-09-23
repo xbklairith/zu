@@ -12,8 +12,8 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
 
 ## Progress Summary
 - Total Tasks: 15
-- Completed: 4/15
-- In Progress: Task 5 — Declaration facts
+- Completed: 5/15
+- In Progress: Task 6 — Declaration hash
 
 ## Tasks
 
@@ -41,10 +41,10 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
   - [x] REFACTOR
   - Linked: REQ-007, REQ-025, REQ-032, REQ-043
 
-- [ ] **Task 5: Declaration facts**
-  - [ ] RED: func, method (value, pointer, generic receiver), type (struct, interface, generic, alias, named basic) → id, parent, exported, typeKind, location at the identifier; no const/var/`_`/func-literal nodes
-  - [ ] GREEN
-  - [ ] REFACTOR
+- [x] **Task 5: Declaration facts**
+  - [x] RED: func, method (value, pointer, generic receiver), type (struct, interface, generic, alias, named basic) → id, parent, exported, typeKind, location at the identifier; no const/var/`_`/func-literal nodes
+  - [x] GREEN
+  - [x] REFACTOR
   - Linked: REQ-013, REQ-014, REQ-015, REQ-017, REQ-020, REQ-021, REQ-045, REQ-046
 
 - [ ] **Task 6: Declaration hash** (`hash.go`)
