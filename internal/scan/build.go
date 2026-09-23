@@ -45,6 +45,7 @@ func assemble(w *walkResult, facts []*fileFacts) *ir.IR {
 		b.packageNode(p)
 		names := b.imports(p, f)
 		b.calls(p, f, names)
+		b.embeds(p, f, names)
 	}
 	for _, n := range b.nodes {
 		b.doc.Nodes = append(b.doc.Nodes, *n)
@@ -130,6 +131,29 @@ func (b *builder) resolveCall(p *pkgInfo, c callSite, names map[string]target) (
 		}
 	}
 	return "", true
+}
+
+// embeds adds an edge for each embedded type declared in this repository or
+// in a required module; standard-library and predeclared types are omitted.
+func (b *builder) embeds(p *pkgInfo, f *fileFacts, names map[string]target) {
+	for _, e := range f.Embeds {
+		from := declID(p.ID, "", e.Owner)
+		loc := ir.Location{Path: f.Path, Line: e.Line}
+		if e.X == "" {
+			if p.Types[e.Name] {
+				b.edge(from, declID(p.ID, "", e.Name), ir.EdgeEmbeds, loc)
+			}
+			continue
+		}
+		t, ok := names[e.X]
+		switch {
+		case !ok:
+		case t.Class == importInternal && t.Pkg.Types[e.Name]:
+			b.edge(from, declID(t.Pkg.ID, "", e.Name), ir.EdgeEmbeds, loc)
+		case t.Class == importExternal:
+			b.edge(from, t.Module, ir.EdgeEmbeds, loc)
+		}
+	}
 }
 
 // builtins are predeclared functions and types; calling or converting to

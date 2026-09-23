@@ -12,8 +12,8 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
 
 ## Progress Summary
 - Total Tasks: 15
-- Completed: 9/15
-- In Progress: Task 10 — Embed resolution
+- Completed: 10/15
+- In Progress: Task 11 — Build and merge
 
 ## Tasks
 
@@ -71,10 +71,10 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
   - [x] REFACTOR
   - Linked: REQ-019, REQ-033, REQ-034, REQ-035, REQ-036
 
-- [ ] **Task 10: Embed resolution**
-  - [ ] RED: same-package and internal → type edge; external → external node edge; stdlib omitted
-  - [ ] GREEN
-  - [ ] REFACTOR
+- [x] **Task 10: Embed resolution**
+  - [x] RED: same-package and internal → type edge; external → external node edge; stdlib omitted
+  - [x] GREEN
+  - [x] REFACTOR
   - Linked: REQ-037
 
 - [ ] **Task 11: Build and merge** (`build.go`)
