@@ -93,3 +93,36 @@ func TestHeadWithoutGitBinary(t *testing.T) {
 		t.Fatalf("got (%q, %v), want (\"\", false)", commit, dirty)
 	}
 }
+
+// A scanned repository is untrusted: its config must not run code, and
+// reading its state must not modify it (REQ-042, REQ-003).
+func TestHeadRunsNoRepoConfiguredCodeAndWritesNothing(t *testing.T) {
+	needGit(t)
+	dir := t.TempDir()
+	run(t, dir, "init", "-q")
+	write(t, filepath.Join(dir, "a.go"), "package a\n")
+	run(t, dir, "add", "a.go")
+	run(t, dir, "commit", "-q", "-m", "one")
+	marker := filepath.Join(t.TempDir(), "PWNED")
+	run(t, dir, "config", "core.fsmonitor", "touch "+marker+"; false")
+	write(t, filepath.Join(dir, "a.go"), "package a // edited\n")
+
+	index := filepath.Join(dir, ".git", "index")
+	before, err := os.Stat(index)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, dirty := Head(context.Background(), dir); !dirty {
+		t.Fatal("want dirty")
+	}
+	if _, err := os.Stat(marker); err == nil {
+		t.Fatal("repository-configured fsmonitor command was executed")
+	}
+	after, err := os.Stat(index)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !after.ModTime().Equal(before.ModTime()) {
+		t.Fatal(".git/index was rewritten")
+	}
+}

@@ -4,6 +4,7 @@ package gitref
 
 import (
 	"context"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -28,8 +29,18 @@ func Head(ctx context.Context, dir string) (commit string, dirty bool) {
 	return commit, strings.TrimSpace(status) != ""
 }
 
+// safeArgs keep a scanned repository's own config from running commands
+// (core.fsmonitor) and keep git from rewriting .git/index on a read.
+var safeArgs = []string{
+	"-c", "core.fsmonitor=false",
+	"-c", "core.untrackedCache=false",
+	"--no-optional-locks",
+}
+
 func git(ctx context.Context, dir string, args ...string) (string, error) {
-	cmd := exec.CommandContext(ctx, "git", append([]string{"-C", dir}, args...)...) // #nosec G204 -- fixed git subcommands
+	full := append(append([]string{"-C", dir}, safeArgs...), args...)
+	cmd := exec.CommandContext(ctx, "git", full...) // #nosec G204 -- fixed git subcommands
+	cmd.Env = append(os.Environ(), "GIT_OPTIONAL_LOCKS=0")
 	out, err := cmd.Output()
 	return string(out), err
 }
