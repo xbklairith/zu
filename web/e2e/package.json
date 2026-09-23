@@ -1,0 +1,12 @@
+{
+  "name": "zu-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "browsers": "playwright-core install chromium firefox webkit",
+    "accept": "node accept.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "1.63.0"
+  }
+}

@@ -1,6 +1,6 @@
 # 05 · Interaction — Plan
 
-**Status:** approved 2026-09-24 (scrutinized, fixed, advisor sign-off). Builds on 04 as landed at de78b66.
+**Status:** Complete 2026-09-24, except Safari by hand (Task 13). Approved 2026-09-24 (scrutinized, fixed, advisor sign-off). Builds on 04 as landed at de78b66.
 
 > **Mode:** Quick (single-file)
 > **For Claude:** Use `dev-workflow:spec-driven-implementation` to execute task-by-task. Quick mode is auto-detected from this file's presence.
@@ -4369,7 +4369,7 @@ with
 
 **Steps:**
 
-- [ ] **Create the harness.**
+- [x] **Create the harness.**
 
 **Create `web/e2e/package.json`:**
 
@@ -4562,12 +4562,12 @@ with
 /web/e2e/node_modules/
 ````
 
-- [ ] `make check` passes (Go tests including the CSP guard, `tsc`, vitest, lint).
-- [ ] **Browsers, from `file://`:** `make build && cd web/e2e && npm install && npm run browsers && npm run accept` → `chromium: ok`, `firefox: ok`, `webkit: ok` (20 checks each: nodes drawn by the worker, `/` search to `Repo.Get` centred and in the hash, `f` refits, `d` cycles five stages and survives a reload, hide edges, the Change View's chips and a centred changed-list pick, a Change View link outside the subgraph, a 720-edge view collapsed to depth 2 with its notice and header, no CSP errors, and "Layout failed: layout worker failed: blocked" without `worker-src blob:`). `ZU_E2E_CHANNEL=chrome npm run accept` uses an installed Chrome instead of Playwright's Chromium.
-- [ ] **Safari by hand** (the harness drives WebKit, not Safari): the same checks.
-- [ ] **Size:** `zu export -html` of kubernetes v1.37.0 is within 50 KB of 04's 8,065,460 B.
-- [ ] **Timing:** on kubernetes, the opening view reaches `zu-drawn`; `k8s.io/kubernetes/pkg` at depth 2 draws depth 1 with "Collapsed to depth 1: depth 2 has 1712 edges"; *Hide edges* draws depth 2 in under a second. No measured corpus view at depth 1 is over the limit (`pkg`, 184 edges), so the card is checked by the unit test only.
-- [ ] **Commit:** `git add .gitignore web/e2e/package.json web/e2e/package-lock.json web/e2e/accept.mjs docx/features/05-interaction/acceptance.md && git commit -m "Add the browser harness and record 05 acceptance"`
+- [x] `make check` passes (Go tests including the CSP guard, `tsc`, vitest, lint).
+- [x] **Browsers, from `file://`:** `make build && cd web/e2e && npm install && npm run browsers && npm run accept` → `chromium: ok`, `firefox: ok`, `webkit: ok` (20 checks each: nodes drawn by the worker, `/` search to `Repo.Get` centred and in the hash, `f` refits, `d` cycles five stages and survives a reload, hide edges, the Change View's chips and a centred changed-list pick, a Change View link outside the subgraph, a 720-edge view collapsed to depth 2 with its notice and header, no CSP errors, and "Layout failed: layout worker failed: blocked" without `worker-src blob:`). `ZU_E2E_CHANNEL=chrome npm run accept` uses an installed Chrome instead of Playwright's Chromium.
+- [~] **Safari by hand** (the harness drives WebKit, not Safari): the same checks. Pending a person: docx/UserInstructions/05-interaction-safari-check.md.
+- [x] **Size:** `zu export -html` of kubernetes v1.37.0 is within 50 KB of 04's 8,065,460 B.
+- [x] **Timing:** on kubernetes, the opening view reaches `zu-drawn`; `k8s.io/kubernetes/pkg` at depth 2 draws depth 1 with "Collapsed to depth 1: depth 2 has 1712 edges"; *Hide edges* draws depth 2 in under a second. No measured corpus view at depth 1 is over the limit (`pkg`, 184 edges), so the card is checked by the unit test only.
+- [x] **Commit:** `git add .gitignore web/e2e/package.json web/e2e/package-lock.json web/e2e/accept.mjs docx/features/05-interaction/acceptance.md && git commit -m "Add the browser harness and record 05 acceptance"`
 
 ---
 
@@ -4583,16 +4583,16 @@ with
 
 ## Progress
 
-- [ ] Task 1 · state and URL hash
-- [ ] Task 2 · cut with in-place toggles
-- [ ] Task 3 · bundles; 04's tree and facts over them
-- [ ] Task 4 · selection hops and declutter
-- [ ] Task 5 · scene
-- [ ] Task 6 · search, reveal and keys
-- [ ] Task 7 · layout, canvas and page from the scene
-- [ ] Task 8 · ELK in a Web Worker + CSP
-- [ ] Task 9 · view state drives the page
-- [ ] Task 10 · side panel, full
-- [ ] Task 11 · toolbar and search box
-- [ ] Task 12 · large views collapse to a depth that fits
-- [ ] Task 13 · browser harness and acceptance
+- [x] Task 1 · state and URL hash
+- [x] Task 2 · cut with in-place toggles
+- [x] Task 3 · bundles; 04's tree and facts over them
+- [x] Task 4 · selection hops and declutter
+- [x] Task 5 · scene
+- [x] Task 6 · search, reveal and keys
+- [x] Task 7 · layout, canvas and page from the scene
+- [x] Task 8 · ELK in a Web Worker + CSP
+- [x] Task 9 · view state drives the page
+- [x] Task 10 · side panel, full
+- [x] Task 11 · toolbar and search box
+- [x] Task 12 · large views collapse to a depth that fits
+- [~] Task 13 · browser harness and acceptance (Safari by hand pending)

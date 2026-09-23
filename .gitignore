@@ -4,6 +4,7 @@
 
 # UI build output; public/.gitkeep keeps dist non-empty for go:embed
 /web/node_modules/
+/web/e2e/node_modules/
 /web/dist/*
 !/web/dist/.gitkeep
 
