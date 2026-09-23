@@ -112,3 +112,21 @@ func assertOrder(t *testing.T, s string, parts ...string) {
 		at += 1 + i
 	}
 }
+
+func TestNodeShapeFollowsHash(t *testing.T) {
+	doc := &IR{Nodes: []Node{
+		{ID: "m/a", Kind: KindPackage, Hash: "p", Locations: []Location{{"a/a.go", 1}}},
+		{ID: "m/a.f", Kind: KindFunction, Parent: "m/a", Hash: "h", Shape: "s", Locations: []Location{{"a/a.go", 3}}},
+	}}
+	var buf bytes.Buffer
+	if err := Encode(&buf, doc); err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "\"hash\": \"h\",\n      \"shape\": \"s\",\n      \"locations\"") {
+		t.Errorf("shape must follow hash and precede locations, got\n%s", out)
+	}
+	if strings.Count(out, `"shape"`) != 1 {
+		t.Errorf("a node without a shape must omit the key, got\n%s", out)
+	}
+}

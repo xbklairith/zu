@@ -56,7 +56,9 @@ type Ref struct {
 }
 
 // Node is a package, type, function (including methods) or external module.
-// Optional fields are omitted for kinds they do not apply to.
+// Optional fields are omitted for kinds they do not apply to. Shape is Hash
+// with the declared name and receiver type name blanked: equal shapes pair a
+// removed and an added declaration as a Move (0003); types and functions only.
 type Node struct {
 	ID        string     `json:"id"`
 	Kind      NodeKind   `json:"kind"`
@@ -66,6 +68,7 @@ type Node struct {
 	TypeKind  string     `json:"typeKind,omitempty"`
 	Generated bool       `json:"generated,omitempty"`
 	Hash      string     `json:"hash,omitempty"`
+	Shape     string     `json:"shape,omitempty"`
 	Locations []Location `json:"locations"`
 }
 
