@@ -171,7 +171,7 @@
 
 **Steps:**
 
-- [ ] **Test**: `tree_test.go`, using the existing `needGit`, `run` and `write` helpers. Commit a repo containing:
+- [x] **Test**: `tree_test.go`, using the existing `needGit`, `run` and `write` helpers. Commit a repo containing:
    - `go.mod`, `a/a.go`, `vendor/v.go`, `.hidden/h.go`, `_x/x.go`;
    - an in-tree link `b/link.go -> ../a/a.go`, and a chain `c/l2.go -> ../b/link.go`;
    - an escaping link `d/out.go -> ../../etc/passwd`, a directory link `e -> a`, and a dangling link `f/gone.go -> nope.go`.
@@ -183,8 +183,8 @@
    - `Resolve(ctx, dir, "nope")` fails with an error naming the ref;
    - `Resolve(ctx, dir, "HEAD")` returns the full id from `git rev-parse HEAD`;
    - in a non-repository, `Resolve` fails.
-- [ ] **Verify RED**: `go test ./internal/gitref -run Tree` → FAIL.
-- [ ] **Action**:
+- [x] **Verify RED**: `go test ./internal/gitref -run Tree` → FAIL.
+- [x] **Action**:
 
    ```go
    // Resolve returns the repository top level containing dir and the full
@@ -210,10 +210,12 @@
      - For mode `120000`, read the link text and resolve it component by component (`path.Join` of the link's directory and the text), following further links up to 40 hops. Keep the entry only if it ends at a regular blob inside the tree.
      - Skip `160000` (submodules) and directory results.
    - **ReadFile**: returns the blob of the resolved oid. A broken pipe or a short read sets a sticky `Err()`, which the CLI checks.
-- [ ] **Verify**: `go test -race ./internal/gitref` → ok.
-- [ ] **Commit**: `git add internal/gitref/tree.go internal/gitref/tree_test.go internal/scan/walk.go internal/scan/tree.go && git commit -m "Read commits from git objects"`
+- [x] **Verify**: `go test -race ./internal/gitref` → ok.
+- [x] **Commit**: `git add internal/gitref/tree.go internal/gitref/tree_test.go internal/scan/walk.go internal/scan/tree.go && git commit -m "Read commits from git objects"`
 
 ---
+
+   *Done note:* `ls-tree` also lists directories (`-t`), so links through a directory link resolve component by component, as `EvalSymlinks` does. Absolute link targets are skipped: a commit can't know where it will be checked out.
 
 ### Task 5: Disk and ref scans are byte-identical
 
@@ -296,7 +298,7 @@
 - [x] Task 1: `shape` field in the IR
 - [x] Task 2: Compute the shape hash
 - [x] Task 3: `scan.Tree` and `DirTree`
-- [ ] Task 4: `gitref.CommitTree`
+- [x] Task 4: `gitref.CommitTree`
 - [ ] Task 5: Disk and ref scans are byte-identical
 - [ ] Task 6: `zu scan -ref`
 - [ ] Task 7: Docs, benchmarks, final check

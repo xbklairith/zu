@@ -1,5 +1,6 @@
-// Package gitref reads the commit a working tree is at. It is the only code in
-// zu that runs a process, and it only ever runs git with fixed arguments.
+// Package gitref reads git: the commit a working tree is at, and the files
+// of any commit, straight from git objects. It is the only code in zu that
+// runs a process, and it only ever runs git with fixed subcommands.
 package gitref
 
 import (
