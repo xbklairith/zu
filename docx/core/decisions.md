@@ -10,6 +10,7 @@ Hard-to-reverse, surprising, real trade-offs — one file each in [`docx/decisio
 - [0003](../decisions/0003-stable-node-ids-canonical-ir.md) Node ids from source identity; canonically ordered IR
 - [0004](../decisions/0004-policy-hash-and-head-policy.md) Policy hash over parsed rules; diff uses head's policy
 - [0005](../decisions/0005-git-cli-for-refs.md) git CLI for reading refs
+- [0006](../decisions/0006-self-contained-html-export.md) Self-contained HTML file is the primary deliverable, source inlined
 
 ## Settled choices (not decision records)
 - **Stack:** Go 1.24, CGO off; UI React 19 + `@xyflow/react` + ELK.js in a Worker, Vite-built, `go:embed`ed. Revisit Cytoscape if collapsed views exceed ~1,500 nodes.
@@ -23,7 +24,9 @@ Hard-to-reverse, surprising, real trade-offs — one file each in [`docx/decisio
 - **Metrics overlay (A7):** out of v1.
 - **Test corpus:** zu, spf13/cobra, gohugoio/hugo, kubernetes/kubernetes, pinned to tags, fetched by script.
 - **5-minute criterion:** the author, timed, on a public repo they have not read (hugo).
-- **Build order:** scan → diff to CI (no UI) → serve → interaction → Policy file → model features.
+- **Product focus:** zu explains a project and a code change through interactive diagrams — the diagram is the explanation. No prose or doc-comment text in the UI.
+- **Change reading order:** new violations first, then changed components bottom-up by dependency (infra → interface).
+- **Build order:** scan → diff to CI (no UI) → HTML Export (static) → interaction → Policy file. `serve` after v1 core.
 - **UI v1:** U1, U3, U4, U5 full; U2 reduced (full re-layout allowed); U6 reduced (weak-edge slider).
 - **Distribution:** `go install` + GitHub Releases via goreleaser with checksums.
-- **Model Provider (when built):** Anthropic API + OpenAI-compatible endpoint; sends structure only (IR names, edges, paths, Policy, diff), never source bodies.
+- **Model features:** out of v1; revisit after v1 ships. Notes for then: Anthropic API + OpenAI-compatible endpoint; send structure only (IR names, edges, paths, Policy, diff), never source bodies.

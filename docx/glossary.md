@@ -32,3 +32,21 @@ edge, or a file path that reaches the diagram.
 The pinned set of public Go repositories zu is measured against — one per size tier
 (zu itself, spf13/cobra, gohugoio/hugo, kubernetes/kubernetes). Pinned to tags so
 results repeat; fetched on demand, never committed.
+
+## Project View
+
+The Mode A picture: a repository's components, their layering, and the direction of
+their dependencies at one ref. Answers "how is this built?". Distinct from the Change
+View, which answers "what did this change do to it?".
+
+## Change View
+
+The Mode B picture: the Project View of the head ref with every component and
+dependency marked added, removed, modified or unchanged, new rule violations called
+out, and each affected component labelled with its hop distance from the change.
+
+## HTML Export
+
+A single self-contained HTML file holding a Project View or Change View together with
+the UI, the IR and the full source of the packages it shows. Opens in any browser with
+no zu install, server or network. Carries the same sensitivity as the source it holds.
