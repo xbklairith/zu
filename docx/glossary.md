@@ -57,9 +57,12 @@ docs, output and JSON.
 
 ## Move
 
-A removed and an added declaration of the same kind with identical `shape`, shown as
-one moved node rather than a removal plus an addition. It covers a rename, a
-relocation to another package, or both, as long as nothing else changed.
+A removed and an added declaration of the same kind with identical `shape`, the only
+such pair, shown as one moved node rather than a removal plus an addition. It covers a
+rename in place or a relocation to another package under the same name, as long as
+nothing else changed. When both the name and the package change, the pair stays a
+removal plus an addition: equal shapes there more likely mean two small look-alike
+bodies (ADR 0003).
 
 ## Shape
 
