@@ -1,0 +1,13 @@
+# Build output
+/bin/
+/dist/
+
+# UI build output; public/.gitkeep keeps dist non-empty for go:embed
+/web/node_modules/
+/web/dist/*
+!/web/dist/.gitkeep
+
+# zu's own generated IRs and caches (the policy file is committed)
+/.zu/
+
+.DS_Store

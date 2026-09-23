@@ -1,0 +1,17 @@
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+    - ineffassign
+    - gosimple
+    - gofmt
+    - misspell
+    - revive
+    - gosec
+issues:
+  exclude-rules:
+    # Writes to the CLI's stdout/stderr have no meaningful recovery.
+    - linters: [errcheck]
+      source: "fmt\\.Fprint"
