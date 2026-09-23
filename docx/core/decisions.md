@@ -22,7 +22,7 @@ Hard-to-reverse, surprising, real trade-offs — one file each in [`docx/decisio
 - **Levels rule:** uml-viewer `:levels` exactly, on top-level tree segments: listed inner first, higher-ranked → lower-ranked is a violation, same rank allowed, foreign/unranked not compared, a bundled edge is red if any pair inside it is, level 0 drawn at the bottom.
 - **Baseline:** `zu.baseline.json` (sorted, committed) records known violations; `check` exits 1 only on new ones; `-update-baseline` only removes fixed ones.
 - **Diff base:** `git merge-base base head` by default; the Change View shows one hop of unchanged neighbours, dimmed. No merge-base (shallow clone) → exit 3 with the fix, never a fallback to the base tip.
-- **Diff head:** `zu diff <base> [head]`, head defaults to the `HEAD` commit; `-worktree` opts in to uncommitted edits. Both refs are scanned fresh (no IR cache). A successful diff exits 0 whatever it finds; 1 stays reserved for new violations.
+- **Diff head:** `zu diff <base> [head]`, head defaults to the `HEAD` commit; `-worktree` opts in to uncommitted edits: the files the next commit would contain (tracked plus untracked, not ignored, read from disk); `-include-ignored` adds git-ignored files too, as `zu scan` sees them. Both refs are scanned fresh (no IR cache). A successful diff exits 0 whatever it finds; 1 stays reserved for new violations.
 - **Structural Summary (v1):** one row per changed package (+added ~modified −removed declarations), imports listed, call/embed changes as counts, Mermaid of changed packages + one hop (omitted above 30 nodes). Links (B6) deferred to the HTML Export.
 - **License:** Apache-2.0 (`LICENSE`). Public at v0.1 (scan + diff-to-CI working).
 - **Audience:** the author first, then open-source users.
