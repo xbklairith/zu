@@ -100,7 +100,7 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
    ```go
    package export
@@ -168,11 +168,11 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    }
    ```
 
-- [ ] **Run — expect FAIL** (`undefined: ParsePattern`)
+- [x] **Run — expect FAIL** (`undefined: ParsePattern`)
 
    Run: `go test ./internal/export/`
 
-- [ ] **Implement**
+- [x] **Implement**
 
    ```go
    // Package export turns an IR into the data one HTML Export carries and writes
@@ -246,12 +246,12 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    }
    ```
 
-- [ ] **Run — expect PASS**
+- [x] **Run — expect PASS**
 
    Run: `go test ./internal/export/ && go vet ./internal/export/`
    Expected: `ok  zu/internal/export`
 
-- [ ] **Commit**
+- [x] **Commit**
 
    ```bash
    git add internal/export/include.go internal/export/include_test.go
@@ -1610,7 +1610,7 @@ Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag r
 
 ## Progress
 
-- [ ] Task 1 · `-include` patterns
+- [x] Task 1 · `-include` patterns
 - [ ] Task 2 · Project View data
 - [ ] Task 3 · Render
 - [ ] Task 4 · Links
