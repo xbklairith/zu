@@ -224,17 +224,19 @@
 
 **Steps:**
 
-- [ ] **Test**: `TestRefScanMatchesDiskScan`.
+- [x] **Test**: `TestRefScanMatchesDiskScan`.
    1. Copy `testdata/shop` into a temp repo.
    2. Add the link cases from Task 4, a nested module with its own `go.mod`, a malformed `go.mod` boundary, and a file with a parse error.
    3. Commit it.
    4. Scan it with `scan.DirTree(top)` and with `gitref.OpenCommit(top, head)`.
    5. Set `Ref` on both to the same value and `ir.Encode` both.
    6. Assert the bytes are equal. On failure, print the first differing line.
-- [ ] **Verify**: `go test ./internal/scan -run TestRefScanMatchesDiskScan` → ok. If it fails, fix the tree implementation, never the test.
-- [ ] **Commit**: `git add internal/scan/parity_test.go && git commit -m "Test ref and disk scans for byte equality"`
+- [x] **Verify**: `go test ./internal/scan -run TestRefScanMatchesDiskScan` → ok. If it fails, fix the tree implementation, never the test.
+- [x] **Commit**: `git add internal/scan/parity_test.go && git commit -m "Test ref and disk scans for byte equality"`
 
 ---
+
+   *Done note:* the test first failed on `links/abs.go`: the disk walk followed an absolute link back into the checkout, and a commit can't. Both trees now share `scan.ResolveLinks`, which never follows absolute targets (REQ-024 amended; `TestWalkSymlinks` updated). This also fixes a determinism bug: the same commit cloned to two paths gave different IRs.
 
 ### Task 6: `zu scan -ref <commit>`
 
@@ -299,7 +301,7 @@
 - [x] Task 2: Compute the shape hash
 - [x] Task 3: `scan.Tree` and `DirTree`
 - [x] Task 4: `gitref.CommitTree`
-- [ ] Task 5: Disk and ref scans are byte-identical
+- [x] Task 5: Disk and ref scans are byte-identical
 - [ ] Task 6: `zu scan -ref`
 - [ ] Task 7: Docs, benchmarks, final check
 

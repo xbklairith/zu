@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path"
 	"slices"
 	"strconv"
 	"strings"
@@ -45,10 +44,8 @@ const (
 	modeFile = "100644"
 	modeExec = "100755"
 	modeLink = "120000"
+	modeDir  = "040000"
 )
-
-// maxLinkHops bounds symlink chains, as the kernel does.
-const maxLinkHops = 40
 
 type entry struct{ mode, oid string }
 
@@ -165,53 +162,30 @@ func pruned(p string) bool {
 	return slices.ContainsFunc(dirs[:len(dirs)-1], scan.PrunedDir)
 }
 
-// resolve follows symlinks component by component, like
-// filepath.EvalSymlinks, and returns the path of the regular file p leads
-// to. It fails for anything else: a directory, a submodule, a missing or
-// absolute target, a path leaving the tree, or a chain longer than
-// maxLinkHops.
-func (t *CommitTree) resolve(p string) (string, bool) {
-	var cur []string // resolved components, free of links
-	todo := strings.Split(p, "/")
-	hops := 0
-	for len(todo) > 0 {
-		c := todo[0]
-		todo = todo[1:]
-		switch c {
-		case "", ".":
-			continue
-		case "..":
-			if len(cur) == 0 {
-				return "", false
-			}
-			cur = cur[:len(cur)-1]
-			continue
+// resolve returns the regular file rel leads to, following links the way
+// scan.DirTree does on disk.
+func (t *CommitTree) resolve(rel string) (string, bool) {
+	return scan.ResolveLinks(rel, t.lookup)
+}
+
+// lookup describes one path of the commit without following it.
+func (t *CommitTree) lookup(rel string) (scan.EntryKind, string) {
+	e, ok := t.entries[rel]
+	switch {
+	case !ok:
+		return scan.EntryMissing, ""
+	case e.mode == modeFile, e.mode == modeExec:
+		return scan.EntryFile, ""
+	case e.mode == modeDir:
+		return scan.EntryDir, ""
+	case e.mode == modeLink:
+		target, err := t.blob(e.oid)
+		if err != nil {
+			return scan.EntryMissing, ""
 		}
-		next := strings.Join(append(slices.Clip(cur), c), "/")
-		e, ok := t.entries[next]
-		if !ok {
-			return "", false
-		}
-		if e.mode == modeLink {
-			if hops++; hops > maxLinkHops {
-				return "", false
-			}
-			target, err := t.blob(e.oid)
-			if err != nil || path.IsAbs(string(target)) {
-				return "", false
-			}
-			// Relative to the link's directory, which cur already is.
-			todo = append(strings.Split(string(target), "/"), todo...)
-			continue
-		}
-		cur = append(cur, c)
+		return scan.EntryLink, string(target)
 	}
-	final := strings.Join(cur, "/")
-	switch t.entries[final].mode {
-	case modeFile, modeExec:
-		return final, true
-	}
-	return "", false
+	return scan.EntryOther, "" // submodules
 }
 
 // blob reads one object over the cat-file pipe.

@@ -117,7 +117,8 @@ func TestWalkSymlinks(t *testing.T) {
 	links := map[string]string{
 		"linkdir":      filepath.Join(outside, "secret"),
 		"in/escape.go": filepath.Join(outside, "o.go"),
-		"in/inner.go":  filepath.Join(root, "in", "i.go"),
+		"in/inner.go":  "i.go",
+		"in/abs.go":    filepath.Join(root, "in", "i.go"), // absolute: depends on the checkout path
 		"indir":        filepath.Join(root, "in"),
 	}
 	for name, target := range links {
