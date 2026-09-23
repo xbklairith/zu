@@ -2375,7 +2375,7 @@ Pin v3.0.5, the newest release at the time of planning.
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
    <!-- file: internal/policy/baseline_test.go -->
    ```go
@@ -2468,9 +2468,9 @@ Pin v3.0.5, the newest release at the time of planning.
    }
    ```
 
-- [ ] **Run it:** `go test ./internal/policy -run Baseline`. Expected: FAIL (`undefined: Baseline`).
+- [x] **Run it:** `go test ./internal/policy -run Baseline`. Expected: FAIL (`undefined: Baseline`).
 
-- [ ] **Implement.** `Update` only ever removes entries. With no Baseline it records every current violation, and the caller lists them. A `Stale` Baseline, written under another Policy, is an error: re-recording it would accept new violations unseen.
+- [x] **Implement.** `Update` only ever removes entries. With no Baseline it records every current violation, and the caller lists them. A `Stale` Baseline, written under another Policy, is an error: re-recording it would accept new violations unseen.
 
    <!-- file: internal/policy/baseline.go -->
    ```go
@@ -2578,7 +2578,7 @@ Pin v3.0.5, the newest release at the time of planning.
    }
    ```
 
-- [ ] **Run:** `go test ./internal/policy`. Expected: `ok`.
+- [x] **Run:** `go test ./internal/policy`. Expected: `ok`.
 
 ### Task 8: `zu check`
 
@@ -4387,7 +4387,7 @@ These diffs are against `main` at 8f43cb1. If 05's `App.tsx` changes before 06 s
 - [x] Task 4 · `zu scan` and `zu diff` read the Policy
 - [x] Task 5 · `Apply`
 - [x] Task 6 · Levels and cycles
-- [ ] Task 7 · Baseline
+- [x] Task 7 · Baseline
 - [ ] Task 8 · `zu check`
 - [ ] Task 9 · `zu policy init`
 - [ ] Task 10 · `zu diff` B7/B9
