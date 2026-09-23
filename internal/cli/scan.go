@@ -18,21 +18,24 @@ import (
 	"zu/internal/scan"
 )
 
-// Seams for tests: how the command learns of Ctrl-C, and how it reads HEAD.
+// Seams for tests: how the command learns of Ctrl-C, how it reads HEAD, and
+// how it resolves a ref.
 var (
 	interruptContext = func() (context.Context, context.CancelFunc) {
 		return signal.NotifyContext(context.Background(), os.Interrupt)
 	}
-	gitHead = gitref.Head
+	gitHead    = gitref.Head
+	gitResolve = gitref.Resolve
 )
 
-// runScan implements `zu scan [dir] [-out -|path] [-max-parse-errors N]`.
-// Flags may come before or after dir.
+// runScan implements `zu scan [dir] [-ref commit] [-out -|path]
+// [-max-parse-errors N]`. Flags may come before or after dir.
 func runScan(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("zu scan", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	out := fs.String("out", "", "write the IR to `path` instead of .zu/ir/ (- for stdout)")
 	maxErrs := fs.Int("max-parse-errors", 0, "exit 2 when more than `N` files fail to parse")
+	refName := fs.String("ref", "", "scan `commit` from git objects (whole repository) instead of the working tree")
 	dir, err := parseWithDir(fs, args)
 	if err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
@@ -47,17 +50,26 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 
 	ctx, stop := interruptContext()
 	defer stop()
-	tree, err := scan.DirTree(dir)
+	src, err := openSource(ctx, dir, *refName)
 	if err != nil {
 		fmt.Fprintf(stderr, "zu scan: %v\n", err)
 		return ExitBadInvocation
 	}
-	doc, stats, err := scan.Run(ctx, scan.Options{Tree: tree})
+	defer src.close()
+	doc, stats, err := scan.Run(ctx, scan.Options{Tree: src.tree})
+	if err == nil {
+		err = src.err()
+	}
 	if err != nil {
 		fmt.Fprintf(stderr, "zu scan: %v\n", err)
 		return ExitBadInvocation
 	}
-	doc.Ref.Commit, doc.Ref.Dirty = gitHead(ctx, dir)
+	if src.ref != nil {
+		doc.Ref = *src.ref
+	} else {
+		doc.Ref.Commit, doc.Ref.Dirty = gitHead(ctx, dir)
+	}
+	dir = src.root
 	if err := ctx.Err(); err != nil {
 		// An interrupted git looks like "no commit"; writing that would
 		// mislabel the IR as the worktree.
@@ -91,6 +103,39 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 		return ExitParseFailure
 	}
 	return ExitOK
+}
+
+// source is what one scan reads: the directory on disk, or a commit read
+// from git objects at the repository's top level.
+type source struct {
+	tree  scan.Tree
+	root  string  // where default output goes
+	ref   *ir.Ref // known up front for a commit; nil for the working tree
+	err   func() error
+	close func()
+}
+
+func openSource(ctx context.Context, dir, ref string) (*source, error) {
+	if ref == "" {
+		tree, err := scan.DirTree(dir)
+		if err != nil {
+			return nil, err
+		}
+		none := func() error { return nil }
+		return &source{tree: tree, root: dir, err: none, close: func() {}}, nil
+	}
+	top, commit, err := gitResolve(ctx, dir, ref)
+	if err != nil {
+		return nil, err
+	}
+	tree, err := gitref.OpenCommit(ctx, top, commit)
+	if err != nil {
+		return nil, err
+	}
+	return &source{
+		tree: tree, root: top, ref: &ir.Ref{Commit: commit},
+		err: tree.Err, close: func() { _ = tree.Close() },
+	}, nil
 }
 
 // parseWithDir parses flags on both sides of the one optional dir argument.

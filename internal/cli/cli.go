@@ -20,7 +20,7 @@ const (
 const usage = `usage: zu <command> [flags]
 
 commands:
-  scan      parse the checkout and write the IR
+  scan      parse the checkout (or a commit, with -ref) and write the IR
   serve     scan if needed, then serve the local web UI
   diff      structurally diff the IRs of two refs
   check     evaluate policy rules against the current IR

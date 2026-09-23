@@ -233,3 +233,86 @@ func TestScanWithoutGoModExitsBadInvocation(t *testing.T) {
 		t.Fatalf("wrote .zu (err=%v)", err)
 	}
 }
+
+func TestScanRefWritesCommitIR(t *testing.T) {
+	needGit(t)
+	dir := repo(t, small)
+	git(t, dir, "init", "-q")
+	git(t, dir, "add", "go.mod", "a/a.go")
+	git(t, dir, "commit", "-q", "-m", "one")
+	head := git(t, dir, "rev-parse", "HEAD")
+	// A worktree edit the commit must not see.
+	if err := os.WriteFile(filepath.Join(dir, "a", "a.go"), []byte("package a\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	code, _, errOut := run("scan", "-ref", "HEAD", filepath.Join(dir, "a"))
+	if code != ExitOK {
+		t.Fatalf("exit %d: %s", code, errOut)
+	}
+	doc := readIR(t, filepath.Join(dir, ".zu", "ir", head[:12]+".json"))
+	if doc.Ref.Commit != head || doc.Ref.Dirty {
+		t.Fatalf("ref = %+v", doc.Ref)
+	}
+	var edges int
+	for _, e := range doc.Edges {
+		if e.Kind == ir.EdgeCalls {
+			edges++
+		}
+	}
+	if edges != 1 || len(doc.Nodes) != 3 {
+		t.Fatalf("IR is not the committed tree: %d nodes, %d call edges", len(doc.Nodes), edges)
+	}
+	if doc.Nodes[0].Locations[0].Path != "a/a.go" {
+		t.Errorf("paths must be relative to the top level, got %q", doc.Nodes[0].Locations[0].Path)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "a", ".zu")); !os.IsNotExist(err) {
+		t.Error("output must go under the top level, not the subdirectory")
+	}
+}
+
+func TestScanRefBadRef(t *testing.T) {
+	needGit(t)
+	dir := repo(t, small)
+	git(t, dir, "init", "-q")
+	git(t, dir, "add", "go.mod", "a/a.go")
+	git(t, dir, "commit", "-q", "-m", "one")
+	for name, args := range map[string][]string{
+		"unknown ref":    {"scan", "-ref", "nope", dir},
+		"option-like":    {"scan", "-ref", "-x", dir},
+		"not a repo":     {"scan", "-ref", "HEAD", t.TempDir()},
+		"missing target": {"scan", "-ref", "HEAD", filepath.Join(dir, "nope")},
+	} {
+		code, _, errOut := run(args...)
+		if code != ExitBadInvocation || errOut == "" {
+			t.Errorf("%s: exit %d, stderr %q; want %d with a reason", name, code, errOut, ExitBadInvocation)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(dir, ".zu")); !os.IsNotExist(err) {
+		t.Fatal("nothing may be written for a bad ref")
+	}
+}
+
+func TestScanRefInterrupted(t *testing.T) {
+	needGit(t)
+	dir := repo(t, small)
+	git(t, dir, "init", "-q")
+	git(t, dir, "add", "go.mod", "a/a.go")
+	git(t, dir, "commit", "-q", "-m", "one")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	oldCtx, oldResolve := interruptContext, gitResolve
+	t.Cleanup(func() { interruptContext, gitResolve = oldCtx, oldResolve })
+	interruptContext = func() (context.Context, context.CancelFunc) { return ctx, cancel }
+	gitResolve = func(c context.Context, d, ref string) (string, string, error) {
+		top, commit, err := oldResolve(c, d, ref)
+		cancel() // Ctrl-C arrives right after the ref resolves
+		return top, commit, err
+	}
+	if code, _, errOut := run("scan", "-ref", "HEAD", dir); code != ExitBadInvocation {
+		t.Fatalf("exit %d, want %d: %s", code, ExitBadInvocation, errOut)
+	}
+	if _, err := os.Stat(filepath.Join(dir, ".zu")); !os.IsNotExist(err) {
+		t.Fatalf("interrupted scan wrote .zu (err=%v)", err)
+	}
+}

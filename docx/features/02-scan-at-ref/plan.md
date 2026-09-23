@@ -247,7 +247,7 @@
 
 **Steps:**
 
-- [ ] **Test**: add these tests to `scan_test.go`.
+- [x] **Test**: add these tests to `scan_test.go`.
 
    | Test | Setup | Expected |
    |---|---|---|
@@ -255,15 +255,15 @@
    | `TestScanRefBadRef` | — | `-ref nope`, `-ref -x`, and `-ref HEAD` outside a repository each exit 3, with a reason on stderr and nothing written |
    | `TestScanRefInterrupted` | cancel through the `interruptContext` seam | exit 3, nothing written |
 
-- [ ] **Verify RED**: `go test ./internal/cli -run ScanRef` → FAIL.
-- [ ] **Action**:
+- [x] **Verify RED**: `go test ./internal/cli -run ScanRef` → FAIL.
+- [x] **Action**:
    - Add `ref := fs.String("ref", "", "scan `commit` from git objects instead of the working tree")`.
    - When it is set: call `gitref.Resolve`, then `gitref.OpenCommit`, with `defer tree.Close()`. Run `scan.Run(ctx, scan.Options{Tree: tree})` and set `doc.Ref = ir.Ref{Commit: commit}`. If `tree.Err() != nil`, exit 3. The default output goes under `top`.
    - Otherwise keep today's path through `scan.DirTree(dir)`.
    - Make the `gitHead` and `gitResolve` seams package variables, as today.
-- [ ] **Verify**: `go test -race ./internal/cli` → ok.
-- [ ] **Smoke**: `go run ./cmd/zu scan -ref HEAD -out - . | head -5` → an IR whose `ref.commit` equals `git rev-parse HEAD`.
-- [ ] **Commit**: `git add internal/cli/scan.go internal/cli/scan_test.go internal/cli/cli.go && git commit -m "Add zu scan -ref"`
+- [x] **Verify**: `go test -race ./internal/cli` → ok.
+- [x] **Smoke**: `go run ./cmd/zu scan -ref HEAD -out - . | head -5` → an IR whose `ref.commit` equals `git rev-parse HEAD`.
+- [x] **Commit**: `git add internal/cli/scan.go internal/cli/scan_test.go internal/cli/cli.go && git commit -m "Add zu scan -ref"`
 
 ---
 
@@ -302,7 +302,7 @@
 - [x] Task 3: `scan.Tree` and `DirTree`
 - [x] Task 4: `gitref.CommitTree`
 - [x] Task 5: Disk and ref scans are byte-identical
-- [ ] Task 6: `zu scan -ref`
+- [x] Task 6: `zu scan -ref`
 - [ ] Task 7: Docs, benchmarks, final check
 
 **Status:** In Progress
