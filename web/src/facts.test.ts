@@ -13,6 +13,13 @@ describe("panel facts", () => {
     expect(f.out.every((r) => !r.id.startsWith("example.com/shop/internal/"))).toBe(true);
     expect(f.in.map((r) => r.id)).toContain("example.com/shop");
   });
+  it("keeps a nested module root outside its parent module's box", () => {
+    // tools/gen is its own module, so its import of money crosses into the
+    // example.com/shop box, as boxStats counts it (4 packages, not 5).
+    const f = imports(v, "example.com/shop");
+    expect(f.in).toEqual([{ id: "example.com/shop/tools/gen", count: 1 }]);
+    expect(f.out.map((r) => r.id)).not.toContain("example.com/shop/internal/money");
+  });
   it("lists a declaration's calls, counting its methods as the type", () => {
     const c = calls(v, `${store}.Repo`);
     expect(c.out).toEqual([

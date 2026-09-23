@@ -1,11 +1,9 @@
 // What the side panel lists about a selection: edges grouped by the node at
 // the other end, with counts.
 import type { View } from "./data";
-import { boxesOf, packageEnds } from "./tree";
+import { boxesOf, packageEnds, packagesIn } from "./tree";
 
 export type Row = { id: string; count: number };
-
-const PKG = "#pkg";
 
 function group(ids: string[]): Row[] {
   const m = new Map<string, number>();
@@ -28,9 +26,7 @@ function across(view: View, kinds: string[], inside: (id: string) => boolean): {
 
 // imports lists the packages a box imports from outside it and its importers.
 export function imports(view: View, box: string): { out: Row[]; in: Row[] } {
-  const own = box.endsWith(PKG) ? box.slice(0, -PKG.length) : null;
-  const inBox = (id: string) => (own !== null ? id === own : id === box || id.startsWith(box + "/"));
-  const pkgs = new Set(boxesOf(view).pkgs.filter((p) => inBox(p.id)).map((p) => p.id));
+  const pkgs = new Set(packagesIn(view, box).map((p) => p.id));
   if (pkgs.size === 0 && boxesOf(view).byId.get(box)?.kind === "external") pkgs.add(box);
   return across(view, ["imports"], (id) => pkgs.has(id));
 }

@@ -243,12 +243,17 @@ export function touchedExternals(view: View, focus: string, d: number): string[]
 }
 
 // boxStats sums the packages a box holds; a #pkg leaf holds only its package.
-export function boxStats(view: View, box: string): { packages: number; decls: number; unresolved: number } {
+// packagesIn are the packages a box holds: the #pkg leaf holds only its own
+// package, and a nested module root is never inside its parent module's box.
+export function packagesIn(view: View, box: string): ViewNode[] {
   const idx = boxesOf(view);
   const own = box.endsWith(PKG) ? box.slice(0, -PKG.length) : null;
+  return idx.pkgs.filter((p) => (own !== null ? p.id === own : under(idx, p.id, box)));
+}
+
+export function boxStats(view: View, box: string): { packages: number; decls: number; unresolved: number } {
   const s = { packages: 0, decls: 0, unresolved: 0 };
-  for (const p of idx.pkgs) {
-    if (own !== null ? p.id !== own : !under(idx, p.id, box)) continue;
+  for (const p of packagesIn(view, box)) {
     s.packages++;
     s.decls += p.decls ?? 0;
     s.unresolved += p.unresolved ?? 0;
