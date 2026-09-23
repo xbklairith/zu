@@ -1511,28 +1511,28 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
 
 **Steps:**
 
-- [ ] **Build and export zu itself**
+- [x] **Build and export zu itself**
 
    Run: `make check && make build && bin/zu scan -html /tmp/zu-self.html -include ./internal/...`
    Expected: exit 0; stderr ends with the `html → /tmp/zu-self.html (N source files inlined …)` line.
 
-- [ ] **Determinism**
+- [x] **Determinism**
 
    Run: `T=$(mktemp -d) && bin/zu scan -out $T/ir.json -html $T/a.html -include ./... && bin/zu scan -out $T/ir.json -html $T/b.html -include ./... && shasum $T/a.html $T/b.html`
    Expected: identical hashes.
 
-- [ ] **Corpus** (`scripts/bench-corpus.sh` has cloned them into `.zu/corpus/`)
+- [x] **Corpus** (`scripts/bench-corpus.sh` has cloned them into `.zu/corpus/`)
 
    `-out` must name a writable directory: `/dev/null` fails because of the atomic write's temp file.
    Run: `T=$(mktemp -d) && bin/zu scan .zu/corpus/hugo@v0.166.0 -out $T/hugo.json -html $T/hugo.html -include ./hugolib && bin/zu scan .zu/corpus/kubernetes@v1.37.0 -out $T/k8s.json -html $T/k8s.html && ls -l $T/*.html`
    Expected: `k8s.html` < 10 MB (estimate ≈ 8.1 MB); hugo opens at 37 boxes and kubernetes at 38 module roots plus one "111 external modules" oval.
 
-- [ ] **Offline and browsers.** Open each file from `file://` in Chrome, Firefox and Safari. Check:
+- [~] **Offline and browsers.** (Chrome over 127.0.0.1 done; `file://`, Firefox, Safari and visible first paint pending: `docx/UserInstructions/04-html-export-browser-check.md`) Open each file from `file://` in Chrome, Firefox and Safari. Check:
   - the DevTools console shows no CSP violations;
   - the Network panel shows only the document itself;
   - first paint is under 3 s for `k8s.html`, measured with the Performance panel.
-- [ ] **Record evidence** in `docx/features/04-html-export/acceptance.md`: sizes, hashes, timings, and browser results.
-- [ ] **Commit**: `git add docx/features/04-html-export/acceptance.md && git commit -m "Record HTML Export Project View acceptance evidence"`
+- [x] **Record evidence** in `docx/features/04-html-export/acceptance.md`: sizes, hashes, timings, and browser results.
+- [x] **Commit**: `git add docx/features/04-html-export/acceptance.md && git commit -m "Record HTML Export Project View acceptance evidence"`
 
 ---
 
@@ -1621,7 +1621,7 @@ Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag r
 - [x] Task 9 · Layout
 - [x] Task 10 · Canvas and header
 - [x] Task 11 · Side panel
-- [ ] Task 12 · Part A acceptance
+- [x] Task 12 · Part A acceptance (manual browser checks pending)
 - [ ] Task B1 · `export.Change`
 - [ ] Task B2 · `zu diff -html` (blocked)
 - [ ] Task B3 · Change View UI (blocked)

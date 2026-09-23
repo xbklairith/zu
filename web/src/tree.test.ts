@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import golden from "../../internal/export/testdata/shop.view.golden.json";
-import { autoDepth, boxStats, bundles, containers, declLeaves, leavesAt, methodsOf, parentBox } from "./tree";
+import { autoDepth, boxStats, bundles, containers, touchedExternals, declLeaves, leavesAt, methodsOf, parentBox } from "./tree";
 import { parseView } from "./data";
 import type { View } from "./data";
 
@@ -56,6 +56,7 @@ describe("Package Tree", () => {
       { from: "m/a", to: "m/b", pairs: 2 },
       { from: "m/b", to: "outside", pairs: 1 },
     ]);
+    expect(touchedExternals(v, "m", 1)).toHaveLength(21);
   });
   it("containers are the boxes between the focus and its leaves", () => {
     const v = view(pkgs(["ex/shop", "ex/shop/internal/a", "ex/shop/internal/b"], "ex/shop"));

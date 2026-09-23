@@ -15,7 +15,9 @@ async function loadView(): Promise<View | null> {
 
 const root = document.getElementById("root");
 if (!root) throw new Error("missing #root element");
+performance.mark("zu-parse-start");
 const view = await loadView();
+performance.mark("zu-parse-end");
 createRoot(root).render(
   <StrictMode>
     {view ? (

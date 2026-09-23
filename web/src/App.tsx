@@ -18,7 +18,11 @@ export function App({ view }: { view: View }) {
 
   useEffect(() => {
     let live = true;
-    layout(s.items, s.edges).then((at) => live && setPlaced({ focus, at }));
+    performance.mark("zu-layout-start");
+    layout(s.items, s.edges).then((at) => {
+      performance.mark("zu-layout-end");
+      if (live) setPlaced({ focus, at });
+    });
     return () => {
       live = false;
     };

@@ -231,11 +231,13 @@ function count<E extends { from: string; to: string }>(
     .sort((a, b) => cmp(a.from, b.from) || cmp(a.to, b.to));
 }
 
+// touchedExternals are the external modules the drawn import edges reach,
+// whether drawn as ovals or folded into the "externals" aggregate.
 export function touchedExternals(view: View, focus: string, d: number): string[] {
   const idx = boxesOf(view);
   const out = new Set<string>();
-  for (const b of bundles(view, focus, d)) {
-    for (const id of [b.from, b.to]) if (idx.byId.get(id)?.kind === "external") out.add(id);
+  for (const e of packageEnds(view, focus, d).drawn) {
+    for (const id of [e.from, e.to]) if (idx.byId.get(id)?.kind === "external") out.add(id);
   }
   return [...out].sort(cmp);
 }

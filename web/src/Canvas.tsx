@@ -151,6 +151,7 @@ export function Canvas({ view, items, edges, placed, selected, onSelect, onOpen 
       fitView
       minZoom={0.05}
       zoomOnDoubleClick={false}
+      onInit={() => performance.mark("zu-drawn")}
       nodesDraggable={false}
       nodesConnectable={false}
       onNodeClick={(_, n) => onSelect(n.id)}
