@@ -12,8 +12,8 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
 
 ## Progress Summary
 - Total Tasks: 15
-- Completed: 6/15
-- In Progress: Task 7 — Call and embed site extraction
+- Completed: 7/15
+- In Progress: Task 8 — Index and import resolution
 
 ## Tasks
 
@@ -53,10 +53,10 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
   - [x] REFACTOR
   - Linked: REQ-022
 
-- [ ] **Task 7: Call and embed site extraction** (shadowing via `localKind`)
-  - [ ] RED: bare / qualified / recv sites recorded; shadowed `F`, a local var `p` hiding an import, a reassigned receiver → `other`; builtins dropped; `F[T]()` → bare; embeds of Ident, Selector, Star and Index forms; unions and `~T` skipped
-  - [ ] GREEN
-  - [ ] REFACTOR
+- [x] **Task 7: Call and embed site extraction** (shadowing via `localKind`)
+  - [x] RED: bare / qualified / recv sites recorded; shadowed `F`, a local var `p` hiding an import, a reassigned receiver → `other`; builtins dropped; `F[T]()` → bare; embeds of Ident, Selector, Star and Index forms; unions and `~T` skipped
+  - [x] GREEN
+  - [x] REFACTOR
   - Linked: REQ-033, REQ-034, REQ-035, REQ-036, REQ-037
 
 - [ ] **Task 8: Index and import resolution** (`resolve.go`)

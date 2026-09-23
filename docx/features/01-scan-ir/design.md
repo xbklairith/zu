@@ -126,7 +126,7 @@ output side effects.
   included.
 - **Package hash amendment:** the pairs also include one synthetic member,
   `("#decls", hash)`. It is the SHA-256 over the sorted hashes of the package's `const`, `var`
-  and `import` declarations, sorted by printed text. Without it, a changed constant or a
+  and `import` declarations. Without it, a changed constant or a
   new import would leave the package "unmodified", which contradicts Meaningful Change.
 
 ### 4. Index and resolve (REQ-029–REQ-037)

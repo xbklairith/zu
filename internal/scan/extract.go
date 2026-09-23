@@ -26,6 +26,9 @@ type fileFacts struct {
 	// OtherHashes holds one hash per const, var or import declaration;
 	// they feed the package hash so such edits count as meaningful.
 	OtherHashes []string
+	Imports     []importFact
+	Calls       []callSite
+	Embeds      []embedSite
 }
 
 // declFact is one type, function or method declaration. Ids are formed
@@ -62,6 +65,7 @@ func extractFile(root, rel string) *fileFacts {
 	f.PkgName = file.Name.Name
 	f.PkgLine = fset.Position(file.Package).Line
 	f.Generated = ast.IsGenerated(file)
+	f.addImports(fset, file)
 	for _, decl := range file.Decls {
 		switch d := decl.(type) {
 		case *ast.GenDecl:
@@ -69,10 +73,12 @@ func extractFile(root, rel string) *fileFacts {
 				for _, spec := range d.Specs {
 					ts := spec.(*ast.TypeSpec)
 					f.addDecl(fset, ts.Name, "", ir.KindType, typeKind(ts), ts)
+					f.addEmbeds(fset, ts)
 				}
 			}
 		case *ast.FuncDecl:
 			f.addDecl(fset, d.Name, recvBase(d), ir.KindFunction, "", d)
+			f.addCalls(fset, d)
 		}
 	}
 	// Hashing strips comments from the AST, so it runs last.
