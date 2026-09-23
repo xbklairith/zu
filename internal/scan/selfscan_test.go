@@ -27,12 +27,12 @@ func TestSelfScan(t *testing.T) {
 	}
 	found := false
 	for _, e := range doc.Edges {
-		if e.From == "zu/internal/cli.runScan" && e.To == "zu/internal/scan.Run" {
+		if e.From == "zu/internal/cli.runScan" && e.To == "zu/internal/ir.Encode" {
 			found = true
 		}
 	}
 	if !found {
-		t.Error("missing call edge runScan → scan.Run")
+		t.Error("missing call edge runScan → ir.Encode")
 	}
 	if strings.Contains(string(encode(t, doc)), root) {
 		t.Fatal("IR contains the absolute root")

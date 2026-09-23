@@ -11,12 +11,20 @@ import (
 	"zu/internal/diff"
 	"zu/internal/gitref"
 	"zu/internal/ir"
+	"zu/internal/policy"
 	"zu/internal/scan"
 )
 
-// scanTree is a seam for tests: how zu diff scans one side.
-var scanTree = func(ctx context.Context, tree scan.Tree) (*ir.IR, scan.Stats, error) {
-	return scan.Run(ctx, scan.Options{Tree: tree})
+// scanTree is a seam for tests: how zu scans one tree under a Policy, which
+// decides the files skipped and the hash the IR records.
+var scanTree = func(ctx context.Context, tree scan.Tree, pol *policy.Policy) (*ir.IR, scan.Stats, error) {
+	return scan.Run(ctx, scan.Options{Tree: tree, Exclude: pol.Excluded, PolicyHash: pol.Hash()})
+}
+
+// loadPolicy reads the Policy file at the root of tree, capped at
+// scan.MaxSmallFile. A missing file is the empty Policy.
+func loadPolicy(tree scan.Tree) (*policy.Policy, error) {
+	return policy.Load(func(rel string) ([]byte, error) { return scan.ReadSmall(tree, rel) })
 }
 
 // runDiff implements `zu diff <base> [head] [-format text|markdown|json]
@@ -80,9 +88,22 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 		return bad("%v", err)
 	}
 
-	// One side at a time, so peak memory is two IRs, not two scans.
-	// The trees stay open while -html needs to read changed files.
-	baseDoc, baseTree, err := scanCommit(ctx, top, mb)
+	// Head's Policy governs both sides (ADR 0004): scan head under its own
+	// Policy file, then base under the same one, so a change to the Policy
+	// never shows up as a change to the code. One side at a time, so peak
+	// memory is two IRs, not two scans. The trees stay open while -html
+	// needs to read changed files.
+	head, err := openHead(ctx, top, headCommit, *worktree, *withIgnored)
+	if err != nil {
+		return bad("head: %v", err)
+	}
+	defer head.close()
+	headDoc, pol, _, err := scanSource(ctx, head)
+	if err != nil {
+		return bad("head: %v", err)
+	}
+	headDoc.Ref = *head.ref
+	baseDoc, baseTree, err := scanCommit(ctx, top, mb, pol)
 	if err != nil {
 		return bad("base %s: %v", mb[:min(12, len(mb))], err)
 	}
@@ -91,26 +112,8 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 		_ = baseTree.Close()
 	}
 	baseDoc.Ref = ir.Ref{Commit: mb}
-	var headDoc *ir.IR
-	var headTree scan.Tree
-	if *worktree {
-		headDoc, headTree, err = scanWorktree(ctx, top, headCommit, *withIgnored)
-	} else {
-		var t *gitref.CommitTree
-		headDoc, t, err = scanCommit(ctx, top, headCommit)
-		if err == nil {
-			defer t.Close()
-			headDoc.Ref, headTree = ir.Ref{Commit: headCommit}, t
-		}
-	}
-	if err != nil {
-		return bad("head: %v", err)
-	}
 	if err := ctx.Err(); err != nil {
 		return bad("%v", err)
-	}
-	if baseDoc.PolicyHash != headDoc.PolicyHash {
-		return bad("policy changed between base and head; diff uses head's policy once the Policy feature lands")
 	}
 
 	s := diff.Summarize(baseDoc, headDoc)
@@ -132,7 +135,7 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 	fmt.Fprintf(stderr, "zu diff: %d packages changed, %d affected, parse errors base=%d head=%d\n",
 		len(s.Packages), len(s.Affected), len(baseDoc.ParseErrors), len(headDoc.ParseErrors))
 	if hopts.path != "" {
-		c := changeSides{top: top, base: baseDoc, head: headDoc, baseTree: baseTree, headTree: headTree}
+		c := changeSides{top: top, base: baseDoc, head: headDoc, baseTree: baseTree, headTree: head.tree}
 		if err := writeChangeHTML(ctx, c, s, &hopts, stderr); err != nil {
 			return bad("html: %v", err)
 		}
@@ -145,14 +148,14 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 	return ExitOK
 }
 
-// scanCommit scans one commit from git objects. On success the tree is left
-// open for reading files, and the caller closes it.
-func scanCommit(ctx context.Context, top, commit string) (*ir.IR, *gitref.CommitTree, error) {
+// scanCommit scans one commit from git objects under pol. On success the
+// tree is left open for reading files, and the caller closes it.
+func scanCommit(ctx context.Context, top, commit string, pol *policy.Policy) (*ir.IR, *gitref.CommitTree, error) {
 	tree, err := openCommit(ctx, top, commit)
 	if err != nil {
 		return nil, nil, err
 	}
-	doc, _, err := scanTree(ctx, tree)
+	doc, _, err := scanTree(ctx, tree, pol)
 	if treeErr := tree.Err(); treeErr != nil {
 		err = treeErr // the cause; a scan error would only be its symptom
 	}
@@ -163,27 +166,35 @@ func scanCommit(ctx context.Context, top, commit string) (*ir.IR, *gitref.Commit
 	return doc, tree, nil
 }
 
-// scanWorktree scans the files the next commit would contain, labelled as
-// zu scan labels them.
-func scanWorktree(ctx context.Context, top, head string, withIgnored bool) (*ir.IR, scan.Tree, error) {
+// openHead opens head's side: the commit or, with worktree, the files the
+// next commit would contain, labelled as zu scan labels them.
+func openHead(ctx context.Context, top, commit string, worktree, withIgnored bool) (*source, error) {
+	if !worktree {
+		tree, err := openCommit(ctx, top, commit)
+		if err != nil {
+			return nil, err
+		}
+		return &source{
+			tree: tree, root: top, ref: &ir.Ref{Commit: commit},
+			err: tree.Err, close: func() { _ = tree.Close() },
+		}, nil
+	}
 	l, err := gitWorktree(ctx, top, withIgnored)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if l == nil {
-		return nil, nil, fmt.Errorf("%s is not a git working tree", top)
+		return nil, fmt.Errorf("%s is not a git working tree", top)
 	}
 	tree, err := scan.ListTree(top, l.Files)
 	if err != nil {
-		return nil, nil, err
-	}
-	doc, _, err := scanTree(ctx, tree)
-	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	_, modified := gitHead(ctx, top)
-	doc.Ref = ir.Ref{Commit: head, Dirty: modified || l.Extra}
-	return doc, tree, nil
+	return &source{
+		tree: tree, root: top, ref: &ir.Ref{Commit: commit, Dirty: modified || l.Extra},
+		err: func() error { return nil }, close: func() {},
+	}, nil
 }
 
 // parsePositional parses flags anywhere among the positional arguments.

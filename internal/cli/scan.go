@@ -15,6 +15,7 @@ import (
 
 	"zu/internal/gitref"
 	"zu/internal/ir"
+	"zu/internal/policy"
 	"zu/internal/scan"
 )
 
@@ -73,10 +74,7 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 		return ExitBadInvocation
 	}
 	defer src.close()
-	doc, stats, err := scan.Run(ctx, scan.Options{Tree: src.tree})
-	if treeErr := src.err(); treeErr != nil {
-		err = treeErr // the cause; a scan error would only be its symptom
-	}
+	doc, _, stats, err := scanSource(ctx, src)
 	if err != nil {
 		fmt.Fprintf(stderr, "zu scan: %v\n", err)
 		return ExitBadInvocation
@@ -176,6 +174,22 @@ func openSource(ctx context.Context, dir, ref string, withIgnored bool) (*source
 		tree: tree, root: top, ref: &ir.Ref{Commit: commit},
 		err: tree.Err, close: func() { _ = tree.Close() },
 	}, nil
+}
+
+// scanSource scans src under the Policy file at its own root: a commit's
+// committed Policy, or the working tree's. Only diff scans a tree under
+// another tree's Policy (ADR 0004).
+func scanSource(ctx context.Context, src *source) (*ir.IR, *policy.Policy, scan.Stats, error) {
+	pol, err := loadPolicy(src.tree)
+	var doc *ir.IR
+	var stats scan.Stats
+	if err == nil {
+		doc, stats, err = scanTree(ctx, src.tree, pol)
+	}
+	if treeErr := src.err(); treeErr != nil {
+		err = treeErr // the cause; a read or scan error would only be its symptom
+	}
+	return doc, pol, stats, err
 }
 
 // parseWithDir parses flags on both sides of the one optional dir argument.

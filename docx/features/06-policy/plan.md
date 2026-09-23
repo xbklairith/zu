@@ -1236,7 +1236,7 @@ Pin v3.0.5, the newest release at the time of planning.
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
    <!-- file: internal/cli/policy_scan_test.go -->
    ```go
@@ -1381,9 +1381,9 @@ Pin v3.0.5, the newest release at the time of planning.
     func TestDiffFromSubdirectory(t *testing.T) {
    ```
 
-- [ ] **Run them:** `go test ./internal/cli -run Policy`. Expected: FAIL (the `.pb.go` package is scanned; `PolicyHash` is the default; the MR that adds a Policy exits 3 with "policy changed"). `TestScanDoesNotFollowAPolicyLinkOutOfTheRepo` already passes: it guards Task 2's fix end to end.
+- [x] **Run them:** `go test ./internal/cli -run Policy`. Expected: FAIL (the `.pb.go` package is scanned; `PolicyHash` is the default; the MR that adds a Policy exits 3 with "policy changed"). `TestScanDoesNotFollowAPolicyLinkOutOfTheRepo` already passes: it guards Task 2's fix end to end.
 
-- [ ] **Implement**
+- [x] **Implement**
 
    ```diff
    --- a/internal/cli/diff.go
@@ -1617,7 +1617,7 @@ Pin v3.0.5, the newest release at the time of planning.
     		t.Fatal("IR contains the absolute root")
    ```
 
-- [ ] **Run:** `go test ./internal/cli ./internal/scan`. Expected: `ok` for both.
+- [x] **Run:** `go test ./internal/cli ./internal/scan`. Expected: `ok` for both.
 
 ### Task 5: `Apply`: omit, omit-edges and foreign collapse
 
@@ -4384,7 +4384,7 @@ These diffs are against `main` at 8f43cb1. If 05's `App.tsx` changes before 06 s
 - [x] Task 1 · Parse, normalise and hash
 - [x] Task 2 · Exclude globs and safe by-name reads
 - [x] Task 3 · The scan skips excluded files
-- [ ] Task 4 · `zu scan` and `zu diff` read the Policy
+- [x] Task 4 · `zu scan` and `zu diff` read the Policy
 - [ ] Task 5 · `Apply`
 - [ ] Task 6 · Levels and cycles
 - [ ] Task 7 · Baseline

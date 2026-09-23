@@ -9,8 +9,7 @@ import (
 	"testing"
 
 	"zu/internal/diff"
-	"zu/internal/ir"
-	"zu/internal/scan"
+	"zu/internal/policy"
 )
 
 // diffRepo commits a two-package module on main, then branches feat and
@@ -195,21 +194,42 @@ func TestDiffParseErrors(t *testing.T) {
 	}
 }
 
-func TestDiffPolicyChanged(t *testing.T) {
-	diffRepo(t)
-	old := scanTree
-	t.Cleanup(func() { scanTree = old })
-	calls := 0
-	scanTree = func(ctx context.Context, tree scan.Tree) (*ir.IR, scan.Stats, error) {
-		doc, stats, err := old(ctx, tree)
-		if calls++; calls == 2 && err == nil {
-			doc.PolicyHash = "sha256:other"
-		}
-		return doc, stats, err
+// Head's Policy governs both sides (ADR 0004): the MR that adds a Policy is
+// diffed like any other, and a package it excludes is excluded at base too,
+// so excluding it is not a removal. Under -worktree the working tree's
+// Policy governs.
+func TestDiffScansBothSidesUnderHeadsPolicy(t *testing.T) {
+	needGit(t)
+	dir := repo(t, map[string]string{
+		"go.mod":        "module example.com/m\n",
+		"a/a.go":        "package a\n",
+		"gen/gen.pb.go": "package gen\n\nfunc Old() {}\n",
+	})
+	git(t, dir, "init", "-q", "-b", "main")
+	git(t, dir, "add", "-A")
+	git(t, dir, "commit", "-q", "-m", "base")
+	git(t, dir, "checkout", "-q", "-b", "feat")
+	writeFile(t, dir, "gen/gen.pb.go", "package gen\n\nfunc New() {}\n")
+	writeFile(t, dir, policy.FileName, "exclude: [\"**/*.pb.go\"]\n")
+	git(t, dir, "add", "-A")
+	git(t, dir, "commit", "-q", "-m", "add a Policy")
+	t.Chdir(dir)
+	code, out, errOut := run("diff", "main", "-format", "json")
+	if code != ExitOK {
+		t.Fatalf("the MR adding a Policy: exit %d, stderr %q", code, errOut)
 	}
-	code, out, errOut := run("diff", "main")
-	if code != ExitBadInvocation || out != "" || !strings.Contains(errOut, "policy changed") {
-		t.Fatalf("exit %d, stdout %q, stderr %q", code, out, errOut)
+	if s := summaryOf(t, out); s.Changed {
+		t.Errorf("gen is excluded on both sides, want no change: %+v", s.Packages)
+	}
+
+	writeFile(t, dir, policy.FileName, "order: [example.com/m/a]\n") // no exclude
+	code, out, errOut = run("diff", "main", "-worktree", "-format", "json")
+	if code != ExitOK {
+		t.Fatalf("-worktree: exit %d, stderr %q", code, errOut)
+	}
+	s := summaryOf(t, out)
+	if len(s.Packages) != 1 || s.Packages[0].ID != "example.com/m/gen" || s.Packages[0].Status != "modified" {
+		t.Errorf("under the working tree's Policy gen is scanned on both sides and modified: %+v", s.Packages)
 	}
 }
 
