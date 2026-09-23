@@ -1,6 +1,6 @@
 # Tasks: 01 · scan → IR
 
-**Status:** In Progress
+**Status:** Complete
 **Requirements:** [requirements.md](requirements.md) · **Design:** [design.md](design.md)
 
 ## Approach
@@ -12,8 +12,8 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
 
 ## Progress Summary
 - Total Tasks: 15
-- Completed: 14/15
-- In Progress: Task 15 — Self-scan, benchmarks, final verification
+- Completed: 15/15
+- In Progress: —
 
 ## Tasks
 
@@ -101,11 +101,19 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
   - [x] REFACTOR
   - Linked: REQ-024, REQ-042, REQ-043
 
-- [ ] **Task 15: Self-scan, benchmarks, final verification**
-  - [ ] Self-scan of zu: 0 parse errors (a test that skips when not in the repo)
-  - [ ] `scripts/bench-corpus.sh` (pinned hugo and kubernetes tags) → `benchmarks.md`
-  - [ ] `make check` (fmt, lint, race tests); review; update CLAUDE.md layout
+- [x] **Task 15: Self-scan, benchmarks, final verification**
+  - [x] Self-scan of zu: 0 parse errors (a test that skips when not in the repo)
+  - [x] `scripts/bench-corpus.sh` (pinned hugo and kubernetes tags) → `benchmarks.md`
+  - [x] `make check` (fmt, lint, race tests); review; update CLAUDE.md layout
   - Linked: REQ-040, REQ-041, REQ-043, and the acceptance criteria
 
 ## Notes
 - `golang.org/x/mod v0.33.0` is the newest version that still declares Go ≤ 1.24.
+- Review fixes after Task 15: git runs with fsmonitor and optional locks off; receiver type
+  parameters are not calls; directives, package clause, build constraint, cgo preamble and `_`
+  declarations are hashed (REQ-022 amended); single-spec parentheses don't change hashes; edge
+  locations are deduplicated; `(*fp)()` counts as unresolved; the longest module path wins
+  across requires and discovered modules; `for r = range` counts as reassigning the receiver;
+  Ctrl-C during git exits 3 without writing.
+- Residual risk: a `clean` filter configured in `.git/config` still runs when git computes
+  dirtiness. Config is not cloned, so this only matters for a copied `.git` directory.
