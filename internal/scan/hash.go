@@ -8,6 +8,7 @@ import (
 	"go/build/constraint"
 	"go/printer"
 	"go/token"
+	"slices"
 	"strings"
 )
 
@@ -17,6 +18,31 @@ import (
 // do count. It strips comments from n in place: call it only once the AST is
 // otherwise done with.
 func hashNode(n ast.Node, extra ...*ast.CommentGroup) string {
+	dirs := directives(n, extra...)
+	stripComments(n)
+	return printHash(dirs, n)
+}
+
+// hashDecl returns hashNode's hash and the declaration's shape: the same
+// print with every identifier spelled like one of names (the declared name
+// and receiver type name) replaced by "_", so a rename keeps the shape.
+// Over-blanking, such as a field sharing the name, only makes shapes more
+// alike, and Moves pair one-to-one. It rewrites n in place.
+func hashDecl(n ast.Node, names []string, extra ...*ast.CommentGroup) (hash, shape string) {
+	dirs := directives(n, extra...)
+	stripComments(n)
+	hash = printHash(dirs, n)
+	ast.Inspect(n, func(x ast.Node) bool {
+		if id, ok := x.(*ast.Ident); ok && id.Name != "" && slices.Contains(names, id.Name) {
+			id.Name = "_"
+		}
+		return true
+	})
+	return hash, printHash(dirs, n)
+}
+
+// directives collects the directive lines of extra and of n's comments.
+func directives(n ast.Node, extra ...*ast.CommentGroup) []byte {
 	var buf bytes.Buffer
 	for _, g := range extra {
 		writeDirectives(&buf, g)
@@ -27,10 +53,15 @@ func hashNode(n ast.Node, extra ...*ast.CommentGroup) string {
 		}
 		return true
 	})
-	stripComments(n)
+	return buf.Bytes()
+}
+
+// printHash hashes dirs followed by n printed canonically.
+func printHash(dirs []byte, n ast.Node) string {
+	buf := bytes.NewBuffer(slices.Clone(dirs))
 	// An empty FileSet hides the original positions from the printer, which
 	// then lays the code out canonically.
-	if err := printer.Fprint(&buf, token.NewFileSet(), n); err != nil {
+	if err := printer.Fprint(buf, token.NewFileSet(), n); err != nil {
 		// Printing a parsed AST into memory does not fail; fall back to a
 		// hash that still changes with the node type.
 		buf.Reset()

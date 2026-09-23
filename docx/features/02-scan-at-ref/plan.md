@@ -40,9 +40,9 @@
 
 **Steps:**
 
-- [ ] **Test**: in `ir_test.go`, `TestNodeShapeFollowsHash`. Encode one function node with `Hash:"h"` and `Shape:"s"`. Assert that `"hash": "h",` is directly followed by `"shape": "s",`, and that a package node with no shape has no `"shape"` key.
-- [ ] **Verify RED**: `go test ./internal/ir -run TestNodeShapeFollowsHash` → FAIL (unknown field `Shape`).
-- [ ] **Action**:
+- [x] **Test**: in `ir_test.go`, `TestNodeShapeFollowsHash`. Encode one function node with `Hash:"h"` and `Shape:"s"`. Assert that `"hash": "h",` is directly followed by `"shape": "s",`, and that a package node with no shape has no `"shape"` key.
+- [x] **Verify RED**: `go test ./internal/ir -run TestNodeShapeFollowsHash` → FAIL (unknown field `Shape`).
+- [x] **Action**:
 
    ```go
    Hash      string     `json:"hash,omitempty"`
@@ -54,8 +54,8 @@
    ```
 
    `schemaVersion` stays `"1"`: the field is additive and no IR reader exists yet.
-- [ ] **Verify**: `go test ./internal/ir` → ok.
-- [ ] **Commit**: `git add internal/ir/ir.go internal/ir/ir_test.go docx/features/01-scan-ir/requirements.md && git commit -m "Add shape to IR nodes"`
+- [x] **Verify**: `go test ./internal/ir` → ok.
+- [x] **Commit**: `git add internal/ir/ir.go internal/ir/ir_test.go docx/features/01-scan-ir/requirements.md && git commit -m "Add shape to IR nodes"`
 
 ---
 
@@ -66,23 +66,23 @@
 - Modify: `internal/scan/extract.go` (`declFact.Shape`; the hashing loop at the end of `extractFile`)
 - Modify: `internal/scan/build.go` (`mergeDecls`)
 - Modify: `internal/scan/hash_test.go`
-- Modify: `testdata/shop.golden.json` (regenerated)
+- Modify: `internal/scan/testdata/shop.golden.json` (regenerated)
 
 **Steps:**
 
-- [ ] **Test**: in `hash_test.go`, add `TestShape`. Parse each pair of sources below, then compare the one declaration's `Hash` and `Shape`.
+- [x] **Test**: in `hash_test.go`, add `TestShape`. Parse each pair of sources below, then compare the one declaration's `Hash` and `Shape`.
 
    | Pair | hash | shape |
    |---|---|---|
    | `func round(x int) int { return x }` → `func roundHalfEven(x int) int { return x }` | differs | equal |
    | recursive `func f(n int) int { if n == 0 { return 0 }; return f(n-1) }` → the same with `g` | differs | equal |
    | `type T struct{ next *T }` → `type U struct{ next *U }` | differs | equal |
-   | `func (t *T) M() {}` → `func (u *U) M() {}` (receiver type renamed) | differs | equal |
+   | `func (x *T) M() {}` → `func (x *U) M() {}` (receiver type renamed; the receiver variable is kept, since renaming it is a real change) | differs | equal |
    | `func f() int { return 1 }` → `func f() int { return 2 }` | differs | differs |
    | `//go:noinline` added to `f` | differs | differs |
 
-- [ ] **Verify RED**: `go test ./internal/scan -run TestShape` → FAIL.
-- [ ] **Action**: replace the body of `hashNode` with a shared helper, and add `hashDecl`:
+- [x] **Verify RED**: `go test ./internal/scan -run TestShape` → FAIL.
+- [x] **Action**: replace the body of `hashNode` with a shared helper, and add `hashDecl`:
 
    ```go
    // hashDecl returns the declaration's hash and its shape: the same print
@@ -113,9 +113,9 @@
    ```
 
    `d.Recv` is empty for types and functions; empty strings never match an identifier. In `mergeDecls`, merged shapes are the SHA-256 over the per-declaration shapes in location order, exactly like `Hash`, and `n.Shape` is set.
-- [ ] **Verify**: `go test ./internal/scan -run 'TestShape|TestHash'` → ok. Existing hash tests must pass unchanged, which proves `hash` did not move.
-- [ ] **Golden**: `go test ./internal/scan -update`, then `git diff --stat testdata/shop.golden.json`. Expected: only `"shape":` lines are added; no `"hash":` line changes. Then run `go test ./...` → ok.
-- [ ] **Commit**: `git add internal/scan/hash.go internal/scan/hash_test.go internal/scan/extract.go internal/scan/build.go testdata/shop.golden.json && git commit -m "Hash declaration shape for rename pairing"`
+- [x] **Verify**: `go test ./internal/scan -run 'TestShape|TestHash'` → ok. Existing hash tests must pass unchanged, which proves `hash` did not move.
+- [x] **Golden**: `go test ./internal/scan -update`, then `git diff --stat testdata/shop.golden.json`. Expected: only `"shape":` lines are added; no `"hash":` line changes. Then run `go test ./...` → ok.
+- [x] **Commit**: `git add internal/scan/hash.go internal/scan/hash_test.go internal/scan/extract.go internal/scan/build.go testdata/shop.golden.json && git commit -m "Hash declaration shape for rename pairing"`
 
 ---
 
@@ -291,12 +291,12 @@
 
 ## Progress
 
-- [ ] Task 1: `shape` field in the IR
-- [ ] Task 2: Compute the shape hash
+- [x] Task 1: `shape` field in the IR
+- [x] Task 2: Compute the shape hash
 - [ ] Task 3: `scan.Tree` and `DirTree`
 - [ ] Task 4: `gitref.CommitTree`
 - [ ] Task 5: Disk and ref scans are byte-identical
 - [ ] Task 6: `zu scan -ref`
 - [ ] Task 7: Docs, benchmarks, final check
 
-**Status:** Not Started
+**Status:** In Progress

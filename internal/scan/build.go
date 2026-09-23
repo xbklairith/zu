@@ -249,8 +249,8 @@ func declID(pkg, recv, name string) string {
 }
 
 // mergeDecls builds one node from every declaration sharing an id (build
-// variants, repeated init). A single declaration keeps its own hash; several
-// hash to SHA-256 over their hashes in location order.
+// variants, repeated init). A single declaration keeps its own hash and
+// shape; several hash to SHA-256 over theirs in location order.
 func mergeDecls(id, pkg string, ds []declAt) *ir.Node {
 	slices.SortFunc(ds, func(a, b declAt) int {
 		return cmp.Or(cmp.Compare(a.Loc.Path, b.Loc.Path), cmp.Compare(a.Loc.Line, b.Loc.Line))
@@ -261,7 +261,7 @@ func mergeDecls(id, pkg string, ds []declAt) *ir.Node {
 	if first.Recv != "" {
 		n.Parent = declID(pkg, "", first.Recv)
 	}
-	var hashes strings.Builder
+	var hashes, shapes strings.Builder
 	for _, d := range ds {
 		n.Locations = append(n.Locations, d.Loc)
 		n.Generated = n.Generated && d.Generated
@@ -269,10 +269,12 @@ func mergeDecls(id, pkg string, ds []declAt) *ir.Node {
 			n.TypeKind = ir.TypeOther
 		}
 		hashes.WriteString(d.Hash + "\n")
+		shapes.WriteString(d.Shape + "\n")
 	}
-	n.Hash = first.Hash
+	n.Hash, n.Shape = first.Hash, first.Shape
 	if len(ds) > 1 {
 		n.Hash = hashBytes([]byte(hashes.String()))
+		n.Shape = hashBytes([]byte(shapes.String()))
 	}
 	return n
 }

@@ -132,3 +132,44 @@ func F() { fmt.Println() }
 		t.Error("const change must change other decl hashes")
 	}
 }
+
+func declShapes(t *testing.T, src string) (hash, shape string) {
+	t.Helper()
+	f := extractOne(t, src)
+	if f.Err != nil {
+		t.Fatal(f.Err)
+	}
+	if len(f.Decls) != 1 {
+		t.Fatalf("want one declaration, got %d", len(f.Decls))
+	}
+	d := f.Decls[0]
+	if len(d.Shape) != 64 {
+		t.Fatalf("%s: shape %q is not hex SHA-256", d.Name, d.Shape)
+	}
+	return d.Hash, d.Shape
+}
+
+func TestShape(t *testing.T) {
+	for _, c := range []struct {
+		name, a, b string
+		sameShape  bool
+	}{
+		{"rename", "func round(x int) int { return x }", "func roundHalfEven(x int) int { return x }", true},
+		{"recursive rename",
+			"func f(n int) int {\n\tif n == 0 {\n\t\treturn 0\n\t}\n\treturn f(n - 1)\n}",
+			"func g(n int) int {\n\tif n == 0 {\n\t\treturn 0\n\t}\n\treturn g(n - 1)\n}", true},
+		{"self-referencing type", "type T struct{ next *T }", "type U struct{ next *U }", true},
+		{"receiver type rename", "func (x *T) M() {}", "func (x *U) M() {}", true},
+		{"body change", "func f() int { return 1 }", "func f() int { return 2 }", false},
+		{"directive added", "func f() {}", "//go:noinline\nfunc f() {}", false},
+	} {
+		ha, sa := declShapes(t, "package p\n\n"+c.a+"\n")
+		hb, sb := declShapes(t, "package p\n\n"+c.b+"\n")
+		if ha == hb {
+			t.Errorf("%s: hash must differ", c.name)
+		}
+		if (sa == sb) != c.sameShape {
+			t.Errorf("%s: shape equal = %v, want %v", c.name, sa == sb, c.sameShape)
+		}
+	}
+}

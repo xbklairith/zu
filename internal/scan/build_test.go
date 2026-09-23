@@ -39,14 +39,17 @@ func init() {}
 		if len(n.Hash) != 64 {
 			t.Errorf("%s: hash %q", id, n.Hash)
 		}
+		if len(n.Shape) != 64 {
+			t.Errorf("%s: shape %q", id, n.Shape)
+		}
 		got := *n
-		got.Hash = ""
+		got.Hash, got.Shape = "", ""
 		if !reflect.DeepEqual(got, w) {
 			t.Errorf("%s\n got %+v\nwant %+v", id, got, w)
 		}
 	}
 	pkg := node(doc, "example.com/m/p")
-	if pkg == nil || len(pkg.Hash) != 64 || pkg.Parent != "" || pkg.Exported != nil {
+	if pkg == nil || len(pkg.Hash) != 64 || pkg.Shape != "" || pkg.Parent != "" || pkg.Exported != nil {
 		t.Fatalf("package node = %+v", pkg)
 	}
 }
@@ -67,6 +70,11 @@ func TestBuildMergesBuildVariants(t *testing.T) {
 	if want := hashBytes([]byte(h1 + "\n" + h2 + "\n")); f.Hash != want {
 		t.Errorf("merged hash = %s, want SHA-256 over location-ordered hashes %s", f.Hash, want)
 	}
+	s1 := extractFile(root, "p/f_linux.go").Decls[1].Shape
+	s2 := extractFile(root, "p/f_windows.go").Decls[1].Shape
+	if want := hashBytes([]byte(s1 + "\n" + s2 + "\n")); f.Shape != want {
+		t.Errorf("merged shape = %s, want SHA-256 over location-ordered shapes %s", f.Shape, want)
+	}
 	if f.Generated {
 		t.Error("merged node is generated only if every declaration is")
 	}
@@ -75,7 +83,7 @@ func TestBuildMergesBuildVariants(t *testing.T) {
 	}
 
 	both := scanTree(t, map[string]string{"go.mod": "module example.com/m\n", "p/g.go": linux})
-	if n := node(both, "example.com/m/p.F"); n == nil || !n.Generated || n.Hash != h1 {
+	if n := node(both, "example.com/m/p.F"); n == nil || !n.Generated || n.Hash != h1 || n.Shape != s1 {
 		t.Fatalf("single generated declaration = %+v, want generated with its own hash", n)
 	}
 }

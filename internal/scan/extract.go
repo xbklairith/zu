@@ -41,6 +41,7 @@ type declFact struct {
 	Exported bool
 	TypeKind string // types only
 	Hash     string
+	Shape    string // Hash with the name and receiver type blanked
 	Line     int
 	node     ast.Node          // released once hashed
 	doc      *ast.CommentGroup // enclosing declaration's doc, for its directives
@@ -104,8 +105,9 @@ func extractFile(root, rel string) *fileFacts {
 		}
 	}
 	for i := range f.Decls {
-		f.Decls[i].Hash = hashNode(f.Decls[i].node, f.Decls[i].doc)
-		f.Decls[i].node, f.Decls[i].doc = nil, nil
+		d := &f.Decls[i]
+		d.Hash, d.Shape = hashDecl(d.node, []string{d.Name, d.Recv}, d.doc)
+		d.node, d.doc = nil, nil
 	}
 	return f
 }

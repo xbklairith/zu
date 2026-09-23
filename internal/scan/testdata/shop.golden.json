@@ -25,6 +25,7 @@
       "parent": "example.com/shop",
       "exported": false,
       "hash": "3755818cd2acdccf6ffbdedf5e25e271142ca068f9e4703494474bcd0eed6877",
+      "shape": "3965ee3d39b6fb4cd90aaea8efafc1a1826c7460f11a4140d002eebf85a2f984",
       "locations": [
         {
           "path": "main.go",
@@ -51,6 +52,7 @@
       "exported": true,
       "typeKind": "struct",
       "hash": "a4f700f600d119d77af7b96ec6e62dd3aefd445dd42ac5a00a6873bbec679c2a",
+      "shape": "0811f13b513e812d48f4f181cddaf0d349d61328976c8dc1eca084347fb33232",
       "locations": [
         {
           "path": "internal/checkout/checkout.go",
@@ -65,6 +67,7 @@
       "exported": true,
       "typeKind": "struct",
       "hash": "1c63561db82f75f602f7290c3cc4807b9ea5efe4c612a961a9acc57f19fdae09",
+      "shape": "6c88214356ad67ac0b284c5d63d038efdb4a2ad39adf56b61ab200ef93a87019",
       "locations": [
         {
           "path": "internal/checkout/checkout.go",
@@ -78,6 +81,7 @@
       "parent": "example.com/shop/internal/checkout",
       "exported": true,
       "hash": "7022e1abb5278e4cde58d583ea464e694109ed8218275bfb329001e9bbf631ca",
+      "shape": "bf7ef24247e3e558601bcee8f2f8c588f155a4e86beb8657a0e658b98bd9d851",
       "locations": [
         {
           "path": "internal/checkout/checkout.go",
@@ -91,6 +95,7 @@
       "parent": "example.com/shop/internal/checkout",
       "exported": true,
       "hash": "c9cb21db57190f4cb0ce5fd161e6e5784e0270b145892337f188804a2f90c26b",
+      "shape": "57ecf86bcc0093b698a7b9aefc895971a70b372f913f01c5f68d36af77344e7e",
       "locations": [
         {
           "path": "internal/checkout/checkout.go",
@@ -104,6 +109,7 @@
       "parent": "example.com/shop/internal/checkout",
       "exported": false,
       "hash": "749e073ad4de76f3ace03827969c10e07cc3e608ebcb91568b8c585c6d8974ff",
+      "shape": "73eaaf0eb77333912036f26b4a7527ec0aab29444a3413adf18c5031e223ce55",
       "locations": [
         {
           "path": "internal/checkout/checkout.go",
@@ -129,6 +135,7 @@
       "parent": "example.com/shop/internal/money",
       "exported": true,
       "hash": "f6bb8d861f5184d14a65f3194c1d29dedc23a89e088c527b03a5297e335a4887",
+      "shape": "0fd19c0d5b3b59b0da80782d898d55800cfa8058e303dc6a66973291e0a4f6f8",
       "locations": [
         {
           "path": "internal/money/money.go",
@@ -143,6 +150,7 @@
       "exported": true,
       "typeKind": "other",
       "hash": "585898f2ed91a2f36178b34a64df73cd9c98d44191ec9c62c21ca7ceecaad2dc",
+      "shape": "5af1161047ad907a0803d734b1dd30c8355aef68eadbd99157591ca4f568f5e5",
       "locations": [
         {
           "path": "internal/money/money.go",
@@ -157,6 +165,7 @@
       "exported": true,
       "typeKind": "other",
       "hash": "8847771dde98f8e185b4f1b1498da4b1d25eb12912b66ecc20882b140a605ae4",
+      "shape": "aed953173cbfd467caaec3acaea649466961cdda3c9f04ec0716b5f3dc79db74",
       "locations": [
         {
           "path": "internal/money/money.go",
@@ -182,6 +191,7 @@
       "parent": "example.com/shop/internal/store",
       "exported": true,
       "hash": "a51ef9eae846965d676e2a1c7687e00fd0d21c3c1cf3adf2f6af29ca89acd34c",
+      "shape": "2a8f5f9b0800f0bfd69ebe04f074f04c3d023c45c609b45347669d667add75db",
       "locations": [
         {
           "path": "internal/store/store.go",
@@ -196,6 +206,7 @@
       "exported": true,
       "typeKind": "struct",
       "hash": "14c51534b85833ac77e8e74db00988691112afe413cb5843db3bf769a3aa4a7a",
+      "shape": "72d6343cae39d6234cf5b9fe5b9d93e7db21bcce7720d05c336870c67a6e1ed4",
       "locations": [
         {
           "path": "internal/store/store.go",
@@ -210,6 +221,7 @@
       "exported": true,
       "typeKind": "struct",
       "hash": "2f2656bb06013fa824825ccebb6a3afa75661326f8b4b12dc9b783b27699e0a8",
+      "shape": "6833bcb2f5c857aca9d5192fb10f47106076a9c30728ce4c98c43ac3ef487426",
       "locations": [
         {
           "path": "internal/store/store.go",
@@ -223,6 +235,7 @@
       "parent": "example.com/shop/internal/store.Page",
       "exported": true,
       "hash": "c38d57b5e81d2971b60a0ace27e80d46e162f9baea960316c8f5b95791577097",
+      "shape": "7479fe89478a718486a131931ca1b32fff1be87f55424d482a4d1ae86b50ffd3",
       "locations": [
         {
           "path": "internal/store/store.go",
@@ -237,6 +250,7 @@
       "exported": true,
       "typeKind": "interface",
       "hash": "8555d57666106979710b8565b9486052a35734917797b80d1902fde93db76456",
+      "shape": "854f8f9710e74df49532a2d681770b5a638df306373dfaf7adf914d5a151fdba",
       "locations": [
         {
           "path": "internal/store/store.go",
@@ -251,6 +265,7 @@
       "exported": true,
       "typeKind": "interface",
       "hash": "2de0248078838297d22ac18f1a86b3632ff79b983f30259172b1e75c54e5d639",
+      "shape": "db0d3bdcc5146d8ea26eee6409aa050c21b6e621c431c98e2fac53c0a0b1f729",
       "locations": [
         {
           "path": "internal/store/store.go",
@@ -265,6 +280,7 @@
       "exported": true,
       "typeKind": "struct",
       "hash": "d16935b2610e6f66cf51fc2e2c20627373f03b4a6923e0c378515f1cec5cb6f4",
+      "shape": "8072d7da284d8e0bb0f31e3b5828bdf17a48e810c4bba6316298b27840b7ca31",
       "locations": [
         {
           "path": "internal/store/store.go",
@@ -278,6 +294,7 @@
       "parent": "example.com/shop/internal/store.Repo",
       "exported": true,
       "hash": "a8cea5e27afd62b6ee1e20e6cc492ed645a8e20726814cdcb5504ca2ca7cdc2c",
+      "shape": "e6d79ac5fbaf274de31f88465052ae678978da32f4ca415c034be7ce4d20b7e7",
       "locations": [
         {
           "path": "internal/store/store.go",
@@ -291,6 +308,7 @@
       "parent": "example.com/shop/internal/store.Repo",
       "exported": true,
       "hash": "5358523aeab74bb035f77515d76e1ded13e6156950530f99552e763868bed804",
+      "shape": "7d35bf3ecb3fc41960dc43f55a33c1a287dcd90b158b3ce55b6df8aa4ea0c478",
       "locations": [
         {
           "path": "internal/store/store.go",
@@ -304,6 +322,7 @@
       "parent": "example.com/shop/internal/store.Repo",
       "exported": false,
       "hash": "af3069ff2b149b9786b38af4f862f420d27202671b9aa96280042cebdb4a3289",
+      "shape": "bba4723f975d39e4ca9c6d83e5b4cdb11eebce95af798e7933cd685e3778eec4",
       "locations": [
         {
           "path": "internal/store/store.go",
@@ -319,6 +338,7 @@
       "typeKind": "other",
       "generated": true,
       "hash": "dec01fc0f7655a9e0d7b01242993854ba8aeebbba473c9270d0c152a67ae97cf",
+      "shape": "cc43d0b465f9b5c426dd2543689189ecdd05d63e097500448f0deecae1ea5484",
       "locations": [
         {
           "path": "internal/store/zz_generated.go",
@@ -333,6 +353,7 @@
       "exported": true,
       "generated": true,
       "hash": "7a2d4c231dc32a6d745a14c6e4ec44247ebc972f8c5360af6262d8463544e26a",
+      "shape": "069286d2e97cdea8d0cccdb069aeb64955c8d6281b230c56d56d74d146b34034",
       "locations": [
         {
           "path": "internal/store/zz_generated.go",
@@ -346,6 +367,7 @@
       "parent": "example.com/shop/internal/store",
       "exported": false,
       "hash": "6118e504a6ed01477d9dbd1618f5401e5a7fcae3c8378fddb0b34cfd99aef3a7",
+      "shape": "b0727c877669f391b3e7641607569801db949ce45beb59df29f9439eb2aacbb1",
       "locations": [
         {
           "path": "internal/store/db_linux.go",
@@ -363,6 +385,7 @@
       "parent": "example.com/shop/internal/store",
       "exported": false,
       "hash": "6a9c1d49a780f719b2e392a095d383c57c19d1ada932af5766a4a1ea6e18d6f6",
+      "shape": "6250a33ae0806ce7db379dfd93032424541eaeb88a550f08d75b218d6a7649c6",
       "locations": [
         {
           "path": "internal/store/db_linux.go",
@@ -380,6 +403,7 @@
       "parent": "example.com/shop/internal/store",
       "exported": false,
       "hash": "f770bcafbf7189f112c6995cc876004d3fa306f46a435ffafc5a4343c53c879f",
+      "shape": "7441d0aa939a2af60c49bdc13a363719f508c506dc21eef304e767683df5100c",
       "locations": [
         {
           "path": "internal/store/register.go",
@@ -405,6 +429,7 @@
       "parent": "example.com/shop/tools/gen",
       "exported": false,
       "hash": "9f9d3980e7ada80c8d5aa6bb4f85a7e55c3ddb8160ef5f66570076cc887da52a",
+      "shape": "54ff68d11ce12b799c60bc7394f87e927bca1c9317cb41d7688775824c64ed3b",
       "locations": [
         {
           "path": "tools/gen/gen.go",
