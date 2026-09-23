@@ -12,7 +12,7 @@ func scanTree(t *testing.T, files map[string]string) *ir.IR {
 	t.Helper()
 	root := tree(t, files)
 	d := dirOf(t, root)
-	w, err := walkTree(d)
+	w, err := walkTree(d, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

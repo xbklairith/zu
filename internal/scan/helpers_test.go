@@ -39,5 +39,5 @@ func walk(root string) (*walkResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	return walkTree(d)
+	return walkTree(d, nil)
 }

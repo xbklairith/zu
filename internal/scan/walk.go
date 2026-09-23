@@ -45,8 +45,9 @@ var sourceExts = map[string]bool{
 }
 
 // walkTree lists the Go files to scan in t, discovers modules, and counts
-// unsupported source files. The only error is an unusable tree.
-func walkTree(t Tree) (*walkResult, error) {
+// unsupported source files, skipping what exclude matches (nil: nothing)
+// except go.mod. The only error is an unusable tree.
+func walkTree(t Tree, exclude func(rel string) bool) (*walkResult, error) {
 	files, errs, err := t.Files()
 	if err != nil {
 		return nil, err
@@ -55,6 +56,9 @@ func walkTree(t Tree) (*walkResult, error) {
 	var goFiles []string
 	for _, rel := range files {
 		name := path.Base(rel)
+		if name != "go.mod" && exclude != nil && exclude(rel) {
+			continue
+		}
 		switch ext := path.Ext(name); {
 		case name == "go.mod":
 			w.readModule(t, rel)

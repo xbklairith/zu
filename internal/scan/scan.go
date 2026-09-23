@@ -3,6 +3,7 @@
 package scan
 
 import (
+	"cmp"
 	"context"
 	"runtime"
 	"sync"
@@ -18,6 +19,11 @@ var DefaultPolicyHash = "sha256:" + hashBytes([]byte("{}\n"))
 type Options struct {
 	Tree    Tree // what to scan: DirTree, or a commit read from git
 	Workers int  // parallel parsers; 0 means GOMAXPROCS
+	// Exclude skips source files by repo-relative path (the Policy's
+	// exclude globs). go.mod files are always read: they fence modules.
+	Exclude func(rel string) bool
+	// PolicyHash is recorded in the IR; "" means DefaultPolicyHash.
+	PolicyHash string
 }
 
 // Stats summarise a scan for the one-line report.
@@ -32,7 +38,7 @@ type Stats struct {
 // It fails only when the tree is unusable or ctx is cancelled; unparseable
 // files are recorded in the IR instead.
 func Run(ctx context.Context, opts Options) (*ir.IR, Stats, error) {
-	w, err := walkTree(opts.Tree)
+	w, err := walkTree(opts.Tree, opts.Exclude)
 	if err != nil {
 		return nil, Stats{}, err
 	}
@@ -42,7 +48,7 @@ func Run(ctx context.Context, opts Options) (*ir.IR, Stats, error) {
 	}
 	doc := assemble(w, facts)
 	doc.Grouping = "tree"
-	doc.PolicyHash = DefaultPolicyHash
+	doc.PolicyHash = cmp.Or(opts.PolicyHash, DefaultPolicyHash)
 
 	st := Stats{ParseErrors: len(doc.ParseErrors)}
 	for _, n := range doc.Nodes {

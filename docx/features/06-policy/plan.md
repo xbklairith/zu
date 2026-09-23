@@ -1066,7 +1066,7 @@ Pin v3.0.5, the newest release at the time of planning.
 
 **Steps:**
 
-- [ ] **Write the failing test.** It uses the existing `testdata/shop` fixture: `tools/` is a nested module and `web/app.ts` is an unsupported file.
+- [x] **Write the failing test.** It uses the existing `testdata/shop` fixture: `tools/` is a nested module and `web/app.ts` is an unsupported file.
 
    <!-- file: internal/scan/exclude_test.go -->
    ```go
@@ -1122,9 +1122,9 @@ Pin v3.0.5, the newest release at the time of planning.
    }
    ```
 
-- [ ] **Run it:** `go test ./internal/scan -run Excludes`. Expected: FAIL (`unknown field Exclude`).
+- [x] **Run it:** `go test ./internal/scan -run Excludes`. Expected: FAIL (`unknown field Exclude`).
 
-- [ ] **Implement**
+- [x] **Implement**
 
    ```diff
    --- a/internal/scan/scan.go
@@ -1222,7 +1222,7 @@ Pin v3.0.5, the newest release at the time of planning.
     }
    ```
 
-- [ ] **Run:** `go test ./internal/scan`. Expected: `ok`. `shop.golden.json` and `parity_test.go` are unchanged, because no Policy means no exclusions and the default hash.
+- [x] **Run:** `go test ./internal/scan`. Expected: `ok`. `shop.golden.json` and `parity_test.go` are unchanged, because no Policy means no exclusions and the default hash.
 
 ### Task 4: `zu scan` and `zu diff` read the Policy file
 
@@ -4383,7 +4383,7 @@ These diffs are against `main` at 8f43cb1. If 05's `App.tsx` changes before 06 s
 
 - [x] Task 1 · Parse, normalise and hash
 - [x] Task 2 · Exclude globs and safe by-name reads
-- [ ] Task 3 · The scan skips excluded files
+- [x] Task 3 · The scan skips excluded files
 - [ ] Task 4 · `zu scan` and `zu diff` read the Policy
 - [ ] Task 5 · `Apply`
 - [ ] Task 6 · Levels and cycles
