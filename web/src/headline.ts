@@ -46,7 +46,8 @@ export function breadcrumb(view: View, focus: string): Crumb[] {
   return crumbs;
 }
 
-export function depthNote(boxes: number, depth: number): string {
-  const note = `${boxes} boxes at depth ${depth}. Double-click to open a box, Esc to go up.`;
+// auto is false when the reader chose the depth (A6), which the note says.
+export function depthNote(boxes: number, depth: number, auto = true): string {
+  const note = `${boxes} boxes at depth ${depth}${auto ? "" : " (chosen)"}. Double-click to open a box, Esc to go up.`;
   return boxes > BOX_BUDGET ? `${note} More than ${BOX_BUDGET} boxes, drawn anyway.` : note;
 }

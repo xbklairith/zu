@@ -6,10 +6,12 @@ import { parentBox } from "./cut";
 import type { View } from "./data";
 import { pageEngine } from "./engine";
 import { Header } from "./Header";
+import { keyAction } from "./keys";
 import { elkGraph, positions, Superseded, type Placed } from "./layout";
 import { Panel } from "./Panel";
-import { scene, type SceneNode } from "./scene";
-import { DEFAULT_STATE } from "./state";
+import { openFull, scene, type SceneNode } from "./scene";
+import { deeper, drill, nextStage, select, shallower, toggle, up } from "./state";
+import { useViewState } from "./useViewState";
 
 const PKG = "#pkg";
 
@@ -53,15 +55,20 @@ function ChangedList({ view, onPick }: { view: View; onPick: (id: string) => voi
 
 export function App({ view: whole }: { view: View }) {
   const change = whole.kind === "change";
-  const [full, setFull] = useState(false);
-  // The Change View opens on the changed subgraph (Q4); U10 toggles to all of it.
+  const [state, update] = useViewState(whole);
+  // The Change View opens on the changed subgraph (Q4); U10 toggles to all of
+  // it. A link whose focus lies outside the subgraph opens all of it, at that
+  // focus: from the start, and on a later hashchange.
+  const [full, setFull] = useState(() => change && openFull(changedSubgraph(whole), state.focus));
   const view = useMemo(() => (change && !full ? changedSubgraph(whole) : whole), [whole, change, full]);
-  const [focus, setFocus] = useState("");
-  const [selected, setSelected] = useState<string | null>(null);
+  useEffect(() => {
+    if (change && !full && openFull(view, state.focus)) setFull(true);
+  }, [change, full, view, state.focus]);
   const [center, setCenter] = useState<{ id: string; seq: number } | undefined>(undefined);
-  const sc = useMemo(() => scene(view, { ...DEFAULT_STATE, focus, selected }), [view, focus, selected]);
+  const sc = useMemo(() => scene(view, state), [view, state]);
 
-  // One engine for the page's life; a layout runs only when its ELK input changes.
+  // One engine for the page's life; a layout runs only when its ELK input
+  // changes, so selecting and dimming never lay out again.
   const engine = useMemo(pageEngine, []);
   useEffect(() => () => engine.dispose(), [engine]);
   const graph = useMemo(() => JSON.stringify(elkGraph(sc)), [sc]);
@@ -82,43 +89,54 @@ export function App({ view: whole }: { view: View }) {
   }, [engine, graph]);
 
   const go = (box: string) => {
-    setFocus(box);
-    setSelected(null);
+    update((s) => drill(s, box));
     setCenter(undefined);
   };
-  const toggle = () => {
+  const flip = () => {
     setFull(!full);
     go("");
   };
+  // A pick from the changed list (U11) shows the page root with it selected and centred.
   const pick = (id: string) => {
-    setFocus("");
-    setSelected(id);
+    update((s) => ({ ...drill(s, ""), selected: id }));
     setCenter((c) => ({ id, seq: (c?.seq ?? 0) + 1 }));
   };
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && focus !== "") go(parentBox(view, focus));
+      const a = keyAction(e.key, {
+        searchOpen: false,
+        selected: state.selected !== null,
+        atRoot: state.focus === "",
+        typing: e.target instanceof HTMLInputElement,
+        mod: e.metaKey || e.ctrlKey || e.altKey,
+      });
+      if (a === "clearSelection") update((s) => select(s, null));
+      else if (a === "up") update((s) => up(s, parentBox(view, s.focus)));
+      else if (a === "declutter") update((s) => ({ ...s, stage: nextStage(s.stage) }));
+      else if (a === "deeper") update((s) => deeper(s, sc.depth));
+      else if (a === "shallower") update((s) => shallower(s, sc.depth));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [view, focus]);
+  }, [view, state, sc.depth, update]);
 
   const open = (n: SceneNode) => {
     if (n.shape === "box" || n.shape === "container") go(n.id);
   };
   const boxes = sc.nodes.filter((n) => n.shape === "box" || n.shape === "decl").length;
-  const pkg = focus.endsWith(PKG) ? focus.slice(0, -PKG.length) : focus;
+  const pkg = state.focus.endsWith(PKG) ? state.focus.slice(0, -PKG.length) : state.focus;
 
   return (
     <div className={`app${change ? " change" : ""}${change && !full ? " subgraph" : ""}`}>
       <Header
         view={whole}
-        focus={focus}
+        focus={state.focus}
         boxes={boxes}
         depth={sc.depth}
+        auto={state.depth === null}
         onFocus={go}
         full={change ? full : undefined}
-        onToggle={toggle}
+        onToggle={flip}
       />
       {change && <ChangedList view={whole} onPick={pick} />}
       <main className="canvas">
@@ -132,8 +150,16 @@ export function App({ view: whole }: { view: View }) {
             Layout failed: {failed}
           </div>
         ) : placed && placed.graph === graph ? (
-          <ReactFlowProvider key={focus}>
-            <Canvas view={view} sc={sc} placed={placed.at} onSelect={setSelected} onOpen={open} center={center} />
+          <ReactFlowProvider key={`${state.focus}\n${sc.depth}`}>
+            <Canvas
+              view={view}
+              sc={sc}
+              placed={placed.at}
+              onSelect={(id) => update((s) => select(s, id))}
+              onOpen={open}
+              onToggle={(id) => update((s) => toggle(s, id))}
+              center={center}
+            />
           </ReactFlowProvider>
         ) : (
           <div className="empty" id="zu-status">
@@ -141,14 +167,14 @@ export function App({ view: whole }: { view: View }) {
           </div>
         )}
       </main>
-      {selected && (
+      {state.selected && (
         <Panel
           view={whole}
           shown={view}
-          focus={focus}
+          focus={state.focus}
           depth={sc.depth}
-          id={selected}
-          onClose={() => setSelected(null)}
+          id={state.selected}
+          onClose={() => update((s) => select(s, null))}
         />
       )}
     </div>

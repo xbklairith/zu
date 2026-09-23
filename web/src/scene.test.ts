@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { knownIds, scene } from "./scene";
+import { knownIds, openFull, scene } from "./scene";
+import { changedSubgraph } from "./change";
 import { DEFAULT_STATE, up, type ViewState } from "./state";
 import { decl, edge, exts, pkgs, view } from "./testkit";
 import golden from "../../internal/export/testdata/shop.view.golden.json";
@@ -91,6 +92,11 @@ describe("scene", () => {
     expect([k.box(""), k.box("m/core"), k.box("m#pkg"), k.box("m/api#pkg"), k.box("x.io/e")]).toEqual([true, true, true, false, false]);
     expect([k.folder("m/core"), k.folder("m/api"), k.folder("m#pkg")]).toEqual([true, false, false]);
     expect([k.node("x.io/e"), k.node("outside"), k.node("m/nope")]).toEqual([true, true, false]);
+  });
+  it("a Change View link focused outside the changed subgraph opens the whole View (U10)", () => {
+    const ch = { ...v, kind: "change" as const, nodes: v.nodes.map((n) => (n.id === "m/api" ? { ...n, status: "modified" } : n)) };
+    const sub = changedSubgraph(ch);
+    expect(["", "m/api", "m/core", "m/lone"].map((f) => openFull(sub, f))).toEqual([false, false, true, true]);
   });
   it("is independent of input order", () => {
     const w = { ...v, nodes: [...v.nodes].reverse(), edges: [...v.edges].reverse() };

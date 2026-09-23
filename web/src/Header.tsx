@@ -8,11 +8,12 @@ type Props = {
   boxes: number;
   depth: number;
   onFocus: (box: string) => void;
+  auto: boolean; // the depth is autoDepth's, not the reader's
   full?: boolean; // Change View only: showing the full project, not the changed subgraph
   onToggle?: () => void;
 };
 
-export function Header({ view, focus, boxes, depth, onFocus, full, onToggle }: Props) {
+export function Header({ view, focus, boxes, depth, onFocus, auto, full, onToggle }: Props) {
   const compare = view.links?.compare?.startsWith("https://") ? view.links.compare : null;
   const [showErrors, setShowErrors] = useState(false);
   const errors = view.honesty.parseErrors;
@@ -53,7 +54,7 @@ export function Header({ view, focus, boxes, depth, onFocus, full, onToggle }: P
         ))}
       </nav>
       <p className="note">
-        {depthNote(boxes, depth)}
+        {depthNote(boxes, depth, auto)}
         {full !== undefined && (
           <>
             {" "}

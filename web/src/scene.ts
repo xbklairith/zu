@@ -227,3 +227,8 @@ export const knownIds = (view: View): Known => ({
   folder: (id) => !id.endsWith(PKG) && childrenOf(view, id).length > 0,
   node: (id) => isBox(view, id) || index(view).node.has(id) || id === OUTSIDE || id === EXTERNALS,
 });
+
+// openFull says a Change View focus (from a link) lies outside the changed
+// subgraph, so the page opens the whole View at that focus (U10) rather than
+// an empty canvas.
+export const openFull = (sub: View, focus: string): boolean => !knownIds(sub).box(focus);

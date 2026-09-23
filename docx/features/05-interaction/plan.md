@@ -2874,7 +2874,7 @@ export const pageEngine = () => superseding(workerElk);
 
 **Steps:**
 
-- [ ] **Write the failing test.**
+- [x] **Write the failing test.**
 
 **Edit `web/src/headline.test.ts`:** replace
 
@@ -2889,8 +2889,8 @@ with
     expect(depthNote(5, 2, false)).toBe("5 boxes at depth 2 (chosen). Double-click to open a box, Esc to go up.");
 ````
 
-- [ ] **Run — expect FAIL:** `cd web && npx vitest run src/headline.test.ts` → the note lacks "(chosen)".
-- [ ] **Write the failing test** for a Change View link outside the changed subgraph.
+- [x] **Run — expect FAIL:** `cd web && npx vitest run src/headline.test.ts` → the note lacks "(chosen)".
+- [x] **Write the failing test** for a Change View link outside the changed subgraph.
 
 **Edit `web/src/scene.test.ts`:** replace
 
@@ -2922,8 +2922,8 @@ with
   it("is independent of input order", () => {
 ````
 
-- [ ] **Run — expect FAIL:** `cd web && npx vitest run src/scene.test.ts` → `openFull` is not exported.
-- [ ] **Implement.**
+- [x] **Run — expect FAIL:** `cd web && npx vitest run src/scene.test.ts` → `openFull` is not exported.
+- [x] **Implement.**
 
 **Edit `web/src/headline.ts`:** replace
 
@@ -3300,9 +3300,9 @@ with
 }
 ````
 
-- [ ] **Run — expect PASS:** `cd web && npx vitest run && npx tsc --noEmit && npm run build`.
-- [ ] **Check in a browser:** select a box (its neighbours stay lit), press `d` five times (full → arrows → triangles → elements → classes → full), `+`/`−`, reload: the hash brings the same view back. On a Change View, a link with `f=` naming an unchanged package far from the change opens the whole project at that package.
-- [ ] **Commit:** `git add web/src/useViewState.ts web/src/App.tsx web/src/Header.tsx web/src/headline.ts web/src/headline.test.ts web/src/scene.ts web/src/scene.test.ts web/src/styles.css && git commit -m "Keep the view in the URL hash and wire selection, toggles and keys"`
+- [x] **Run — expect PASS:** `cd web && npx vitest run && npx tsc --noEmit && npm run build`.
+- [x] **Check in a browser:** select a box (its neighbours stay lit), press `d` five times (full → arrows → triangles → elements → classes → full), `+`/`−`, reload: the hash brings the same view back. On a Change View, a link with `f=` naming an unchanged package far from the change opens the whole project at that package.
+- [x] **Commit:** `git add web/src/useViewState.ts web/src/App.tsx web/src/Header.tsx web/src/headline.ts web/src/headline.test.ts web/src/scene.ts web/src/scene.test.ts web/src/styles.css && git commit -m "Keep the view in the URL hash and wire selection, toggles and keys"`
 
 ---
 

@@ -16,6 +16,7 @@
   --moved: #6639ba;
   --add-bg: #dafbe1;
   --del-bg: #ffebe9;
+  --pin: #cf222e; /* a pinned (violating) edge, 06 */
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color: var(--fg);
   background: var(--bg);
@@ -40,6 +41,7 @@
     --moved: #bc8cff;
     --add-bg: #12361f;
     --del-bg: #3d1a1c;
+    --pin: #ff7b72;
   }
 }
 
@@ -408,4 +410,62 @@ button.st-removed {
 }
 .hunk .del {
   background: var(--del-bg);
+}
+
+
+/* Feature 05: selection, dimming, toggles and uml-viewer's triangles. The
+   marks sit outside the box; .node is not positioned, so its overflow does not clip them. */
+.node.dim,
+.react-flow__edge.dim {
+  opacity: 0.25;
+}
+
+.react-flow__edge.hot path,
+.react-flow__edge.selected path {
+  stroke-width: 2;
+}
+
+/* A changed edge keeps its Change View colour when lit. */
+.react-flow__edge.hot:not(.edge-added, .edge-removed, .edge-reversed, .edge-mixed) path,
+.react-flow__edge.selected:not(.edge-added, .edge-removed, .edge-reversed, .edge-mixed) path {
+  stroke: var(--accent);
+}
+
+.react-flow__edge.pinned path {
+  stroke: var(--pin);
+}
+
+.node .toggle {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--box-border);
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  line-height: 14px;
+  cursor: pointer;
+}
+
+.node .marks {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.node .marks polygon {
+  fill: var(--muted);
+}
+
+.node .marks polygon.pinned {
+  fill: var(--pin);
+}
+
+.row.selected {
+  background: var(--mark);
 }
