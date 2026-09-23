@@ -22,7 +22,7 @@ const usage = `usage: zu <command> [flags]
 commands:
   scan      parse the checkout (or a commit, with -ref) and write the IR
   serve     scan if needed, then serve the local web UI
-  diff      structurally diff the IRs of two refs
+  diff      summarise a change: head against its merge-base with base
   check     evaluate policy rules against the current IR
   policy    init or suggest a grouping policy
   version   print application, commit and IR schema versions
@@ -30,7 +30,7 @@ commands:
 
 // planned lists commands that are part of the CLI surface but not built yet.
 var planned = map[string]bool{
-	"serve": true, "diff": true, "check": true, "policy": true,
+	"serve": true, "check": true, "policy": true,
 }
 
 // Run executes the command line args (without the program name) and returns
@@ -50,6 +50,8 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		return ExitOK
 	case cmd == "scan":
 		return runScan(args[1:], stdout, stderr)
+	case cmd == "diff":
+		return runDiff(args[1:], stdout, stderr)
 	case planned[cmd]:
 		fmt.Fprintf(stderr, "zu %s: not implemented\n", cmd)
 		return ExitBadInvocation

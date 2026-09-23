@@ -24,10 +24,11 @@ var (
 	interruptContext = func() (context.Context, context.CancelFunc) {
 		return signal.NotifyContext(context.Background(), os.Interrupt)
 	}
-	gitHead     = gitref.Head
-	gitResolve  = gitref.Resolve
-	openCommit  = gitref.OpenCommit
-	gitWorktree = gitref.WorktreeFiles
+	gitHead      = gitref.Head
+	gitResolve   = gitref.Resolve
+	openCommit   = gitref.OpenCommit
+	gitWorktree  = gitref.WorktreeFiles
+	gitMergeBase = gitref.MergeBase
 )
 
 // runScan implements `zu scan [dir] [-ref commit | -include-ignored]

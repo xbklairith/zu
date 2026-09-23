@@ -300,7 +300,7 @@ Nothing is left to do here.
 
 **Steps:**
 
-- [ ] **Test** (temp repos, using the `needGit` helper):
+- [x] **Test** (temp repos, using the `needGit` helper):
 
    | Case | Expected |
    |---|---|
@@ -322,8 +322,8 @@ Nothing is left to do here.
    | run from a subdirectory | output byte-identical to running at the top level |
    | Ctrl-C through `interruptContext` | exit 3, nothing on stdout |
 
-- [ ] **Verify RED**: `go test ./internal/cli -run Diff` → FAIL.
-- [ ] **Action**: `runDiff(args, stdout, stderr)`.
+- [x] **Verify RED**: `go test ./internal/cli -run Diff` → FAIL.
+- [x] **Action**: `runDiff(args, stdout, stderr)`.
    1. **Flags:** `-format text|markdown|json` (default `text`), `-worktree`, `-include-ignored`, `-max-parse-errors N`. Arguments: `<base> [head]`.
    2. **Resolve:** `gitref.Resolve(".", base)` → `top` and the base commit. Resolve head with the same call (default `HEAD`).
    3. **Merge-base:** `gitref.MergeBase(top, base, head)`. On `ErrNoMergeBase`, exit 3 and print its message.
@@ -334,9 +334,9 @@ Nothing is left to do here.
    8. **Render:** `diff.Summarize`, then render to stdout.
    9. **Status line:** `zu diff: <n> packages changed, <m> affected, parse errors base=<a> head=<b>`.
    10. **Exit:** 2 if head's parse errors exceed N, else 0. Base's parse errors are pre-existing (B7): they are reported, never fail the MR.
-- [ ] **Verify**: `go test -race ./internal/cli` → ok.
-- [ ] **Smoke**: `go run ./cmd/zu diff HEAD~3 -format markdown` in the zu repository → readable Markdown, exit 0.
-- [ ] **Commit**: `git add internal/cli/diff.go internal/cli/diff_test.go internal/cli/cli.go && git commit -m "Add zu diff"`
+- [x] **Verify**: `go test -race ./internal/cli` → ok.
+- [x] **Smoke**: `go run ./cmd/zu diff HEAD~3 -format markdown` in the zu repository → readable Markdown, exit 0.
+- [x] **Commit**: `git add internal/cli/diff.go internal/cli/diff_test.go internal/cli/cli.go && git commit -m "Add zu diff"`
 
 ---
 
@@ -372,7 +372,7 @@ Nothing is left to do here.
 - [x] Task 4: Text and Markdown renderers, with Mermaid
 - [x] Task 5: merge-base
 - [x] Task 6: `scan.ListTree` (done in feature 02)
-- [ ] Task 7: `zu diff` CLI
+- [x] Task 7: `zu diff` CLI
 - [ ] Task 8: Docs, memory, final check
 
 **Status:** In Progress
