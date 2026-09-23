@@ -12,8 +12,8 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
 
 ## Progress Summary
 - Total Tasks: 15
-- Completed: 7/15
-- In Progress: Task 8 — Index and import resolution
+- Completed: 8/15
+- In Progress: Task 9 — Call resolution
 
 ## Tasks
 
@@ -59,10 +59,10 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
   - [x] REFACTOR
   - Linked: REQ-033, REQ-034, REQ-035, REQ-036, REQ-037
 
-- [ ] **Task 8: Index and import resolution** (`resolve.go`)
-  - [ ] RED: internal import → edge; path under a module but not scanned → `unresolvedImports`; longest-prefix require → external node; stdlib ignored; no module → unresolved; effective name from the package clause and the explicit alias
-  - [ ] GREEN
-  - [ ] REFACTOR
+- [x] **Task 8: Index and import resolution** (`resolve.go`)
+  - [x] RED: internal import → edge; path under a module but not scanned → `unresolvedImports`; longest-prefix require → external node; stdlib ignored; no module → unresolved; effective name from the package clause and the explicit alias
+  - [x] GREEN
+  - [x] REFACTOR
   - Linked: REQ-018, REQ-029, REQ-030, REQ-031
 
 - [ ] **Task 9: Call resolution**
