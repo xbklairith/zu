@@ -125,9 +125,15 @@ output side effects.
 - A type's hash covers its `TypeSpec`. A function's hash covers its `FuncDecl`, body
   included.
 - **Package hash amendment:** the pairs also include one synthetic member,
-  `("#decls", hash)`. It is the SHA-256 over the sorted hashes of the package's `const`, `var`
-  and `import` declarations. Without it, a changed constant or a
-  new import would leave the package "unmodified", which contradicts Meaningful Change.
+  `("#decls", hash)`. It is the SHA-256 over the sorted hashes of the package's `const`, `var`,
+  `import` and blank (`_`) declarations, plus one `fileHash` per file (package clause name,
+  normalised `//go:build`, cgo preamble, every directive line). Without it, a changed
+  constant, a new import, a `//go:embed` pattern or a build constraint would leave the
+  package "unmodified", which contradicts Meaningful Change.
+- Directive lines (`//go:…` except `//go:build`, and `//export`) attached to a declaration
+  are hashed with it, so `//go:linkname` or `//go:embed` edits change that node's hash.
+  A single-spec `GenDecl` loses its parentheses before printing: `import "x"` and
+  `import ("x")` hash the same.
 
 ### 4. Index and resolve (REQ-029–REQ-037)
 - **Index:**
@@ -271,9 +277,11 @@ Default output: `<dir>/.zu/ir/<commit12>[-dirty].json` or `<dir>/.zu/ir/worktree
 ## Requirement amendments (applied to requirements.md)
 
 1. **REQ-022:** the printer runs against an empty `FileSet` with every comment field
-   removed. The package hash also covers a synthetic `#decls` member for
-   const/var/import declarations. Otherwise re-wrapping would change hashes, and a
-   const change would not mark the package modified.
+   removed, except compiler directives. The package hash also covers a synthetic `#decls`
+   member for const/var/import/blank declarations and a per-file hash (package name, build
+   constraint, cgo preamble, directives). Otherwise re-wrapping would change hashes, and a
+   const, `//go:embed` or build-constraint change would not mark the package modified.
+   (The per-file part and directives were added after the code review.)
 2. **REQ-032:** use the Go convention (`ast.IsGenerated`: a matching line in any comment
    before the `package` clause), not "first comment group". Kubernetes' generated files
    put the licence header first and would otherwise be missed.

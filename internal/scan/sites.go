@@ -65,10 +65,14 @@ func (f *fileFacts) addCalls(fset *token.FileSet, d *ast.FuncDecl) {
 	}
 	from := callSite{FromRecv: recvBase(d), FromName: d.Name.Name}
 	recv := receiverObject(d)
+	tparams := receiverTypeParams(d)
 	ast.Inspect(d.Body, func(n ast.Node) bool {
 		call, ok := n.(*ast.CallExpr)
 		if !ok {
 			return true
+		}
+		if id, ok := unwrapInstantiation(call.Fun).(*ast.Ident); ok && id.Obj == nil && tparams[id.Name] {
+			return true // conversion to a receiver type parameter
 		}
 		s := from
 		s.Line = fset.Position(call.Lparen).Line
@@ -105,8 +109,16 @@ func classifyCall(s *callSite, fun ast.Expr, recv *ast.Object) bool { //nolint:s
 		default:
 			s.Kind = callOther
 		}
+	case *ast.StarExpr:
+		// (*fp)() calls through a pointer to a func variable; (*T)(x) with
+		// anything but a local variable is taken as a conversion.
+		if id, ok := x.X.(*ast.Ident); ok && localKind(id) == ast.Var {
+			s.Kind = callOther
+			return true
+		}
+		return false
 	case *ast.FuncLit, *ast.ArrayType, *ast.MapType, *ast.ChanType, *ast.FuncType,
-		*ast.InterfaceType, *ast.StructType, *ast.StarExpr:
+		*ast.InterfaceType, *ast.StructType:
 		return false // literal call or conversion
 	default:
 		s.Kind = callOther
@@ -167,6 +179,10 @@ func receiverObject(d *ast.FuncDecl) *ast.Object { //nolint:staticcheck // SA101
 			if isRecv(x.X) {
 				reassigned = true
 			}
+		case *ast.RangeStmt:
+			if x.Tok == token.ASSIGN && (isRecv(x.Key) || isRecv(x.Value)) {
+				reassigned = true
+			}
 		}
 		return !reassigned
 	})
@@ -174,6 +190,41 @@ func receiverObject(d *ast.FuncDecl) *ast.Object { //nolint:staticcheck // SA101
 		return nil
 	}
 	return obj
+}
+
+// receiverTypeParams returns the names a generic receiver binds, as in
+// func (l *L[F]) M(). The parser leaves them unresolved in the body, so
+// without this F(x) would look like a call to a package function F.
+func receiverTypeParams(d *ast.FuncDecl) map[string]bool {
+	if d.Recv == nil || len(d.Recv.List) == 0 {
+		return nil
+	}
+	t := d.Recv.List[0].Type
+	for {
+		switch x := t.(type) {
+		case *ast.StarExpr:
+			t = x.X
+			continue
+		case *ast.ParenExpr:
+			t = x.X
+			continue
+		}
+		break
+	}
+	var idx []ast.Expr
+	switch x := t.(type) {
+	case *ast.IndexExpr:
+		idx = []ast.Expr{x.Index}
+	case *ast.IndexListExpr:
+		idx = x.Indices
+	}
+	names := map[string]bool{}
+	for _, e := range idx {
+		if id, ok := e.(*ast.Ident); ok && id.Name != "_" {
+			names[id.Name] = true
+		}
+	}
+	return names
 }
 
 // addEmbeds records embedded types of a top-level struct or interface.

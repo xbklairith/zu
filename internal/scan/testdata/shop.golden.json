@@ -11,7 +11,7 @@
       "id": "example.com/shop",
       "kind": "package",
       "module": "example.com/shop",
-      "hash": "a8955dc1d4f2d6f067908b329095a72728e247fbee35fcbccf57634f4ae383f5",
+      "hash": "65552a8a1360f94e104eeaa147f261bc816391cbeea8138ededea871be6cb1e6",
       "locations": [
         {
           "path": "main.go",
@@ -36,7 +36,7 @@
       "id": "example.com/shop/internal/checkout",
       "kind": "package",
       "module": "example.com/shop",
-      "hash": "fe684652b4df6132374ecb24e8997d923062f620637fd76bbc663e80b0769b1e",
+      "hash": "9fd6b74b2aeb8ef2a8bcab2cf7226020f85844bc8c193e3bd62c916ce145b184",
       "locations": [
         {
           "path": "internal/checkout/checkout.go",
@@ -115,7 +115,7 @@
       "id": "example.com/shop/internal/money",
       "kind": "package",
       "module": "example.com/shop",
-      "hash": "42b67daef3793556b610cc650e390bf9904c368c506738d24c18ee6553933236",
+      "hash": "0c8332e74b6f57df24716d284e6112452e53a44e51ff306b546bc7717448e74e",
       "locations": [
         {
           "path": "internal/money/money.go",
@@ -168,7 +168,7 @@
       "id": "example.com/shop/internal/store",
       "kind": "package",
       "module": "example.com/shop",
-      "hash": "4f7d908f166c43c49644a7d3f3953595500bc7364e53b6281961632c0a3888da",
+      "hash": "817bb04f72c153b1da71b8c523d9e3834542227e5b9ea4777a0a6e512cf26649",
       "locations": [
         {
           "path": "internal/store/db_linux.go",
@@ -391,7 +391,7 @@
       "id": "example.com/shop/tools/gen",
       "kind": "package",
       "module": "example.com/shop/tools",
-      "hash": "977eda87fa9dce50e9e06906fbc06c79fbaf8363621f63f963f94575d1830084",
+      "hash": "7fa199a3196c0a620c26f5dd7924c9ba0095b41b4a113244f66bcac128cbbfe4",
       "locations": [
         {
           "path": "tools/gen/gen.go",

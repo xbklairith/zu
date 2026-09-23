@@ -101,8 +101,8 @@ func F() { fmt.Println() }
 		return h
 	}
 	b := other(base)
-	if len(b) != 3 {
-		t.Fatalf("want 3 other decl hashes (import, const, var), got %d", len(b))
+	if len(b) != 4 {
+		t.Fatalf("want 4 other hashes (file, import, const, var), got %d", len(b))
 	}
 	sameCommented := other(`package p
 

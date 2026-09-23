@@ -23,8 +23,9 @@ type fileFacts struct {
 	PkgLine   int
 	Generated bool
 	Decls     []declFact
-	// OtherHashes holds one hash per const, var or import declaration;
-	// they feed the package hash so such edits count as meaningful.
+	// OtherHashes holds one hash for the file itself (see fileHash) and one
+	// per const, var, import or blank (_) declaration; they feed the package
+	// hash so such edits count as meaningful.
 	OtherHashes []string
 	Imports     []importFact
 	Calls       []callSite
@@ -41,7 +42,8 @@ type declFact struct {
 	TypeKind string // types only
 	Hash     string
 	Line     int
-	node     ast.Node // released once hashed
+	node     ast.Node          // released once hashed
+	doc      *ast.CommentGroup // enclosing declaration's doc, for its directives
 }
 
 // extractFile parses root/rel and pulls out its facts.
@@ -82,14 +84,28 @@ func extractFile(root, rel string) *fileFacts {
 		}
 	}
 	// Hashing strips comments from the AST, so it runs last.
+	f.OtherHashes = append(f.OtherHashes, fileHash(file))
 	for _, decl := range file.Decls {
-		if d, ok := decl.(*ast.GenDecl); ok && d.Tok != token.TYPE {
-			f.OtherHashes = append(f.OtherHashes, hashNode(d))
+		switch d := decl.(type) {
+		case *ast.GenDecl:
+			if d.Tok != token.TYPE {
+				f.OtherHashes = append(f.OtherHashes, hashNode(d))
+				continue
+			}
+			for _, spec := range d.Specs {
+				if ts := spec.(*ast.TypeSpec); ts.Name.Name == "_" {
+					f.OtherHashes = append(f.OtherHashes, hashNode(ts))
+				}
+			}
+		case *ast.FuncDecl:
+			if d.Name.Name == "_" {
+				f.OtherHashes = append(f.OtherHashes, hashNode(d))
+			}
 		}
 	}
 	for i := range f.Decls {
-		f.Decls[i].Hash = hashNode(f.Decls[i].node)
-		f.Decls[i].node = nil
+		f.Decls[i].Hash = hashNode(f.Decls[i].node, f.Decls[i].doc)
+		f.Decls[i].node, f.Decls[i].doc = nil, nil
 	}
 	return f
 }

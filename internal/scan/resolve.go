@@ -92,15 +92,18 @@ func (ix *index) classify(from *module, importPath string) target {
 	if p := ix.pkgs[importPath]; p != nil {
 		return target{Class: importInternal, Pkg: p}
 	}
-	for _, m := range ix.w.Modules {
-		if m.Path != "" && hasPathPrefix(importPath, m.Path) {
-			return target{Class: importUnresolved}
-		}
-	}
+	// The longest matching module path wins, whether it was discovered in
+	// the tree or only required: a require of a nested module path beats the
+	// enclosing module that happens to be scanned.
 	var best require
 	for _, r := range from.Requires {
 		if hasPathPrefix(importPath, r.Path) && len(r.Path) > len(best.Path) {
 			best = r
+		}
+	}
+	for _, m := range ix.w.Modules {
+		if m.Path != "" && hasPathPrefix(importPath, m.Path) && len(m.Path) >= len(best.Path) {
+			return target{Class: importUnresolved}
 		}
 	}
 	if best.Path != "" {

@@ -275,5 +275,7 @@ func (b *builder) edge(from, to string, kind ir.EdgeKind, loc ir.Location) {
 		e = &ir.Edge{From: from, To: to, Kind: kind}
 		b.edges[id] = e
 	}
-	e.Locations = append(e.Locations, loc)
+	if !slices.Contains(e.Locations, loc) {
+		e.Locations = append(e.Locations, loc)
+	}
 }
