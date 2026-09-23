@@ -162,12 +162,12 @@
 
 **Steps:**
 
-- [ ] **Test**:
+- [x] **Test**:
    - **Golden.** Take the base IR from `testdata/shop` and a head IR from *scanning* a modified copy of it (copy the fixture into `t.TempDir()`, edit the sources, `scan.Run`), never a hand-edited IR, so `hash` and `shape` are the scanner's. The edits: a renamed function, a new import, a modified method, a removed type, and a reversed import. `Summarize` + `WriteJSON` must equal the golden file, which the `-update` flag rewrites.
    - **Repeatability.** Running it twice gives identical bytes.
    - **No change.** Base == head gives `"changed": false` and empty lists.
-- [ ] **Verify RED**: `go test ./internal/diff -run Summary` → FAIL.
-- [ ] **Action**:
+- [x] **Verify RED**: `go test ./internal/diff -run Summary` → FAIL.
+- [x] **Action**:
 
    ```go
    const SummaryVersion = "1"
@@ -205,8 +205,8 @@
 
    - **Row order, "bottom-up" (settled: change reading order).** Sort the changed packages by the length of the longest import chain to other changed packages, fewest first (leaves first), then by id. Compute it on the condensation of head's import graph (strongly connected components as single nodes), so a cycle, which the merged build variants can create, still has a defined order: packages in one component share its rank and sort by id. Test: a two-package import cycle among changed packages. Violations would come first, but they don't exist yet.
    - **Moves** count once. Their from and to ids are left out of the added/removed counts.
-- [ ] **Verify**: `go test ./internal/diff` → ok.
-- [ ] **Commit**: `git add internal/diff/summary.go internal/diff/summary_test.go internal/diff/testdata && git commit -m "Build the Structural Summary and its JSON"`
+- [x] **Verify**: `go test ./internal/diff` → ok.
+- [x] **Commit**: `git add internal/diff/summary.go internal/diff/summary_test.go internal/diff/testdata && git commit -m "Build the Structural Summary and its JSON"`
 
 ---
 
@@ -368,7 +368,7 @@ Nothing is left to do here.
 
 - [x] Task 1: Compare two IRs
 - [x] Task 2: Affected Set
-- [ ] Task 3: Summary model and JSON
+- [x] Task 3: Summary model and JSON
 - [ ] Task 4: Text and Markdown renderers, with Mermaid
 - [ ] Task 5: merge-base
 - [x] Task 6: `scan.ListTree` (done in feature 02)

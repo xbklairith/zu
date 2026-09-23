@@ -1,0 +1,156 @@
+{
+  "summaryVersion": "1",
+  "base": {
+    "commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "dirty": false
+  },
+  "head": {
+    "commit": "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
+    "dirty": false
+  },
+  "changed": true,
+  "packages": [
+    {
+      "id": "example.com/shop/internal/store",
+      "status": "modified",
+      "added": 0,
+      "modified": 3,
+      "removed": 1,
+      "hops": 0
+    },
+    {
+      "id": "example.com/shop/internal/money",
+      "status": "modified",
+      "added": 0,
+      "modified": 0,
+      "removed": 0,
+      "hops": 0
+    },
+    {
+      "id": "example.com/shop/internal/checkout",
+      "status": "modified",
+      "added": 0,
+      "modified": 1,
+      "removed": 0,
+      "hops": 0
+    },
+    {
+      "id": "example.com/shop",
+      "status": "modified",
+      "added": 0,
+      "modified": 1,
+      "removed": 0,
+      "hops": 0
+    }
+  ],
+  "imports": [
+    {
+      "from": "example.com/shop",
+      "to": "example.com/shop/internal/money",
+      "kind": "imports",
+      "status": "added"
+    },
+    {
+      "from": "example.com/shop/internal/money",
+      "to": "example.com/shop/internal/store",
+      "kind": "imports",
+      "status": "reversed"
+    }
+  ],
+  "edgeCounts": {
+    "calls": {
+      "added": 0,
+      "removed": 2
+    },
+    "embeds": {
+      "added": 0,
+      "removed": 1
+    }
+  },
+  "moves": [
+    {
+      "from": "example.com/shop/internal/money.Add",
+      "to": "example.com/shop/internal/money.Plus",
+      "kind": "function"
+    }
+  ],
+  "affected": [
+    {
+      "package": "example.com/shop",
+      "hops": 0
+    },
+    {
+      "package": "example.com/shop/internal/checkout",
+      "hops": 0
+    },
+    {
+      "package": "example.com/shop/internal/money",
+      "hops": 0
+    },
+    {
+      "package": "example.com/shop/internal/store",
+      "hops": 0
+    },
+    {
+      "package": "example.com/shop/tools/gen",
+      "hops": 1
+    }
+  ],
+  "nodes": [
+    {
+      "id": "example.com/shop",
+      "kind": "package",
+      "status": "modified"
+    },
+    {
+      "id": "example.com/shop.main",
+      "kind": "function",
+      "status": "modified"
+    },
+    {
+      "id": "example.com/shop/internal/checkout",
+      "kind": "package",
+      "status": "modified"
+    },
+    {
+      "id": "example.com/shop/internal/checkout.Total",
+      "kind": "function",
+      "status": "modified"
+    },
+    {
+      "id": "example.com/shop/internal/money",
+      "kind": "package",
+      "status": "modified"
+    },
+    {
+      "id": "example.com/shop/internal/store",
+      "kind": "package",
+      "status": "modified"
+    },
+    {
+      "id": "example.com/shop/internal/store.Order",
+      "kind": "type",
+      "status": "modified"
+    },
+    {
+      "id": "example.com/shop/internal/store.ReadWriter",
+      "kind": "type",
+      "status": "removed"
+    },
+    {
+      "id": "example.com/shop/internal/store.Repo.Get",
+      "kind": "function",
+      "status": "modified"
+    },
+    {
+      "id": "example.com/shop/internal/store.Repo.check",
+      "kind": "function",
+      "status": "modified"
+    }
+  ],
+  "parseErrors": {
+    "base": [],
+    "head": []
+  },
+  "notCompared": "Not compared: go.mod changes (dependency versions, go and toolchain lines) and other languages' toolchain and dependency files."
+}
