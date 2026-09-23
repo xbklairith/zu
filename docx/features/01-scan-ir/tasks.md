@@ -12,8 +12,8 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
 
 ## Progress Summary
 - Total Tasks: 15
-- Completed: 5/15
-- In Progress: Task 6 — Declaration hash
+- Completed: 6/15
+- In Progress: Task 7 — Call and embed site extraction
 
 ## Tasks
 
@@ -47,10 +47,10 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
   - [x] REFACTOR
   - Linked: REQ-013, REQ-014, REQ-015, REQ-017, REQ-020, REQ-021, REQ-045, REQ-046
 
-- [ ] **Task 6: Declaration hash** (`hash.go`)
-  - [ ] RED: comments (doc, field, trailing) and re-wrapping don't change the hash; a statement change does; const/var/import produce `#decls` hashes, and a changed const changes them
-  - [ ] GREEN
-  - [ ] REFACTOR
+- [x] **Task 6: Declaration hash** (`hash.go`)
+  - [x] RED: comments (doc, field, trailing) and re-wrapping don't change the hash; a statement change does; const/var/import produce `#decls` hashes, and a changed const changes them
+  - [x] GREEN
+  - [x] REFACTOR
   - Linked: REQ-022
 
 - [ ] **Task 7: Call and embed site extraction** (shadowing via `localKind`)

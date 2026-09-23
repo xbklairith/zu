@@ -23,6 +23,9 @@ type fileFacts struct {
 	PkgLine   int
 	Generated bool
 	Decls     []declFact
+	// OtherHashes holds one hash per const, var or import declaration;
+	// they feed the package hash so such edits count as meaningful.
+	OtherHashes []string
 }
 
 // declFact is one type, function or method declaration. Ids are formed
@@ -35,6 +38,7 @@ type declFact struct {
 	TypeKind string // types only
 	Hash     string
 	Line     int
+	node     ast.Node // released once hashed
 }
 
 // extractFile parses root/rel and pulls out its facts.
@@ -64,17 +68,27 @@ func extractFile(root, rel string) *fileFacts {
 			if d.Tok == token.TYPE {
 				for _, spec := range d.Specs {
 					ts := spec.(*ast.TypeSpec)
-					f.addDecl(fset, ts.Name, "", ir.KindType, typeKind(ts))
+					f.addDecl(fset, ts.Name, "", ir.KindType, typeKind(ts), ts)
 				}
 			}
 		case *ast.FuncDecl:
-			f.addDecl(fset, d.Name, recvBase(d), ir.KindFunction, "")
+			f.addDecl(fset, d.Name, recvBase(d), ir.KindFunction, "", d)
 		}
+	}
+	// Hashing strips comments from the AST, so it runs last.
+	for _, decl := range file.Decls {
+		if d, ok := decl.(*ast.GenDecl); ok && d.Tok != token.TYPE {
+			f.OtherHashes = append(f.OtherHashes, hashNode(d))
+		}
+	}
+	for i := range f.Decls {
+		f.Decls[i].Hash = hashNode(f.Decls[i].node)
+		f.Decls[i].node = nil
 	}
 	return f
 }
 
-func (f *fileFacts) addDecl(fset *token.FileSet, name *ast.Ident, recv string, kind ir.NodeKind, tk string) {
+func (f *fileFacts) addDecl(fset *token.FileSet, name *ast.Ident, recv string, kind ir.NodeKind, tk string, node ast.Node) {
 	if name.Name == "_" {
 		return
 	}
@@ -85,6 +99,7 @@ func (f *fileFacts) addDecl(fset *token.FileSet, name *ast.Ident, recv string, k
 		Exported: ast.IsExported(name.Name),
 		TypeKind: tk,
 		Line:     fset.Position(name.Pos()).Line,
+		node:     node,
 	})
 }
 

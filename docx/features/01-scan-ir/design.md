@@ -125,7 +125,7 @@ output side effects.
 - A type's hash covers its `TypeSpec`. A function's hash covers its `FuncDecl`, body
   included.
 - **Package hash amendment:** the pairs also include one synthetic member,
-  `("#decls", hash)`. It is the SHA-256 over the hashes of the package's `const`, `var`
+  `("#decls", hash)`. It is the SHA-256 over the sorted hashes of the package's `const`, `var`
   and `import` declarations, sorted by printed text. Without it, a changed constant or a
   new import would leave the package "unmodified", which contradicts Meaningful Change.
 
