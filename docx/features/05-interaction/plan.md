@@ -1745,7 +1745,7 @@ with
 
 **Steps:**
 
-- [ ] **Write the failing tests.**
+- [x] **Write the failing tests.**
 
 **Create `web/src/search.test.ts`:**
 
@@ -1808,8 +1808,8 @@ describe("keys", () => {
 });
 ````
 
-- [ ] **Run — expect FAIL:** `cd web && npx vitest run src/search.test.ts src/keys.test.ts` → modules not found.
-- [ ] **Implement.**
+- [x] **Run — expect FAIL:** `cd web && npx vitest run src/search.test.ts src/keys.test.ts` → modules not found.
+- [x] **Implement.**
 
 **Create `web/src/search.ts`:**
 
@@ -1893,8 +1893,8 @@ export function keyAction(key: string, ctx: KeyContext): Action | null {
 }
 ````
 
-- [ ] **Run — expect PASS:** `cd web && npx vitest run src/search.test.ts src/keys.test.ts && npx tsc --noEmit` → 6 passed.
-- [ ] **Commit:** `git add web/src/search.ts web/src/search.test.ts web/src/keys.ts web/src/keys.test.ts && git commit -m "Add search, reveal and the keyboard map"`
+- [x] **Run — expect PASS:** `cd web && npx vitest run src/search.test.ts src/keys.test.ts && npx tsc --noEmit` → 6 passed.
+- [x] **Commit:** `git add web/src/search.ts web/src/search.test.ts web/src/keys.ts web/src/keys.test.ts && git commit -m "Add search, reveal and the keyboard map"`
 
 ---
 
