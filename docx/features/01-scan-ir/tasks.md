@@ -12,8 +12,8 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
 
 ## Progress Summary
 - Total Tasks: 15
-- Completed: 2/15
-- In Progress: Task 3 — Walk
+- Completed: 3/15
+- In Progress: Task 4 — File header facts
 
 ## Tasks
 
@@ -29,10 +29,10 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
   - [x] REFACTOR
   - Linked: REQ-002, REQ-011, REQ-042
 
-- [ ] **Task 3: Walk** (`internal/scan/walk.go`)
-  - [ ] RED: skips `vendor`, `testdata`, `.x`, `_x` and `_test.go`; does not follow a directory symlink; skips a file symlink that leaves the root; lexical order; counts non-Go extensions (files without an extension are ignored); discovers `go.mod` files and maps each directory to its nearest module and import path
-  - [ ] GREEN
-  - [ ] REFACTOR
+- [x] **Task 3: Walk** (`internal/scan/walk.go`)
+  - [x] RED: skips `vendor`, `testdata`, `.x`, `_x` and `_test.go`; does not follow a directory symlink; skips a file symlink that leaves the root; lexical order; counts non-Go extensions (files without an extension are ignored); discovers `go.mod` files and maps each directory to its nearest module and import path
+  - [x] GREEN
+  - [x] REFACTOR
   - Linked: REQ-023, REQ-024, REQ-027, REQ-028
 
 - [ ] **Task 4: File header facts** (`extract.go`)
