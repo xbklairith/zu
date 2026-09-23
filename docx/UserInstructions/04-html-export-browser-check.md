@@ -21,6 +21,8 @@ need a person: `file://` loading, Firefox and Safari, and a visible first-paint 
    bin/zu scan -out $T/zu.json -html $T/zu.html -include ./internal/...
    bin/zu scan .zu/corpus/hugo@v0.166.0 -out $T/hugo.json -html $T/hugo.html -include ./hugolib
    bin/zu scan .zu/corpus/kubernetes@v1.37.0 -out $T/k8s.json -html $T/k8s.html
+   bin/zu diff 0aaff9c 23a3e08 -html $T/zu-change.html
+   (cd .zu/corpus/hugo@v0.166.0 && ../../../bin/zu diff HEAD~50 -max-parse-errors 1000000 -html $T/hugo-change.html)
    open $T
    ```
 
@@ -32,6 +34,9 @@ need a person: `file://` loading, Firefox and Safari, and a visible first-paint 
    - Also run `performance.getEntriesByType("mark")` to get `zu-drawn`.
 4. Double-click a box, press Esc, and click a declaration in `zu.html` to see its
    source.
+5. In `zu-change.html` and `hugo-change.html`: click a package in "Changed packages"
+   (it is centred), select a changed declaration (its hunks show in the panel), and
+   toggle "Show full project" and back.
 
 ## Verification
 
@@ -39,6 +44,7 @@ need a person: `file://` loading, Firefox and Safari, and a visible first-paint 
 - [ ] Network: only the document itself
 - [ ] `k8s.html` first paint under 3 s in every browser
 - [ ] Drill-in, Esc and the source panel work in every browser
+- [ ] Change View: the changed list centres, hunks show, and the toggle works in every browser
 
 Add the results to `docx/features/04-html-export/acceptance.md`.
 

@@ -1637,6 +1637,6 @@ Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag r
 - [x] Task B1 · `export.Change`
 - [x] Task B2 · `zu diff -html` (blocked)
 - [x] Task B3 · Change View UI (blocked)
-- [ ] Task B4 · Part B acceptance (blocked)
+- [~] Task B4 · Part B acceptance (blocked) — measured; file://, Firefox and Safari pending (see acceptance.md)
 
 **Status:** Not Started
