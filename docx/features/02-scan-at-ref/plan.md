@@ -278,24 +278,36 @@
 **Steps:**
 
 - [x] **Bench**: `scripts/bench-corpus.sh`, run in the background. Record wall time and peak RSS for disk scans vs ref scans on hugo and kubernetes. Expected: a ref scan stays within 2× the disk scan time, and peak RSS stays under 4 GB.
-- [x] **Self-parity**: on a clean zu checkout (`git status --porcelain` is empty), run `go run ./cmd/zu scan -ref HEAD -out "$SCRATCH/ref.json" .` and `go run ./cmd/zu scan -out "$SCRATCH/disk.json" .`, then `cmp "$SCRATCH/ref.json" "$SCRATCH/disk.json"`. Expected: no output. Untracked files would break this, which is expected; see Notes.
+- [x] **Self-parity**: on a clean zu checkout (`git status --porcelain` is empty), run `go run ./cmd/zu scan -ref HEAD -out "$SCRATCH/ref.json" .` and `go run ./cmd/zu scan -out "$SCRATCH/disk.json" .`, then `cmp "$SCRATCH/ref.json" "$SCRATCH/disk.json"`. Expected: no output. See Notes for the exceptions.
 - [x] **Full check**: `set -o pipefail; make check` → exit 0.
 - [x] **Commit**: `git add docx/glossary.md CLAUDE.md scripts/bench-corpus.sh docx/features/02-scan-at-ref/benchmarks.md docx/features/02-scan-at-ref/plan.md && git commit -m "Document ref scans and record benchmarks"`
 
-   *Done note:* corpus parity is identical for cobra, hugo and kubernetes (see `benchmarks.md`). On the zu checkout, only `unsupported` differs: the disk scan also counts git-ignored `web/node_modules` and `web/dist` files, the documented exception. Every node, edge and hash matches.
+   *Done note:* corpus parity is identical for cobra, hugo and kubernetes (see `benchmarks.md`). On the zu checkout, only `unsupported` differed at first: the disk scan also counted git-ignored `web/node_modules` and `web/dist` files. The follow-up below removed that difference: the self-parity `cmp` is now silent.
+
+### Follow-up: working-tree file selection (from the scrutinize of feature 02)
+
+The scrutinize found that a disk scan read untracked and ignored files yet was labelled as the clean commit (`<commit12>.json`, `dirty:false`), so the same name could hold two different IRs. The fix, chosen by the user as option (a):
+
+- [x] `gitref.WorktreeFiles(ctx, dir, includeIgnored)` lists the files the next commit would contain (`ls-files --cached`, `--others --exclude-standard`, and `--ignored` when asked); `Listing.Extra` says whether any untracked or ignored file lies outside pruned directories. *Evidence:* `TestWorktreeFiles`, `TestWorktreeFilesCleanAndOutside`.
+- [x] `scan.ListTree(root, files)` applies `DirTree`'s file rules to that list. *Evidence:* `TestListTreeFiles`, `TestListTreeMatchesDirTree`, and `TestRefScanMatchesDiskScan`, which adds an ignored file and checks that the working-tree scan still equals the ref scan.
+- [x] `zu scan` in a work tree scans that list; `dirty` = tracked modifications or `Extra`; `-include-ignored` opts back in (exit 3 with `-ref`). Outside a repository it scans every file, as before. *Evidence:* `TestScanWorktreeSkipsIgnoredFiles` (a clean tree with an ignored file is byte-identical to `-ref HEAD`), `TestScanWorktreeUntrackedIsDirty`, `TestScanIncludeIgnoredWithRef`.
+- [x] Minor: a read from a closed `CommitTree` now sets its sticky error, and `zu scan` reports the tree's error in place of its symptom (for example "no go.mod"). *Evidence:* `TestScanRefClosedTreeWritesNothing`.
+- [x] Docs: REQ-002 and REQ-011 amended, REQ-048 added (01 requirements); `shape` added to the 01 design's IR example; 03 plan Task 6 marked as done here.
 
 ---
 
 ## Notes
 
-- **The parity promise, precisely:** same commit, clean checkout (no untracked or ignored `.go` files), no checked-out submodules. Disk scans see untracked and ignored files; ref scans never do.
+- **The parity promise, precisely:** a working-tree scan with `dirty:false` is byte-identical to a ref scan of the same commit. Two exceptions remain:
+  - checked-out submodules, whose files a disk scan reads while a commit holds only the gitlink;
+  - files a smudge filter rewrites on checkout (git-lfs pointers, git-crypt ciphertext), since a ref scan reads the raw blob and a disk scan reads the filtered file.
 - **Security:**
   - `--end-of-options` and the leading-`-` check stop ref injection.
   - `cat-file --batch` never runs clean or smudge filters.
   - Links are resolved purely by path arithmetic inside the tree, so nothing outside the repository is read.
 - **`shape` can over-pair across kinds**, for example a type and a function both named `_` after blanking. Feature 03 pairs only within the same `kind`, and only one-to-one.
 - **Import direction:** `gitref` imports `scan` (for `PrunedDir` and `ir`); `scan` never imports `gitref` outside `_test.go`.
-- **Deliberately not done:** a filter on `git ls-files` (that belongs to feature 03's `-worktree`), and reusing the tree between two scans.
+- **Deliberately not done:** reusing the tree between two scans.
 
 ## Progress
 

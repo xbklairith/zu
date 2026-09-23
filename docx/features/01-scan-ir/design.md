@@ -215,9 +215,10 @@ Default output: `<dir>/.zu/ir/<commit12>[-dirty].json` or `<dir>/.zu/ir/worktree
     {"id": "example.com/shop/store", "kind": "package", "module": "example.com/shop",
      "hash": "…", "locations": [{"path": "store/repo.go", "line": 1}]},
     {"id": "example.com/shop/store.Repo", "kind": "type", "parent": "example.com/shop/store",
-     "exported": true, "typeKind": "struct", "hash": "…", "locations": [...]},
+     "exported": true, "typeKind": "struct", "hash": "…", "shape": "…", "locations": [...]},
     {"id": "example.com/shop/store.Repo.Get", "kind": "function",
-     "parent": "example.com/shop/store.Repo", "exported": true, "hash": "…", "locations": [...]},
+     "parent": "example.com/shop/store.Repo", "exported": true, "hash": "…", "shape": "…",
+     "locations": [...]},
     {"id": "github.com/lib/pq", "kind": "external", "locations": [{"path": "go.mod", "line": 7}]}
   ],
   "edges": [{"from": "…", "to": "…", "kind": "calls", "locations": [...]}],
@@ -227,7 +228,8 @@ Default output: `<dir>/.zu/ir/<commit12>[-dirty].json` or `<dir>/.zu/ir/worktree
   "unsupported": {".proto": 12}
 }
 ```
-- Optional fields (`parent`, `module`, `exported`, `typeKind`, `generated`, `hash`) are
+- Optional fields (`parent`, `module`, `exported`, `typeKind`, `generated`, `hash`,
+  `shape`) are
   omitted when they don't apply to a node's kind. `exported` is a `*bool` so `false`
   still gets written.
 - Empty collections are written as `[]` or `{}`, never `null`, so the file shape is the
@@ -246,7 +248,8 @@ Default output: `<dir>/.zu/ir/<commit12>[-dirty].json` or `<dir>/.zu/ir/worktree
 | malformed `go.mod` | parse error; it is a boundary, so its files are not scanned |
 | `.go` files but no `go.mod` at or under the root | stderr reason, nothing written, exit 3 |
 | two nodes would share an id | the declarations are dropped with their edges; one parse error per id |
-| git missing, errors, or no repo | `commit: ""`, output `worktree.json`; not an error |
+| git missing, errors, or no repo | `commit: ""`, output `worktree.json`, every file under `dir` scanned; not an error |
+| inside a git work tree | only the files git would commit (plus ignored ones with `-include-ignored`) are scanned; an untracked or included ignored file makes the IR dirty (REQ-011, REQ-048, added by feature 02) |
 | write fails | stderr, exit 3; the temp file is removed; no partial IR (REQ-044) |
 | Ctrl-C (during the scan or the git lookup) | context cancelled; workers stop; nothing written; exit 3 |
 

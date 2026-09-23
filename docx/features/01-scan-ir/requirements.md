@@ -32,7 +32,7 @@ requirement, decision record or round-1 answer each one comes from.
 | ID | Requirement | Trace |
 |---|---|---|
 | REQ-001 | WHEN the user runs `zu scan [dir]` THEN the system SHALL parse the Go source under `dir` (default `.`) and write one IR file. | A1 |
-| REQ-002 | WHEN a scan completes THEN the system SHALL write the IR to `.zu/ir/<commit12>.json` (first 12 hex characters of the HEAD commit id), or `.zu/ir/<commit12>-dirty.json` when tracked files have uncommitted modifications, or `.zu/ir/worktree.json` when `dir` is not inside a git repository or the repository has no commits. Untracked files SHALL NOT make a scan dirty. | T13, T11 |
+| REQ-002 | WHEN a scan completes THEN the system SHALL write the IR to `.zu/ir/<commit12>.json` (first 12 hex characters of the HEAD commit id), or `.zu/ir/<commit12>-dirty.json` when the scan is dirty (REQ-011), or `.zu/ir/worktree.json` when `dir` is not inside a git repository or the repository has no commits. *(Dirty rule amended by feature 02: untracked files now count.)* | T13, T11, feature 02 |
 | REQ-003 | WHEN the system creates `.zu/` THEN it SHALL write `.zu/.gitignore` containing `*` and SHALL NOT modify any other file outside `.zu/`. | T13 |
 | REQ-004 | WHEN `-out -` is given THEN the system SHALL write the IR to stdout and write nothing under `.zu/`. | T13, CI usage |
 | REQ-005 | WHEN `-out <path>` is given THEN the system SHALL write the IR to that path instead of `.zu/ir/`. | CLI flags |
@@ -46,7 +46,7 @@ requirement, decision record or round-1 answer each one comes from.
 | ID | Requirement | Trace |
 |---|---|---|
 | REQ-010 | The IR SHALL contain, in this order: `schemaVersion`, `ref`, `grouping`, `policyHash`, `nodes`, `edges`, `unresolvedCalls`, `unresolvedImports`, `parseErrors`, `unsupported`. | IR contract, 0003 |
-| REQ-011 | The IR SHALL record `ref` once at top level as `{commit, dirty}`, where `commit` is the full HEAD commit id, or `""` outside a git repository or in a repository with no commits; `dirty` is true only when tracked files have uncommitted modifications. | T11 |
+| REQ-011 | The IR SHALL record `ref` once at top level as `{commit, dirty}`, where `commit` is the full HEAD commit id, or `""` outside a git repository or in a repository with no commits; `dirty` is true when tracked files have uncommitted modifications or the scan read a file HEAD lacks: an untracked file, or an ignored one under `-include-ignored` (REQ-048), outside skipped directories. A scan whose `dirty` is false SHALL be byte-identical to `zu scan -ref` of the same commit. *(Amended by feature 02: untracked files used not to count, which let a scan that differed from its commit carry the clean name.)* | T11, feature 02 |
 | REQ-012 | The IR SHALL set `grouping` to `"tree"` and `policyHash` to the fixed hash of the built-in default (empty) Policy, and SHALL NOT contain nodes for import-path segments that are not packages. | M1, 0008, 0004 |
 | REQ-013 | The IR SHALL contain nodes of exactly four kinds: `package`, `type`, `function` (including methods), and `external`. | T1, T9 |
 | REQ-014 | The system SHALL identify a `package` node by its import path, a `type` node by `<import path>.<Type>`, a function by `<import path>.<Func>`, and a method by `<import path>.<Type>.<Method>` — for both value and pointer receivers, and ignoring type parameters. IF a type, function or method id equals a package id, or declarations in two packages share an id (possible because directory names may contain dots: package `m/a.b` and type `b` of package `m/a`), THEN the system SHALL keep the package node, drop every such declaration together with the edges touching its id, and record one `parseErrors` entry per dropped id at its first location. | 0003, T1, spec review |
@@ -72,6 +72,7 @@ requirement, decision record or round-1 answer each one comes from.
 | REQ-026 | The system SHALL merge declarations that share an id (e.g. the same function in `_linux.go` and `_windows.go` files, or several `init` functions) into one node holding every location, with `hash` = SHA-256 over the per-declaration hashes (each computed as in REQ-022) sorted by location `(path, line)`. | T5, 0007 |
 | REQ-027 | The system SHALL discover every `go.mod` under the root (outside skipped directories) and assign each package to the module of its nearest enclosing `go.mod`; its import path SHALL be that module's path joined with the package directory's path relative to the module root. A `go.mod` without a `module` directive, or one that fails to parse, is a boundary: files under it (down to the next `go.mod`) are not scanned. One that fails to parse, or has content but no `module` directive, is reported as a parse error; an empty one is not. | T8 |
 | REQ-028 | The system SHALL count non-Go source files by extension in `unsupported`, and SHALL NOT create nodes for them. | Language support, R2 Q8 |
+| REQ-048 | WHILE `dir` is inside a git work tree, the system SHALL consider only the files the next commit would contain (tracked and untracked, not ignored by `.gitignore` or `.git/info/exclude`, tracked files deleted on disk left out), and, WHERE `-include-ignored` is given, ignored files too; outside a work tree it SHALL consider every file under `dir`. REQ-023 and REQ-024 apply to either set. *(Added by feature 02.)* | T11, feature 02 |
 
 ### Conditional Requirements — resolution
 
@@ -132,7 +133,7 @@ requirement, decision record or round-1 answer each one comes from.
 
 ## Out of Scope
 
-- Scanning a git ref other than the working tree (feature: diff).
+- Scanning a git ref other than the working tree (done in feature 02: `zu scan -ref`).
 - Policy files, Levels, Proposals, Baseline, and cycle checks (feature: Policy).
 - Cyclomatic complexity and coverage (feature: CRAP overlay).
 - Building the Package Tree from ids (done where views are drawn).

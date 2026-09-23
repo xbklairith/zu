@@ -10,8 +10,8 @@
 **Architecture:**
 - A new, pure package, `internal/diff`, turns two `*ir.IR` into a `Summary`. It computes Change Status, Moves, reversed imports and the Affected Set. It does no I/O.
 - Renderers in `internal/diff/render*.go` write the three formats.
-- `internal/gitref` gains merge-base and the worktree file list.
-- `internal/scan` gains a `ListTree`: disk files from a given list, with the same link rules as `DirTree`.
+- `internal/gitref` gains merge-base.
+- `-worktree` reuses feature 02's `gitref.WorktreeFiles` and `scan.ListTree`, the same file selection `zu scan` uses.
 - `internal/cli/diff.go` wires them together:
   1. resolve both refs;
   2. find the merge-base, or exit 3;
@@ -245,7 +245,7 @@
 
 ---
 
-### Task 5: merge-base and the worktree file list (`internal/gitref`)
+### Task 5: merge-base (`internal/gitref`)
 
 **Files:**
 - Create: `internal/gitref/diff.go`
@@ -261,10 +261,8 @@
    | `MergeBase` when head equals base | head |
    | `MergeBase` in a `git clone --depth 1 file://…` of a two-branch repo, with the other branch fetched shallow | `ErrNoMergeBase` |
    | `MergeBase` with a criss-cross history | the same commit as `git merge-base` |
-   | `WorktreeFiles(top, false)` with a tracked file, an untracked file, an ignored file and a tracked file deleted on disk | tracked + untracked; not ignored; not deleted |
-   | `WorktreeFiles(top, true)` | also includes the ignored file |
 
-- [ ] **Verify RED**: `go test ./internal/gitref -run 'MergeBase|Worktree'` → FAIL.
+- [ ] **Verify RED**: `go test ./internal/gitref -run MergeBase` → FAIL.
 - [ ] **Action**:
 
    ```go
@@ -273,46 +271,21 @@
    // MergeBase is `git merge-base <a> <b>`: git's single pick, even for
    // criss-cross histories. Exit status 1 with no output → ErrNoMergeBase.
    func MergeBase(ctx context.Context, top, a, b string) (string, error)
-
-   // WorktreeFiles lists the files the next commit would contain: tracked
-   // plus untracked, not ignored (`ls-files -z --cached --others
-   // --exclude-standard`), or with ignored files too when includeIgnored
-   // (adds `ls-files -z --others --ignored --exclude-standard`). It
-   // de-duplicates, sorts, and drops paths missing on disk (tracked files
-   // deleted in the worktree).
-   func WorktreeFiles(ctx context.Context, top string, includeIgnored bool) ([]string, error)
    ```
 
 - [ ] **Verify**: `go test -race ./internal/gitref` → ok.
-- [ ] **Commit**: `git add internal/gitref/diff.go internal/gitref/diff_test.go && git commit -m "Find merge-bases and list worktree files"`
+- [ ] **Commit**: `git add internal/gitref/diff.go internal/gitref/diff_test.go && git commit -m "Find merge-bases"`
 
 ---
 
-### Task 6: `scan.ListTree` for `-worktree`
+### Task 6: `scan.ListTree` for `-worktree`: done in feature 02
 
-**Files:**
-- Modify: `internal/scan/tree.go`
-- Modify: `internal/scan/walk_test.go`
+Feature 02 needed the same file selection for `zu scan` (its scrutinize found that a disk scan of an untracked or ignored file was labelled as the clean commit). It shipped:
 
-**Steps:**
+- `gitref.WorktreeFiles(ctx, dir, includeIgnored) (*Listing, error)`: `Listing.Files` holds the files the next commit would contain, relative to `dir`, sorted, with deleted tracked files dropped. `Listing.Extra` is set when an untracked or ignored file lies outside pruned directories. It returns `nil, nil` outside a work tree.
+- `scan.ListTree(root, files)`: `DirTree`'s file rules applied to a given list.
 
-- [ ] **Test**:
-   - `ListTree(root, files)` reports exactly the given files, minus pruned directories.
-   - It applies the same link rules as `DirTree`: in-tree file links are kept, escaping or directory links are dropped.
-   - A missing file becomes a parse error, not a crash.
-   - `ListTree(root, <every file DirTree lists>)` scans byte-identically to `DirTree(root)`.
-- [ ] **Verify RED**: `go test ./internal/scan -run ListTree` → FAIL.
-- [ ] **Action**:
-
-   ```go
-   // ListTree is the directory at root restricted to files (slash paths
-   // relative to root), for `zu diff -worktree`.
-   func ListTree(root string, files []string) (Tree, error)
-   ```
-
-   It shares `linkedFileInside` and the `PrunedDir` check with `DirTree`.
-- [ ] **Verify**: `go test ./internal/scan` → ok.
-- [ ] **Commit**: `git add internal/scan/tree.go internal/scan/walk_test.go && git commit -m "Scan a listed set of worktree files"`
+Nothing is left to do here.
 
 ---
 
@@ -353,7 +326,7 @@
    2. **Resolve:** `gitref.Resolve(".", base)` → `top` and the base commit. Resolve head with the same call (default `HEAD`).
    3. **Merge-base:** `gitref.MergeBase(top, base, head)`. On `ErrNoMergeBase`, exit 3 and print its message.
    4. **Base tree:** `gitref.OpenCommit(top, mb)`.
-   5. **Head tree:** with `-worktree`, `scan.ListTree(top, gitref.WorktreeFiles(top, includeIgnored))`, with `Ref{Commit: head, Dirty: true}`. Otherwise `gitref.OpenCommit(top, head)`.
+   5. **Head tree:** with `-worktree`, `scan.ListTree(top, l.Files)` where `l` is `gitref.WorktreeFiles(ctx, top, includeIgnored)`, labelled as `zu scan` labels it: `Ref{Commit: head, Dirty: modified || l.Extra}`. Otherwise `gitref.OpenCommit(top, head)`.
    6. **Scan:** run `scan.Run` on each tree in turn, not concurrently, so peak memory is two IRs, not two scans. Check `tree.Err()` on each.
    7. **Policy hash:** if they differ, exit 3 with `policy changed between base and head; diff uses head's policy once the Policy feature lands` (0004).
    8. **Render:** `diff.Summarize`, then render to stdout.
@@ -383,7 +356,8 @@
 
 ## Notes
 
-- **The head IR under `-worktree`** is labelled `dirty: true` with head's commit, matching `zu scan`'s naming. Its ignored files follow `-include-ignored`.
+- **The head IR under `-worktree`** uses exactly `zu scan`'s file selection and dirty rule, so `zu scan` and `zu diff -worktree` agree. Its ignored files follow `-include-ignored`.
+- **Open decision: trivial-body Moves.** Two unrelated small declarations, such as `func Stop() {}` removed from package `x` and `func Reset() {}` added to package `y`, have equal `shape` and would pair as a Move. Options: pair only when the package or the name stays the same, or require a minimum body size. Decide in Task 1 before writing its tests.
 - **Removed packages** can't be in the Affected Set: nothing at head imports them.
 - **No `.zu/` writes:** `zu diff` writes only stdout and stderr. IRs stay in memory.
 - **Exit 1 stays unused** until the Policy feature adds violations.
@@ -394,8 +368,8 @@
 - [ ] Task 2: Affected Set
 - [ ] Task 3: Summary model and JSON
 - [ ] Task 4: Text and Markdown renderers, with Mermaid
-- [ ] Task 5: merge-base and the worktree file list
-- [ ] Task 6: `scan.ListTree`
+- [ ] Task 5: merge-base
+- [x] Task 6: `scan.ListTree` (done in feature 02)
 - [ ] Task 7: `zu diff` CLI
 - [ ] Task 8: Docs, memory, final check
 
