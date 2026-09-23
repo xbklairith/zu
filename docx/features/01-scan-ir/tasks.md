@@ -12,8 +12,8 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
 
 ## Progress Summary
 - Total Tasks: 15
-- Completed: 12/15
-- In Progress: Task 13 — CLI `zu scan`
+- Completed: 13/15
+- In Progress: Task 14 — Security and privacy checks
 
 ## Tasks
 
@@ -89,10 +89,10 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
   - [x] REFACTOR
   - Linked: REQ-001, REQ-007, REQ-012, REQ-038, REQ-039, and the end-to-end check of REQ-013–REQ-037
 
-- [ ] **Task 13: CLI `zu scan`** (`internal/cli/scan.go`)
-  - [ ] RED: default output names (commit12, `-dirty`, `worktree`); `.zu/.gitignore` = `*`; `-out -` writes stdout and nothing under `.zu`; `-out path`; summary line; parse error → exit 2, `-max-parse-errors 1` → 0; missing dir or bad flag → exit 3 and nothing written; no temp file left behind
-  - [ ] GREEN
-  - [ ] REFACTOR
+- [x] **Task 13: CLI `zu scan`** (`internal/cli/scan.go`)
+  - [x] RED: default output names (commit12, `-dirty`, `worktree`); `.zu/.gitignore` = `*`; `-out -` writes stdout and nothing under `.zu`; `-out path`; summary line; parse error → exit 2, `-max-parse-errors 1` → 0; missing dir or bad flag → exit 3 and nothing written; no temp file left behind
+  - [x] GREEN
+  - [x] REFACTOR
   - Linked: REQ-001–REQ-009, REQ-044
 
 - [ ] **Task 14: Security and privacy checks**

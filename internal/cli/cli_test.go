@@ -67,7 +67,7 @@ func TestUnknownCommandIsBadInvocation(t *testing.T) {
 }
 
 func TestPlannedCommandsReportNotImplemented(t *testing.T) {
-	for _, cmd := range []string{"scan", "serve", "diff", "check", "policy"} {
+	for _, cmd := range []string{"serve", "diff", "check", "policy"} {
 		code, _, errOut := run(cmd)
 		if code != ExitBadInvocation {
 			t.Errorf("%s: exit = %d, want %d", cmd, code, ExitBadInvocation)
