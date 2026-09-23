@@ -126,6 +126,7 @@ requirement, decision record or round-1 answer each one comes from.
 - [x] A fixture with one unparseable file writes the IR with one `parseErrors` entry and exits 2; with `-max-parse-errors 1` it exits 0 (REQ-007, REQ-008). — *Evidence:* `TestScanParseErrorTolerance` (`internal/cli`)
 - [x] `zu scan /nonexistent` exits 3 and writes nothing (REQ-009). — *Evidence:* `TestScanBadInvocation` ("missing dir")
 - [x] `zu scan` on zu's own repository succeeds with zero parse errors, and the IR contains no absolute paths (REQ-043). — *Evidence:* `TestSelfScan`, `TestIRHasNoAbsolutePaths`
+- [x] `internal/scan` and `internal/ir` link no network code; `git` runs with fsmonitor, the untracked cache and optional locks off, and leaves `.git/index` untouched; a scan leaves no temporary file next to its output (REQ-042, REQ-044). — *Evidence:* `TestScanLinksNoNetworkCode`, `TestHeadRunsNoRepoConfiguredCodeAndWritesNothing`, `TestScanOutsideGitWritesWorktreeIR` (no leftovers in `.zu/ir`)
 - [x] The hugo scan time and kubernetes peak memory are measured with a script and recorded in `docx/features/01-scan-ir/benchmarks.md` (REQ-040, REQ-041). — *Evidence:* `benchmarks.md` (hugo 0.37 s, kubernetes 818 MB)
 
 ## Out of Scope
