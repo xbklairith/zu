@@ -171,6 +171,7 @@ type Props = {
   onToggle?: (id: string) => void;
   onEdge?: (id: string) => void;
   center?: { id: string; seq: number }; // a node to bring into view
+  fit?: number; // fits the whole scene each time it changes (the f key)
 };
 
 // drawnFor is the drawn node standing for id: itself, its #pkg leaf, or the
@@ -190,7 +191,7 @@ function depth(nodes: Map<string, SceneNode>, id: string): number {
   return d;
 }
 
-export function Canvas({ view, sc, placed, edge, onSelect, onOpen, onToggle, onEdge, center }: Props) {
+export function Canvas({ view, sc, placed, edge, onSelect, onOpen, onToggle, onEdge, center, fit }: Props) {
   const byId = new Map(sc.nodes.map((n) => [n.id, n]));
   const rf = useReactFlow();
   const box = useRef<HTMLDivElement>(null);
@@ -209,6 +210,9 @@ export function Canvas({ view, sc, placed, edge, onSelect, onOpen, onToggle, onE
     const cy = at.y + p.h / 2;
     void rf.setViewport({ x: r.width / 2 - cx * zoom, y: r.height / 2 - cy * zoom, zoom });
   }, [rf, target, placed, center?.seq]);
+  useEffect(() => {
+    if (fit) void rf.fitView();
+  }, [rf, fit]);
   const nodes: ZNode[] = [...sc.nodes]
     .sort((a, b) => depth(byId, a.id) - depth(byId, b.id) || (a.id < b.id ? -1 : 1))
     .map((node) => {

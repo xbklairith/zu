@@ -3620,7 +3620,7 @@ with
 
 **Steps:**
 
-- [ ] **Implement.**
+- [x] **Implement.**
 
 **Create `web/src/Toolbar.tsx`:**
 
@@ -4038,9 +4038,9 @@ with
 }
 ````
 
-- [ ] **Run — expect PASS:** `cd web && npx vitest run && npx tsc --noEmit && npm run build`.
-- [ ] **Check in a browser:** `/`, type `Repo.Get`, Enter → focus `store`, the `.Get` row selected and centred, hash `#f=…store&s=…Repo.Get`; `d` → the stage button reads "Declutter arrows"; reload keeps it.
-- [ ] **Commit:** `git add web/src/Toolbar.tsx web/src/SearchBox.tsx web/src/App.tsx web/src/Canvas.tsx web/src/styles.css && git commit -m "Add the toolbar and the search box"`
+- [x] **Run — expect PASS:** `cd web && npx vitest run && npx tsc --noEmit && npm run build`.
+- [x] **Check in a browser:** `/`, type `Repo.Get`, Enter → focus `store`, the `.Get` row selected and centred, hash `#f=…store&s=…Repo.Get`; `d` → the stage button reads "Declutter arrows"; reload keeps it.
+- [x] **Commit:** `git add web/src/Toolbar.tsx web/src/SearchBox.tsx web/src/App.tsx web/src/Canvas.tsx web/src/styles.css && git commit -m "Add the toolbar and the search box"`
 
 ---
 

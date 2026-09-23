@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { Canvas } from "./Canvas";
 import { changedSubgraph, nodeMark } from "./change";
@@ -10,8 +10,10 @@ import { keyAction } from "./keys";
 import { elkGraph, positions, Superseded, type Placed } from "./layout";
 import { Panel } from "./Panel";
 import { reveal } from "./search";
+import { SearchBox } from "./SearchBox";
 import { openFull, scene, type SceneNode } from "./scene";
 import { deeper, drill, nextStage, select, shallower, toggle, up } from "./state";
+import { Toolbar } from "./Toolbar";
 import { useViewState } from "./useViewState";
 
 const PKG = "#pkg";
@@ -66,6 +68,9 @@ export function App({ view: whole }: { view: View }) {
     if (change && !full && openFull(view, state.focus)) setFull(true);
   }, [change, full, view, state.focus]);
   const [center, setCenter] = useState<{ id: string; seq: number } | undefined>(undefined);
+  const searchBox = useRef<HTMLInputElement>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [fit, setFit] = useState(0);
   const sc = useMemo(() => scene(view, state), [view, state]);
   // A selected bundle edge lives here, not in the hash: its id changes with depth.
   const [edgeId, setEdgeId] = useState<string | null>(null);
@@ -120,13 +125,18 @@ export function App({ view: whole }: { view: View }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const a = keyAction(e.key, {
-        searchOpen: false,
+        searchOpen,
         selected: state.selected !== null,
         atRoot: state.focus === "",
         typing: e.target instanceof HTMLInputElement,
         mod: e.metaKey || e.ctrlKey || e.altKey,
       });
-      if (a === "clearSelection") choose(null);
+      if (a === "search") {
+        e.preventDefault();
+        searchBox.current?.focus();
+      } else if (a === "closeSearch") searchBox.current?.blur();
+      else if (a === "fit") setFit((n) => n + 1);
+      else if (a === "clearSelection") choose(null);
       else if (a === "up") update((s) => up(s, parentBox(view, s.focus)));
       else if (a === "declutter") update((s) => ({ ...s, stage: nextStage(s.stage) }));
       else if (a === "deeper") update((s) => deeper(s, sc.depth));
@@ -134,7 +144,7 @@ export function App({ view: whole }: { view: View }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [view, state, sc.depth, update]);
+  }, [view, state, sc.depth, update, searchOpen]);
 
   const open = (n: SceneNode) => {
     if (n.shape === "box" || n.shape === "container") go(n.id);
@@ -154,6 +164,10 @@ export function App({ view: whole }: { view: View }) {
         full={change ? full : undefined}
         onToggle={flip}
       />
+      <div className="bar">
+        <Toolbar state={state} depth={sc.depth} update={update} />
+        <SearchBox view={whole} input={searchBox} onOpen={setSearchOpen} onPick={jump} />
+      </div>
       {change && <ChangedList view={whole} onPick={pick} />}
       <main className="canvas">
         {change && <Legend />}
@@ -180,6 +194,7 @@ export function App({ view: whole }: { view: View }) {
               onOpen={open}
               onToggle={(id) => update((s) => toggle(s, id))}
               center={center}
+              fit={fit}
             />
           </ReactFlowProvider>
         ) : (

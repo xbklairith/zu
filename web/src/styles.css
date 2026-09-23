@@ -59,7 +59,7 @@ pre {
 
 .app {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto auto 1fr;
   grid-template-columns: auto 1fr auto;
   height: 100%;
 }
@@ -113,7 +113,7 @@ pre {
 }
 
 .canvas {
-  grid-row: 2;
+  grid-row: 3;
   grid-column: 2;
   position: relative;
   min-height: 0;
@@ -209,7 +209,7 @@ pre {
 }
 
 .panel {
-  grid-row: 2;
+  grid-row: 3;
   grid-column: 3;
   width: min(560px, 45vw);
   overflow: auto;
@@ -361,7 +361,7 @@ button.st-removed {
 }
 
 .changed {
-  grid-row: 2;
+  grid-row: 3;
   grid-column: 1;
   width: min(280px, 25vw);
   overflow: auto;
@@ -467,5 +467,56 @@ button.st-removed {
 }
 
 .row.selected {
+  background: var(--mark);
+}
+
+
+.bar {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: center;
+}
+
+.toolbar input[type="number"] {
+  width: 4em;
+}
+
+.search {
+  position: relative;
+  margin-left: auto;
+}
+
+.search .hits {
+  position: absolute;
+  right: 0;
+  z-index: 10;
+  min-width: 320px;
+  max-height: 60vh;
+  overflow: auto;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+
+.search .hits li {
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.search .hits li.at {
   background: var(--mark);
 }
