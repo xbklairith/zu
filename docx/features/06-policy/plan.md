@@ -1908,7 +1908,7 @@ Pin v3.0.5, the newest release at the time of planning.
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
    <!-- file: internal/policy/levels_test.go -->
    ```go
@@ -2088,9 +2088,9 @@ Pin v3.0.5, the newest release at the time of planning.
    }
    ```
 
-- [ ] **Run them:** `go test ./internal/policy`. Expected: FAIL (`p.RankOf undefined`, `undefined: lift`).
+- [x] **Run them:** `go test ./internal/policy`. Expected: FAIL (`p.RankOf undefined`, `undefined: lift`).
 
-- [ ] **Implement**
+- [x] **Implement**
 
    <!-- file: internal/policy/levels.go -->
    ```go
@@ -2366,7 +2366,7 @@ Pin v3.0.5, the newest release at the time of planning.
    }
    ```
 
-- [ ] **Run:** `go test ./internal/policy`. Expected: `ok`.
+- [x] **Run:** `go test ./internal/policy`. Expected: `ok`.
 
 ### Task 7: The Baseline
 
@@ -4386,7 +4386,7 @@ These diffs are against `main` at 8f43cb1. If 05's `App.tsx` changes before 06 s
 - [x] Task 3 · The scan skips excluded files
 - [x] Task 4 · `zu scan` and `zu diff` read the Policy
 - [x] Task 5 · `Apply`
-- [ ] Task 6 · Levels and cycles
+- [x] Task 6 · Levels and cycles
 - [ ] Task 7 · Baseline
 - [ ] Task 8 · `zu check`
 - [ ] Task 9 · `zu policy init`
