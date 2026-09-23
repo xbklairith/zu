@@ -19,7 +19,7 @@ in the OS page cache.
 - **Time:** a ref scan is within 2× the disk scan everywhere (the target). On
   kubernetes it is faster: one `ls-tree` replaces about 30,000 directory reads and a
   `git status`.
-- **Disk scans now list files with `git ls-files`** (the follow-up in `plan.md`), which costs a little on kubernetes. First run, at `92527ba`, before that change: kubernetes disk 5.16 s / 916 MB, ref 3.75 s / 924 MB. Timings vary run to run by about 20% on this machine.
+- **Disk scans now list files with `git ls-files`** (the follow-up in `plan.md`). The first run, at `92527ba` before that change, gave kubernetes disk 5.16 s / 916 MB and ref 3.75 s / 924 MB. The kubernetes disk scan rose to 7.44 s. Whether that comes from `ls-files` or from noise is not yet measured (one run each). No budget covers kubernetes time; hugo, which REQ-040 budgets at 30 s, takes 0.69 s.
 - **Memory:** kubernetes peaks at 982 MB, well inside REQ-041's 4 GB. Compared with
   feature 01's 818 MB, the extra is mostly the new `shape` string on every declaration
   node. Feature 03 holds two IRs at once, so expect about 1.9 GB for a kubernetes diff.
