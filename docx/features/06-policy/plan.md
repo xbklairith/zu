@@ -198,7 +198,7 @@ Pin v3.0.5, the newest release at the time of planning.
 
 **Steps:**
 
-- [ ] **Add the dependency**
+- [x] **Add the dependency**
 
    ```bash
    go get go.yaml.in/yaml/v3@v3.0.5
@@ -227,7 +227,7 @@ Pin v3.0.5, the newest release at the time of planning.
     golang.org/x/mod v0.33.0/go.mod h1:swjeQEj+6r7fODbD2cqrnje9PnziFuw4bmLbBZFrQ5w=
    ```
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
    <!-- file: internal/policy/policy_test.go -->
    ```go
@@ -352,9 +352,9 @@ Pin v3.0.5, the newest release at the time of planning.
    }
    ```
 
-- [ ] **Run it:** `go test ./internal/policy`. Expected: FAIL (`undefined: Parse`).
+- [x] **Run it:** `go test ./internal/policy`. Expected: FAIL (`undefined: Parse`).
 
-- [ ] **Implement**
+- [x] **Implement**
 
    <!-- file: internal/policy/policy.go -->
    ```go
@@ -663,7 +663,7 @@ Pin v3.0.5, the newest release at the time of planning.
    }
    ```
 
-- [ ] **Run it:** `go test ./internal/policy`. Expected: `ok`. `TestEmptyPolicyIsTheDefault` proves the empty Policy hashes to `scan.DefaultPolicyHash`. `TestParseRejects` covers a second YAML document, and `TestHashIgnoresFormAndCatchesMeaning` a run of `**`. `Format` is printed by `zu version` in Task 8.
+- [x] **Run it:** `go test ./internal/policy`. Expected: `ok`. `TestEmptyPolicyIsTheDefault` proves the empty Policy hashes to `scan.DefaultPolicyHash`. `TestParseRejects` covers a second YAML document, and `TestHashIgnoresFormAndCatchesMeaning` a run of `**`. `Format` is printed by `zu version` in Task 8.
 
 ### Task 2: Exclude globs, and reading the Policy safely from any tree
 
@@ -4381,7 +4381,7 @@ These diffs are against `main` at 8f43cb1. If 05's `App.tsx` changes before 06 s
 
 ## Progress
 
-- [ ] Task 1 · Parse, normalise and hash
+- [x] Task 1 · Parse, normalise and hash
 - [ ] Task 2 · Exclude globs and safe by-name reads
 - [ ] Task 3 · The scan skips excluded files
 - [ ] Task 4 · `zu scan` and `zu diff` read the Policy
