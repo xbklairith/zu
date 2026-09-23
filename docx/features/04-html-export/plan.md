@@ -267,7 +267,7 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
 
 **Steps:**
 
-- [ ] **Write the failing tests.** Use the real fixture IR (`internal/scan/testdata/shop.golden.json`) so the test follows the scanner.
+- [x] **Write the failing tests.** Use the real fixture IR (`internal/scan/testdata/shop.golden.json`) so the test follows the scanner.
 
    ```go
    package export
@@ -400,11 +400,11 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    }
    ```
 
-- [ ] **Run — expect FAIL** (`undefined: Project`)
+- [x] **Run — expect FAIL** (`undefined: Project`)
 
    Run: `go test ./internal/export/`
 
-- [ ] **Implement `view.go`**
+- [x] **Implement `view.go`**
 
    ```go
    package export
@@ -522,7 +522,7 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    }
    ```
 
-- [ ] **Implement `project.go`**
+- [x] **Implement `project.go`**
 
    ```go
    package export
@@ -631,12 +631,12 @@ The CLI checks pattern syntax before scanning, using `ParsePattern(s, "root.inva
    }
    ```
 
-- [ ] **Run — expect PASS**
+- [x] **Run — expect PASS**
 
    Run: `go test ./internal/export/ && go vet ./internal/export/`
    Expected: `ok  zu/internal/export`
 
-- [ ] **Commit**
+- [x] **Commit**
 
    ```bash
    git add internal/export/view.go internal/export/project.go internal/export/project_test.go
@@ -1611,7 +1611,7 @@ Same as Task 12, for `zu diff -html`, on a real zu commit range and a hugo tag r
 ## Progress
 
 - [x] Task 1 · `-include` patterns
-- [ ] Task 2 · Project View data
+- [x] Task 2 · Project View data
 - [ ] Task 3 · Render
 - [ ] Task 4 · Links
 - [ ] Task 5 · `zu scan -html`
