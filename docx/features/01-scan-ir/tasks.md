@@ -12,8 +12,8 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
 
 ## Progress Summary
 - Total Tasks: 15
-- Completed: 1/15
-- In Progress: Task 2 — gitref.Head
+- Completed: 2/15
+- In Progress: Task 3 — Walk
 
 ## Tasks
 
@@ -23,10 +23,10 @@ under `t.TempDir()`. The golden fixture (Task 12) then proves the pieces work to
   - [x] REFACTOR
   - Linked: REQ-010, REQ-011, REQ-013, REQ-018, REQ-039, REQ-045, REQ-046
 
-- [ ] **Task 2: gitref.Head** (`internal/gitref`)
-  - [ ] RED: non-repo → `("", false)`; repo with no commits → `("", false)`; clean commit → full id, false; edit a tracked file → dirty; an untracked file only → not dirty. Tests skip if `git` is missing
-  - [ ] GREEN: `exec.Command("git","-C",dir,…)` with fixed arguments
-  - [ ] REFACTOR
+- [x] **Task 2: gitref.Head** (`internal/gitref`)
+  - [x] RED: non-repo → `("", false)`; repo with no commits → `("", false)`; clean commit → full id, false; edit a tracked file → dirty; an untracked file only → not dirty. Tests skip if `git` is missing
+  - [x] GREEN: `exec.Command("git","-C",dir,…)` with fixed arguments
+  - [x] REFACTOR
   - Linked: REQ-002, REQ-011, REQ-042
 
 - [ ] **Task 3: Walk** (`internal/scan/walk.go`)
