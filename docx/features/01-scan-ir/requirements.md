@@ -9,14 +9,16 @@
 on-disk description of its packages, types, functions and the dependencies between
 them — and writes it under `.zu/`. Every later feature reads this file: the Change View
 diffs two of them, the HTML Export renders one. This feature is build-order step 1: no
-UI, no Policy (grouping is the Ungrouped View), no git refs other than recording HEAD.
+UI, no Policy (the grouping is the Package Tree, derived from node ids by later features),
+no git refs other than recording HEAD.
 
 Sources: [requirements draft](../../core/requirements-draft.md) (IDs A1, A4…), decisions
 [0002](../../decisions/0002-syntax-first-analysis.md),
 [0003](../../decisions/0003-stable-node-ids-canonical-ir.md),
 [0004](../../decisions/0004-policy-hash-and-head-policy.md),
-[0007](../../decisions/0007-scan-all-build-variants.md), and the [glossary](../../glossary.md).
-Choices below come from feature-01 round 1 (T1–T14).
+[0007](../../decisions/0007-scan-all-build-variants.md),
+[0008](../../decisions/0008-package-tree-default-policy-never-invents-boxes.md), and the [glossary](../../glossary.md).
+Choices below come from feature-01 round 1 (T1–T14) and the uml-viewer and tool comparison (M1–M10, C1–C8).
 
 ### Requirement ID Format
 
@@ -45,7 +47,7 @@ requirement, decision record or round-1 answer each one comes from.
 |---|---|---|
 | REQ-010 | The IR SHALL contain, in this order: `schemaVersion`, `ref`, `grouping`, `policyHash`, `nodes`, `edges`, `unresolvedCalls`, `unresolvedImports`, `parseErrors`, `unsupported`. | IR contract, 0003 |
 | REQ-011 | The IR SHALL record `ref` once at top level as `{commit, dirty}`, where `commit` is the full HEAD commit id, or `""` outside a git repository or in a repository with no commits; `dirty` is true only when tracked files have uncommitted modifications. | T11 |
-| REQ-012 | The IR SHALL set `grouping` to `"ungrouped"` and `policyHash` to the fixed hash of the built-in default grouping. | T2, 0001, 0004 |
+| REQ-012 | The IR SHALL set `grouping` to `"tree"` and `policyHash` to the fixed hash of the built-in default (empty) Policy, and SHALL NOT contain nodes for import-path segments that are not packages. | M1, 0008, 0004 |
 | REQ-013 | The IR SHALL contain nodes of exactly four kinds: `package`, `type`, `function` (including methods), and `external`. | T1, T9 |
 | REQ-014 | The system SHALL identify a `package` node by its import path, a `type` node by `<import path>.<Type>`, a function by `<import path>.<Func>`, and a method by `<import path>.<Type>.<Method>` — for both value and pointer receivers, and ignoring type parameters. | 0003, T1 |
 | REQ-015 | The system SHALL set each `type` and top-level `function` node's `parent` to its package id, and each method's `parent` to its receiver type id; `package` and `external` nodes SHALL have no `parent`. | A3 |
@@ -55,6 +57,8 @@ requirement, decision record or round-1 answer each one comes from.
 | REQ-019 | The system SHALL store edges only at their finest level — no aggregated package-to-package `calls` or `embeds` edges. | T4 |
 | REQ-020 | The system SHALL give every node and every edge at least one location `{path, line}`, where `path` is relative to the scanned root and uses forward slashes. | IR rules |
 | REQ-021 | The system SHALL locate a `package` node at the `package` clause of its first file in path order, a `type` or `function` node at its declaring identifier, an `external` node at its `require` line in `go.mod`, and an edge at each import spec, call expression or embedded field that justifies it. | IR rules, T9 |
+| REQ-045 | The system SHALL record on every `type` and `function` node `exported: true` when its name (for a method, the method name) starts with an upper-case letter, else `exported: false`. | M5 |
+| REQ-046 | The system SHALL record on every `type` node `typeKind`: `"struct"` or `"interface"` when its type expression is a struct or interface type (including generic types), otherwise `"other"` (aliases, named basic, func, map, slice and similar types); a merged node whose declarations disagree SHALL get `"other"`. | M5, 0007 |
 | REQ-022 | The system SHALL record on every `package`, `type` and `function` node a `hash`: SHA-256 of the declaration re-printed with `go/printer` after removing comments; for a package, SHA-256 over its members' sorted `(id, hash)` pairs. | T10, Meaningful Change |
 
 ### Ubiquitous Requirements — what is scanned
@@ -115,7 +119,7 @@ requirement, decision record or round-1 answer each one comes from.
 
 ## Acceptance Criteria
 
-- [ ] A fixture module under `internal/scan/testdata/` covering every node kind, edge kind, merge case, generated file, nested module, external module, skipped directory and parse error produces an IR equal to its committed golden file (REQ-001–REQ-037).
+- [ ] A fixture module under `internal/scan/testdata/` covering every node kind, edge kind, `exported` and `typeKind` value, merge case, generated file, nested module, external module, skipped directory and parse error produces an IR equal to its committed golden file (REQ-001–REQ-037, REQ-045, REQ-046).
 - [ ] Scanning the same fixture twice, with GOMAXPROCS=1 and GOMAXPROCS=8, produces byte-identical output (REQ-038, REQ-039).
 - [ ] Reformatting a fixture file with `gofmt` and editing only its comments leaves every `hash` unchanged; changing one statement changes exactly that function's hash and its package's hash (REQ-022).
 - [ ] A symlink inside the fixture that points outside the root is not followed, and the scan still succeeds (REQ-024).
@@ -127,7 +131,9 @@ requirement, decision record or round-1 answer each one comes from.
 ## Out of Scope
 
 - Scanning a git ref other than the working tree (feature: diff).
-- Policy files, component nodes, layering and cycle checks (feature: Policy).
+- Policy files, Levels, Proposals, Baseline, and cycle checks (feature: Policy).
+- Cyclomatic complexity and coverage (feature: CRAP overlay).
+- Building the Package Tree from ids (done where views are drawn).
 - Any rendering, HTML export, or `serve`.
 - Type-checked analysis, `implements` edges, interface dispatch, calls through variables or fields.
 - Test files, and languages other than Go (beyond counting them).

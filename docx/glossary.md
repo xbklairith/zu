@@ -4,21 +4,55 @@ Canonical terms for zu. Definitions only — how things are built lives in specs
 
 ## Policy
 
-A committed, human-reviewed file that assigns packages to Components and declares
-layering rules. The only place grouping judgement enters zu. A Model Provider may
+A committed, human-reviewed file (`zu.policy.yaml`) that orders boxes, ranks Levels,
+collapses Foreign prefixes, overrides edge kinds, omits nodes or edges, and declares
+Proposals. It never assigns packages to boxes that do not exist in the code. The only
+place architectural judgement enters zu. A Model Provider may
 propose changes to it, only ever as a patch a person accepts or rejects.
 
-## Ungrouped View
+## Package Tree
 
-What zu shows for a repository that has no Policy: one component per Go package,
-explicitly labelled as ungrouped, with a pointer to `zu policy init`. It is an honest
-fallback, not an architecture — zu never presents the folder tree as one.
+The structure every Project View draws: each module path is a root, each further
+import-path segment one nesting level, each package inside its nearest ancestor. It is
+the code's own hierarchy, never an invented one. Replaces the retired *Ungrouped View*.
+
+## Level
+
+A rank the Policy gives to top-level Package Tree segments, listed inner first. A
+dependency from a higher-ranked Level to a lower-ranked one is a violation.
+
+## Foreign
+
+An external module drawn as an oval outside the Package Tree. The Policy can collapse
+several module paths under one prefix, or omit them.
+
+## Proposal
+
+A named regrouping of real packages, declared in the Policy and drawn only on request
+under a "not instantiated in code" banner. A what-if, never the default picture.
+
+## Baseline
+
+The committed, sorted list of known violations (`zu.baseline.json`). `check` fails only
+on violations not in it; entries are only ever removed.
+
+## Affected Set
+
+In a Change View, the changed nodes plus every node that depends on them, directly or
+transitively. Its size is the blast-radius count in the Structural Summary.
+
+## Move
+
+A removed and an added declaration with identical `hash`, shown as one moved node
+rather than a removal plus an addition.
 
 ## Structural Summary
 
-The Mode B output meant for a merge request: the components a change touches, the
-dependencies it adds or removes, and any structural rule it newly violates, plus a
-small Mermaid diagram of the changed components. zu writes it as Markdown and JSON;
+The Mode B output meant for a merge request: the packages a change touches, the
+dependencies it adds or removes, the blast-radius count, and any structural rule it
+newly violates, plus a small Mermaid diagram of the changed packages. It says "no
+structural change" when a change has no Meaningful Change. zu writes it as text,
+Markdown or JSON;
 posting it to the MR is the CI pipeline's job, not zu's.
 
 ## Model Provider
@@ -35,15 +69,16 @@ results repeat; fetched on demand, never committed.
 
 ## Project View
 
-The Mode A picture: a repository's components, their layering, and the direction of
-their dependencies at one ref. Answers "how is this built?". Distinct from the Change
+The Mode A picture: a repository's Package Tree, its Levels, and the direction of its
+dependencies at one ref. Answers "how is this built?". Distinct from the Change
 View, which answers "what did this change do to it?".
 
 ## Change View
 
-The Mode B picture: the Project View of the head ref with every component and
-dependency marked added, removed, modified or unchanged, new rule violations called
-out, and each affected component labelled with its hop distance from the change.
+The Mode B picture: the Project View of the head ref, compared against the merge-base.
+Every package and dependency is marked added, removed, modified or unchanged. New rule
+violations are called out, the Affected Set is outlined, Moves are dashed, and unchanged
+neighbours one hop away are dimmed.
 
 ## HTML Export
 

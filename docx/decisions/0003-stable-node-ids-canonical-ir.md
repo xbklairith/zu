@@ -25,6 +25,8 @@ byte-identical IR.
 
 ## Consequences
 
-Renaming a symbol shows as remove + add; rename detection, if wanted, is a diff
-heuristic layered on top. Moving a declaration between files in the same package is
+Renaming a symbol shows as remove + add in the IR diff. The Change View pairs them
+as a **Move** when exactly one removed and one added declaration share the same
+`hash` and draws that pair as one dashed arrow. The pairing lives in the view; ids
+and the IR diff are unchanged (amended 2026-09-23, from the tool comparison, C7). Moving a declaration between files in the same package is
 not a change. Output ordering is part of the IR contract and must be tested.

@@ -1,6 +1,6 @@
 # 0001. Ungrouped View plus `policy init`, not automatic clustering
 
-- **Status:** accepted
+- **Status:** superseded by [0008](0008-package-tree-default-policy-never-invents-boxes.md)
 - **Date:** 2026-09-23
 
 ## Context

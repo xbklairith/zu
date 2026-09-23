@@ -14,7 +14,7 @@ the Policy file itself exists at both refs.
 
 `policyHash` is computed over the normalised, parsed rules — not the file's bytes —
 so editing a comment or reordering keys does not change it. The built-in default
-grouping (Ungrouped View) has a hash too. `diff` groups both refs with the head ref's
+grouping (the Package Tree with an empty Policy, see 0008) has a hash too. `diff` groups both refs with the head ref's
 Policy; if the change modifies the Policy's rules, zu reports the mismatch and stops.
 
 ## Alternatives considered
