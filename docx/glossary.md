@@ -38,8 +38,22 @@ on violations not in it; entries are only ever removed.
 
 ## Affected Set
 
-In a Change View, the changed nodes plus every node that depends on them, directly or
-transitively. Its size is the blast-radius count in the Structural Summary.
+In a Change View, the changed packages plus every package that imports them, directly
+or transitively, each with its hop distance. Computed over import edges, which are
+always complete, not over calls, which are only drawn when certain. Its size is the
+blast-radius count in the Structural Summary.
+
+## Base
+
+The merge-base commit of the base ref and the head: the left side of a Change View.
+Not the base branch itself, whose newer commits are not part of the change.
+
+## Change Status
+
+How a node or edge differs between Base and head: *added*, *removed*, *modified*
+(nodes only: its hash differs) or *unchanged*. A package dependency that is removed
+in one direction and added in the other is *reversed*. The same words are used in
+docs, output and JSON.
 
 ## Move
 

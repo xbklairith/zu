@@ -13,6 +13,7 @@ Hard-to-reverse, surprising, real trade-offs — one file each in [`docx/decisio
 - [0006](../decisions/0006-self-contained-html-export.md) Self-contained HTML file is the primary deliverable, carrying only code worth reading
 - [0007](../decisions/0007-scan-all-build-variants.md) Scan every build variant; merge duplicate declarations
 - [0008](../decisions/0008-package-tree-default-policy-never-invents-boxes.md) Package Tree by default; the Policy ranks and proposes, never invents boxes
+- [0009](../decisions/0009-affected-set-over-package-imports.md) Affected Set over package imports, not calls
 
 ## Settled choices (not decision records)
 - **Stack:** Go 1.24, CGO off; UI React 19 + `@xyflow/react` + ELK.js in a Worker, Vite-built, `go:embed`ed. Revisit Cytoscape if collapsed views exceed ~1,500 nodes.
@@ -20,7 +21,9 @@ Hard-to-reverse, surprising, real trade-offs — one file each in [`docx/decisio
 - **Policy file:** one `zu.policy.yaml` at repo root, uml-viewer model (order, levels, foreign, edge-kind overrides, omit, omit-edges, proposals); tests excluded by default; generated and vendored code excluded by glob. Importing `.go-arch-lint.yml` after v1.
 - **Levels rule:** uml-viewer `:levels` exactly, on top-level tree segments: listed inner first, higher-ranked → lower-ranked is a violation, same rank allowed, foreign/unranked not compared, a bundled edge is red if any pair inside it is, level 0 drawn at the bottom.
 - **Baseline:** `zu.baseline.json` (sorted, committed) records known violations; `check` exits 1 only on new ones; `-update-baseline` only removes fixed ones.
-- **Diff base:** `git merge-base base head` by default; the Change View shows one hop of unchanged neighbours, dimmed.
+- **Diff base:** `git merge-base base head` by default; the Change View shows one hop of unchanged neighbours, dimmed. No merge-base (shallow clone) → exit 3 with the fix, never a fallback to the base tip.
+- **Diff head:** `zu diff <base> [head]`, head defaults to the `HEAD` commit; `-worktree` opts in to uncommitted edits. Both refs are scanned fresh (no IR cache). A successful diff exits 0 whatever it finds; 1 stays reserved for new violations.
+- **Structural Summary (v1):** one row per changed package (+added ~modified −removed declarations), imports listed, call/embed changes as counts, Mermaid of changed packages + one hop (omitted above 30 nodes). Links (B6) deferred to the HTML Export.
 - **License:** Apache-2.0 (`LICENSE`). Public at v0.1 (scan + diff-to-CI working).
 - **Audience:** the author first, then open-source users.
 - **Mode B surface:** Structural Summary for CI leads; local UI diff view for depth. zu never calls a code-host API and ships no CI snippets — the JSON/Markdown output is documented.
