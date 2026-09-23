@@ -15,3 +15,6 @@ issues:
     # Writes to the CLI's stdout/stderr have no meaningful recovery.
     - linters: [errcheck]
       source: "fmt\\.Fprint"
+    # Tests create fixtures in t.TempDir() and run git with test-chosen args.
+    - linters: [gosec]
+      path: _test\.go

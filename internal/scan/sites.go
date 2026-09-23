@@ -81,7 +81,7 @@ func (f *fileFacts) addCalls(fset *token.FileSet, d *ast.FuncDecl) {
 
 // classifyCall fills s from the called expression and reports whether the
 // call is recorded at all. Conversions and function literals are not.
-func classifyCall(s *callSite, fun ast.Expr, recv *ast.Object) bool {
+func classifyCall(s *callSite, fun ast.Expr, recv *ast.Object) bool { //nolint:staticcheck // SA1019: syntax-only scope resolution, see design "Key decision"
 	fun = unwrapInstantiation(fun)
 	switch x := fun.(type) {
 	case *ast.Ident:
@@ -142,7 +142,7 @@ func localKind(id *ast.Ident) ast.ObjKind {
 
 // receiverObject returns the receiver's object if the method names it and
 // never assigns to it; otherwise nil, so no r.M() call counts as certain.
-func receiverObject(d *ast.FuncDecl) *ast.Object {
+func receiverObject(d *ast.FuncDecl) *ast.Object { //nolint:staticcheck // SA1019: syntax-only scope resolution, see design "Key decision"
 	if d.Recv == nil || len(d.Recv.List) == 0 || len(d.Recv.List[0].Names) == 0 {
 		return nil
 	}
