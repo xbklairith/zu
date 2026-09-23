@@ -124,15 +124,15 @@
 
 **Steps:**
 
-- [ ] **Test**:
+- [x] **Test**:
    - Head has imports `api→orders→money` and `billing→money`, and `money` is modified. Expect `money:0`, `orders:1`, `billing:1`, `api:2`.
    - Changed packages are in the set at hop 0 (ADR 0009, glossary *Affected Set*: "the changed packages plus every package that imports them"; its size is the blast-radius count).
    - Cycles terminate.
    - External nodes never appear.
    - An added package's importers are included.
    - Nothing changed → an empty set.
-- [ ] **Verify RED**: `go test ./internal/diff -run Affected` → FAIL.
-- [ ] **Action**:
+- [x] **Verify RED**: `go test ./internal/diff -run Affected` → FAIL.
+- [x] **Action**:
 
    ```go
    // Affected returns the Affected Set (0009): the changed packages at hop 0
@@ -148,8 +148,8 @@
    ```
 
    The search is a breadth-first search over reversed `imports` edges between `package` nodes. Changed packages seed the search at hop 0. Results are sorted by (hops, package). The blast-radius count is `len(Affected(...))`.
-- [ ] **Verify**: `go test ./internal/diff` → ok.
-- [ ] **Commit**: `git add internal/diff/affected.go internal/diff/affected_test.go && git commit -m "Compute the Affected Set over imports"`
+- [x] **Verify**: `go test ./internal/diff` → ok.
+- [x] **Commit**: `git add internal/diff/affected.go internal/diff/affected_test.go && git commit -m "Compute the Affected Set over imports"`
 
 ---
 
@@ -367,7 +367,7 @@ Nothing is left to do here.
 ## Progress
 
 - [x] Task 1: Compare two IRs
-- [ ] Task 2: Affected Set
+- [x] Task 2: Affected Set
 - [ ] Task 3: Summary model and JSON
 - [ ] Task 4: Text and Markdown renderers, with Mermaid
 - [ ] Task 5: merge-base
