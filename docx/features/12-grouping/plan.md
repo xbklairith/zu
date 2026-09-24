@@ -679,7 +679,7 @@ index 021d526..6cbbda5 100644
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 diff --git a/internal/export/policy_test.go b/internal/export/policy_test.go
@@ -846,9 +846,9 @@ index 2fb33af..888aa0c 100644
          "line": 1
 ```
 
-- [ ] **Run:** `go test ./internal/export/` Expected: FAIL (`Demoted`, `Main`, `GenDecls` and `Budget` undefined)
+- [x] **Run:** `go test ./internal/export/` Expected: FAIL (`Demoted`, `Main`, `GenDecls` and `Budget` undefined)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/internal/export/change.go b/internal/export/change.go
@@ -988,9 +988,9 @@ index 587e4db..70353ea 100644
  
 ```
 
-- [ ] **Run:** `go test ./... && go vet ./...` Expected: PASS
+- [x] **Run:** `go test ./... && go vet ./...` Expected: PASS
 
-- [ ] **Commit** (one line, imperative; stage these files only)
+- [x] **Commit** (one line, imperative; stage these files only)
 
 ## 12b: the grouped first view (the page)
 

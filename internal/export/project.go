@@ -15,13 +15,16 @@ type ReadFunc func(path string) ([]byte, error)
 // edges, plus declarations, calls, embeds and source for included packages.
 func Project(doc *ir.IR, include []Pattern, read ReadFunc) (*View, error) {
 	pkgOf := packageOf(nodesByID(doc))
-	detail, decls := map[string]bool{}, map[string]int{}
+	detail, decls, gen := map[string]bool{}, map[string]int{}, map[string]int{}
 	matched := make([]bool, len(include))
 	for i := range doc.Nodes {
 		n := &doc.Nodes[i]
 		switch n.Kind {
 		case ir.KindType, ir.KindFunction:
 			decls[pkgOf(n.ID)]++
+			if n.Generated {
+				gen[pkgOf(n.ID)]++
+			}
 		case ir.KindPackage:
 			for j, p := range include {
 				if p.Match(n.ID, n.Module) {
@@ -44,7 +47,7 @@ func Project(doc *ir.IR, include []Pattern, read ReadFunc) (*View, error) {
 		switch n.Kind {
 		case ir.KindPackage:
 			modules[n.Module] = true
-			vn.Decls, vn.Unresolved, vn.Detail = decls[n.ID], doc.UnresolvedCalls[n.ID], detail[n.ID]
+			vn.Decls, vn.GenDecls, vn.Unresolved, vn.Detail = decls[n.ID], gen[n.ID], doc.UnresolvedCalls[n.ID], detail[n.ID]
 		case ir.KindType, ir.KindFunction:
 			if !detail[pkgOf(n.ID)] {
 				continue

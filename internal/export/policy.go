@@ -2,6 +2,7 @@ package export
 
 import (
 	"cmp"
+	"path"
 	"slices"
 
 	"zu/internal/ir"
@@ -15,6 +16,7 @@ type PolicyInfo struct {
 	Levels    [][]string     `json:"levels"`
 	Order     []string       `json:"order,omitempty"`
 	Proposals []ProposalInfo `json:"proposals,omitempty"`
+	Budget    *int           `json:"budget,omitempty"` // 12: boxes the first view shows; absent = the UI's default
 }
 
 // ProposalInfo is one Proposal as the UI draws it: its layers inner first,
@@ -31,14 +33,20 @@ type ProposalInfo struct {
 
 // Mark adds the Policy to a View built from pol.Apply(doc): the rank of
 // every ranked package, the rule each violating import breaks, the order
-// and the Proposals. A Policy with none of these adds nothing, so a View
-// without them is 04's.
+// and the Proposals, and (12) the budget. A Policy with none of these adds
+// nothing, so a View without them is 04's. Every package is marked with why
+// the first view sets it aside, if it does, Policy file or not (12).
 func Mark(v *View, pol *policy.Policy, doc *ir.IR) {
+	for i := range v.Nodes {
+		if n := &v.Nodes[i]; n.Kind == string(ir.KindPackage) {
+			n.Demoted = pol.Demoted(n.ID, path.Dir(n.Loc.Path), n.Decls > 0 && n.GenDecls == n.Decls)
+		}
+	}
 	norm := pol.Normalize()
-	if !pol.Rules() && len(norm.Order) == 0 && len(norm.Proposals) == 0 {
+	if !pol.Rules() && len(norm.Order) == 0 && len(norm.Proposals) == 0 && norm.Budget == nil {
 		return
 	}
-	v.Policy = &PolicyInfo{Hash: pol.Hash(), Levels: [][]string{}, Order: norm.Order}
+	v.Policy = &PolicyInfo{Hash: pol.Hash(), Levels: [][]string{}, Order: norm.Order, Budget: norm.Budget}
 	for _, l := range norm.Levels {
 		v.Policy.Levels = append(v.Policy.Levels, l)
 	}

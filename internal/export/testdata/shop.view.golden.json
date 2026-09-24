@@ -15,6 +15,7 @@
       "id": "example.com/shop",
       "kind": "package",
       "module": "example.com/shop",
+      "main": true,
       "loc": {
         "path": "main.go",
         "line": 1
@@ -51,6 +52,7 @@
         "line": 3
       },
       "decls": 15,
+      "genDecls": 2,
       "unresolved": 4,
       "detail": true
     },
@@ -216,6 +218,7 @@
       "id": "example.com/shop/tools/gen",
       "kind": "package",
       "module": "example.com/shop/tools",
+      "main": true,
       "loc": {
         "path": "tools/gen/gen.go",
         "line": 1

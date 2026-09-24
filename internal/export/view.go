@@ -44,14 +44,17 @@ type Node struct {
 	Exported   *bool       `json:"exported,omitempty"`
 	TypeKind   string      `json:"typeKind,omitempty"`
 	Generated  bool        `json:"generated,omitempty"`
+	Main       bool        `json:"main,omitempty"` // packages (12): package main
 	Loc        ir.Location `json:"loc"`
 	Decls      int         `json:"decls,omitempty"`      // packages: declarations in the IR
+	GenDecls   int         `json:"genDecls,omitempty"`   // packages (12): those of them in generated files
 	Unresolved int         `json:"unresolved,omitempty"` // packages: Unresolved Calls
 	Detail     bool        `json:"detail,omitempty"`     // packages: declarations and source are in this file
 	Status     string      `json:"status,omitempty"`     // Change View only
 	MovedFrom  string      `json:"movedFrom,omitempty"`  // Change View: the Move's base id
 	Hop        *int        `json:"hop,omitempty"`        // Change View: distance in the Affected Set
 	Rank       *int        `json:"rank,omitempty"`       // packages: the Policy Level, 0 = innermost
+	Demoted    string      `json:"demoted,omitempty"`    // packages (12): why the first view sets it aside, "name" or "generated"
 }
 
 // Edge is an IR edge with its location count instead of every location.
@@ -105,7 +108,7 @@ func first(l []ir.Location) ir.Location {
 func toNode(n *ir.Node) Node {
 	return Node{
 		ID: n.ID, Kind: string(n.Kind), Parent: n.Parent, Module: n.Module,
-		Exported: n.Exported, TypeKind: n.TypeKind, Generated: n.Generated, Loc: first(n.Locations),
+		Exported: n.Exported, TypeKind: n.TypeKind, Generated: n.Generated, Main: n.Main, Loc: first(n.Locations),
 	}
 }
 

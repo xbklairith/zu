@@ -44,10 +44,13 @@ func Change(base, head *ir.IR, delta diff.Delta, sum *diff.Summary, baseTree, he
 		detail[headPkg(to)] = true
 	}
 
-	decls := map[string]int{}
+	decls, gen := map[string]int{}, map[string]int{}
 	for i := range head.Nodes {
 		if k := head.Nodes[i].Kind; k == ir.KindType || k == ir.KindFunction {
 			decls[headPkg(head.Nodes[i].ID)]++
+			if head.Nodes[i].Generated {
+				gen[headPkg(head.Nodes[i].ID)]++
+			}
 		}
 	}
 
@@ -60,7 +63,7 @@ func Change(base, head *ir.IR, delta diff.Delta, sum *diff.Summary, baseTree, he
 			if h, ok := hop[n.ID]; ok {
 				vn.Hop = &h
 			}
-			vn.Decls, vn.Unresolved, vn.Detail = decls[n.ID], from.UnresolvedCalls[n.ID], detail[n.ID]
+			vn.Decls, vn.GenDecls, vn.Unresolved, vn.Detail = decls[n.ID], gen[n.ID], from.UnresolvedCalls[n.ID], detail[n.ID]
 		}
 		v.Nodes = append(v.Nodes, vn)
 		in[n.ID] = true
