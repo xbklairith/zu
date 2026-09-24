@@ -2644,7 +2644,7 @@ That makes 39 checks per engine.
 
 **Steps:**
 
-- [ ] **Write the check**
+- [x] **Write the check**
 
 ```diff
 --- a/web/e2e/accept.mjs
@@ -2786,8 +2786,8 @@ That makes 39 checks per engine.
  const channel = process.env.ZU_E2E_CHANNEL;
 ```
 
-- [ ] **Run:** `cd web && npx vite build && cd e2e && npm run accept` Expected: PASS (`ok (39/39 checks)` in chromium, firefox and webkit)
-- [ ] **Commit:** `Cover the CRAP overlay in the browser harness`
+- [x] **Run:** `cd web && npx vite build && cd e2e && npm run accept` Expected: PASS (`ok (39/39 checks)` in chromium, firefox and webkit)
+- [x] **Commit:** `Cover the CRAP overlay in the browser harness`
 
 ### Task 12: Acceptance
 
@@ -2848,5 +2848,5 @@ That makes 39 checks per engine.
 - [x] Task 8 · CRAP on the scene
 - [x] Task 9 · Fill and badge
 - [x] Task 10 · Panel and legend
-- [ ] Task 11 · Browser harness
+- [x] Task 11 · Browser harness
 - [ ] Task 12 · Acceptance

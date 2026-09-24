@@ -57,13 +57,50 @@ write("violations.html", page({
   ...change, policy: { hash: "sha256:e2e", levels: [], proposals: [{ ...hexagon, ranks: {}, violations: [] }] },
   violations: { new: [{ rule: "levels", from: "example.com/shop/internal/store", to: "example.com/shop/internal/money" }], fixed: [], known: 2 },
 }));
+// 08: CRAP as export.AddMetrics writes it. m/cmd μ+σ 2 (green), m/internal/cli
+// 10 (yellow) with one function, Run, m/internal/ir measured without coverage
+// data (red, "?"), m/util and m/internal/ir/bad unmeasured.
+const metrics = {
+  packages: {
+    "m/cmd": { funcs: 1, crap: { mu: 2, max: 2, sigma: 0 } },
+    "m/internal/cli": { funcs: 3, missing: 1, crap: { mu: 9, max: 12, sigma: 1 } },
+    "m/internal/ir": { funcs: 2, missing: 2 },
+  },
+  funcs: { "m/internal/cli.Run": { cc: 4, stmts: 8, covered: 4, crap: 6 } },
+};
+write("crap.html", page({
+  ...shop, modules: ["m"], sources: {}, metrics,
+  nodes: [
+    pkg("m", "m"), ...ranked.map(([id]) => ({ ...pkg(id, "m"), ...(id === "m/internal/cli" ? { detail: true } : {}) })),
+    { id: "m/internal/cli.Run", kind: "function", parent: "m/internal/cli", exported: true, loc },
+  ],
+  edges: [imp("m/cmd", "m/internal/cli"), imp("m/internal/cli", "m/internal/ir"), imp("m/cmd", "m/util")],
+}));
+// The shop Change View with its four modified packages measured, and one
+// unchanged package without coverage data that the changed subgraph leaves
+// out: the internal box's badge and panel must both leave it out.
+const hidden = "example.com/shop/internal/far";
+const store = "example.com/shop/internal/store";
+write("crap-change.html", page({
+  ...change,
+  nodes: [...change.nodes, pkg(hidden, "example.com/shop")],
+  metrics: {
+    packages: {
+      "example.com/shop": { funcs: 1, crap: { mu: 1, max: 1, sigma: 0 } },
+      "example.com/shop/internal/checkout": { funcs: 1, crap: { mu: 3, max: 3, sigma: 0 } },
+      "example.com/shop/internal/money": { funcs: 2, crap: { mu: 4, max: 5, sigma: 1 } },
+      [store]: { funcs: 5, crap: { mu: 30, max: 50, sigma: 5 } },
+      [hidden]: { funcs: 1, missing: 1 },
+    },
+    funcs: {},
+  },
+}));
 
 const base = "file://" + dir + "/";
 const vp = (p) => p.locator(".react-flow__viewport").getAttribute("style");
 const settle = (p) => p.waitForTimeout(900);
 const drawn = (p) => p.locator(".react-flow__node").first().waitFor({ timeout: 30000 });
 const hash = (p) => p.evaluate(() => decodeURIComponent(location.hash));
-
 async function run(b) {
   const out = {};
   // Project View
@@ -186,6 +223,69 @@ async function run(b) {
     const dy = n.y + n.height / 2 - (c.y + c.height / 2);
     return Math.abs(dx) <= 2 && Math.abs(dy) <= 2 ? true : `off by ${Math.round(dx)}, ${Math.round(dy)}`;
   });
+  // 08: the CRAP overlay.
+  const craps = () => p.evaluate(() => [...document.querySelectorAll(".react-flow__node")].flatMap((n) => {
+    const box = n.querySelector(".node");
+    const band = /crap-(\w+)/.exec(box?.className ?? "")?.[1];
+    return band ? [`${n.getAttribute("data-id")} ${band} ${n.querySelector(".crap")?.textContent}`] : [];
+  }).sort());
+  out.crap = [];
+  for (const d of [2, 3]) {
+    await p.goto(base + `crap.html#d=${d}`);
+    await p.reload();
+    await drawn(p);
+    await settle(p);
+    out.crap.push(await craps());
+    // A container's badge overlaps none of the boxes inside it.
+    out.crapBadgeClear = await p.evaluate(() => {
+      const rect = (e) => e.getBoundingClientRect();
+      const meets = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+      const nodes = [...document.querySelectorAll(".react-flow__node")];
+      return nodes.flatMap((n) => {
+        const badge = n.querySelector(".node.container > .crap");
+        const id = n.getAttribute("data-id");
+        if (!badge) return [];
+        return nodes.filter((c) => c.getAttribute("data-id").startsWith(id + "/") && meets(rect(badge), rect(c)))
+          .map((c) => `${id} badge over ${c.getAttribute("data-id")}`);
+      });
+    }).then((xs) => [...(out.crapBadgeClear ?? []), ...xs]);
+  }
+  // At depth 3: green, yellow, red and unmeasured are four different fills.
+  out.crapFills = await p.evaluate(() => new Set(["m/cmd", "m/internal/cli", "m/internal/ir", "m/util"].map((id) =>
+    getComputedStyle(document.querySelector(`.react-flow__node[data-id="${id}"] .node`)).backgroundColor)).size);
+  out.crapLegend = await p.locator(".legend").innerText().then((t) => t.split("\n").filter((l) => /CRAP|≤|>/.test(l)));
+  await p.goto(base + "crap.html#d=3&s=m%2Finternal%2Fcli");
+  await p.reload();
+  await drawn(p);
+  await settle(p);
+  out.crapPanel = await p.locator(".crap-facts").innerText().then((t) => t.split("\n").filter(Boolean)).catch(() => null);
+  await p.goto(base + "crap.html#f=m%2Finternal%2Fcli&s=m%2Finternal%2Fcli.Run");
+  await p.reload();
+  await drawn(p);
+  await settle(p);
+  out.crapFunc = [
+    await p.locator('.react-flow__node[data-id="m/internal/cli.Run"] .crap').textContent().catch(() => null),
+    await p.locator(".crap-facts").innerText().catch(() => null),
+  ];
+  // The Change View: a modified package's fill and change border show
+  // together, and a box's badge and panel agree.
+  await p.goto(base + "crap-change.html#d=3");
+  await drawn(p);
+  await settle(p);
+  out.crapChange = await p.locator(`.react-flow__node[data-id="${store}"] .node`).getAttribute("class")
+    .then((c) => ["crap-red", "st-modified"].map((k) => c.split(" ").includes(k)));
+  await p.goto(base + "crap-change.html#d=2&s=example.com%2Fshop%2Finternal");
+  await p.reload();
+  await drawn(p);
+  await settle(p);
+  out.crapChangeBox = [
+    await p.locator('.react-flow__node[data-id="example.com/shop/internal"] .crap').first().textContent(),
+    await p.locator(".crap-facts").innerText().catch(() => null),
+  ];
+  await p.goto(base + "with.html");
+  await drawn(p);
+  await settle(p);
+  out.noCrap = [await p.locator(".node .crap").count(), await p.locator(".legend .crap-green").count()];
   await p.goto(base + "violations.html#p=Hexagon");
   await drawn(p);
   await settle(p);
@@ -234,13 +334,35 @@ const want = {
   orderCentred: true,
   violations: ["New violations (1)", "levels example.com/shop/internal/store → example.com/shop/internal/money", "", "0 fixed, 2 pre-existing"],
   changeNoProposal: [0, 0],
+  // 08
+  crap: [
+    ["m red ? high", "m/cmd green 2 low", "m/internal red ? high"],
+    ["m red ? high", "m/cmd green 2 low", "m/internal red ? high", "m/internal/cli yellow 10 mid", "m/internal/ir red ? high"],
+  ],
+  crapBadgeClear: [],
+  crapFills: 4,
+  crapLegend: ["CRAP μ+σ ≤ 8 low", "≤ 12 mid", "> 12 high · ? no coverage data"],
+  crapPanel: ["CRAP μ 9 · max 12 · σ 1 · μ+σ 10, grade 7.8 of 10", "1 of 3 functions without coverage data", "Highest CRAP", "m/internal/cli.Run 6"],
+  crapFunc: ["6 low", "Complexity 4 · 4 of 8 statements covered (50%) · CRAP 6"],
+  crapChange: [true, true],
+  crapChangeBox: ["35 high", "Worst CRAP μ+σ among drawn: 35, grade 1.0 of 10"],
+  noCrap: [0, 0],
 };
 
 const channel = process.env.ZU_E2E_CHANNEL;
+// A page that crashes (Firefox, on reload, 2 of 8 runs while 08 was drafted)
+// reruns that engine once in a fresh browser and is logged; a second crash fails.
+async function attempt(type, opts) {
+  const b = await type.launch(opts);
+  return run(b).finally(() => b.close());
+}
 let failed = 0;
 for (const [name, type, opts] of [["chromium", chromium, channel ? { channel } : {}], ["firefox", firefox, {}], ["webkit", webkit, {}]]) {
-  const b = await type.launch(opts);
-  const got = await run(b).finally(() => b.close());
+  const got = await attempt(type, opts).catch(async (e) => {
+    if (!/Page crashed/i.test(String(e?.message))) throw e;
+    console.log(`${name}: page crashed, rerunning once: ${String(e.message).split("\n")[0]}`);
+    return attempt(type, opts);
+  });
   const bad = Object.keys(want).filter((k) => JSON.stringify(got[k]) !== JSON.stringify(want[k]));
   for (const k of bad) console.log(`${name}: ${k} = ${JSON.stringify(got[k])}, want ${JSON.stringify(want[k])}`);
   console.log(`${name}: ${bad.length ? "FAIL" : "ok"} (${Object.keys(want).length - bad.length}/${Object.keys(want).length} checks)`);
