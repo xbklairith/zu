@@ -38,7 +38,9 @@ export function breadcrumb(view: View, focus: string): Crumb[] {
   for (const id of path) {
     const parent = crumbs[crumbs.length - 1].id;
     let label: string;
-    if (id.endsWith(PKG)) label = `${id.slice(id.lastIndexOf("/") + 1, -PKG.length)} (package)`;
+    const named = view.regroup?.label[id]; // 07: a Proposal's layer boxes and their tops
+    if (named !== undefined) label = named;
+    else if (id.endsWith(PKG)) label = `${id.slice(id.lastIndexOf("/") + 1, -PKG.length)} (package)`;
     else if (parent === "" || !id.startsWith(parent + "/")) label = id;
     else label = id.slice(parent.length + 1);
     crumbs.push({ id, label });

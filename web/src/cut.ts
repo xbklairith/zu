@@ -30,7 +30,18 @@ export function index(view: View): Index {
     kids.get(up)!.add(box);
   };
   const pkgs = view.nodes.filter((n) => n.kind === "package").sort((a, b) => cmp(a.id, b.id));
-  for (const n of pkgs) {
+  // 07: a Proposal's View names every box's parent, up to a layer box at the
+  // top; only the chains of packages in this View are linked.
+  const rg = view.regroup;
+  for (const n of rg ? pkgs : []) {
+    pkg.add(n.id);
+    for (let box = n.id; box !== ""; ) {
+      const up = rg!.parent[box] ?? "";
+      link(box, up);
+      box = up;
+    }
+  }
+  for (const n of rg ? [] : pkgs) {
     const m = n.module ?? n.id;
     pkg.add(n.id);
     link(m, "");

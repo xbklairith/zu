@@ -1414,7 +1414,7 @@ zu does this as a View transform, so the same `scene`, depth, toggles, declutter
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 <!-- file: web/src/proposal.test.ts -->
 ```ts
@@ -1498,9 +1498,9 @@ describe("proposalView (07)", () => {
 });
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/proposal.test.ts` Expected: FAIL (`Cannot find module './proposal'`)
+- [x] **Run:** `cd web && npx vitest run src/proposal.test.ts` Expected: FAIL (`Cannot find module './proposal'`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 <!-- file: web/src/proposal.ts -->
 ```ts
@@ -1641,7 +1641,7 @@ export function proposalView(view: View, name: string): View {
      if (id.endsWith(PKG)) return `${last(id.slice(0, -PKG.length))} (package)`;
 ```
 
-- [ ] **Run:** `cd web && npx tsc --noEmit && npx vitest run` Expected: PASS; the 04 snapshots are unchanged (no View they draw has `regroup`)
+- [x] **Run:** `cd web && npx tsc --noEmit && npx vitest run` Expected: PASS; the 04 snapshots are unchanged (no View they draw has `regroup`)
 
 ### Task 9: The chosen Proposal is in the URL hash
 
@@ -2368,7 +2368,7 @@ The expected checks grow from 20 to 29 per engine. This makes Tasks 7 and 10 rep
 - [x] Task 5 · Hidden-violation mark
 - [x] Task 6 · Level 0 at the bottom, and `order`
 - [x] Task 7 · Badges, mark and panel list
-- [ ] Task 8 · `proposalView`
+- [x] Task 8 · `proposalView`
 - [ ] Task 9 · Proposal in the hash, never in a Change View
 - [ ] Task 10 · Selector, banner, legend, new violations first
 - [ ] Task 11 · The browser harness covers 07

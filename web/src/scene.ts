@@ -107,6 +107,8 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   const base = s.focus.endsWith(PKG) ? s.focus.slice(0, -PKG.length) : s.focus;
   const externals = externalsOf(view, kept).length;
   const label = (id: string, parent: string): string => {
+    const named = view.regroup?.label[id]; // 07: a Proposal's layer boxes and their tops
+    if (named !== undefined) return named;
     if (id === OUTSIDE) return "outside";
     if (id === EXTERNALS) return `${externals} external modules`;
     if (id.endsWith(PKG)) return `${last(id.slice(0, -PKG.length))} (package)`;
