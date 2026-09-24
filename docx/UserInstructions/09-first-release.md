@@ -84,12 +84,9 @@ page and its archives, not the tag. So the rehearsal (step 3) and the Safari che
 
 6. On GitHub → Releases, open the draft `v0.1.0`. Add at the top:
    - install: the README's Install block, and the macOS quarantine note;
-   - known limits: any performance budget that 09's `acceptance.md` records as missed,
-     any view past the budgeted size that exceeds 3 s (for example, first paint of the
-     857-box kubernetes view in Firefox: "budget met at 500+; ~850 boxes exceeds 3 s in
-     Firefox"), and that
-     incremental re-scan isn't built (watch mode comes after v1); `serve` isn't built
-     either.
+   - known limits, from 09's `acceptance.md` (every measured budget was met): responsiveness
+     at 2,000 nodes isn't measured; incremental re-scan isn't built (watch mode comes after
+     v1); `serve` isn't built either.
 
    Then press **Publish release**.
 
