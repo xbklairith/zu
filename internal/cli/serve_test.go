@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -182,14 +181,20 @@ func TestServeServerTimeouts(t *testing.T) {
 
 // Concurrent requests for the View rescan one at a time (Deviation 2).
 func TestServeRescansOneAtATime(t *testing.T) {
-	var active, most atomic.Int32
+	var (
+		mu           sync.Mutex
+		active, most int
+	)
 	s := &session{dir: repo(t, small), o: &htmlOptions{}, cache: scan.NewCache(), stderr: io.Discard}
 	s.scanning = func() {
-		n := active.Add(1)
-		for m := most.Load(); n > m && !most.CompareAndSwap(m, n); m = most.Load() {
-		}
+		mu.Lock()
+		active++
+		most = max(most, active)
+		mu.Unlock()
 		time.Sleep(20 * time.Millisecond)
-		active.Add(-1)
+		mu.Lock()
+		active--
+		mu.Unlock()
 	}
 	var wg sync.WaitGroup
 	for range 8 {
@@ -202,7 +207,7 @@ func TestServeRescansOneAtATime(t *testing.T) {
 		}()
 	}
 	wg.Wait()
-	if most.Load() != 1 {
-		t.Errorf("%d rescans ran at once; want 1", most.Load())
+	if most != 1 {
+		t.Errorf("%d rescans ran at once; want 1", most)
 	}
 }
