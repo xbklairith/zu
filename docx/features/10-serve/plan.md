@@ -567,7 +567,7 @@ The package knows nothing of zu: it takes the page bytes and a function that bui
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 <!-- file: internal/serve/serve_test.go -->
 ```go
@@ -759,9 +759,9 @@ func TestHandlerReportsAFailedBuild(t *testing.T) {
 }
 ```
 
-- [ ] **Run:** `go test ./internal/serve` Expected: FAIL (`undefined: LoopbackAddr`)
+- [x] **Run:** `go test ./internal/serve` Expected: FAIL (`undefined: LoopbackAddr`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 <!-- file: internal/serve/serve.go -->
 ```go
@@ -885,7 +885,7 @@ func crossSite(r *http.Request) bool {
 }
 ```
 
-- [ ] **Run:** `go test -race ./internal/serve` Expected: PASS
+- [x] **Run:** `go test -race ./internal/serve` Expected: PASS
 
 ### Task 4: `zu serve`
 
