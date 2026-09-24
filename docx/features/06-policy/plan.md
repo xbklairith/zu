@@ -4342,8 +4342,8 @@ These diffs are against `main` at 8f43cb1. If 05's `App.tsx` changes before 06 s
 
 ### Task 13: Acceptance
 
-- [ ] **1. Gates:** `make check` (or `gofmt -l .`, `go vet ./...`, `go test ./...`, `golangci-lint run ./...` and `cd web && npx tsc --noEmit && npx vitest run`). Expected: all clean.
-- [ ] **2. zu on itself**, in a scratch copy of the repository after Task 12, 06's code included (copy the working tree; `git archive HEAD` only if Tasks 1–12 are committed). The counts below depend on that: without 06's `internal/policy` the cycle has fewer arcs.
+- [x] **1. Gates:** `make check` (or `gofmt -l .`, `go vet ./...`, `go test ./...`, `golangci-lint run ./...` and `cd web && npx tsc --noEmit && npx vitest run`). Expected: all clean.
+- [x] **2. zu on itself**, in a scratch copy of the repository after Task 12, 06's code included (copy the working tree; `git archive HEAD` only if Tasks 1–12 are committed). The counts below depend on that: without 06's `internal/policy` the cycle has fewer arcs.
   - `zu policy init .` writes `levels: [["zu/web"], ["zu/internal"], ["zu/cmd"]]`, and `zu check .` exits 0 with `0 new, 0 known, 0 fixed`. A second `zu policy init .` exits 3 and leaves the file alone.
   - Replace the file with the intended layering. `zu check .` exits 0 with `0 new, 0 known, 0 fixed`:
 
@@ -4362,12 +4362,12 @@ These diffs are against `main` at 8f43cb1. If 05's `App.tsx` changes before 06 s
   - `zu check -update-baseline .` exits 0, creates the Baseline with 18 sorted entries and lists all 18 on stderr. `zu check .` then exits 0 with `0 new, 18 known`.
   - Append `order: [zu/cmd]` to the Policy (a hash change with no rule change). `zu check .` and `zu check -update-baseline .` both exit 3 with "Baseline was written under Policy …", and the Baseline is unchanged.
   - Remove the `order` line again. `zu scan . -html self.html` marks 16 `"violation":"cycle"` edges and 1 `"violation":"levels"` edge: the import behind the `zu/internal/ir → zu/internal/cli` arc is the Levels edge, and Levels wins, so 18 violations mark 17 edges.
-- [ ] **3. hugo v0.166.0** (`git -C .zu/corpus/hugo@v0.166.0 archive HEAD` into scratch):
+- [x] **3. hugo v0.166.0** (`git -C .zu/corpus/hugo@v0.166.0 archive HEAD` into scratch):
   - `zu policy init .` writes 4 levels over 36 boxes, and `zu check .` exits 0.
   - With `cycles: true`, `zu check .` exits 1 with 189 new violations in about 0.2 s. `zu check -update-baseline .` creates the Baseline and lists all 189; `zu check .` then exits 0 with 189 known.
   - `zu scan . -html` writes 2.2 MB.
-- [ ] **4. kubernetes v1.37.0** (the IR in `.zu/corpus/kubernetes.json`: 110,270 nodes and 118,110 edges): with the suggested Levels, `cycles: true` and `foreign: [github.com, golang.org/x]`, `Suggest` takes 39 ms, `Check` 171 ms (438 violations) and `EdgeRules` 178 ms.
-- [ ] **5. `zu diff`:** covered end to end by `TestDiffScansBothSidesUnderHeadsPolicy`, `TestDiffNewViolationExitsOne`, `TestDiffWarnsWhenALevelNamesNoPackage` and `TestDiffHTMLDrawsTheLensAndTheViolations` (real git repos).
+- [x] **4. kubernetes v1.37.0** (the IR in `.zu/corpus/kubernetes.json`: 110,270 nodes and 118,110 edges): with the suggested Levels, `cycles: true` and `foreign: [github.com, golang.org/x]`, `Suggest` takes 39 ms, `Check` 171 ms (438 violations) and `EdgeRules` 178 ms.
+- [x] **5. `zu diff`:** covered end to end by `TestDiffScansBothSidesUnderHeadsPolicy`, `TestDiffNewViolationExitsOne`, `TestDiffWarnsWhenALevelNamesNoPackage` and `TestDiffHTMLDrawsTheLensAndTheViolations` (real git repos).
 
 ## Notes
 
@@ -4393,6 +4393,6 @@ These diffs are against `main` at 8f43cb1. If 05's `App.tsx` changes before 06 s
 - [x] Task 10 · `zu diff` B7/B9
 - [x] Task 11 · View fields and the lensed export
 - [x] Task 12 · UI: red violations via `pin`
-- [ ] Task 13 · Acceptance
+- [x] Task 13 · Acceptance
 
-**Status:** Not Started
+**Status:** Complete 2026-09-24 (see acceptance.md)
