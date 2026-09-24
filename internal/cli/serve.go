@@ -62,7 +62,7 @@ func runServe(args []string, stdout, stderr io.Writer) int {
 	if _, err := s.view(ctx); err != nil { // a tree zu cannot scan fails here, not in the page
 		return bad(err)
 	}
-	srv := &http.Server{Handler: serve.Handler(page, s.view), ReadHeaderTimeout: 10 * time.Second}
+	srv := newServer(serve.Handler(page, s.view))
 	done := make(chan error, 1)
 	go func() { done <- srv.Serve(ln) }()
 	fmt.Fprintf(stdout, "http://%s/\n", ln.Addr())
@@ -77,6 +77,12 @@ func runServe(args []string, stdout, stderr io.Writer) int {
 	}
 }
 
+// newServer bounds how long a client may take to send its headers and keep
+// an idle connection open.
+func newServer(h http.Handler) *http.Server {
+	return &http.Server{Handler: h, ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second}
+}
+
 // session is one zu serve: its options, and the Cache its rescans share.
 type session struct {
 	mu     sync.Mutex // one rescan at a time
@@ -84,6 +90,8 @@ type session struct {
 	o      *htmlOptions
 	cache  *scan.Cache
 	stderr io.Writer
+	// scanning, when set, runs while a rescan holds mu (a test seam).
+	scanning func()
 }
 
 // view rescans the working tree under its Policy, as zu scan does, and
@@ -91,6 +99,9 @@ type session struct {
 func (s *session) view(ctx context.Context) ([]byte, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.scanning != nil {
+		s.scanning()
+	}
 	start := time.Now()
 	src, err := openSource(ctx, s.dir, "", false)
 	if err != nil {

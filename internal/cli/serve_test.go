@@ -10,7 +10,11 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
+
+	"zu/internal/scan"
 )
 
 // lockedBuffer is a stderr the server goroutine writes while the test reads.
@@ -165,5 +169,40 @@ func TestServeWithoutTheUI(t *testing.T) {
 	t.Cleanup(func() { uiTemplate = old })
 	if code, _, errOut := run("serve", "-addr", "127.0.0.1:0", repo(t, small)); code != ExitBadInvocation || !strings.Contains(errOut, "no-such-template.html") {
 		t.Errorf("exit %d: %s", code, errOut)
+	}
+}
+
+// A slow client cannot hold a connection open indefinitely (review, 2026-09-25).
+func TestServeServerTimeouts(t *testing.T) {
+	srv := newServer(http.NotFoundHandler())
+	if srv.ReadHeaderTimeout != 10*time.Second || srv.IdleTimeout != 60*time.Second {
+		t.Errorf("ReadHeaderTimeout %v, IdleTimeout %v; want 10s and 60s", srv.ReadHeaderTimeout, srv.IdleTimeout)
+	}
+}
+
+// Concurrent requests for the View rescan one at a time (Deviation 2).
+func TestServeRescansOneAtATime(t *testing.T) {
+	var active, most atomic.Int32
+	s := &session{dir: repo(t, small), o: &htmlOptions{}, cache: scan.NewCache(), stderr: io.Discard}
+	s.scanning = func() {
+		n := active.Add(1)
+		for m := most.Load(); n > m && !most.CompareAndSwap(m, n); m = most.Load() {
+		}
+		time.Sleep(20 * time.Millisecond)
+		active.Add(-1)
+	}
+	var wg sync.WaitGroup
+	for range 8 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if _, err := s.view(context.Background()); err != nil {
+				t.Error(err)
+			}
+		}()
+	}
+	wg.Wait()
+	if most.Load() != 1 {
+		t.Errorf("%d rescans ran at once; want 1", most.Load())
 	}
 }
