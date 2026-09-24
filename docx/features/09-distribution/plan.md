@@ -667,7 +667,7 @@ and its `ui` line `embedded`. Record the digests and the record in
   move it. Delete the draft, fix forward on `main`, and release `v0.1.1`.
 ````
 
-- [ ] **Run:** `grep -q '^## Troubleshooting' docx/UserInstructions/09-first-release.md && ! grep -q 'go install' docx/UserInstructions/09-first-release.md` Expected: PASS.
+- [x] **Run:** `grep -q '^## Troubleshooting' docx/UserInstructions/09-first-release.md && ! grep -q 'go install' docx/UserInstructions/09-first-release.md` Expected: PASS.
 
 ### Task 6: acceptance
 
@@ -743,4 +743,4 @@ make release-snapshot && rm -rf dist .zu/release
 
 ## Progress
 
-- [x] Task 1 · [x] Task 2 · [x] Task 3 · [x] Task 4 · [ ] Task 5 · [ ] Task 6
+- [x] Task 1 · [x] Task 2 · [x] Task 3 · [x] Task 4 · [x] Task 5 · [ ] Task 6
