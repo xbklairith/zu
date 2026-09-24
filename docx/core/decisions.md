@@ -41,7 +41,7 @@ Hard-to-reverse, surprising, real trade-offs — one file each in [`docx/decisio
 - **UI v1:** U1, U3, U4, U5 full; U2 reduced (full re-layout allowed); U6 = uml-viewer's declutter cycle (full → arrows → triangles → elements → classes → back to full, as in uml-viewer's `hierarchy.clj`; stage definitions in feature 05's Deviation 1; violations stay red). Externals drawn as ovals. Focus (N hops), collapse to depth N, external toggle (no stdlib toggle: the IR has no stdlib edges); view state in the URL hash. Views over 2,000 nodes or 500 laid-out edges collapse depth automatically and say so.
 - **Change View marks:** changed nodes solid, the Affected Set outlined; edges +/−, pair counts on bundles, cycle edges red; Moves dashed.
 - **Output formats:** `diff`/`check` take `-format text|markdown|json`; markdown can be pasted as a PR comment; HTML via export. The summary includes the blast-radius count and says "no structural change" when only cosmetic edits were made.
-- **Distribution:** `go install` + GitHub Releases via goreleaser with checksums.
+- **Distribution:** GitHub Releases via goreleaser with checksums; `go install` after v0.1, once it can carry the UI (needs the module rename).
 - **Watch + session restore:** with `serve`, after the v1 core.
 - **Not matched from uml-viewer:** agent companion, EDN, desktop window, JVM.
 - **Positioning:** no other tool draws a deterministic, non-LLM structural delta for a Go PR (checked 2026-09-23 against ~35 tools). Go rule linters draw nothing; Go graph viewers show no change.
