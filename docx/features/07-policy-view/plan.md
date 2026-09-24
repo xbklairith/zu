@@ -582,7 +582,7 @@ This task also adds every 07 View field to `data.ts` (`policy.order`, `policy.pr
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 --- a/web/src/policy.test.ts
@@ -626,9 +626,9 @@ This task also adds every 07 View field to `data.ts` (`policy.order`, `policy.pr
 +});
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/policy.test.ts` Expected: FAIL (`rolledRanks is not a function`)
+- [x] **Run:** `cd web && npx vitest run src/policy.test.ts` Expected: FAIL (`rolledRanks is not a function`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/web/src/data.ts
@@ -736,7 +736,7 @@ This task also adds every 07 View field to `data.ts` (`policy.order`, `policy.pr
    const row = view.kind === "change" ? markChanges(view, c.decls, nodes, d.rows, s.selected) : null;
 ```
 
-- [ ] **Run:** `cd web && npx tsc --noEmit && npx vitest run` Expected: tsc clean; every vitest file passes
+- [x] **Run:** `cd web && npx tsc --noEmit && npx vitest run` Expected: tsc clean; every vitest file passes
 
 ### Task 5: A violation hidden inside a box marks the box
 
@@ -2364,7 +2364,7 @@ The expected checks grow from 20 to 29 per engine. This makes Tasks 7 and 10 rep
 - [x] Task 1 · `policy.ForProposal` and member validation
 - [x] Task 2 · View `order` and `proposals`
 - [x] Task 3 · Change View violation delta
-- [ ] Task 4 · Rolled ranks on boxes
+- [x] Task 4 · Rolled ranks on boxes
 - [ ] Task 5 · Hidden-violation mark
 - [ ] Task 6 · Level 0 at the bottom, and `order`
 - [ ] Task 7 · Badges, mark and panel list

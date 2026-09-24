@@ -9,16 +9,29 @@ export type ViewNode = {
 };
 export type ViewEdge = {
   from: string; to: string; kind: "imports" | "calls" | "embeds"; count: number; loc: Loc; status?: string;
-  violation?: "levels" | "cycle"; // 06: the Policy rule this import breaks
+  violation?: Violation["rule"]; // 06: the Policy rule this import breaks
 };
 export type Ref = { commit: string; dirty: boolean };
 export type Hunk = { baseStart: number; baseLines: number; headStart: number; headLines: number; lines: string[] };
+export type Violation = { rule: "levels" | "cycle"; from: string; to: string };
+// Proposal is one of the Policy's Proposals as internal/export writes it (07):
+// layers inner first, the ids it omits, each ranked package's layer and the
+// package imports that break its layering.
+export type Proposal = {
+  name: string; layers: { name: string; members: string[] }[]; omit?: string[];
+  ranks: Record<string, number>; violations: { from: string; to: string }[];
+};
 export type View = {
   schema: string; kind: "project" | "change"; tool: string; head: Ref; base?: Ref; changed?: string[];
   modules: string[]; nodes: ViewNode[]; edges: ViewEdge[]; sources: Record<string, string>;
   links?: { blob: string; compare?: string };
   hunks?: Record<string, Hunk[]>;
-  policy?: { hash: string; levels: string[][] }; // 06: only when the Policy has rules
+  // 06: only when the Policy has rules; 07: or an order or Proposals.
+  policy?: { hash: string; levels: string[][]; order?: string[]; proposals?: Proposal[] };
+  violations?: { new: Violation[]; fixed: Violation[]; known: number }; // 07: Change View only
+  // 07, never written by zu: the box tree a Proposal draws (proposal.ts). cut.ts
+  // index reads parent instead of package ids, and scene.ts labels from label.
+  regroup?: { parent: Record<string, string>; label: Record<string, string> };
   honesty: {
     parseErrors: { path: string; message: string }[]; unresolvedCalls: number;
     unresolvedImports: number; unsupported: Record<string, number>;

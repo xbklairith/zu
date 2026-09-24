@@ -4,6 +4,7 @@ import type { View } from "./data";
 import { autoDepth, childrenOf, cmp, cut, declsOf, index, isBox, leafOf, OUTSIDE, packagesIn, PKG } from "./cut";
 import { bundlesOver, EXTERNALS, externalsOf, type Bundle } from "./bundle";
 import { declutter, NO_PINS, type Mark, type Pin } from "./declutter";
+import { rolledRanks } from "./policy";
 import { withinHops } from "./select";
 import type { Known, Stage, ViewState } from "./state";
 
@@ -16,6 +17,7 @@ export type SceneNode = {
   mark?: Mark; // incoming/outgoing triangles, when lines are hidden
   change?: string; // the Change View class (change.ts nodeMark, or "has-change")
   rowMarks?: string[]; // the Change View class of each method row
+  rank?: number; // 07: the Policy rank of a box, rolled up (policy.ts rolledRanks)
 };
 export type SceneEdge = {
   id: string; from: string; to: string; pairs: number; members: Bundle["members"];
@@ -118,6 +120,7 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     return c.decls ? "decl" : "box";
   };
 
+  const ranks = rolledRanks(view);
   const nodes: SceneNode[] = [...ids].sort(cmp).map((id) => {
     const parent = up(id);
     const n: SceneNode = {
@@ -132,6 +135,10 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     else if (n.shape === "box" && !folds.has(id) && !id.endsWith(PKG) && childrenOf(view, id).length > 0) n.toggle = "expand";
     const m = d.lines ? undefined : d.marks.get(id);
     if (m) n.mark = m;
+    // A "#pkg" leaf is its own package; any other box rolls up what it holds.
+    const r = n.shape !== "box" && n.shape !== "container" ? undefined
+      : id.endsWith(PKG) ? node.get(id.slice(0, -PKG.length))?.rank : ranks.get(id);
+    if (r !== undefined) n.rank = r;
     return n;
   });
   const row = view.kind === "change" ? markChanges(view, c.decls, nodes, d.rows, s.selected) : null;
