@@ -1350,7 +1350,7 @@ It fails now, as it should: Task 4's page carries the live marker, but the page 
 
 **Steps:**
 
-- [ ] **Write the failing check**
+- [x] **Write the failing check**
 
 <!-- file: web/e2e/serve.mjs -->
 ```js
@@ -1464,9 +1464,9 @@ process.exit(failed ? 1 : 0);
      "playwright-core": "1.63.0"
 ```
 
-- [ ] **Run:** `make build` Expected: PASS (the UI as it is, and `bin/zu` with Tasks 1–4).
+- [x] **Run:** `make build` Expected: PASS (the UI as it is, and `bin/zu` with Tasks 1–4).
 
-- [ ] **Run:** `cd web/e2e && npm run accept-serve` Expected: FAIL (`locator.waitFor: Timeout 30000ms exceeded` on `.react-flow__node`: no node is drawn, because the page does not fetch its View yet)
+- [x] **Run:** `cd web/e2e && npm run accept-serve` Expected: FAIL (`locator.waitFor: Timeout 30000ms exceeded` on `.react-flow__node`: no node is drawn, because the page does not fetch its View yet)
 
 ### Task 6: the page fetches its View
 
