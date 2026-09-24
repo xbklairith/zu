@@ -4,6 +4,8 @@
 // View this returns with the same scene, so depth, declutter, selection and
 // badges all work; the page never evaluates a rule itself.
 import type { View, ViewEdge, ViewNode } from "./data";
+import { knownIds } from "./scene";
+import { decodeHash, type ViewState } from "./state";
 
 // PROPOSAL_NOTICE is uml-viewer's banner (policy.clj proposal-notice, l.62).
 export const PROPOSAL_NOTICE = "PROPOSAL — not instantiated in code";
@@ -83,4 +85,11 @@ export function proposalView(view: View, name: string): View {
   if (!cache.has(view)) cache.set(view, new Map());
   cache.get(view)!.set(name, out);
   return out;
+}
+
+// readHash decodes a hash in two passes: the Proposal first, then the focus,
+// toggles and selection against the tree that Proposal draws.
+export function readHash(hash: string, view: View): ViewState {
+  const s = decodeHash(hash, knownIds(view));
+  return s.proposal === null ? s : decodeHash(hash, knownIds(proposalView(view, s.proposal)));
 }

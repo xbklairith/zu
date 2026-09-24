@@ -17,7 +17,7 @@ describe("URL hash", () => {
   });
   it("round-trips every field, with toggles sorted", () => {
     const s: ViewState = { focus: "m/a#pkg", depth: 3, toggled: ["m/b", "m/a"], selected: "m/a.T",
-      hops: 2, stage: "triangles", lines: false, minPairs: 4, externals: false };
+      hops: 2, stage: "triangles", lines: false, minPairs: 4, externals: false, proposal: null };
     const h = encodeHash(s);
     expect(h).toBe("#f=m%2Fa%23pkg&d=3&t=m%2Fa&t=m%2Fb&s=m%2Fa.T&h=2&x=triangles&l=0&w=4&e=0");
     expect(decodeHash(h, known)).toEqual({ ...s, toggled: ["m/a", "m/b"] });

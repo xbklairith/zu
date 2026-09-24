@@ -1654,7 +1654,7 @@ A Change View never draws a Proposal: its violations section is zu diff's, under
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 --- a/web/src/proposal.test.ts
@@ -1723,9 +1723,9 @@ A Change View never draws a Proposal: its violations section is zu diff's, under
      expect(decodeHash(h, known)).toEqual({ ...s, toggled: ["m/a", "m/b"] });
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/proposal.test.ts src/state.test.ts` Expected: FAIL (`readHash is not a function`)
+- [x] **Run:** `cd web && npx vitest run src/proposal.test.ts src/state.test.ts` Expected: FAIL (`readHash is not a function`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/web/src/proposal.ts
@@ -1862,7 +1862,7 @@ A Change View never draws a Proposal: its violations section is zu diff's, under
  }
 ```
 
-- [ ] **Run:** `cd web && npx tsc --noEmit && npx vitest run` Expected: PASS
+- [x] **Run:** `cd web && npx tsc --noEmit && npx vitest run` Expected: PASS
 
 ### Task 10: The page: Proposal selector and banner, legend, new violations first
 
@@ -2369,7 +2369,7 @@ The expected checks grow from 20 to 29 per engine. This makes Tasks 7 and 10 rep
 - [x] Task 6 · Level 0 at the bottom, and `order`
 - [x] Task 7 · Badges, mark and panel list
 - [x] Task 8 · `proposalView`
-- [ ] Task 9 · Proposal in the hash, never in a Change View
+- [x] Task 9 · Proposal in the hash, never in a Change View
 - [ ] Task 10 · Selector, banner, legend, new violations first
 - [ ] Task 11 · The browser harness covers 07
 - [ ] Task 12 · Acceptance

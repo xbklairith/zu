@@ -22,11 +22,12 @@ export type ViewState = {
   lines: boolean; // false = "Hide edges": triangles instead of lines, at any stage
   minPairs: number; // hide bundles with fewer package pairs (A6)
   externals: boolean; // draw external modules
+  proposal: string | null; // 07: the Proposal drawn instead of the Package Tree, by name
 };
 
 export const DEFAULT_STATE: ViewState = {
   focus: "", depth: null, toggled: [], selected: null, hops: null,
-  stage: "full", lines: true, minPairs: 1, externals: true,
+  stage: "full", lines: true, minPairs: 1, externals: true, proposal: null,
 };
 
 export const LIMITS = { depth: 32, hops: 9, minPairs: 999 };
@@ -44,13 +45,16 @@ export function encodeHash(s: ViewState): string {
   if (!s.lines) p.set("l", "0");
   if (s.minPairs !== 1) p.set("w", String(s.minPairs));
   if (!s.externals) p.set("e", "0");
+  if (s.proposal !== null) p.set("p", s.proposal);
   const q = p.toString();
   return q ? "#" + q : "";
 }
 
 // Known says which ids a hash may name: a focus, a toggle (a box with child
-// boxes) and a selection.
-export type Known = { box(id: string): boolean; folder(id: string): boolean; node(id: string): boolean };
+// boxes), a selection and (07) a Proposal.
+export type Known = {
+  box(id: string): boolean; folder(id: string): boolean; node(id: string): boolean; proposal?(name: string): boolean;
+};
 
 // decodeHash reads a hash from anywhere (a shared link is untrusted input):
 // unknown ids and out-of-range numbers fall back to the default, never throw.
@@ -65,6 +69,7 @@ export function decodeHash(hash: string, known: Known): ViewState {
   const focus = p.get("f") ?? "";
   const selected = p.get("s");
   const stage = p.get("x");
+  const proposal = p.get("p");
   return {
     focus: known.box(focus) ? focus : "",
     depth: int("d", LIMITS.depth),
@@ -75,6 +80,7 @@ export function decodeHash(hash: string, known: Known): ViewState {
     lines: p.get("l") !== "0",
     minPairs: int("w", LIMITS.minPairs) ?? 1,
     externals: p.get("e") !== "0",
+    proposal: proposal !== null && known.proposal?.(proposal) ? proposal : null,
   };
 }
 
@@ -101,6 +107,10 @@ export const nextStage = (s: Stage): Stage => STAGES[(STAGES.indexOf(s) + 1) % S
 
 export const drill = (s: ViewState, box: string): ViewState =>
   ({ ...s, focus: box, depth: null, toggled: [], selected: null, hops: null });
+
+// propose draws a Proposal (or, with null, the Package Tree again) from the
+// page root: the focus and selection name boxes of the other tree.
+export const propose = (s: ViewState, name: string | null): ViewState => ({ ...drill(s, ""), proposal: name });
 
 // up goes to the parent box and selects the box the reader came from.
 export const up = (s: ViewState, parent: string): ViewState => ({ ...drill(s, parent), selected: s.focus || null });

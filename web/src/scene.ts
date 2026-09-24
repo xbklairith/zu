@@ -274,11 +274,14 @@ export function fitDepth(requested: Sized & { depth: number }, at: (depth: numbe
 }
 
 // knownIds says which ids a URL hash may name: boxes as a focus, boxes with
-// children as toggles, and anything scene() can anchor as a selection.
+// children as toggles, anything scene() can anchor as a selection, and a
+// Proposal outside a Change View: the Change View's violations are zu diff's,
+// under zu.policy.yaml, so it never draws a Proposal's.
 export const knownIds = (view: View): Known => ({
   box: (id) => id === "" || isBox(view, id),
   folder: (id) => !id.endsWith(PKG) && childrenOf(view, id).length > 0,
   node: (id) => isBox(view, id) || index(view).node.has(id) || id === OUTSIDE || id === EXTERNALS,
+  proposal: (name) => view.kind !== "change" && (view.policy?.proposals?.some((p) => p.name === name) ?? false),
 });
 
 // openFull says a Change View focus (from a link) lies outside the changed

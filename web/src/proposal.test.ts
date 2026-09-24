@@ -3,9 +3,9 @@ import { childrenOf } from "./cut";
 import type { View } from "./data";
 import { breadcrumb } from "./headline";
 import { pinFor } from "./policy";
-import { PROPOSAL_NOTICE, proposalView, UNASSIGNED } from "./proposal";
-import { scene } from "./scene";
-import { DEFAULT_STATE } from "./state";
+import { PROPOSAL_NOTICE, proposalView, readHash, UNASSIGNED } from "./proposal";
+import { knownIds, scene } from "./scene";
+import { DEFAULT_STATE, encodeHash, propose } from "./state";
 import { decl, edge, pkgs, view } from "./testkit";
 
 // The Package Tree: m/app and m/domain with sub-packages, m/tools and m/util.
@@ -46,7 +46,7 @@ describe("proposalView (07)", () => {
     expect(childrenOf(p, "m/app")).toEqual(["m/app/api", "m/app/svc"]);
     expect(childrenOf(p, "proposal:1")).toEqual(["m/domain/model"]);
     expect(childrenOf(p, UNASSIGNED)).toEqual(["m/domain", "m/util"]);
-    // The Change View's subgraph keeps regroup but drops packages: no empty boxes.
+    // Only packages present are linked: a regrouped View without some draws no empty boxes.
     const sub = { ...p, nodes: p.nodes.filter((n) => n.id !== "m/util" && n.id !== "m/domain/model") };
     expect(childrenOf(sub, "")).toEqual(["proposal:0", UNASSIGNED]);
     expect(childrenOf(sub, UNASSIGNED)).toEqual(["m/domain"]);
@@ -74,5 +74,30 @@ describe("proposalView (07)", () => {
   it("is the View itself for an unknown name, and names the banner as uml-viewer does", () => {
     expect(proposalView(v, "Nope")).toBe(v);
     expect(PROPOSAL_NOTICE).toBe("PROPOSAL — not instantiated in code");
+  });
+});
+
+describe("a Proposal in the URL hash (07)", () => {
+  it("is off by default and written as p", () => {
+    expect(DEFAULT_STATE.proposal).toBeNull();
+    expect(encodeHash({ ...DEFAULT_STATE, proposal: "Flip", focus: "proposal:0" })).toBe("#f=proposal%3A0&p=Flip");
+  });
+
+  it("reads the focus against the Proposal's tree, and drops an unknown Proposal", () => {
+    expect(readHash("#f=proposal%3A0&p=Flip", v)).toEqual({ ...DEFAULT_STATE, focus: "proposal:0", proposal: "Flip" });
+    expect(readHash("#f=proposal%3A0", v)).toEqual(DEFAULT_STATE);
+    expect(readHash("#f=m%2Fapp&p=Nope", v)).toEqual({ ...DEFAULT_STATE, focus: "m/app" });
+  });
+
+  it("is never read in a Change View, so a pasted link cannot draw one there", () => {
+    const change: View = { ...v, kind: "change", changed: ["m/app/api"] };
+    expect(knownIds(change).proposal?.("Flip")).toBe(false);
+    expect(readHash("#f=m%2Fapp&p=Flip", change)).toEqual({ ...DEFAULT_STATE, focus: "m/app" });
+  });
+
+  it("switching Proposal starts again at the page root", () => {
+    const s = { ...DEFAULT_STATE, focus: "m/app", selected: "m/app/api", toggled: ["m/app"] };
+    expect(propose(s, "Flip")).toEqual({ ...DEFAULT_STATE, proposal: "Flip" });
+    expect(propose({ ...s, proposal: "Flip" }, null)).toEqual(DEFAULT_STATE);
   });
 });
