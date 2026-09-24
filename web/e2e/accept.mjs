@@ -33,6 +33,30 @@ const ids = [];
 for (let g = 0; g < 24; g++) for (let i = 0; i < 5; i++) ids.push(`m/g${String(g).padStart(2, "0")}/p${i}`);
 const edges = ids.flatMap((id, n) => [1, 2, 3, 4, 5, 6].map((k) => imp(id, ids[(n + 5 * k) % ids.length])));
 write("big.html", page({ ...shop, modules: ["m"], nodes: [pkg("m", "m"), ...ids.map((id) => pkg(id, "m"))], edges, sources: {} }));
+// 07: a Policy View, as export.Mark writes it. Ranks: cmd 2, cli 1, ir and
+// ir/bad 0, util unranked; one levels violation, ir/bad → cli, which no line
+// draws once m/internal is closed.
+const ranked = [["m/cmd", 2], ["m/internal/cli", 1], ["m/internal/ir", 0], ["m/internal/ir/bad", 0], ["m/util"]];
+const hexagon = {
+  name: "Hexagon",
+  layers: [{ name: "Domain", members: ["m/internal/ir"] }, { name: "Entry", members: ["m/internal/cli", "m/cmd"] }],
+  ranks: { "m/cmd": 1, "m/internal/cli": 1, "m/internal/ir": 0, "m/internal/ir/bad": 0 },
+  violations: [{ from: "m/internal/ir/bad", to: "m/internal/cli" }],
+};
+const policy = { hash: "sha256:e2e", levels: [["m/internal/ir"], ["m/internal/cli"], ["m/cmd"]], proposals: [hexagon] };
+write("policy.html", page({
+  ...shop, modules: ["m"], sources: {}, policy,
+  nodes: [pkg("m", "m"), ...ranked.map(([id, rank]) => ({ ...pkg(id, "m"), ...(rank === undefined ? {} : { rank }) }))],
+  edges: [imp("m/cmd", "m/internal/cli"), imp("m/internal/cli", "m/internal/ir"), { ...imp("m/internal/ir/bad", "m/internal/cli"), violation: "levels" }, imp("m/cmd", "m/util")],
+}));
+// Six unconnected siblings that ELK alone places x, z, c, y, a, b; order asks z, y, x first.
+const six = ["m/a", "m/b", "m/c", "m/x", "m/y", "m/z"];
+write("order.html", page({ ...shop, modules: ["m"], sources: {}, nodes: [pkg("m", "m"), ...six.map((id) => pkg(id, "m"))], edges: [], policy: { hash: "sha256:e2e", levels: [], order: ["m/z", "m/y", "m/x"] } }));
+// A Change View with zu diff's violation delta, and a Proposal it must not draw.
+write("violations.html", page({
+  ...change, policy: { hash: "sha256:e2e", levels: [], proposals: [{ ...hexagon, ranks: {}, violations: [] }] },
+  violations: { new: [{ rule: "levels", from: "example.com/shop/internal/store", to: "example.com/shop/internal/money" }], fixed: [], known: 2 },
+}));
 
 const base = "file://" + dir + "/";
 const vp = (p) => p.locator(".react-flow__viewport").getAttribute("style");
@@ -110,6 +134,64 @@ async function run(b) {
   await p.getByRole("button", { name: "Draw depth 4 anyway" }).click();
   out.anyway = await p.locator("#zu-notice").count();
   await p.close();
+  // 07: the Policy View.
+  p = await b.newPage();
+  const at = async (h) => {
+    await p.goto(base + "policy.html" + h);
+    await p.reload();
+    await drawn(p);
+    await settle(p);
+  };
+  const nodes = () => p.evaluate(() => [...document.querySelectorAll(".react-flow__node")].map((n) => {
+    const r = n.getBoundingClientRect();
+    return { id: n.getAttribute("data-id"), x: r.x, y: r.y, rank: n.querySelector(".rank")?.textContent ?? null, red: !!n.querySelector(".hides-violation") };
+  }));
+  const reds = async () => (await nodes()).filter((n) => n.red).map((n) => n.id);
+  await at("#d=3");
+  out.ranks = (await nodes()).filter((n) => n.rank !== null).sort((a, b) => a.y - b.y || a.x - b.x).map((n) => `${n.id} ${n.rank}`);
+  await at("#d=2");
+  out.redBox = [`d=2: ${(await reds()).join(" ")}`];
+  for (const st of ["full", "arrows", "triangles", "elements", "classes"]) {
+    await at(`#d=3&x=${st}`);
+    out.redBox.push(`${st}: ${(await reds()).join(" ")}`);
+  }
+  await at("#d=2&s=m%2Finternal");
+  out.panel = await p.locator(".hidden-violations").innerText().then((t) => t.split("\n").slice(0, 2)).catch(() => null);
+  await at("");
+  await p.getByLabel(/^proposal/).selectOption("Hexagon");
+  await settle(p);
+  const banner = () => p.locator(".proposal-banner").innerText().catch(() => null);
+  out.proposal = [await hash(p), await banner(), await p.locator(".legend .violation").innerText()];
+  await p.reload();
+  await drawn(p);
+  await settle(p);
+  out.proposalReload = await banner();
+  await p.getByLabel(/^proposal/).selectOption("");
+  await settle(p);
+  out.proposalNone = [await hash(p), await p.locator(".proposal-banner").count()];
+  await p.goto(base + "order.html#d=2");
+  await drawn(p);
+  await settle(p);
+  out.order = (await nodes()).filter((n) => n.id !== "m").sort((a, b) => a.x - b.x).map((n) => n.id).join(" ");
+  // Search centres from the positions after inOrder: m/z is re-placed first in its row.
+  await p.keyboard.press("/");
+  await p.keyboard.type("m/z");
+  await p.keyboard.press("Enter");
+  await settle(p);
+  out.orderCentred = await p.evaluate(() => {
+    const n = document.querySelector('.react-flow__node[data-id="m/z"]')?.getBoundingClientRect();
+    const c = document.querySelector(".flow")?.getBoundingClientRect();
+    if (!n || !c) return "missing";
+    const dx = n.x + n.width / 2 - (c.x + c.width / 2);
+    const dy = n.y + n.height / 2 - (c.y + c.height / 2);
+    return Math.abs(dx) <= 2 && Math.abs(dy) <= 2 ? true : `off by ${Math.round(dx)}, ${Math.round(dy)}`;
+  });
+  await p.goto(base + "violations.html#p=Hexagon");
+  await drawn(p);
+  await settle(p);
+  out.violations = await p.locator("nav.changed .violations").innerText().then((t) => t.split("\n"));
+  out.changeNoProposal = [await p.locator(".proposal-banner").count(), await p.getByLabel(/^proposal/).count()];
+  await p.close();
   // Worker blocked by the CSP
   p = await b.newPage();
   await p.goto(base + "without.html");
@@ -141,6 +223,17 @@ const want = {
   anyway: 0,
   blocked: "Layout failed: layout worker failed: blocked",
   errors: [],
+  // 07
+  ranks: ["m 2", "m/cmd 2", "m/internal 1", "m/internal/cli 1", "m/internal/ir 0"],
+  redBox: ["d=2: m/internal", "full: ", "arrows: m/internal", "triangles: m/internal", "elements: m/internal", "classes: m/internal"],
+  panel: ["Violations inside (1)", "levels m/internal/ir/bad → m/internal/cli"],
+  proposal: ["#p=Hexagon", "PROPOSAL — not instantiated in code: Hexagon", "violates Proposal Hexagon's layers; a red box holds one"],
+  proposalReload: "PROPOSAL — not instantiated in code: Hexagon",
+  proposalNone: ["", 0],
+  order: "m/z m/y m/x m#pkg m/a m/b m/c",
+  orderCentred: true,
+  violations: ["New violations (1)", "levels example.com/shop/internal/store → example.com/shop/internal/money", "", "0 fixed, 2 pre-existing"],
+  changeNoProposal: [0, 0],
 };
 
 const channel = process.env.ZU_E2E_CHANNEL;

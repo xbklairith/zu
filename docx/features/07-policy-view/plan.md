@@ -2198,7 +2198,7 @@ The expected checks grow from 20 to 29 per engine. This makes Tasks 7 and 10 rep
 
 **Steps:**
 
-- [ ] **Extend the harness**
+- [x] **Extend the harness**
 
 ```diff
 --- a/web/e2e/accept.mjs
@@ -2305,7 +2305,7 @@ The expected checks grow from 20 to 29 per engine. This makes Tasks 7 and 10 rep
  const channel = process.env.ZU_E2E_CHANNEL;
 ```
 
-- [ ] **Run:** `cd web && npx vite build && cd e2e && npm run accept` Expected: `chromium: ok (29/29 checks)`, and the same for firefox and webkit
+- [x] **Run:** `cd web && npx vite build && cd e2e && npm run accept` Expected: `chromium: ok (29/29 checks)`, and the same for firefox and webkit
 
 ### Task 12: Acceptance
 
@@ -2371,5 +2371,5 @@ The expected checks grow from 20 to 29 per engine. This makes Tasks 7 and 10 rep
 - [x] Task 8 · `proposalView`
 - [x] Task 9 · Proposal in the hash, never in a Change View
 - [x] Task 10 · Selector, banner, legend, new violations first
-- [ ] Task 11 · The browser harness covers 07
+- [x] Task 11 · The browser harness covers 07
 - [ ] Task 12 · Acceptance
