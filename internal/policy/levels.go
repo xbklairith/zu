@@ -101,21 +101,31 @@ func packageIDs(doc *ir.IR) map[string]bool {
 	return out
 }
 
-// Validate reports a Levels id that ranks no package of doc: almost always
-// a typo, and a rule that silently checks nothing.
+// Validate reports a Levels id or a Proposal member that ranks no package of
+// doc: almost always a typo, and a rule that silently checks nothing.
 func (p *Policy) Validate(doc *ir.IR) error {
 	pkgs := packageIDs(doc)
+	ranks := func(l string) bool {
+		for id := range pkgs {
+			if under(id, l) {
+				return true
+			}
+		}
+		return false
+	}
 	for i, lv := range p.Levels {
 		for _, l := range lv {
-			found := false
-			for id := range pkgs {
-				if under(id, l) {
-					found = true
-					break
-				}
-			}
-			if !found {
+			if !ranks(l) {
 				return fmt.Errorf("%s: levels[%d]: %q matches no package", FileName, i, l)
+			}
+		}
+	}
+	for i, pr := range p.Proposals {
+		for j, l := range pr.Layers {
+			for _, m := range l.Members {
+				if !ranks(m) {
+					return fmt.Errorf("%s: proposals[%d].layers[%d]: %q matches no package", FileName, i, j, m)
+				}
 			}
 		}
 	}

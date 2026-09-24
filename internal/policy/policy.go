@@ -171,6 +171,7 @@ func (p *Policy) validate() error {
 		if len(pr.Layers) == 0 {
 			return fmt.Errorf("proposals[%d]: no layers", i)
 		}
+		in := map[string]int{}
 		for j, l := range pr.Layers {
 			if l.Name == "" || len(l.Members) == 0 {
 				return fmt.Errorf("proposals[%d].layers[%d]: want a name and members", i, j)
@@ -179,6 +180,10 @@ func (p *Policy) validate() error {
 				if err := checkID(id); err != nil {
 					return fmt.Errorf("proposals[%d].layers[%d]: %w", i, j, err)
 				}
+				if k, dup := in[id]; dup {
+					return fmt.Errorf("proposals[%d].layers[%d]: %q is already in layers[%d]", i, j, id, k)
+				}
+				in[id] = j
 			}
 		}
 		for _, id := range pr.Omit {

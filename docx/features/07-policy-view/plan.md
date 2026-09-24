@@ -132,7 +132,7 @@ Proposal members are held to the Levels' standard: parsing rejects a member list
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 <!-- file: internal/policy/proposal_test.go -->
 ```go
@@ -205,9 +205,9 @@ func TestValidateRejectsAProposalMemberThatMatchesNothing(t *testing.T) {
 }
 ```
 
-- [ ] **Run:** `go test ./internal/policy` Expected: FAIL (`ForProposal` undefined)
+- [x] **Run:** `go test ./internal/policy` Expected: FAIL (`ForProposal` undefined)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 <!-- file: internal/policy/proposal.go -->
 ```go
@@ -313,7 +313,7 @@ func (p *Policy) Omitted(id string) bool {
  		for _, id := range pr.Omit {
 ```
 
-- [ ] **Run:** `go test ./internal/policy` Expected: PASS
+- [x] **Run:** `go test ./internal/policy` Expected: PASS
 
 ### Task 2: The View carries `order` and the Proposals
 
@@ -2361,7 +2361,7 @@ The expected checks grow from 20 to 29 per engine. This makes Tasks 7 and 10 rep
 
 ## Progress
 
-- [ ] Task 1 · `policy.ForProposal` and member validation
+- [x] Task 1 · `policy.ForProposal` and member validation
 - [ ] Task 2 · View `order` and `proposals`
 - [ ] Task 3 · Change View violation delta
 - [ ] Task 4 · Rolled ranks on boxes
