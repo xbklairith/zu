@@ -1,6 +1,6 @@
 # 08 · CRAP Metrics Overlay — Plan
 
-**Status:** approved 2026-09-24 (scrutinized, fixed, advisor sign-off). Deviation 17's doc amendments are applied. Rulings at approval: the "match no function" count excludes package-level literals and unparsed files, and no threshold is used. In a Change View the panel says the rollup is over the drawn packages ("Worst CRAP μ+σ among drawn: N"). If Firefox reports a crash on reload, accept.mjs retries once and logs it.
+**Status:** Complete 2026-09-24 (acceptance in `acceptance.md`); approved 2026-09-24 (scrutinized, fixed, advisor sign-off). Deviation 17's doc amendments are applied. Rulings at approval: the "match no function" count excludes package-level literals and unparsed files, and no threshold is used. In a Change View the panel says the rollup is over the drawn packages ("Worst CRAP μ+σ among drawn: N"). If Firefox reports a crash on reload, accept.mjs retries once and logs it.
 
 **Drafted** 2026-09-24, revised after scrutiny (M1–M8 and N1–N8, with the coordinator's rulings), replayed green on 786ed2b.
 
@@ -2791,9 +2791,9 @@ That makes 39 checks per engine.
 
 ### Task 12: Acceptance
 
-- [ ] **1. Gates**
-- [ ] **Run:** `test -z "$(gofmt -l cmd internal web/*.go)" && go vet ./... && go test ./... && golangci-lint run ./... && cd web && npx tsc --noEmit && npx vitest run && npx vite build` Expected: all clean.
-- [ ] **2. zu on itself.** Run `make build`, then `go test -coverprofile=.zu/cover.out ./...` and `bin/zu scan . -html self.html -coverprofile .zu/cover.out`.
+- [x] **1. Gates**
+- [x] **Run:** `test -z "$(gofmt -l cmd internal web/*.go)" && go vet ./... && go test ./... && golangci-lint run ./... && cd web && npx tsc --noEmit && npx vitest run && npx vite build` Expected: all clean.
+- [x] **2. zu on itself.** Run `make build`, then `go test -coverprofile=.zu/cover.out ./...` and `bin/zu scan . -html self.html -coverprofile .zu/cover.out`.
 
   Measured on this implementation (Go 1.24.5, darwin/arm64), with a profile of 2,075 lines (90 KB):
   - `zu scan` exits 0 in 0.06–0.07 s (0.06 s without the profile). stderr reads `zu scan: CRAP: coverage for 245 of 245 functions`, and no unmatched-block line: K = 0. The two package-level `var … = func` literals (`internal/cli/diff.go:20`, `scan.go:25`) are recorded as loose code (Deviation 18). The IR is byte-identical (`cmp`) to one from `zu scan` without `-coverprofile`, and two runs write a byte-identical `self.html`.
@@ -2814,7 +2814,7 @@ That makes 39 checks per engine.
     | zu/web | 1 | 1 | 1 | 0 | 1 | green |
 
     `zu/internal/version` has no functions and is unmeasured (Deviation 3). zu's own code sits mostly yellow: with high coverage, CRAP approaches cc, so the band is set by complex, well-tested functions (`export.Change`, cc 47).
-- [ ] **3. hugo** (`scratchpad/hugo07`, 193 packages, 522 files). The profile comes from `go test -run='^$' -coverprofile=… ./...`: every package is compiled, but no test runs. That gives a full-size profile (32,410 lines, 2.2 MB, above `ReadSmall`'s 1 MiB) with almost every count 0. It tests the parser and the join at scale; it does not measure hugo's real coverage, which would need its full test run.
+- [x] **3. hugo** (`scratchpad/hugo07`, 193 packages, 522 files). The profile comes from `go test -run='^$' -coverprofile=… ./...`: every package is compiled, but no test runs. That gives a full-size profile (32,410 lines, 2.2 MB, above `ReadSmall`'s 1 MiB) with almost every count 0. It tests the parser and the join at scale; it does not measure hugo's real coverage, which would need its full test run.
   - `zu scan . -html … -coverprofile …` exits 0 in 0.25–0.31 s, against 0.24 s without it (3 runs). stderr reads `coverage for 5402 of 5457 functions`, and no unmatched-block line: K = 0. Before Deviation 18 the same profile gave K = 361, all package-level function literals in 37 files. The IR is byte-identical with and without the profile. The page grows from 2,195,435 to 2,213,346 bytes.
   - Measured packages: 184 of 193. The 9 unmeasured packages have no functions. Bands: 153 red, 9 yellow, 21 green, and 1 without data.
   - The 55 functions without data are all build-tagged away from the test build:
@@ -2849,4 +2849,4 @@ That makes 39 checks per engine.
 - [x] Task 9 · Fill and badge
 - [x] Task 10 · Panel and legend
 - [x] Task 11 · Browser harness
-- [ ] Task 12 · Acceptance
+- [x] Task 12 · Acceptance
