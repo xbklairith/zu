@@ -24,11 +24,6 @@ func TestBaselineRoundTripsSorted(t *testing.T) {
   "policyHash": "sha256:p",
   "violations": [
     {
-      "rule": "cycle",
-      "from": "m/c",
-      "to": "m/d"
-    },
-    {
       "rule": "levels",
       "from": "m/a",
       "to": "m/b"
@@ -37,6 +32,11 @@ func TestBaselineRoundTripsSorted(t *testing.T) {
       "rule": "levels",
       "from": "m/e",
       "to": "m/f"
+    },
+    {
+      "rule": "cycle",
+      "from": "m/c",
+      "to": "m/d"
     }
   ]
 }
@@ -45,7 +45,7 @@ func TestBaselineRoundTripsSorted(t *testing.T) {
 		t.Fatalf("Encode =\n%s\nwant\n%s", buf.String(), want)
 	}
 	back, err := DecodeBaseline(buf.Bytes())
-	if err != nil || back.PolicyHash != "sha256:p" || !slices.Equal(back.Violations, []Violation{vB, vA, vC}) {
+	if err != nil || back.PolicyHash != "sha256:p" || !slices.Equal(back.Violations, []Violation{vA, vC, vB}) {
 		t.Fatalf("DecodeBaseline = %+v, %v", back, err)
 	}
 	var empty bytes.Buffer

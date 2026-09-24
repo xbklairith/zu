@@ -69,3 +69,16 @@ func TestNoPolicyRulesNoViolationsSection(t *testing.T) {
 		t.Fatal("without rules the summary is exactly 03's")
 	}
 }
+
+func TestViolationsListLevelsFirst(t *testing.T) {
+	cyc := policy.Violation{Rule: policy.RuleCycle, From: "m/a", To: "m/b"}
+	lev := policy.Violation{Rule: policy.RuleLevels, From: "m/x", To: "m/y"}
+	d := Violations(nil, []policy.Violation{cyc, lev})
+	if !slices.Equal(d.New, []policy.Violation{lev, cyc}) {
+		t.Fatalf("New = %v, want levels first", d.New)
+	}
+	d = Violations([]policy.Violation{cyc, lev}, nil)
+	if !slices.Equal(d.Fixed, []policy.Violation{lev, cyc}) {
+		t.Fatalf("Fixed = %v, want levels first", d.Fixed)
+	}
+}

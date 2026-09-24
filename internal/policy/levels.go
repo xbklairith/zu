@@ -22,9 +22,18 @@ type Violation struct {
 	To   string `json:"to"`
 }
 
-// Compare orders violations by rule, from, to.
+// Compare orders violations by rule, Levels before cycle, then from, to: the
+// layering violations lead, not buried under a cycle's arcs.
 func Compare(a, b Violation) int {
-	return cmp.Or(cmp.Compare(a.Rule, b.Rule), cmp.Compare(a.From, b.From), cmp.Compare(a.To, b.To))
+	return cmp.Or(cmp.Compare(ruleOrder(a.Rule), ruleOrder(b.Rule)), cmp.Compare(a.Rule, b.Rule),
+		cmp.Compare(a.From, b.From), cmp.Compare(a.To, b.To))
+}
+
+func ruleOrder(rule string) int {
+	if rule == RuleLevels {
+		return 0
+	}
+	return 1
 }
 
 // RankOf is the rank of the longest ranked id that id is under (policy.clj

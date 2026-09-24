@@ -86,3 +86,12 @@ func TestValidateRejectsALevelThatRanksNothing(t *testing.T) {
 		t.Fatalf("a box id ranks the packages under it: %v", err)
 	}
 }
+
+func TestCompareListsLevelsBeforeCycle(t *testing.T) {
+	vs := []Violation{{RuleCycle, "m/a", "m/b"}, {RuleLevels, "m/z", "m/y"}, {RuleCycle, "m/0", "m/1"}, {RuleLevels, "m/c", "m/d"}}
+	slices.SortFunc(vs, Compare)
+	want := []Violation{{RuleLevels, "m/c", "m/d"}, {RuleLevels, "m/z", "m/y"}, {RuleCycle, "m/0", "m/1"}, {RuleCycle, "m/a", "m/b"}}
+	if !slices.Equal(vs, want) {
+		t.Fatalf("sorted = %v, want %v", vs, want)
+	}
+}
