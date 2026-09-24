@@ -1877,7 +1877,7 @@ A Change View never draws a Proposal: its violations section is zu diff's, under
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 --- a/web/src/headline.test.ts
@@ -1912,9 +1912,9 @@ A Change View never draws a Proposal: its violations section is zu diff's, under
 +});
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/headline.test.ts` Expected: FAIL (`violationsNote is not a function`)
+- [x] **Run:** `cd web && npx vitest run src/headline.test.ts` Expected: FAIL (`violationsNote is not a function`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/web/src/App.tsx
@@ -2180,7 +2180,7 @@ A Change View never draws a Proposal: its violations section is zu diff's, under
    margin: 0 0 6px;
 ```
 
-- [ ] **Run:** `cd web && npx tsc --noEmit && npx vitest run && npx vite build && cd .. && go test ./web` Expected: PASS
+- [x] **Run:** `cd web && npx tsc --noEmit && npx vitest run && npx vite build && cd .. && go test ./web` Expected: PASS
 
 
 ### Task 11: The browser harness covers 07
@@ -2370,6 +2370,6 @@ The expected checks grow from 20 to 29 per engine. This makes Tasks 7 and 10 rep
 - [x] Task 7 · Badges, mark and panel list
 - [x] Task 8 · `proposalView`
 - [x] Task 9 · Proposal in the hash, never in a Change View
-- [ ] Task 10 · Selector, banner, legend, new violations first
+- [x] Task 10 · Selector, banner, legend, new violations first
 - [ ] Task 11 · The browser harness covers 07
 - [ ] Task 12 · Acceptance

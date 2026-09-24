@@ -6,10 +6,12 @@ import { parentBox } from "./cut";
 import type { View } from "./data";
 import { pageEngine } from "./engine";
 import { Header } from "./Header";
+import { redLegend, violationsNote } from "./headline";
 import { keyAction } from "./keys";
 import { elkGraph, inOrder, orderOf, positions, Superseded, type Placed } from "./layout";
 import { Panel } from "./Panel";
 import { pinFor } from "./policy";
+import { PROPOSAL_NOTICE, proposalView } from "./proposal";
 import { reveal } from "./search";
 import { SearchBox } from "./SearchBox";
 import { DRAW_LIMIT, fitDepth, openFull, scene, type SceneNode } from "./scene";
@@ -19,7 +21,7 @@ import { useViewState } from "./useViewState";
 
 const PKG = "#pkg";
 
-function Legend({ change, policy }: { change: boolean; policy: boolean }) {
+function Legend({ change, policy, ranks, proposal }: { change: boolean; policy: boolean; ranks: boolean; proposal: string | null }) {
   return (
     <div className="legend" aria-label="Legend">
       {change && (
@@ -32,18 +34,48 @@ function Legend({ change, policy }: { change: boolean; policy: boolean }) {
           <span>edges: + added · − removed · ⇄ reversed · ± mixed</span>
         </>
       )}
-      {policy && <span className="swatch violation">violates zu.policy.yaml (levels or cycle)</span>}
+      {policy && <span className="swatch violation">{redLegend(proposal)}</span>}
+      {ranks && <span>n: Level, 0 = innermost, drawn at the bottom</span>}
     </div>
   );
 }
 
+// Violations is 07's section of the Change View, first as in zu diff
+// (decisions.md, "new violations first"): each new one links to its importer.
+function Violations({ d, onPick }: { d: NonNullable<View["violations"]>; onPick: (id: string) => void }) {
+  const note = violationsNote(d);
+  return (
+    <section className="violations" aria-label="Violations">
+      <h2>{note.heading}</h2>
+      {d.new.length > 0 && (
+        <ol>
+          {d.new.map((x) => (
+            <li key={`${x.rule}\n${x.from}\n${x.to}`}>
+              <span className="muted">{x.rule} </span>
+              <button type="button" className="link" title={x.from} onClick={() => onPick(x.from)}>
+                {x.from}
+              </button>
+              {" → "}
+              <button type="button" className="link" title={x.to} onClick={() => onPick(x.to)}>
+                {x.to}
+              </button>
+            </li>
+          ))}
+        </ol>
+      )}
+      <p className="muted">{note.tail}</p>
+    </section>
+  );
+}
+
 // ChangedList is U11: the changed packages in the Structural Summary's
-// bottom-up order, exactly as zu diff wrote them.
+// bottom-up order, exactly as zu diff wrote them, after the violations (07).
 function ChangedList({ view, onPick }: { view: View; onPick: (id: string) => void }) {
   const byId = new Map(view.nodes.map((n) => [n.id, n]));
   const ids = view.changed ?? [];
   return (
     <nav className="changed" aria-label="Changed packages">
+      {view.violations && <Violations d={view.violations} onPick={onPick} />}
       <h2>Changed packages ({ids.length})</h2>
       <ol>
         {ids.map((id) => {
@@ -65,11 +97,17 @@ function ChangedList({ view, onPick }: { view: View; onPick: (id: string) => voi
 export function App({ view: whole }: { view: View }) {
   const change = whole.kind === "change";
   const [state, update] = useViewState(whole);
+  // 07: a chosen Proposal replaces the Package Tree everywhere a tree is read.
+  // A Change View never has one (knownIds): its violations are zu diff's.
+  const proposed = useMemo(
+    () => (change || state.proposal === null ? whole : proposalView(whole, state.proposal)),
+    [whole, change, state.proposal],
+  );
   // The Change View opens on the changed subgraph (Q4); U10 toggles to all of
   // it. A link whose focus lies outside the subgraph opens all of it, at that
   // focus: from the start, and on a later hashchange.
   const [full, setFull] = useState(() => change && openFull(changedSubgraph(whole), state.focus));
-  const view = useMemo(() => (change && !full ? changedSubgraph(whole) : whole), [whole, change, full]);
+  const view = useMemo(() => (change && !full ? changedSubgraph(whole) : proposed), [whole, proposed, change, full]);
   useEffect(() => {
     if (change && !full && openFull(view, state.focus)) setFull(true);
   }, [change, full, view, state.focus]);
@@ -103,7 +141,7 @@ export function App({ view: whole }: { view: View }) {
   const jump = (id: string) => {
     setEdgeId(null);
     if (change && !full && !view.nodes.some((n) => n.id === id)) setFull(true);
-    update((s) => reveal(whole, id, s));
+    update((s) => reveal(proposed, id, s));
     setCenter((c) => ({ id, seq: (c?.seq ?? 0) + 1 }));
   };
 
@@ -172,13 +210,17 @@ export function App({ view: whole }: { view: View }) {
   const open = (n: SceneNode) => {
     if (n.shape === "box" || n.shape === "container") go(n.id);
   };
+  // The legend explains red only when something can be red, and badges only
+  // when something is ranked; an order-only Policy needs neither.
+  const rules = (proposed.policy?.levels.length ?? 0) > 0 || proposed.edges.some((e) => e.violation);
+  const ranks = sc.nodes.some((n) => n.rank !== undefined);
   const boxes = sc.nodes.filter((n) => n.shape === "box" || n.shape === "decl").length;
   const pkg = state.focus.endsWith(PKG) ? state.focus.slice(0, -PKG.length) : state.focus;
 
   return (
     <div className={`app${change ? " change" : ""}${change && !full ? " subgraph" : ""}`}>
       <Header
-        view={whole}
+        view={proposed}
         focus={state.focus}
         boxes={boxes}
         depth={sc.depth}
@@ -189,12 +231,22 @@ export function App({ view: whole }: { view: View }) {
         onToggle={flip}
       />
       <div className="bar">
-        <Toolbar state={state} depth={sc.depth} update={update} />
-        <SearchBox view={whole} input={searchBox} onOpen={setSearchOpen} onPick={jump} />
+        <Toolbar
+          state={state}
+          depth={sc.depth}
+          update={update}
+          proposals={change ? [] : (whole.policy?.proposals ?? []).map((p) => p.name)}
+        />
+        <SearchBox view={proposed} input={searchBox} onOpen={setSearchOpen} onPick={jump} />
       </div>
       {change && <ChangedList view={whole} onPick={pick} />}
       <main className="canvas">
-        {(change || whole.policy) && <Legend change={change} policy={whole.policy !== undefined} />}
+        {proposed !== whole && (
+          <div className="proposal-banner" role="status">
+            {PROPOSAL_NOTICE}: {state.proposal}
+          </div>
+        )}
+        {(change || rules || ranks) && <Legend change={change} policy={rules} ranks={ranks} proposal={proposed === whole ? null : state.proposal} />}
         {sc !== requested && (
           <div className="notice" id="zu-notice" role="status">
             Collapsed to depth {sc.depth}: depth {requested.depth} has{" "}
@@ -261,7 +313,7 @@ export function App({ view: whole }: { view: View }) {
       </main>
       {(state.selected !== null || edge !== null) && (
         <Panel
-          view={whole}
+          view={proposed}
           id={state.selected}
           edge={edge}
           bundles={sc.bundles}

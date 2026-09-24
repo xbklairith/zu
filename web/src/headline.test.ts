@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import golden from "../../internal/export/testdata/shop.view.golden.json";
 import { parseView, type View } from "./data";
-import { breadcrumb, depthNote, honestyLine, title } from "./headline";
+import { breadcrumb, depthNote, honestyLine, redLegend, title, violationsNote } from "./headline";
 
 const v = parseView(JSON.stringify(golden));
 
@@ -37,5 +37,20 @@ describe("header", () => {
     expect(depthNote(5, 2, false, 4)).toBe("5 boxes at depth 2 (collapsed from 4). Double-click to open a box, Esc to go up.");
     expect(depthNote(5, 2, false, 2)).toBe("5 boxes at depth 2 (chosen). Double-click to open a box, Esc to go up.");
     expect(depthNote(70, 1)).toBe("70 boxes at depth 1. Double-click to open a box, Esc to go up. More than 60 boxes, drawn anyway.");
+  });
+});
+
+describe("violationsNote (07)", () => {
+  const red = { rule: "levels" as const, from: "m/a", to: "m/b" };
+  it("words the Change View's section as zu diff does, new violations first", () => {
+    expect(violationsNote({ new: [red], fixed: [], known: 2 })).toEqual({ heading: "New violations (1)", tail: "0 fixed, 2 pre-existing" });
+    expect(violationsNote({ new: [], fixed: [red], known: 0 })).toEqual({ heading: "No new violations", tail: "1 fixed, 0 pre-existing" });
+  });
+});
+
+describe("redLegend (07)", () => {
+  it("names what red violates: zu.policy.yaml, or the Proposal drawn", () => {
+    expect(redLegend(null)).toBe("violates zu.policy.yaml (levels or cycle); a red box holds one");
+    expect(redLegend("Hexagon")).toBe("violates Proposal Hexagon's layers; a red box holds one");
   });
 });

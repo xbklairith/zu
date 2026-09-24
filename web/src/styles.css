@@ -17,6 +17,7 @@
   --add-bg: #dafbe1;
   --del-bg: #ffebe9;
   --pin: #cf222e; /* a pinned (violating) edge, 06 */
+  --proposal: #9a6700; /* the Proposal banner, gold as in uml-viewer (draw.clj l.650), 07 */
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color: var(--fg);
   background: var(--bg);
@@ -42,6 +43,7 @@
     --add-bg: #12361f;
     --del-bg: #3d1a1c;
     --pin: #ff7b72;
+    --proposal: #d29922;
   }
 }
 
@@ -373,6 +375,27 @@ button.st-removed {
   padding: 8px 12px;
   font-size: 12px;
 }
+.changed .violations {
+  margin-bottom: 12px;
+}
+.changed .violations h2 {
+  color: var(--pin);
+}
+.changed .violations p {
+  margin: 4px 0 0;
+}
+.proposal-banner {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  color: var(--proposal);
+  font-size: 16px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
 .changed h2 {
   font-size: 12px;
   margin: 0 0 6px;

@@ -56,3 +56,17 @@ export function depthNote(boxes: number, depth: number, auto = true, from = dept
   const note = `${boxes} boxes at depth ${depth}${how}. Double-click to open a box, Esc to go up.`;
   return boxes > BOX_BUDGET ? `${note} More than ${BOX_BUDGET} boxes, drawn anyway.` : note;
 }
+
+// violationsNote words the Change View's violations section as zu diff's
+// violationsBlock does (internal/diff/violations.go): new first, then the rest.
+export function violationsNote(d: NonNullable<View["violations"]>): { heading: string; tail: string } {
+  return {
+    heading: d.new.length === 0 ? "No new violations" : `New violations (${d.new.length})`,
+    tail: `${d.fixed.length} fixed, ${d.known} pre-existing`,
+  };
+}
+
+// redLegend says what a red edge or box violates: the Policy's Levels and
+// cycles, or, while a Proposal is drawn, only that Proposal's layers.
+export const redLegend = (proposal: string | null): string =>
+  `violates ${proposal === null ? "zu.policy.yaml (levels or cycle)" : `Proposal ${proposal}'s layers`}; a red box holds one`;

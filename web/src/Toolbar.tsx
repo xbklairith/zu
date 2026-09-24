@@ -1,9 +1,12 @@
-import { deeper, LABELS, LIMITS, nextStage, shallower, type ViewState } from "./state";
+import { deeper, LABELS, LIMITS, nextStage, propose, shallower, type ViewState } from "./state";
 
-type Props = { state: ViewState; depth: number; update: (next: (s: ViewState) => ViewState) => void };
+type Props = {
+  state: ViewState; depth: number; update: (next: (s: ViewState) => ViewState) => void;
+  proposals: string[]; // 07: the Policy's Proposals, drawn only when chosen here
+};
 
 // Toolbar: one control per ViewState field; each calls one state change.
-export function Toolbar({ state, depth, update }: Props) {
+export function Toolbar({ state, depth, update, proposals }: Props) {
   return (
     <div className="toolbar" role="toolbar" aria-label="View">
       <span>
@@ -61,6 +64,19 @@ export function Toolbar({ state, depth, update }: Props) {
         <input type="checkbox" checked={state.externals} onChange={(e) => update((s) => ({ ...s, externals: e.target.checked }))} />{" "}
         externals
       </label>
+      {proposals.length > 0 && (
+        <label>
+          proposal{" "}
+          <select value={state.proposal ?? ""} onChange={(e) => update((s) => propose(s, e.target.value || null))}>
+            <option value="">none (Package Tree)</option>
+            {proposals.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
     </div>
   );
 }
