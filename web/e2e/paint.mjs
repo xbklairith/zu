@@ -4,6 +4,8 @@
 // Opens each page (a hash picks the view) from file:// in Chromium, Firefox and
 // WebKit and prints the boxes drawn and the timings, in ms after navigation
 // start. Judge the budget on zu-drawn: first-contentful-paint is the header.
+// Since 11 a page with no l in its hash draws lines on demand (edges auto), so
+// 09's "default view, edges on" row is now 'k8s.html#l=1'; l=0 still means off.
 import { chromium, firefox, webkit } from "playwright-core";
 
 const pages = process.argv.slice(2);

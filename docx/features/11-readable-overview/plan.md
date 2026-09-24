@@ -3624,7 +3624,7 @@ The amendments and the new checks are Deviation 11 (`selectLines`, `keyboard`, `
 
 **Steps:**
 
-- [ ] **Amend the checks**
+- [x] **Amend the checks**
 
 ```diff
 diff --git a/web/e2e/accept.mjs b/web/e2e/accept.mjs
@@ -3903,9 +3903,9 @@ diff --git a/web/e2e/paint.mjs b/web/e2e/paint.mjs
  const pages = process.argv.slice(2);
 ```
 
-- [ ] **Run:** `make build` Expected: PASS
+- [x] **Run:** `make build` Expected: PASS
 
-- [ ] **Run:** `cd web/e2e && npm run accept` Expected: PASS, 47/47 in each engine
+- [x] **Run:** `cd web/e2e && npm run accept` Expected: PASS, 47/47 in each engine
 
 ### Task 8: Gates and acceptance
 

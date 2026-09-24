@@ -35,6 +35,22 @@ const ids = [];
 for (let g = 0; g < 24; g++) for (let i = 0; i < 5; i++) ids.push(`m/g${String(g).padStart(2, "0")}/p${i}`);
 const edges = ids.flatMap((id, n) => [1, 2, 3, 4, 5, 6].map((k) => imp(id, ids[(n + 5 * k) % ids.length])));
 write("big.html", page({ ...shop, modules: ["m"], nodes: [pkg("m", "m"), ...ids.map((id) => pkg(id, "m"))], edges, sources: {} }));
+// 11: big.html's 144 lines at depth 1 with one violation (m/g00 → m/g01), and
+// as a Change View with one added import (m/g02 → m/g03): auto draws those at rest.
+const bigNodes = [pkg("m", "m"), ...ids.map((id) => pkg(id, "m"))];
+const one = (from, to, extra) => edges.map((e) => (e.from === from && e.to === to ? { ...e, ...extra } : e));
+write("bigpolicy.html", page({ ...shop, modules: ["m"], nodes: bigNodes, edges: one("m/g00/p0", "m/g01/p0", { violation: "levels" }), sources: {}, policy: { hash: "sha256:e2e", levels: [] } }));
+write("bigchange.html", page({
+  ...change, modules: ["m"], sources: {}, hunks: {}, changed: ["m/g02/p0"],
+  nodes: bigNodes.map((n) => (n.id === "m/g02/p0" ? { ...n, status: "modified" } : n)),
+  edges: one("m/g02/p0", "m/g03/p0", { status: "added" }),
+}));
+// 11: 150 unconnected packages of rank 0 with long names, many decls and
+// unresolved calls, and one longer name still: rows must wrap to the screen,
+// no box may clip its text, and the rank is taller than the screen, so a
+// minimap shows. Over the 60-box budget, it is opened at d=2.
+const wide = [...Array.from({ length: 150 }, (_, i) => `m/pkg/controller_manager_${String(i).padStart(3, "0")}`), "m/pkg/a_package_name_longer_than_the_280_px_boxes_used_to_allow"];
+write("wide.html", page({ ...shop, modules: ["m"], sources: {}, edges: [], nodes: [pkg("m", "m"), ...wide.map((id) => ({ ...pkg(id, "m"), decls: 123456, unresolved: 99 }))] }));
 // 07: a Policy View, as export.Mark writes it. Ranks: cmd 2, cli 1, ir and
 // ir/bad 0, util unranked; one levels violation, ir/bad → cli, which no line
 // draws once m/internal is closed.
@@ -137,7 +153,7 @@ async function run(b) {
   await p.reload();
   await drawn(p);
   out.afterReload = await p.locator(".toolbar button[title^='Next declutter']").textContent();
-  await p.getByLabel("hide edges").check();
+  await p.getByLabel(/^edges/).selectOption("off");
   await settle(p);
   out.hideEdges = [(await hash(p)).includes("l=0"), await p.locator(".react-flow__edge").count(), await p.locator(".node .marks polygon").count()];
   out.notice = await p.locator("#zu-notice").count();
@@ -146,6 +162,10 @@ async function run(b) {
   p = await b.newPage();
   await p.goto(base + "change.html");
   await drawn(p);
+  await settle(p);
+  // 11: the first view keeps labels readable, so part of it may need a pan;
+  // React Flow draws only what is on screen. Zoom out to count all of it.
+  await p.locator(".react-flow__controls-fitview").click();
   await settle(p);
   out.change = await p.locator(".react-flow__node").count();
   out.chips = await p.locator(".node.chip").allTextContents();
@@ -161,17 +181,125 @@ async function run(b) {
   await p.close();
   // A view over the limit collapses and says so (Deviation 8).
   p = await b.newPage();
-  await p.goto(base + "big.html#d=4");
+  await p.goto(base + "big.html#d=4&l=1");
   await drawn(p);
   out.collapsed = await p.locator("#zu-notice").innerText().then((t) => t.split("Draw")[0].trim());
   out.header = await p.locator("header").innerText().then((t) => /depth \d+[^.]*/.exec(t)?.[0] ?? "");
   await p.getByRole("button", { name: "Hide edges" }).click();
   await settle(p);
   out.hidden = [await hash(p), await p.locator("#zu-notice").count()];
-  await p.goto(base + "big.html#d=4");
+  await p.goto(base + "big.html#d=4&l=1");
   await p.locator("#zu-notice").waitFor();
   await p.getByRole("button", { name: "Draw depth 4 anyway" }).click();
   out.anyway = await p.locator("#zu-notice").count();
+  // 11: 24 boxes and their dependencies, edges on auto. No line at rest, and
+  // a note says how many; hovering a box draws its own, out solid and in
+  // dashed; labels are at least 11px on screen, and the part a pan reaches is
+  // in a minimap. A reload shows the page as
+  // it opens.
+  await p.goto(base + "big.html#d=1");
+  await p.reload();
+  await drawn(p);
+  await settle(p);
+  const edgeCount = () => p.locator(".react-flow__edge").count();
+  const note = await p.locator("#zu-edges").textContent().then((t) => t.trim()).catch(() => null);
+  const rest = await edgeCount();
+  const px = await p.evaluate(() => {
+    const z = new DOMMatrix(getComputedStyle(document.querySelector(".react-flow__viewport")).transform).a;
+    const l = document.querySelector(".react-flow__node .label") ?? document.querySelector(".react-flow__node");
+    return parseFloat(getComputedStyle(l).fontSize) * z >= 11;
+  });
+  await p.locator(".react-flow__node[data-id='m/g00']").hover();
+  await settle(p);
+  const dirs = await p.evaluate(() => ["dep-out", "dep-in"].map((c) => document.querySelectorAll(`.react-flow__edge.${c}`).length > 0));
+  await p.mouse.move(1, 1);
+  await settle(p);
+  out.overview = [note, rest, px, ...dirs, await edgeCount(), await p.locator(".react-flow__minimap").count()];
+  // 11: the axis names the rows, and at rest 3 boxes are marked most used.
+  // 11: selecting a box draws as many lines out and in as its stats line
+  // says, in dotted (not a removed edge's 6 4 dash); Enter on a focused box
+  // selects it too.
+  const lines = async (id) => {
+    const stats = await p.locator(`.react-flow__node[data-id='${id}'] .stats`).textContent();
+    const [, uses, usedBy] = /uses (\d+) · used by (\d+)/.exec(stats);
+    const [outs, ins] = [await p.locator(".react-flow__edge.dep-out").count(), await p.locator(".react-flow__edge.dep-in").count()];
+    return [+uses === outs && +usedBy === ins, outs, ins];
+  };
+  await p.locator(".react-flow__node[data-id='m/g00']").click();
+  await settle(p);
+  const dash = await p.evaluate(() => getComputedStyle(document.querySelector(".react-flow__edge.dep-in path")).strokeDasharray.replace(/px/g, "").replace(/,\s*/g, " "));
+  out.selectLines = [...(await lines("m/g00")), dash];
+  await p.keyboard.press("Escape");
+  await settle(p);
+  await p.mouse.move(1, 1); // no hover: only the selection draws lines
+  await settle(p);
+  const none = await p.locator(".node.selected").count();
+  await p.locator(".react-flow__node[data-id='m/g00']").focus();
+  await p.keyboard.press("Enter");
+  await settle(p);
+  out.keyboard = [none, await p.locator(".react-flow__node[data-id='m/g00'] .node.selected").count(), ...(await lines("m/g00"))];
+  await p.keyboard.press("Escape");
+  await settle(p);
+  out.reading = [
+    await p.locator(".axis > span").allTextContents().then((t) => t.map((x) => x.replace(/\s+/g, " ").trim())),
+    await p.locator(".react-flow__node .node.hub").count(),
+    await p.locator(".legend .hub").textContent().catch(() => null),
+    await p.locator("#zu-against").textContent({ timeout: 5000 }).catch(() => null),
+  ];
+  await p.close();
+  // 11: the first view at 1600 × 1000: no label or stats line is clipped,
+  // every box (not container) of the top 3 rows is whole on the canvas and clear of the
+  // minimap, and the minimap's button hides it and shows it again.
+  // A3: this is a test of wrapping, clipping and the minimap, not a realistic
+  // first view. The hash forces d=2 (151 boxes, past the 60-box budget) so the
+  // scene is taller than the screen and the minimap appears.
+  p = await b.newPage({ viewport: { width: 1600, height: 1000 } });
+  await p.goto(base + "wide.html#d=2");
+  await drawn(p);
+  await settle(p);
+  const firstView = () => p.evaluate(() => {
+    const clipped = [...document.querySelectorAll(".react-flow__node .label, .react-flow__node .stats")].filter((e) => e.scrollWidth > e.clientWidth).length;
+    const pane = document.querySelector(".react-flow").getBoundingClientRect();
+    const map = document.querySelector(".react-flow__minimap")?.getBoundingClientRect();
+    const boxes = [...document.querySelectorAll(".react-flow__node:not(.react-flow__node-container)")].map((e) => e.getBoundingClientRect());
+    const tops = [...new Set(boxes.map((r) => Math.round(r.top)))].sort((a, b) => a - b).slice(0, 3);
+    const top3 = boxes.filter((r) => tops.includes(Math.round(r.top)));
+    const whole = (r) => r.left >= pane.left && r.right <= pane.right && r.top >= pane.top && r.bottom <= pane.bottom;
+    const under = (r) => map && r.left < map.right && r.right > map.left && r.top < map.bottom && r.bottom > map.top;
+    return [clipped, tops.length, top3.filter((r) => !whole(r) || under(r)).length];
+  });
+  const shown = await firstView();
+  const maps = [];
+  for (let i = 0; i < 2; i++) {
+    await p.locator(".zu-map").click({ timeout: 5000 }).catch(() => {}); // no button: the counts say so
+    maps.push(await p.locator(".react-flow__minimap").count());
+  }
+  out.firstView = [...shown, ...maps];
+  await p.close();
+  // 11: in a window under 900 px the minimap starts hidden; its button shows it.
+  p = await b.newPage({ viewport: { width: 800, height: 900 } });
+  await p.goto(base + "wide.html#d=2");
+  await drawn(p);
+  await settle(p);
+  const narrow = [await p.locator(".react-flow__minimap").count()];
+  await p.locator(".zu-map").click({ timeout: 5000 }).catch(() => {});
+  narrow.push(await p.locator(".react-flow__minimap").count());
+  out.narrowMap = narrow;
+  // 11: in auto, over 40 lines, a violation and a changed import still draw at rest.
+  await p.goto(base + "bigpolicy.html#d=1");
+  await drawn(p);
+  await settle(p);
+  out.policyRest = [await p.locator(".react-flow__edge").count(), await p.locator(".react-flow__edge.pinned").count()];
+  // The full project: 25 boxes, 144 lines, one of them carrying the added import.
+  await p.goto(base + "bigchange.html");
+  await drawn(p);
+  await p.getByRole("button", { name: "Show full project" }).click({ timeout: 5000 }).catch(() => {});
+  await settle(p);
+  out.changeRest = [
+    await p.locator("header").innerText().then((t) => /\d+ boxes at depth \d+/.exec(t)?.[0] ?? ""),
+    await p.locator(".react-flow__edge").count(),
+    await p.locator(".react-flow__edge.edge-mixed, .react-flow__edge.edge-added").count(),
+  ];
   await p.close();
   // 07: the Policy View.
   p = await b.newPage();
@@ -186,15 +314,21 @@ async function run(b) {
     return { id: n.getAttribute("data-id"), x: r.x, y: r.y, rank: n.querySelector(".rank")?.textContent ?? null, red: !!n.querySelector(".hides-violation") };
   }));
   const reds = async () => (await nodes()).filter((n) => n.red).map((n) => n.id);
-  await at("#d=3");
-  out.ranks = (await nodes()).filter((n) => n.rank !== null).sort((a, b) => a.y - b.y || a.x - b.x).map((n) => `${n.id} ${n.rank}`);
+  // 11: policy.html opens at m (home), so depth N here is depth N + 1 below the root.
   await at("#d=2");
-  out.redBox = [`d=2: ${(await reds()).join(" ")}`];
+  out.ranks = (await nodes()).filter((n) => n.rank !== null).sort((a, b) => a.y - b.y || a.x - b.x).map((n) => `${n.id} ${n.rank}`);
+  await at("#d=1");
+  out.redBox = [`d=1: ${(await reds()).join(" ")}`];
+  // 11: below m the leaves sit in one container (m/internal), so 05's arrows
+  // equals full and classes only hides rows: the violation stays a red line
+  // or red triangles, not a red box. Each stage lists red boxes, then the
+  // number of red lines and of red triangles.
+  const redMarks = () => p.evaluate(() => [".react-flow__edge.pinned", "polygon.pinned"].map((q) => document.querySelectorAll(q).length).join(" "));
   for (const st of ["full", "arrows", "triangles", "elements", "classes"]) {
-    await at(`#d=3&x=${st}`);
-    out.redBox.push(`${st}: ${(await reds()).join(" ")}`);
+    await at(`#d=2&x=${st}`);
+    out.redBox.push(`${st}: ${(await reds()).join(" ")} / ${await redMarks()}`);
   }
-  await at("#d=2&s=m%2Finternal");
+  await at("#d=1&s=m%2Finternal");
   out.panel = await p.locator(".hidden-violations").innerText().then((t) => t.split("\n").slice(0, 2)).catch(() => null);
   await at("");
   await p.getByLabel(/^proposal/).selectOption("Hexagon");
@@ -232,7 +366,7 @@ async function run(b) {
     return band ? [`${n.getAttribute("data-id")} ${band} ${n.querySelector(".crap")?.textContent}`] : [];
   }).sort());
   out.crap = [];
-  for (const d of [2, 3]) {
+  for (const d of [1, 2]) {
     await p.goto(base + `crap.html#d=${d}`);
     await p.reload();
     await drawn(p);
@@ -252,7 +386,7 @@ async function run(b) {
       });
     }).then((xs) => [...(out.crapBadgeClear ?? []), ...xs]);
   }
-  // At depth 3: green, yellow, red and unmeasured are four different fills.
+  // At depth 2 below m: green, yellow, red and unmeasured are four different fills.
   out.crapFills = await p.evaluate(() => new Set(["m/cmd", "m/internal/cli", "m/internal/ir", "m/util"].map((id) =>
     getComputedStyle(document.querySelector(`.react-flow__node[data-id="${id}"] .node`)).backgroundColor)).size);
   out.crapLegend = await p.locator(".legend").innerText().then((t) => t.split("\n").filter((l) => /CRAP|≤|>/.test(l)));
@@ -319,15 +453,26 @@ const want = {
   pickCentred: true,
   picked: "store",
   far: [0, 2],
-  collapsed: "Collapsed to depth 2: depth 4 has 720 edges",
-  header: "depth 2 (collapsed from 4)",
+  // 11: the page opens at m (home); depth 1 below m is depth 2 below the root.
+  collapsed: "Collapsed to depth 1: depth 4 has 720 edges",
+  header: "depth 1 (collapsed from 4)",
   hidden: ["#d=4&l=0", 0],
   anyway: 0,
   blocked: "Layout failed: layout worker failed: blocked",
   errors: [],
   // 07
-  ranks: ["m 2", "m/cmd 2", "m/internal 1", "m/internal/cli 1", "m/internal/ir 0"],
-  redBox: ["d=2: m/internal", "full: ", "arrows: m/internal", "triangles: m/internal", "elements: m/internal", "classes: m/internal"],
+  ranks: ["m/cmd 2", "m/internal 1", "m/internal/cli 1", "m/internal/ir 0"],
+  overview: ["144 dependencies hidden; select or hover a box to see its own.", 0, true, true, true, 0, 1],
+  firstView: [0, 3, 0, 0, 1],
+  // big.html's 24 groups form a ring, each using the next 6: in any row order the
+  // arcs that wrap round run against it, 1 + 2 + … + 6 = 21 at the least.
+  reading: [["uses↓", "depends on nothing here"], 3, "thick border: the 3 most used", " 21 dependencies run against the order."],
+  selectLines: [true, 6, 6, "2 3"],
+  keyboard: [0, 1, true, 6, 6],
+  narrowMap: [0, 1],
+  policyRest: [1, 1],
+  changeRest: ["25 boxes at depth 2", 1, 1],
+  redBox: ["d=1: m/internal", "full:  / 1 0", "arrows:  / 1 0", "triangles:  / 0 2", "elements:  / 1 0", "classes:  / 1 0"],
   panel: ["Violations inside (1)", "levels m/internal/ir/bad → m/internal/cli"],
   proposal: ["#p=Hexagon", "PROPOSAL — not instantiated in code: Hexagon", "violates Proposal Hexagon's layers; a red box holds one"],
   proposalReload: "PROPOSAL — not instantiated in code: Hexagon",
@@ -338,8 +483,8 @@ const want = {
   changeNoProposal: [0, 0],
   // 08
   crap: [
-    ["m red ? high", "m/cmd green 2 low", "m/internal red ? high"],
-    ["m red ? high", "m/cmd green 2 low", "m/internal red ? high", "m/internal/cli yellow 10 mid", "m/internal/ir red ? high"],
+    ["m/cmd green 2 low", "m/internal red ? high"],
+    ["m/cmd green 2 low", "m/internal red ? high", "m/internal/cli yellow 10 mid", "m/internal/ir red ? high"],
   ],
   crapBadgeClear: [],
   crapFills: 4,
