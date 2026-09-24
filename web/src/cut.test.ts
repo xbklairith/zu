@@ -36,7 +36,7 @@ describe("home (11)", () => {
     expect(upTo(h, "x.io/m/pkg")).toBeNull(); // nor at home named by a link
     expect(upTo(h, "x.io/m/pkg/a")).toBe(""); // home's children go to the page root
     expect(upTo(h, "x.io/m/pkg/a/x")).toBe("x.io/m/pkg/a"); // below that, as 05 did
-    expect(upTo(shop, "ex/shop/internal")).toBe("ex/shop"); // no home: as 05 did
+    expect(upTo(shop, "ex/shop/internal")).toBe(""); // 12: ex/shop, the root module, opens in place at the page root
     expect(upTo(shop, "ex/shop")).toBe("");
   });
 });

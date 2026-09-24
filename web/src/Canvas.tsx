@@ -68,7 +68,7 @@ function Toggle({ data }: { data: Data }) {
       aria-label={open ? `Open ${node.label} here` : `Close ${node.label}`}
       onClick={(e) => {
         e.stopPropagation();
-        toggle(node.id);
+        toggle(node.toggleId ?? node.id);
       }}
     >
       {open ? "+" : "−"}

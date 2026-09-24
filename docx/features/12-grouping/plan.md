@@ -2621,7 +2621,7 @@ With two or more modules, the page root opens the module at the repository root 
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 diff --git a/web/src/cut.test.ts b/web/src/cut.test.ts
@@ -2715,9 +2715,9 @@ index 5703959..2feb131 100644
 +});
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/group.test.ts src/cut.test.ts` Expected: FAIL (`rootModule is not a function`; `upTo` from inside the root module is not the page root)
+- [x] **Run:** `cd web && npx vitest run src/group.test.ts src/cut.test.ts` Expected: FAIL (`rootModule is not a function`; `upTo` from inside the root module is not the page root)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/web/src/Canvas.tsx b/web/src/Canvas.tsx
@@ -2900,9 +2900,9 @@ index 9f7372a..a59b615 100644
  });
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
 
-- [ ] **Commit** (one line, imperative; stage these files only)
+- [x] **Commit** (one line, imperative; stage these files only)
 
 ### Task 8: Path-role badges and "entry points"
 

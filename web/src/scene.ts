@@ -1,7 +1,7 @@
 // scene is the one pure function the canvas draws: View + ViewState → nodes and edges.
 import { nodeMark, unchangedCount } from "./change";
 import type { View, ViewEdge } from "./data";
-import { autoDepth, childrenOf, cmp, cut, declsOf, home, index, isBox, leafOf, OUTSIDE, packageOf, packagesIn, PKG, within } from "./cut";
+import { autoDepth, childrenOf, cmp, cut, declsOf, home, index, isBox, leafOf, OUTSIDE, packageOf, packagesIn, PKG, ROOT_CLOSED, rootModule, within } from "./cut";
 import { bundlesOver, EXTERNALS, externalsOf, type Bundle } from "./bundle";
 import { declutter, NO_PINS, type Mark, type Pin } from "./declutter";
 import { crapBand, packageRisk, rolledCrap, type Band, type Risk } from "./metrics";
@@ -19,6 +19,7 @@ export type Shape = "container" | "box" | "oval" | "decl" | "outside" | "chip";
 export type SceneNode = {
   id: string; label: string; parent: string; shape: Shape;
   dim: boolean; selected: boolean; toggle?: "expand" | "collapse";
+  toggleId?: string; // 12: the id the toggle flips when not the node's own (the root module's ROOT_CLOSED)
   methods: string[]; // method rows of a type, empty once the stage hides members
   mark?: Mark; // incoming/outgoing triangles, when lines are hidden
   change?: string; // the Change View class (change.ts nodeMark, or "has-change")
@@ -68,7 +69,13 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   const focus = s.focus === "" && opts.home ? home(view) : s.focus;
   const depth = s.depth ?? autoDepth(view, focus);
   // 12: demoted boxes wait in a strip at the bottom of their set (group.ts).
-  let grouped = strip(view, cut(view, focus, depth, s.toggled), s.toggled);
+  // 12 (R5): at the page root, the repository's own module opens in place
+  // among the modules nested in it; toggling it closes it.
+  const root = focus === "" && opts.home && view.kind !== "change" && depth <= 1 ? rootModule(view) : null;
+  const shut = root !== null && s.toggled.includes(root + ROOT_CLOSED);
+  const flips = root === null || s.toggled.includes(root) ? s.toggled
+    : shut ? s.toggled.filter((t) => t !== root + ROOT_CLOSED) : [...s.toggled, root];
+  let grouped = strip(view, cut(view, focus, depth, flips), s.toggled);
   // 12: at the automatic depth, a budget of boxes; the rest of each row folds
   // into a chip, ranked as the rows were before folding (group.ts fold).
   let before: Map<string, number> | null = null;
@@ -83,8 +90,10 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
       new Map([...c1.leaves, ...c1.containers].filter((id) => !low(id)).map((id) => [id, c1.parent.get(id) ?? ""])),
       arcs.map((b) => ({ from: b.from, to: b.to, weight: b.pairs })),
     );
-    // Pinned boxes (the Policy's order) never fold. Every fact is the box's
-    // Rollup, summed once per View (B1).
+    // Pinned boxes (the Policy's order) never fold, nor the children of the
+    // root module drawn open at the page root, however it opened. Every fact
+    // is the box's Rollup, summed once per View (B1).
+    const rm = focus === "" && view.kind !== "change" ? rootModule(view) : null;
     const named = view.policy?.order ?? [];
     const own = (id: string) => (id.endsWith(PKG) ? id.slice(0, -PKG.length) : id);
     // The selection's package and the boxes above it: the chip holding one opens (N3).
@@ -94,6 +103,7 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     const folded = fold(grouped, s.toggled, {
       budget: view.policy?.budget ?? BUDGET, arcs,
       first: (b) => (factsOf(view, b)?.changed ?? false) || named.some((o) => o === own(b) || (!b.endsWith(PKG) && within(view, o, b))),
+      root: (b) => rm !== null && c1.parent.get(b) === rm,
       main: (b) => (factsOf(view, b)?.mains ?? 0) > 0,
       size: (b) => { const f = factsOf(view, b); return f ? f.decls - f.gen : 0; },
       holds: (b) => (b.endsWith(PKG) ? own(b) === selPkg : chain.has(b)),
@@ -210,6 +220,7 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     if (n.shape === "container") n.toggle = "collapse";
     else if (isGroup(id)) n.toggle = grouped.groups.has(id) ? "expand" : "collapse";
     else if (n.shape === "box" && !folds.has(id) && !id.endsWith(PKG) && childrenOf(view, id).length > 0) n.toggle = "expand";
+    if (id === root && n.toggle) n.toggleId = root + ROOT_CLOSED;
     if (grouped.opened.has(id)) n.demoted = true;
     if (isFold(id) && grouped.groups.has(id)) {
       // 12: a closed fold chip names what it holds in its tooltip, as labels drop their shared prefix.
@@ -462,7 +473,8 @@ export function fitDepth(requested: Sized & { depth: number }, at: (depth: numbe
 // under zu.policy.yaml, so it never draws a Proposal's.
 export const knownIds = (view: View): Known => ({
   box: (id) => id === "" || isBox(view, id),
-  folder: (id) => knownGroup(view, id) || (!id.endsWith(PKG) && childrenOf(view, id).length > 0),
+  folder: (id) => knownGroup(view, id) || (!id.endsWith(PKG) && childrenOf(view, id).length > 0)
+    || (id.endsWith(ROOT_CLOSED) && id.slice(0, -ROOT_CLOSED.length) === rootModule(view)),
   node: (id) => isBox(view, id) || index(view).node.has(id) || id === OUTSIDE || id === EXTERNALS,
   proposal: (name) => view.kind !== "change" && (view.policy?.proposals?.some((p) => p.name === name) ?? false),
 });

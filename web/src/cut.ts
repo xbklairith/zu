@@ -206,12 +206,14 @@ export function home(view: View): string {
 // upTo is where Esc and "Go back one level" go from focus (11): nowhere
 // (null) at the page root or at home, the page root from home's children, and
 // the parent box elsewhere, as 05 did. So going up never lands on a root that
-// differs from home only by the boxes home descends through.
+// differs from home only by the boxes home descends through. 12: the root
+// module opens in place at the page root (rootModule), so up from inside it
+// is the page root too.
 export function upTo(view: View, focus: string): string | null {
   const h = home(view);
   if (focus === "" || focus === h) return null;
   const p = parentBox(view, focus);
-  return p === h ? "" : p;
+  return p === h || (h === "" && view.kind !== "change" && p === rootModule(view)) ? "" : p;
 }
 
 // autoDepth: start at 1 and go deeper while the next level has ≤ 60 leaves and
@@ -224,4 +226,26 @@ export function autoDepth(view: View, focus: string): number {
     if (next > DEPTH_LEAVES || next <= here) return d;
     d++;
   }
+}
+
+// ROOT_CLOSED, after the root module's id, is the toggle that closes it at the
+// page root (N10): a pre-12 link's t=<root module> meant "open it in place",
+// which is now the default, so that toggle keeps meaning open.
+export const ROOT_CLOSED = "#closed";
+
+// rootModule is the module at the repository's root when other modules are
+// nested under it (R5: kubernetes and its staging modules), or null. A
+// package's directory (from its file) less its path below its module is the
+// module's directory; "." is the root. The page root opens it in place.
+export function rootModule(view: View): string | null {
+  if (view.modules.length < 2) return null;
+  for (const p of index(view).pkgs) {
+    const m = p.module;
+    if (!m || (p.id !== m && !p.id.startsWith(m + "/"))) continue;
+    const below = p.id === m ? "" : p.id.slice(m.length + 1);
+    const slash = p.loc.path.lastIndexOf("/");
+    const dir = slash < 0 ? "." : p.loc.path.slice(0, slash);
+    if (below === "" ? dir === "." : dir === below) return m;
+  }
+  return null;
 }

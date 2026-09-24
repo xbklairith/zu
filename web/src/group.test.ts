@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ViewEdge, ViewNode } from "./data";
 import { capRows, demotedBox, isGroup, MORE, rankNote, STRIP, stripText } from "./group";
+import { ROOT_CLOSED, rootModule, upTo } from "./cut";
 import { knownIds, scene } from "./scene";
 import { reveal } from "./search";
 import { DEFAULT_STATE, type ViewState } from "./state";
@@ -240,5 +241,65 @@ describe("the row cap (12)", () => {
     expect(new Set(sc.nodes.map((n) => n.tier)).size).toBe(7);
     expect([tier("m/c0").tier, tier("m/c1").tier, tier("m/c8").tier]).toEqual([0, 0, 6]);
     expect([tier("m/c0").ownTier, tier("m/c1").ownTier]).toEqual([0, 1]);
+  });
+});
+
+// k8s's pattern: the repository's own module at the root, and modules nested
+// under it (staging).
+const nested = view([
+  { id: "k/cmd", kind: "package", module: "k", loc: { path: "cmd/main.go", line: 1 }, main: true },
+  { id: "k/pkg/a", kind: "package", module: "k", loc: { path: "pkg/a/a.go", line: 1 } },
+  { id: "k/pkg/b", kind: "package", module: "k", loc: { path: "pkg/b/b.go", line: 1 } },
+  { id: "api/v1", kind: "package", module: "api", loc: { path: "staging/src/api/v1/t.go", line: 1 } },
+  { id: "api/v2", kind: "package", module: "api", loc: { path: "staging/src/api/v2/t.go", line: 1 } },
+  { id: "client", kind: "package", module: "client", loc: { path: "staging/src/client/c.go", line: 1 } },
+], [edge("k/cmd", "k/pkg/a"), edge("k/pkg/a", "api/v1"), edge("client", "api/v1")]);
+
+describe("the root module opens in place (12)", () => {
+  it("finds the module at the repository root when others are nested", () => {
+    expect(rootModule(nested)).toBe("k");
+    expect(rootModule(view(pkgs(["m/a", "m/b"], "m")))).toBeNull();
+    expect(rootModule(view([...pkgs(["a/x"], "a"), ...pkgs(["b/y"], "b")]))).toBeNull(); // no module at the root
+  });
+  it("draws it open at the page root, above the modules it uses", () => {
+    const sc = scene(nested, { ...DEFAULT_STATE, depth: 1 }, { home: true });
+    expect(sc.focus).toBe("");
+    const k = sc.nodes.find((n) => n.id === "k")!;
+    expect(k.shape).toBe("container");
+    expect(ids(sc.nodes)).toEqual(expect.arrayContaining(["k/cmd", "k/pkg", "api", "client"]));
+    expect(k.tier).toBeGreaterThan(sc.nodes.find((n) => n.id === "api")!.tier!);
+  });
+  it("closes by its own token, and never opens in a Change View", () => {
+    const at1 = (toggled: string[]) => scene(nested, { ...DEFAULT_STATE, depth: 1, toggled }, { home: true }).nodes.find((n) => n.id === "k")!;
+    expect(at1([`k${ROOT_CLOSED}`]).shape).toBe("box");
+    // Its toggle flips that token, open or closed.
+    expect([at1([]).toggle, at1([]).toggleId]).toEqual(["collapse", `k${ROOT_CLOSED}`]);
+    expect([at1([`k${ROOT_CLOSED}`]).toggle, at1([`k${ROOT_CLOSED}`]).toggleId]).toEqual(["expand", `k${ROOT_CLOSED}`]);
+    expect(knownIds(nested).folder(`k${ROOT_CLOSED}`)).toBe(true);
+    const change = { ...nested, kind: "change" as const };
+    expect(scene(change, { ...DEFAULT_STATE, depth: 1 }, { home: true }).nodes.find((n) => n.id === "k")!.shape).toBe("box");
+  });
+  it("keeps its children, however small, and folds the islands among them", () => {
+    // Twenty staging modules in a chain, each bigger than k/a; k/i1 and k/i2,
+    // the biggest, use nothing in k and nothing in k uses them: islands.
+    const kid = (id: string, decls: number, main = false): ViewNode =>
+      ({ id, kind: "package", module: "k", decls, main, loc: { path: `${id.slice(2)}/x.go`, line: 1 } });
+    const mods = Array.from({ length: 20 }, (_, i) => `s${String(i).padStart(2, "0")}`);
+    const v = view([
+      kid("k/cmd", 5, true), kid("k/a", 1), kid("k/i1", 900), kid("k/i2", 900),
+      ...mods.map((m): ViewNode => ({ id: m, kind: "package", module: m, decls: 100, loc: { path: `staging/${m}/x.go`, line: 1 } })),
+    ], [edge("k/cmd", "k/a"), edge("k/a", "s00"), ...mods.slice(1).map((m, i) => edge(m, mods[i]))]);
+    const sc = at({}, v);
+    expect(boxes(sc)).toEqual(expect.arrayContaining(["k/cmd", "k/a"])); // the root module's, though the smallest
+    expect(boxes(sc)).toHaveLength(15); // they count against the budget
+    const chip = sc.nodes.find((n) => n.id === `k${MORE}`)!;
+    expect([chip.label, chip.hint]).toEqual(["+2 more", "i1, i2"]);
+  });
+  it("keeps an old link's t=<root module> meaning: open in place (N10)", () => {
+    expect(scene(nested, { ...DEFAULT_STATE, depth: 1, toggled: ["k"] }, { home: true }).nodes.find((n) => n.id === "k")!.shape).toBe("container");
+  });
+  it("goes up from inside it to the page root", () => {
+    expect(upTo(nested, "k/pkg")).toBe("");
+    expect(upTo(nested, "k")).toBe("");
   });
 });

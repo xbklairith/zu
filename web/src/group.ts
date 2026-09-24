@@ -168,13 +168,15 @@ export type Keep = {
   budget: number;
   arcs: readonly { from: string; to: string }[]; // dependencies between drawn nodes
   first: (box: string) => boolean; // changed, or named by the Policy: never folded
+  root: (box: string) => boolean; // a child of the opened root module: never folded unless an island
   main: (box: string) => boolean; // holds a package main
   size: (box: string) => number; // hand-written declarations: those not in generated files
   holds?: (box: string) => boolean; // holds the selection: its chip opens (N3)
 };
 
 // fold keeps at most budget boxes of the cut, in this order: changed and
-// Policy-named boxes; then entry points (no sibling imports it, it holds a
+// Policy-named boxes, and the opened root module's children that are not
+// islands; then entry points (no sibling imports it, it holds a
 // package main and it uses a sibling), which would fold by size alone; then
 // by hand-written declarations, ties by id, islands (no sibling uses it and it
 // uses none) after every other box. A sibling is a project box of the same
@@ -206,8 +208,11 @@ export function fold(g: Grouped, toggled: readonly string[], k: Keep): Grouped {
   }
   const entry = (id: string) => !imported.has(id) && uses.has(id) && k.main(id);
   const island = (id: string) => !imported.has(id) && !uses.has(id);
+  // The opened root module's children are what the reader came to see:
+  // kept first, counted against the budget; its islands still fold.
+  const held = (id: string) => k.first(id) || (k.root(id) && !island(id));
   // Each key once, not per comparison (B1).
-  const keys = new Map(drawn.map((id) => [id, [k.first(id) ? 0 : 1, entry(id) ? 0 : 1, island(id) ? 1 : 0, -k.size(id)]]));
+  const keys = new Map(drawn.map((id) => [id, [held(id) ? 0 : 1, entry(id) ? 0 : 1, island(id) ? 1 : 0, -k.size(id)]]));
   const order = [...drawn].sort((a, b) => {
     const [x, y] = [keys.get(a)!, keys.get(b)!];
     return x[0] - y[0] || x[1] - y[1] || x[2] - y[2] || x[3] - y[3] || cmp(a, b);
@@ -215,7 +220,7 @@ export function fold(g: Grouped, toggled: readonly string[], k: Keep): Grouped {
   const rows = new Map<string, string[]>(); // chip id → the boxes it would hold
   const at = new Map<string, string>();
   for (const id of order.slice(k.budget)) {
-    if (k.first(id)) continue;
+    if (held(id)) continue;
     const p = up(id);
     const chip = `${p === "" ? c.focus : p}${MORE}`;
     rows.set(chip, [...(rows.get(chip) ?? []), id]);
