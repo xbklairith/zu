@@ -246,3 +246,60 @@ export function fold(g: Grouped, toggled: readonly string[], k: Keep): Grouped {
   return { ...out, cut: { ...c, leaves: [...c.leaves.filter((l) => !gone.has(l)), ...chips].sort(cmp), parent, alias } };
 }
 
+
+// rankNote is what the Panel says of a box whose set the row cap merged: its
+// own rank, which the merged row no longer shows (0 = depends on nothing here).
+export const rankNote = (ownTier: number | undefined): string | null =>
+  ownTier === undefined || ownTier < 0 ? null : `rank ${ownTier} in its set before rows merged (0 = depends on nothing here)`;
+
+// MAX_ROWS is the most rows one sibling set is drawn in (R3).
+export const MAX_ROWS = 7;
+
+// capRows merges the rows of one sibling set, given as its box count per row
+// from the bottom, into at most max: the row each merges into, or null when
+// they fit. Rows merge with their neighbours from the bottom up, where the
+// dependencies are, and no merged row holds more boxes than it must: the
+// least capacity that fits (binary search), filled bottom-up, with each row
+// left keeping its own once the rows left can hold them one each. A rank the
+// fold emptied is not a row (N2): only ranks that hold a box count, and an
+// empty one maps to the row of the live rank below it.
+export function capRows(counts: readonly number[], max = MAX_ROWS): number[] | null {
+  const live = counts.flatMap((c, i) => (c > 0 ? [i] : []));
+  if (live.length <= max) return null;
+  const rows = capLive(live.map((i) => counts[i]), max);
+  const out: number[] = [];
+  let at = 0;
+  for (let i = 0; i < counts.length; i++) {
+    const k = live.indexOf(i);
+    if (k >= 0) at = rows[k];
+    out.push(at);
+  }
+  return out;
+}
+
+function capLive(counts: readonly number[], max: number): number[] {
+  const n = counts.length;
+  const pack = (cap: number): number[] => {
+    const row: number[] = [];
+    let at = 0;
+    let sum = 0;
+    for (let i = 0; i < n; i++) {
+      const open = i > 0 && row[i - 1] === at;
+      if (open && (sum + counts[i] > cap || n - i <= max - at - 1)) {
+        at++;
+        sum = 0;
+      }
+      row.push(at);
+      sum += counts[i];
+    }
+    return row;
+  };
+  let lo = 1; // a row heavier than the capacity keeps a row of its own
+  let hi = counts.reduce((a, b) => a + b, 0);
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (pack(mid)[n - 1] < max) hi = mid;
+    else lo = mid + 1;
+  }
+  return pack(lo);
+}

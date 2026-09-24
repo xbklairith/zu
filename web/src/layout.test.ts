@@ -298,3 +298,16 @@ describe("superseding", () => {
     expect(made.map((f) => f.stopped)).toEqual([true, false]);
   });
 });
+
+// 12: a set of more than MAX_ROWS ranks merges rows; a merged row reads its
+// higher own tier first, and is drawn as any row: no rule between its ranks.
+describe("merged rows (12)", () => {
+  it("orders a merged row by own tier", async () => {
+    const chain = view(pkgs(Array.from({ length: 9 }, (_, i) => `m/c${i}`), "m"),
+      Array.from({ length: 8 }, (_, i) => edge(`m/c${i + 1}`, `m/c${i}`)));
+    const sc = scene(chain, DEFAULT_STATE, { home: true });
+    const a = await layout(sc, elk);
+    expect(a.get("m/c0")!.y).toBe(a.get("m/c1")!.y);
+    expect(a.get("m/c1")!.x).toBeLessThan(a.get("m/c0")!.x);
+  });
+});

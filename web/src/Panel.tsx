@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import type { Bundle } from "./bundle";
 import type { Hunk, Loc, View, ViewEdge, ViewNode } from "./data";
 import { calls, imports, targets, type Row } from "./facts";
-import { isGroup, isStrip } from "./group";
+import { isGroup, isStrip, rankNote } from "./group";
 import { linkFor } from "./links";
 import { crapFacts, type Risk } from "./metrics";
 import type { SceneEdge } from "./scene";
@@ -19,6 +19,7 @@ type Props = {
   bundles: Bundle[]; // the scene's bundles: an aggregate's real targets come from them
   hidden?: ViewEdge[]; // 07: violating imports inside the selected box, drawn as no line
   crap?: Risk; // 08: the selected box's CRAP as the scene rolled it up
+  ownTier?: number; // 12: the selected box's rank before the row cap merged its row
   onReveal: (id: string) => void;
   onClose: () => void;
 };
@@ -217,7 +218,7 @@ function Crap({ view, id, box, onReveal }: { view: View; id: string; box?: Risk;
   );
 }
 
-export function Panel({ view, id, edge, bundles, hidden, crap, onReveal, onClose }: Props) {
+export function Panel({ view, id, edge, bundles, hidden, crap, ownTier, onReveal, onClose }: Props) {
   const title = edge ? `${edge.from} → ${edge.to}` : (id ?? "");
   const node = id === null ? undefined : view.nodes.find((n) => n.id === (id.endsWith(PKG) ? id.slice(0, -PKG.length) : id));
   let body: React.ReactNode;
@@ -269,6 +270,7 @@ export function Panel({ view, id, edge, bundles, hidden, crap, onReveal, onClose
         <p className="muted">
           {s.packages} packages · {s.decls} declarations · {s.unresolved} unresolved calls
         </p>
+        {rankNote(ownTier) && <p className="muted">{rankNote(ownTier)}</p>}
         <Rows title="Imports" rows={f.out} onReveal={onReveal} />
         <Rows title="Imported by" rows={f.in} onReveal={onReveal} />
       </>

@@ -90,7 +90,8 @@ export function elkGraph(sc: Scene): ElkNode {
     else byParent.set(n.parent, [n]);
   }
   const last = Number.MAX_SAFE_INTEGER;
-  for (const l of byParent.values()) l.sort((a, b) => (a.order ?? last) - (b.order ?? last));
+  // 12: a merged row wraps by own tier, the higher first, as byOwnTier places it.
+  for (const l of byParent.values()) l.sort((a, b) => (a.order ?? last) - (b.order ?? last) || (b.ownTier ?? 0) - (a.ownTier ?? 0));
   const rank = sc.nodes.some((n) => n.rank !== undefined || n.tier !== undefined) ? ranked(byParent) : null;
   const build = (n: SceneNode): ElkNode => {
     if (n.shape !== "container") {
@@ -234,10 +235,36 @@ export function positions(g: ElkNode): Map<string, Placed> {
 // Policy's order, packed. The page (App) and layout both use it.
 export const arrange = (
   out: ElkNode, order: ReadonlyMap<string, number>, header: ReadonlyMap<string, number>, levels: ReadonlyMap<string, number> = new Map(),
-) => packed(inOrder(positions(out), order), header, levels);
+  ownTiers: ReadonlyMap<string, number> = new Map(),
+) => packed(byOwnTier(inOrder(positions(out), order), ownTiers), header, levels);
 
 export const layout = async (sc: Scene, engine: Engine) =>
-  arrange(await engine.layout(elkGraph(sc)), orderOf(sc), headers(sc), levelsOf(sc));
+  arrange(await engine.layout(elkGraph(sc)), orderOf(sc), headers(sc), levelsOf(sc), ownTiersOf(sc));
+
+// ownTiersOf is each node's rank before the row cap merged its row (12).
+export const ownTiersOf = (sc: Scene): ReadonlyMap<string, number> =>
+  new Map(sc.nodes.flatMap((n) => (n.ownTier === undefined ? [] : [[n.id, n.ownTier] as const])));
+
+// byOwnTier re-places each row of siblings that holds nodes of more than one
+// own tier (12, a merged row), as inOrder does: the higher own tier first, so the row
+// still reads down from left to right, and ELK's order inside one own tier.
+export function byOwnTier(placed: Map<string, Placed>, ownTiers: ReadonlyMap<string, number>): Map<string, Placed> {
+  if (ownTiers.size === 0) return placed;
+  const out = new Map(placed);
+  for (const ids of siblings(placed).values()) {
+    for (const row of rowsOf(ids, placed)) {
+      if (new Set(row.map((id) => ownTiers.get(id))).size < 2) continue;
+      let x = Math.min(...row.map((id) => placed.get(id)!.x));
+      row.sort((a, b) => (ownTiers.get(b) ?? -1) - (ownTiers.get(a) ?? -1) || placed.get(a)!.x - placed.get(b)!.x || cmp(a, b));
+      for (const id of row) {
+        const p = placed.get(id)!;
+        out.set(id, { ...p, x });
+        x += p.w + GAP;
+      }
+    }
+  }
+  return out;
+}
 
 // headers is the least width of each container: its label and badges. ELK
 // never sees it, so a page keys its layout on it as well as on elkGraph.

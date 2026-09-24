@@ -9,7 +9,7 @@ import { pageEngine } from "./engine";
 import { Header } from "./Header";
 import { redLegend, violationsNote } from "./headline";
 import { keyAction } from "./keys";
-import { arrange, elkGraph, headers, levelsOf, orderOf, Superseded, type Placed } from "./layout";
+import { arrange, ownTiersOf, elkGraph, headers, levelsOf, orderOf, Superseded, type Placed } from "./layout";
 import { Panel } from "./Panel";
 import { pinFor } from "./policy";
 import { PROPOSAL_NOTICE, proposalView } from "./proposal";
@@ -176,6 +176,7 @@ export function App({ view: whole }: { view: View }) {
   const order = useMemo(() => orderOf(sc), [sc]);
   // 11: likewise each node's level: graph holds the rows ranked made.
   const levels = useMemo(() => levelsOf(sc), [sc]);
+  const ownTiers = useMemo(() => ownTiersOf(sc), [sc]); // 12: a merged row's order
   const [placed, setPlaced] = useState<{ graph: string; at: Map<string, Placed> } | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   useEffect(() => {
@@ -185,7 +186,7 @@ export function App({ view: whole }: { view: View }) {
       (out) => {
         performance.mark("zu-layout-end");
         setFailed(null);
-        setPlaced({ graph: graph + "\n" + heads, at: arrange(out, order, new Map(JSON.parse(heads) as [string, number][]), levels) });
+        setPlaced({ graph: graph + "\n" + heads, at: arrange(out, order, new Map(JSON.parse(heads) as [string, number][]), levels, ownTiers) });
       },
       (e: Error) => {
         if (!(e instanceof Superseded)) setFailed(e.message);
@@ -358,6 +359,7 @@ export function App({ view: whole }: { view: View }) {
           bundles={sc.bundles}
           hidden={sc.nodes.find((n) => n.id === sc.selected)?.hidden}
           crap={sc.nodes.find((n) => n.id === sc.selected)?.crap?.risk}
+          ownTier={sc.nodes.find((n) => n.id === sc.selected)?.ownTier}
           onReveal={jump}
           onClose={() => choose(null)}
         />

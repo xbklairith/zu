@@ -2282,7 +2282,7 @@ index dee0df8..268359e 100644
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 diff --git a/web/src/group.test.ts b/web/src/group.test.ts
@@ -2366,9 +2366,9 @@ index 1e9c814..9c7f00a 100644
 +});
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/group.test.ts src/layout.test.ts` Expected: FAIL (`capRows is not a function`; a chain of twenty draws 16 rows; a merged row is not ordered by own tier)
+- [x] **Run:** `cd web && npx vitest run src/group.test.ts src/layout.test.ts` Expected: FAIL (`capRows is not a function`; a chain of twenty draws 16 rows; a merged row is not ordered by own tier)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/web/src/App.tsx b/web/src/App.tsx
@@ -2607,9 +2607,9 @@ index 148e1ec..9f7372a 100644
    // to follow: violations, changed imports, and the imports behind the
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
 
-- [ ] **Commit** (one line, imperative; stage these files only)
+- [x] **Commit** (one line, imperative; stage these files only)
 
 ### Task 7: Open the root module in place
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ViewEdge, ViewNode } from "./data";
-import { demotedBox, isGroup, MORE, STRIP, stripText } from "./group";
+import { capRows, demotedBox, isGroup, MORE, rankNote, STRIP, stripText } from "./group";
 import { knownIds, scene } from "./scene";
 import { reveal } from "./search";
 import { DEFAULT_STATE, type ViewState } from "./state";
@@ -166,6 +166,8 @@ describe("the budget fold (12)", () => {
     const sc = at({}, chain);
     expect(boxes(sc)).toHaveLength(15);
     expect(sc.nodes.find((n) => n.id === `m${MORE}`)!.label).toBe("+5 more");
+    // six rows of boxes and the bottom row of the chip: seven.
+    expect(new Set(sc.nodes.map((n) => n.tier)).size).toBe(7);
   });
   it("folds only at the automatic depth", () => {
     expect(boxes(at({ depth: 1 }, many()))).toHaveLength(20);
@@ -205,5 +207,38 @@ describe("search reveals a demoted package (12)", () => {
     const s = reveal(noisy, "m/gen");
     expect(s.toggled).toEqual([`m${STRIP}`]);
     expect(ids(scene(noisy, s, { home: true }).nodes)).toContain("m/gen");
+  });
+});
+
+describe("the row cap (12)", () => {
+  it("counts only the ranks that still hold a box (N2)", () => {
+    // Ranks the fold emptied are not rows: two ranks left fit.
+    expect(capRows([3, 0, 0, 0, 0, 0, 0, 0, 1])).toBeNull();
+    // Nine live ranks under a cap of 6 fill all 6 rows, not 5.
+    const rows = capRows([1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1], 6)!;
+    const live = [0, 1, 2, 3, 4, 5, 6, 7, 13].map((i) => rows[i]);
+    expect(Math.max(...live)).toBe(5);
+    expect(live).toEqual([...live].sort((x, y) => x - y)); // still bottom-up
+  });
+  it("leaves seven rows or fewer alone", () => {
+    expect(capRows([1, 1, 1, 1, 1, 1, 1])).toBeNull();
+    // The Panel keeps a merged box's own rank; a group has none.
+    expect(rankNote(3)).toBe("rank 3 in its set before rows merged (0 = depends on nothing here)");
+    expect([rankNote(undefined), rankNote(-1)]).toEqual([null, null]);
+  });
+  it("merges adjacent rows from the bottom, balanced by boxes", () => {
+    // nine rows of one box: the lowest four pair up, the rest keep a row each.
+    expect(capRows([1, 1, 1, 1, 1, 1, 1, 1, 1])).toEqual([0, 0, 1, 1, 2, 3, 4, 5, 6]);
+    // a heavy bottom row stays alone; the light ones above it merge.
+    expect(capRows([9, 1, 1, 1, 1, 1, 1, 1, 1, 1])).toEqual([0, 1, 1, 2, 2, 3, 3, 4, 5, 6]);
+  });
+  it("draws a chain of nine at most seven rows, each box keeping its own row as its own tier", () => {
+    const chain = view(pkgs(Array.from({ length: 9 }, (_, i) => `m/c${i}`), "m"),
+      Array.from({ length: 8 }, (_, i) => edge(`m/c${i + 1}`, `m/c${i}`)));
+    const sc = at({}, chain);
+    const tier = (id: string) => sc.nodes.find((n) => n.id === id)!;
+    expect(new Set(sc.nodes.map((n) => n.tier)).size).toBe(7);
+    expect([tier("m/c0").tier, tier("m/c1").tier, tier("m/c8").tier]).toEqual([0, 0, 6]);
+    expect([tier("m/c0").ownTier, tier("m/c1").ownTier]).toEqual([0, 1]);
   });
 });

@@ -11,7 +11,7 @@ import { always, quiet, type Dir } from "./edges";
 import { boxStats, statsLine } from "./tree";
 import { shorten } from "./labels";
 import { withinHops } from "./select";
-import { BUDGET, factsOf, fold, isFold, isGroup, isStrip, knownGroup, strip, stripText } from "./group";
+import { BUDGET, capRows, factsOf, fold, isFold, isGroup, isStrip, knownGroup, MAX_ROWS, strip, stripText } from "./group";
 import type { Known, Stage, ViewState } from "./state";
 
 export type Shape = "container" | "box" | "oval" | "decl" | "outside" | "chip";
@@ -26,6 +26,7 @@ export type SceneNode = {
   rank?: number; // 07: the Policy rank of a box, rolled up (policy.ts rolledRanks)
   tier?: number; // 11: its architecture rank among its siblings (rank.ts); only the layout reads it
   hint?: string; // 12: a group's tooltip (group.ts stripText, the fold's names)
+  ownTier?: number; // 12: its rank before the row cap merged it into tier (group.ts capRows)
   stats?: string; // 11: a box's stats line (tree.ts statsLine); the canvas draws it and layout.ts sizes by it
   hub?: boolean; // 11: at rest, one of the HUBS most used boxes; drawn with a thicker border
   hidden?: ViewEdge[]; // 07: violating imports with both ends inside this node, so no line shows them
@@ -258,6 +259,18 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   );
   for (const n of nodes) {
     n.tier = bottom(n.id) ? -1 : before?.get(n.id) ?? tiers.get(n.id);
+  }
+  // 12: at most MAX_ROWS rows in a set the Policy does not place, the
+  // bottom row of groups counted; a box keeps its rank as its own tier, which
+  // orders a merged row (layout.ts).
+  const low = new Set(nodes.filter((n) => n.tier === -1).map((n) => n.parent));
+  const rowSets = new Map<string, SceneNode[]>();
+  for (const n of nodes) if (!byPolicy.has(n.parent) && n.tier !== undefined && n.tier >= 0) rowSets.set(n.parent, [...(rowSets.get(n.parent) ?? []), n]);
+  for (const set of rowSets.values()) {
+    const top = Math.max(...set.map((n) => n.tier!));
+    const counts = Array.from({ length: top + 1 }, (_, t) => set.filter((n) => n.tier === t).length);
+    const rows = capRows(counts, MAX_ROWS - (low.has(set[0].parent) ? 1 : 0));
+    if (rows) for (const n of set) [n.ownTier, n.tier] = [n.tier, rows[n.tier!]];
   }
 
   // 11: auto draws at rest only what must show when there are too many lines
