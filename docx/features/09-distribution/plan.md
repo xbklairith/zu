@@ -1,6 +1,6 @@
 # 09 · Distribution (v0.1) — Plan
 
-**Status:** APPROVED 2026-09-24 (scrutiny + advisor sign-off). Revised after scrutiny (M1–M4 and N1–N7, with the coordinator's rulings); replayed green on a clone of 2005ff1 with the prebuilt goreleaser v2.12.7. Drafted against `main` at 2005ff1, with 08 committed. M1 dropped `go install` from v0.1, so the module rename is deferred (see Deferred) and no task depends on 08's files.
+**Status:** Implemented 2026-09-24 (Tasks 1–6; `acceptance.md`). The release itself, Task 5's steps with the Safari gate, is pending with the user. APPROVED 2026-09-24 (scrutiny + advisor sign-off). Revised after scrutiny (M1–M4 and N1–N7, with the coordinator's rulings); replayed green on a clone of 2005ff1 with the prebuilt goreleaser v2.12.7. Drafted against `main` at 2005ff1, with 08 committed. M1 dropped `go install` from v0.1, so the module rename is deferred (see Deferred) and no task depends on 08's files.
 
 > **Mode:** Quick (single-file)
 > **For Claude:** Use `dev-workflow:spec-driven-implementation` to execute task-by-task. Quick mode is auto-detected from this file's presence.
@@ -673,7 +673,7 @@ and its `ui` line `embedded`. Record the digests and the record in
 
 **Files:** `docx/features/09-distribution/acceptance.md` (new), `web/e2e/paint.mjs` (new)
 
-- [ ] **Step 1: first paint in three engines, from `file://`.** A hash picks the view. The box count comes from the page's header, because React Flow renders only the nodes on screen (`onlyRenderVisibleElements`), so the DOM undercounts.
+- [x] **Step 1: first paint in three engines, from `file://`.** A hash picks the view. The box count comes from the page's header, because React Flow renders only the nodes on screen (`onlyRenderVisibleElements`), so the DOM undercounts.
 
 <!-- file: web/e2e/paint.mjs -->
 ```js
@@ -712,9 +712,9 @@ for (const [name, type] of [["chromium", chromium], ["firefox", firefox], ["webk
 }
 ```
 
-- [ ] **Run:** `d=$(mktemp -d) && (cd web && npm run build >/dev/null) && go build -o "$d/zu" ./cmd/zu && "$d/zu" scan internal/scan/testdata/shop -out "$d/shop.json" -html "$d/shop.html" 2>/dev/null && (cd web/e2e && node paint.mjs "$d/shop.html#d=2") | grep 'boxes at depth' >/dev/null; r=$?; rm -rf "$d"; exit $r` Expected: PASS (the script runs in all three engines and reads the header).
+- [x] **Run:** `d=$(mktemp -d) && (cd web && npm run build >/dev/null) && go build -o "$d/zu" ./cmd/zu && "$d/zu" scan internal/scan/testdata/shop -out "$d/shop.json" -html "$d/shop.html" 2>/dev/null && (cd web/e2e && node paint.mjs "$d/shop.html#d=2") | grep 'boxes at depth' >/dev/null; r=$?; rm -rf "$d"; exit $r` Expected: PASS (the script runs in all three engines and reads the header).
 
-- [ ] **Step 2: measure and record.** Run these from the repository root after `make build`. They use the Test Corpus in `.zu/corpus/`, which `scripts/bench-corpus.sh` clones.
+- [x] **Step 2: measure and record.** Run these from the repository root after `make build`. They use the Test Corpus in `.zu/corpus/`, which `scripts/bench-corpus.sh` clones.
 
 ```bash
 scripts/bench-corpus.sh | tee /tmp/zu-bench.md
@@ -743,4 +743,4 @@ make release-snapshot && rm -rf dist .zu/release
 
 ## Progress
 
-- [x] Task 1 · [x] Task 2 · [x] Task 3 · [x] Task 4 · [x] Task 5 · [ ] Task 6
+- [x] Task 1 · [x] Task 2 · [x] Task 3 · [x] Task 4 · [x] Task 5 · [x] Task 6
