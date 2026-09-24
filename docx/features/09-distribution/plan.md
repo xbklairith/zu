@@ -381,7 +381,7 @@ Open the HTML file straight from disk (`file://`); it loads nothing from the net
 Apache-2.0. See [LICENSE](LICENSE).
 ````
 
-- [ ] **Run:** `test -s README.md && grep -q 'com.apple.quarantine' README.md && ! grep -q 'go install' README.md && grep -q 'docx/features/03-diff-ci/output.md' README.md && test -f docx/features/03-diff-ci/output.md` Expected: PASS.
+- [x] **Run:** `test -s README.md && grep -q 'com.apple.quarantine' README.md && ! grep -q 'go install' README.md && grep -q 'docx/features/03-diff-ci/output.md' README.md && test -f docx/features/03-diff-ci/output.md` Expected: PASS.
 
 ### Task 4: goreleaser config, Makefile targets and the release check
 
@@ -743,4 +743,4 @@ make release-snapshot && rm -rf dist .zu/release
 
 ## Progress
 
-- [x] Task 1 · [x] Task 2 · [ ] Task 3 · [ ] Task 4 · [ ] Task 5 · [ ] Task 6
+- [x] Task 1 · [x] Task 2 · [x] Task 3 · [ ] Task 4 · [ ] Task 5 · [ ] Task 6
