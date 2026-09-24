@@ -67,6 +67,8 @@ func TestLivePageFetchesItsViewFromItsOrigin(t *testing.T) {
 	for _, want := range []string{
 		`<script id="zu-data" type="application/json">{"live":true}</script>`,
 		`http-equiv="Content-Security-Policy" content="connect-src 'self'; default-src &#39;none&#39;; worker-src blob:"`,
+		// No request for /favicon.ico, which the CSP would refuse and log (review, 2026-09-25).
+		`<link rel="icon" href="data:,"></head>`,
 	} {
 		if !strings.Contains(s, want) {
 			t.Errorf("live page lacks %s:\n%s", want, s)

@@ -35,9 +35,7 @@ async function run(name, b) {
   const out = {};
   const errors = [];
   let p = await b.newPage();
-  // Firefox's own favicon loader asks for /favicon.ico, which img-src data:
-  // refuses; the page makes no such request.
-  const csp = (t) => /Content.Security|CSP|refused/i.test(t) && !/FaviconLoader/.test(t);
+  const csp = (t) => /Content.Security|CSP|refused/i.test(t);
   p.on("console", (m) => csp(m.text()) && errors.push(m.text().slice(0, 160)));
   p.on("pageerror", (e) => errors.push("pageerror " + e.message.slice(0, 120)));
   // A view's URL opens that view: the page fetched its View and applied the hash.

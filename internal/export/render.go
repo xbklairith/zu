@@ -61,7 +61,12 @@ func LivePage(tmpl []byte) ([]byte, error) {
 	if n := bytes.Count(tmpl, []byte(cspAttr)); n != 1 {
 		return nil, fmt.Errorf("UI template has %d Content-Security-Policy elements, want 1", n)
 	}
+	if n := bytes.Count(tmpl, []byte("</head>")); n != 1 {
+		return nil, fmt.Errorf("UI template has %d </head> tags, want 1", n)
+	}
 	live := strings.Replace(marker, "{}", `{"live":true}`, 1)
 	page := bytes.Replace(tmpl, []byte(marker), []byte(live), 1)
+	// An empty icon, so the browser asks the server for no /favicon.ico.
+	page = bytes.Replace(page, []byte("</head>"), []byte(`<link rel="icon" href="data:,"></head>`), 1)
 	return bytes.Replace(page, []byte(cspAttr), []byte(cspAttr+"connect-src 'self'; "), 1), nil
 }
