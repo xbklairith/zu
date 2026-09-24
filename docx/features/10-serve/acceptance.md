@@ -38,6 +38,9 @@ Two runs, source in the page cache:
 Budget: under 2 s from request to response. **Met: 1.74–1.93 s**, with 0.07 s
 to spare at worst. Every rescan reported 2963 packages, 9909 files, 0 parse errors.
 
+Correction, 2026-09-25: the 1.74–1.93 s runs were on a fresh clone whose racy index makes zu's `git status` cost 340–360 ms.
+See rescan-profile.md: 1.51–1.61 s on a fresh clone, 1.33–1.41 s after an index refresh.
+
 The plan's figure, 1.09–1.19 s, came from a copy of kubernetes' non-test Go files
 and `go.mod`s. The same copy measured today gives 1.14–1.37 s (peak RSS 693 MB), so
 the full worktree costs about 0.5 s more per rescan. The worktree's git calls,
