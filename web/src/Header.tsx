@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { View } from "./data";
-import { breadcrumb, depthNote, honestyLine, title } from "./headline";
+import { breadcrumb, depthNote, edgesNote, honestyLine, title } from "./headline";
 
 type Props = {
   view: View;
@@ -10,11 +10,12 @@ type Props = {
   onFocus: (box: string) => void;
   auto: boolean; // the depth is autoDepth's, not the reader's
   from?: number; // the requested depth, when the drawn one is shallower (Deviation 8)
+  hidden?: number; // 11: lines auto leaves out at rest
   full?: boolean; // Change View only: showing the full project, not the changed subgraph
   onToggle?: () => void;
 };
 
-export function Header({ view, focus, boxes, depth, onFocus, auto, from, full, onToggle }: Props) {
+export function Header({ view, focus, boxes, depth, onFocus, auto, from, hidden = 0, full, onToggle }: Props) {
   const compare = view.links?.compare?.startsWith("https://") ? view.links.compare : null;
   const [showErrors, setShowErrors] = useState(false);
   const errors = view.honesty.parseErrors;
@@ -56,6 +57,7 @@ export function Header({ view, focus, boxes, depth, onFocus, auto, from, full, o
       </nav>
       <p className="note">
         {depthNote(boxes, depth, auto, from)}
+        {hidden > 0 && <span id="zu-edges"> {edgesNote(hidden)}</span>}
         {full !== undefined && (
           <>
             {" "}

@@ -7,6 +7,7 @@ import { declutter, NO_PINS, type Mark, type Pin } from "./declutter";
 import { crapBand, packageRisk, rolledCrap, type Band, type Risk } from "./metrics";
 import { rolledRanks } from "./policy";
 import { siblingTiers } from "./rank";
+import { always, quiet, type Dir } from "./edges";
 import { shorten } from "./labels";
 import { withinHops } from "./select";
 import type { Known, Stage, ViewState } from "./state";
@@ -30,11 +31,14 @@ export type SceneEdge = {
   id: string; from: string; to: string; pairs: number; members: Bundle["members"];
   dim: boolean; hot: boolean; pinned: boolean;
   status?: string; // the Change Status its members share, or "mixed" (bundle.ts statusOf)
+  dir?: Dir; // 11: on a lit edge, out = the selection depends on the other end, in = the other end on it
 };
 export type Scene = {
   depth: number; stage: Stage;
-  lines: boolean; // edges are laid out; false = only the selection's edges, drawn over the marks
+  lines: boolean; // every edge is drawn at rest; false = the selection's edges, over marks (off) or none (auto)
   nodes: SceneNode[]; edges: SceneEdge[];
+  all: SceneEdge[]; // 11: every edge the cut could draw, drawn or not; the canvas draws a hovered box's from here
+  hidden: number; // 11: the lines auto leaves out at rest (edges.ts); 0 when every line is drawn
   bundles: Bundle[]; // the leaf bundles behind the edges, for the panel
   selected: string | null; // the drawn node that stands for the selection
   selectedRow: string | null; // the selected method, drawn as a row of `selected`
@@ -84,7 +88,7 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     kept = kept.filter((b) => near.has(b.from) && near.has(b.to));
   }
 
-  const d = declutter(s.stage, s.lines, kept, [...leaves], c.parent, pin);
+  const d = declutter(s.stage, s.edges !== "off", kept, [...leaves], c.parent, pin);
   const shown = (id: string) => (d.folded(id) ? up(id) : id);
   const folds = new Set([...leaves].filter(d.folded).map(up));
   leaves = new Set([...leaves].filter((l) => !d.folded(l)));
@@ -184,20 +188,34 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   );
   for (const n of nodes) n.tier = tiers.get(n.id);
 
+  // 11: auto draws at rest only what must show when there are too many lines
+  // to follow: violations, changed imports, and the imports behind the
+  // Affected Set (edges.ts always). Everything else waits for a selection.
+  const drawable = d.arrows.filter((a) => ids.has(a.from) && ids.has(a.to));
+  const hush = quiet(s.edges, d.lines, drawable.length);
+  const marked = (id: string) => (node.get(id) ? nodeMark(node.get(id)!) : "");
+  const affected = (e: ViewEdge) => view.kind === "change" && marked(e.from) === "affected" && marked(e.to) !== "";
+  const all: SceneEdge[] = [];
   const edges: SceneEdge[] = [];
-  for (const a of d.arrows) {
+  let hidden = 0;
+  for (const a of drawable) {
     const h = hot(a);
-    if (!ids.has(a.from) || !ids.has(a.to) || (!d.lines && !h)) continue;
     const e: SceneEdge = {
       id: `${a.from}→${a.to}`, from: a.from, to: a.to, pairs: a.pairs, members: a.members,
       hot: h, dim: selected !== null && !h, pinned: a.pinned,
     };
     if (a.status) e.status = a.status;
-    edges.push(e);
+    if (h) e.dir = a.carries.some((b) => inSel(b.from)) ? "out" : "in";
+    all.push(e);
+    const rest = !hush || always(a, affected); // drawn with nothing selected
+    if (!rest) hidden++;
+    if (d.lines ? rest || h : h) edges.push(e);
   }
-  edges.sort((x, y) => cmp(x.from, y.from) || cmp(x.to, y.to));
+  const byEnds = (x: SceneEdge, y: SceneEdge) => cmp(x.from, y.from) || cmp(x.to, y.to);
+  edges.sort(byEnds);
+  all.sort(byEnds);
   return {
-    depth, stage: s.stage, lines: d.lines, nodes: nodes.sort((x, y) => cmp(x.id, y.id)), edges, bundles: kept,
+    depth, stage: s.stage, lines: d.lines && !hush, nodes: nodes.sort((x, y) => cmp(x.id, y.id)), edges, all, hidden, bundles: kept,
     selected, selectedRow: row?.selectedRow ?? selectedRow, decls: c.decls, noDetail: c.noDetail,
   };
 }

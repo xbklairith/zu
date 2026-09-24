@@ -1276,7 +1276,7 @@ diff --git a/web/src/scene.ts b/web/src/scene.ts
 
 **Steps:**
 
-- [ ] **Write the failing tests.** `policy.test.ts` and `search.test.ts` only rename `lines: false` to `edges: "off"`. `state.test.ts` also reads the hashes 05, 07 and 09 recorded (Deviation 12).
+- [x] **Write the failing tests.** `policy.test.ts` and `search.test.ts` only rename `lines: false` to `edges: "off"`. `state.test.ts` also reads the hashes 05, 07 and 09 recorded (Deviation 12).
 
 <!-- file: web/src/edges.test.ts -->
 ```ts
@@ -1460,9 +1460,9 @@ diff --git a/web/src/search.test.ts b/web/src/search.test.ts
  });
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/edges.test.ts src/state.test.ts src/scene.test.ts src/headline.test.ts` Expected: FAIL (`Failed to resolve import "./edges"`, `edgesNote` undefined, `l` not read)
+- [x] **Run:** `cd web && npx vitest run src/edges.test.ts src/state.test.ts src/scene.test.ts src/headline.test.ts` Expected: FAIL (`Failed to resolve import "./edges"`, `edgesNote` undefined, `l` not read)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 <!-- file: web/src/edges.ts -->
 ```ts
@@ -1883,7 +1883,7 @@ diff --git a/web/src/styles.css b/web/src/styles.css
    top: 2px;
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
 
 ### Task 5: Open below single-child containers (`home`)
 

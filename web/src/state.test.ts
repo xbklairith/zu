@@ -17,10 +17,26 @@ describe("URL hash", () => {
   });
   it("round-trips every field, with toggles sorted", () => {
     const s: ViewState = { focus: "m/a#pkg", depth: 3, toggled: ["m/b", "m/a"], selected: "m/a.T",
-      hops: 2, stage: "triangles", lines: false, minPairs: 4, externals: false, proposal: null };
+      hops: 2, stage: "triangles", edges: "off", minPairs: 4, externals: false, proposal: null };
     const h = encodeHash(s);
     expect(h).toBe("#f=m%2Fa%23pkg&d=3&t=m%2Fa&t=m%2Fb&s=m%2Fa.T&h=2&x=triangles&l=0&w=4&e=0");
     expect(decodeHash(h, known)).toEqual({ ...s, toggled: ["m/a", "m/b"] });
+  });
+  it("keeps the edge mode as l: absent for auto, 1 for on, 0 for off, as 05's links wrote it (11)", () => {
+    expect(["auto", "on", "off"].map((edges) => encodeHash({ ...DEFAULT_STATE, edges } as ViewState))).toEqual(["", "#l=1", "#l=0"]);
+    expect(["", "#l=1", "#l=0", "#l=2"].map((h) => decodeHash(h, known).edges)).toEqual(["auto", "on", "off", "auto"]);
+  });
+  it("reads the links 05, 07 and 09 recorded as they meant them: l=0 is still edges off (11)", () => {
+    // 09's paint.mjs views, 05's acceptance hash, and 05/07's round-trip hash.
+    expect(decodeHash("#d=3&l=0", known)).toEqual({ ...DEFAULT_STATE, depth: 3, edges: "off" });
+    expect(decodeHash("#f=m%2Fa&d=6&l=0", known)).toEqual({ ...DEFAULT_STATE, focus: "m/a", depth: 6, edges: "off" });
+    expect(decodeHash("#d=2&l=0", known)).toEqual({ ...DEFAULT_STATE, depth: 2, edges: "off" });
+    expect(decodeHash("#f=m%2Fa%23pkg&d=3&t=m%2Fa&t=m%2Fb&s=m%2Fa.T&h=2&x=triangles&l=0&w=4&e=0", known)).toEqual({
+      focus: "m/a#pkg", depth: 3, toggled: ["m/a", "m/b"], selected: "m/a.T", hops: 2, stage: "triangles",
+      edges: "off", minPairs: 4, externals: false, proposal: null,
+    });
+    // Each writes back unchanged.
+    for (const h of ["#d=3&l=0", "#f=m%2Fa&d=6&l=0", "#d=2&l=0"]) expect(encodeHash(decodeHash(h, known))).toBe(h);
   });
   it("drops unknown ids, childless toggles and bad numbers instead of failing", () => {
     expect(decodeHash("#f=evil&d=0&d=abc&t=nope&t=m%2Fa%23pkg&s=%3Cb%3E&h=-1&x=none&w=99999", known))

@@ -12,6 +12,11 @@ export const LABELS: Record<Stage, string> = {
   classes: "Declutter classes",
 };
 
+// EDGE_MODES (11): auto draws lines when there are few and on demand when
+// there are many (edges.ts); on draws every line; off draws 05's triangles.
+export const EDGE_MODES = ["auto", "on", "off"] as const;
+export type EdgeMode = (typeof EDGE_MODES)[number];
+
 export type ViewState = {
   focus: string; // box id, "X#pkg", or "" for the page root
   depth: number | null; // null = autoDepth
@@ -19,7 +24,7 @@ export type ViewState = {
   selected: string | null; // any node id, or a drawn box or aggregate
   hops: number | null; // show only nodes within N hops of the selection
   stage: Stage; // declutter stage (U6)
-  lines: boolean; // false = "Hide edges": triangles instead of lines, at any stage
+  edges: EdgeMode; // 11: "off" = 05's "Hide edges": triangles instead of lines, at any stage
   minPairs: number; // hide bundles with fewer package pairs (A6)
   externals: boolean; // draw external modules
   proposal: string | null; // 07: the Proposal drawn instead of the Package Tree, by name
@@ -27,7 +32,7 @@ export type ViewState = {
 
 export const DEFAULT_STATE: ViewState = {
   focus: "", depth: null, toggled: [], selected: null, hops: null,
-  stage: "full", lines: true, minPairs: 1, externals: true, proposal: null,
+  stage: "full", edges: "auto", minPairs: 1, externals: true, proposal: null,
 };
 
 export const LIMITS = { depth: 32, hops: 9, minPairs: 999 };
@@ -42,7 +47,7 @@ export function encodeHash(s: ViewState): string {
   if (s.selected) p.set("s", s.selected);
   if (s.hops !== null) p.set("h", String(s.hops));
   if (s.stage !== "full") p.set("x", s.stage);
-  if (!s.lines) p.set("l", "0");
+  if (s.edges !== "auto") p.set("l", s.edges === "off" ? "0" : "1");
   if (s.minPairs !== 1) p.set("w", String(s.minPairs));
   if (!s.externals) p.set("e", "0");
   if (s.proposal !== null) p.set("p", s.proposal);
@@ -77,7 +82,7 @@ export function decodeHash(hash: string, known: Known): ViewState {
     selected: selected !== null && known.node(selected) ? selected : null,
     hops: int("h", LIMITS.hops),
     stage: (STAGES as readonly string[]).includes(stage ?? "") ? (stage as Stage) : "full",
-    lines: p.get("l") !== "0",
+    edges: p.get("l") === "0" ? "off" : p.get("l") === "1" ? "on" : "auto",
     minPairs: int("w", LIMITS.minPairs) ?? 1,
     externals: p.get("e") !== "0",
     proposal: proposal !== null && known.proposal?.(proposal) ? proposal : null,

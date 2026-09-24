@@ -10,14 +10,15 @@ import {
   type NodeProps,
   useReactFlow,
 } from "@xyflow/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "@xyflow/react/dist/style.css";
 import { edgeMark } from "./change";
 import { parentBox } from "./cut";
 import type { View } from "./data";
+import { around } from "./edges";
 import { absolute, triangles, type Placed } from "./layout";
 import { crapGrade, crapLabel } from "./metrics";
-import type { Scene, SceneNode } from "./scene";
+import type { Scene, SceneEdge, SceneNode } from "./scene";
 import { boxStats } from "./tree";
 
 type Data = {
@@ -250,7 +251,9 @@ export function Canvas({ view, sc, placed, edge, onSelect, onOpen, onToggle, onE
   useEffect(() => {
     if (fit) void rf.fitView();
   }, [rf, fit]);
-  const nodes: ZNode[] = [...sc.nodes]
+  // 11: while lines are on demand, a hovered box draws its own over the rest.
+  const [hover, setHover] = useState<string | null>(null);
+  const nodes: ZNode[] = useMemo(() => [...sc.nodes]
     .sort((a, b) => depth(byId, a.id) - depth(byId, b.id) || (a.id < b.id ? -1 : 1))
     .map((node) => {
       const p = placed.get(node.id) ?? { x: 0, y: 0, w: 90, h: 40 };
@@ -268,8 +271,11 @@ export function Canvas({ view, sc, placed, edge, onSelect, onOpen, onToggle, onE
         connectable: false,
         data: { node, w: p.w, h: p.h, stats, row: sc.selectedRow, pick: onSelect, toggle: onToggle },
       };
-    });
-  const rfEdges: Edge[] = sc.edges.map((e) => {
+    }), [sc, placed, view, onSelect, onToggle]); // byId comes from sc
+  const drawn = new Set(sc.edges.map((e) => e.id));
+  const hovered: SceneEdge[] = sc.lines || hover === null || hover === sc.selected ? []
+    : around(sc.all, hover, (id) => byId.get(id)?.parent ?? "").filter((e) => !drawn.has(e.id)).map((e) => ({ ...e, hot: true, dim: false }));
+  const rfEdges: Edge[] = [...sc.edges, ...hovered].map((e) => {
     const m = edgeMark(e.status);
     const label = [m.sign, e.pairs > 1 ? String(e.pairs) : ""].filter(Boolean).join(" ");
     return {
@@ -277,7 +283,7 @@ export function Canvas({ view, sc, placed, edge, onSelect, onOpen, onToggle, onE
       source: e.from,
       target: e.to,
       type: "smoothstep",
-      className: [m.cls, e.dim && "dim", e.hot && "hot", e.pinned && "pinned", e.id === edge && "selected"]
+      className: [m.cls, e.dim && "dim", e.hot && "hot", e.dir && `dep-${e.dir}`, e.pinned && "pinned", e.id === edge && "selected"]
         .filter(Boolean)
         .join(" "),
       markerEnd: { type: MarkerType.ArrowClosed },
@@ -304,6 +310,8 @@ export function Canvas({ view, sc, placed, edge, onSelect, onOpen, onToggle, onE
         }}
         onEdgeClick={(_, e) => onEdge?.(e.id)}
         onPaneClick={() => onSelect(null)}
+        onNodeMouseEnter={(_, n) => setHover(n.id)}
+        onNodeMouseLeave={() => setHover(null)}
       >
         <Background />
         <Controls showInteractive={false} />

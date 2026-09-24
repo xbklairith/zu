@@ -21,11 +21,15 @@ import { useViewState } from "./useViewState";
 
 const PKG = "#pkg";
 
-type LegendProps = { change: boolean; policy: boolean; ranks: boolean; crap: boolean; proposal: string | null };
+type LegendProps = {
+  change: boolean; policy: boolean; ranks: boolean; crap: boolean; proposal: string | null;
+  onDemand: boolean; // 11: lines show for a selected or hovered box
+};
 
-function Legend({ change, policy, ranks, crap, proposal }: LegendProps) {
+function Legend({ change, policy, ranks, crap, proposal, onDemand }: LegendProps) {
   return (
     <div className="legend" aria-label="Legend">
+      {onDemand && <span className="dirs">a box's lines: solid, it depends on · dashed, depends on it</span>}
       {change && (
         <>
           <span className="swatch st-added">added</span>
@@ -236,6 +240,7 @@ export function App({ view: whole }: { view: View }) {
         depth={sc.depth}
         auto={state.depth === null}
         from={requested.depth}
+        hidden={sc.hidden}
         onFocus={go}
         full={change ? full : undefined}
         onToggle={flip}
@@ -256,8 +261,15 @@ export function App({ view: whole }: { view: View }) {
             {PROPOSAL_NOTICE}: {state.proposal}
           </div>
         )}
-        {(change || rules || ranks || crap) && (
-          <Legend change={change} policy={rules} ranks={ranks} crap={crap} proposal={proposed === whole ? null : state.proposal} />
+        {(change || rules || ranks || crap || !sc.lines) && (
+          <Legend
+            change={change}
+            policy={rules}
+            ranks={ranks}
+            crap={crap}
+            proposal={proposed === whole ? null : state.proposal}
+            onDemand={!sc.lines}
+          />
         )}
         {sc !== requested && (
           <div className="notice" id="zu-notice" role="status">
@@ -268,7 +280,7 @@ export function App({ view: whole }: { view: View }) {
             <button type="button" onClick={() => setConfirmed(wanted)}>
               Draw depth {requested.depth} anyway
             </button>{" "}
-            <button type="button" onClick={() => update((s) => ({ ...s, lines: false }))}>
+            <button type="button" onClick={() => update((s) => ({ ...s, edges: "off" }))}>
               Hide edges
             </button>
           </div>
@@ -283,7 +295,7 @@ export function App({ view: whole }: { view: View }) {
               Even depth 1 is too big to lay out quickly. Draw {sc.nodes.length} boxes and{" "}
               {sc.lines ? sc.edges.length : 0} edges at depth {sc.depth}? Layout may take minutes.
             </p>
-            <button type="button" onClick={() => update((s) => ({ ...s, lines: false }))}>
+            <button type="button" onClick={() => update((s) => ({ ...s, edges: "off" }))}>
               Hide edges
             </button>{" "}
             {state.focus !== "" && (

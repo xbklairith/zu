@@ -32,7 +32,7 @@ describe("violations through 05's pin hook", () => {
   it("keeps a violation drawn below minPairs and as red triangles without lines", () => {
     const sc = scene(v, { ...DEFAULT_STATE, depth: 3, minPairs: 5 }, { pin: pinFor(v) });
     expect(sc.edges.map((e) => e.id)).toEqual(["m/core/b→m/api/r"]);
-    const marks = scene(v, { ...DEFAULT_STATE, depth: 3, lines: false }, { pin: pinFor(v) });
+    const marks = scene(v, { ...DEFAULT_STATE, depth: 3, edges: "off" }, { pin: pinFor(v) });
     expect(marks.nodes.find((n) => n.id === "m/api/r")?.mark?.inPinned).toBe(true);
   });
 

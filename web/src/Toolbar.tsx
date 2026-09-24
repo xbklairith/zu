@@ -1,4 +1,4 @@
-import { deeper, LABELS, LIMITS, nextStage, propose, shallower, type ViewState } from "./state";
+import { deeper, EDGE_MODES, LABELS, LIMITS, nextStage, propose, shallower, type EdgeMode, type ViewState } from "./state";
 
 type Props = {
   state: ViewState; depth: number; update: (next: (s: ViewState) => ViewState) => void;
@@ -43,9 +43,15 @@ export function Toolbar({ state, depth, update, proposals }: Props) {
       <button type="button" title="Next declutter stage (d)" onClick={() => update((s) => ({ ...s, stage: nextStage(s.stage) }))}>
         {LABELS[state.stage]}
       </button>
-      <label>
-        <input type="checkbox" checked={!state.lines} onChange={(e) => update((s) => ({ ...s, lines: !e.target.checked }))} />{" "}
-        hide edges
+      <label title="auto: every line when there are few, a box's own on selection or hover when there are many; off: triangles">
+        edges{" "}
+        <select value={state.edges} onChange={(e) => update((s) => ({ ...s, edges: e.target.value as EdgeMode }))}>
+          {EDGE_MODES.map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
+          ))}
+        </select>
       </label>
       <label>
         min pairs{" "}

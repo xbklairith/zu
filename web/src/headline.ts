@@ -57,6 +57,10 @@ export function depthNote(boxes: number, depth: number, auto = true, from = dept
   return boxes > BOX_BUDGET ? `${note} More than ${BOX_BUDGET} boxes, drawn anyway.` : note;
 }
 
+// edgesNote says what auto left out (11): the lines, and how to see a box's own.
+export const edgesNote = (hidden: number): string =>
+  `${hidden} ${hidden === 1 ? "dependency" : "dependencies"} hidden; select or hover a box to see its own.`;
+
 // violationsNote words the Change View's violations section as zu diff's
 // violationsBlock does (internal/diff/violations.go): new first, then the rest.
 export function violationsNote(d: NonNullable<View["violations"]>): { heading: string; tail: string } {

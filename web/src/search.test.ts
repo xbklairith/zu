@@ -25,7 +25,7 @@ describe("search", () => {
     expect(reveal(v, "x.io/e3").selected).toBe("externals");
   });
   it("reveal keeps the stage and hide-edges, and resets what could hide the target", () => {
-    const from = { ...DEFAULT_STATE, stage: "arrows" as const, lines: false, minPairs: 3, externals: false, hops: 2, toggled: ["m"] };
-    expect(reveal(v, "m/store/sql", from)).toMatchObject({ stage: "arrows", lines: false, minPairs: 1, externals: true, hops: null, toggled: [] });
+    const from = { ...DEFAULT_STATE, stage: "arrows" as const, edges: "off" as const, minPairs: 3, externals: false, hops: 2, toggled: ["m"] };
+    expect(reveal(v, "m/store/sql", from)).toMatchObject({ stage: "arrows", edges: "off", minPairs: 1, externals: true, hops: null, toggled: [] });
   });
 });

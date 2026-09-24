@@ -481,6 +481,12 @@ button.st-removed {
   stroke: var(--pin);
 }
 
+/* 11: a lit edge is solid when the lit box depends on the other end, and
+   dashed when the other end depends on it. */
+.react-flow__edge.dep-in path {
+  stroke-dasharray: 6 4;
+}
+
 .node .toggle {
   position: absolute;
   top: 2px;

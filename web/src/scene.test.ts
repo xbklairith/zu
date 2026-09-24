@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DRAW_LIMIT, fitDepth, knownIds, openFull, scene, tooBig } from "./scene";
+import { elkGraph } from "./layout";
 import { changedSubgraph } from "./change";
 import { DEFAULT_STATE, up, type ViewState } from "./state";
 import { decl, edge, exts, pkgs, view } from "./testkit";
@@ -82,9 +83,42 @@ describe("scene", () => {
     expect(sel.edges.map((e) => [e.id, e.hot])).toEqual([["m→m/core", true], ["m→x.io/e", true]]);
   });
   it("hide edges keeps the stage and draws marks; pinned bundles mark red", () => {
-    const sc = scene(v, { ...DEFAULT_STATE, depth: 2, lines: false }, { pin: (b) => b.to === "x.io/e" });
+    const sc = scene(v, { ...DEFAULT_STATE, depth: 2, edges: "off" }, { pin: (b) => b.to === "x.io/e" });
     expect([sc.stage, sc.lines, sc.edges.length]).toEqual(["full", false, 0]);
     expect(sc.nodes.find((n) => n.id === "x.io/e")?.mark).toEqual({ in: true, out: false, inPinned: true, outPinned: false });
+  });
+  it("auto draws every line up to the limit, then only what must show, and a selection's own (11)", () => {
+    // 12 packages, each importing every later one: 66 lines.
+    const ids12 = Array.from({ length: 12 }, (_, i) => `m/p${String(i).padStart(2, "0")}`);
+    const many = view(pkgs(ids12, "m"), ids12.flatMap((a, i) => ids12.slice(i + 1).map((b) => edge(a, b))));
+    const pin = (b: { from: string; to: string }) => b.from === "m/p00" && b.to === "m/p11";
+    const rest = scene(many, { ...DEFAULT_STATE, depth: 2 }, { pin });
+    expect([rest.lines, rest.hidden, rest.all.length, rest.edges.map((e) => e.id)]).toEqual([false, 65, 66, ["m/p00→m/p11"]]);
+    expect(rest.nodes.some((n) => n.mark)).toBe(false); // no triangles either: that is off
+    const sel = scene(many, { ...DEFAULT_STATE, depth: 2, selected: "m/p05" }, { pin });
+    expect(sel.edges.filter((e) => e.hot).map((e) => `${e.from}>${e.to.slice(-2)} ${e.dir}`)).toEqual([
+      "m/p00>05 in", "m/p01>05 in", "m/p02>05 in", "m/p03>05 in", "m/p04>05 in",
+      "m/p05>06 out", "m/p05>07 out", "m/p05>08 out", "m/p05>09 out", "m/p05>10 out", "m/p05>11 out",
+    ]);
+    expect(sel.edges.filter((e) => !e.hot).map((e) => e.id)).toEqual(["m/p00→m/p11"]);
+    const on = scene(many, { ...DEFAULT_STATE, depth: 2, edges: "on" }, { pin });
+    expect([on.lines, on.hidden, on.edges.length]).toEqual([true, 0, 66]);
+    const off = scene(many, { ...DEFAULT_STATE, depth: 2, edges: "off" }, { pin });
+    expect([off.lines, off.hidden, off.edges.length, off.nodes.filter((n) => n.mark).length]).toEqual([false, 0, 0, 12]);
+    expect([at({ depth: 2 }).lines, at({ depth: 2 }).hidden]).toEqual([true, 0]); // 3 lines: all drawn
+    // The ranks, not the lines, place the boxes: the layout input is the same in every mode.
+    const g = JSON.stringify(elkGraph(rest));
+    expect([sel, on, off].map((x) => JSON.stringify(elkGraph(x)) === g)).toEqual([true, true, true]);
+  });
+  it("auto draws a Change View's changed imports and the imports behind the Affected Set at rest (11)", () => {
+    const ids12 = Array.from({ length: 12 }, (_, i) => `m/p${String(i).padStart(2, "0")}`);
+    const status = (id: string) => (id === "m/p11" ? { status: "modified" } : id === "m/p10" ? { hop: 1 } : {});
+    const ch = {
+      ...view(ids12.map((id) => ({ ...pkgs([id], "m")[0], ...status(id) })),
+        ids12.flatMap((a, i) => ids12.slice(i + 1).map((b) => (a === "m/p00" && b === "m/p01" ? { ...edge(a, b), status: "added" } : edge(a, b))))),
+      kind: "change" as const,
+    };
+    expect(scene(ch, { ...DEFAULT_STATE, depth: 2 }).edges.map((e) => e.id)).toEqual(["m/p00→m/p01", "m/p10→m/p11"]);
   });
   it("a type lists its methods as rows until the elements stage", () => {
     const w = view([...pkgs(["m/p"], "m", { detail: true }), decl("m/p.T", "m/p"),
