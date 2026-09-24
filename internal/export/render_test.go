@@ -55,3 +55,52 @@ func TestRenderNeedsExactlyOneMarker(t *testing.T) {
 		}
 	}
 }
+
+// zu serve's page (10) carries no View: it fetches view.json, which its CSP
+// must allow, from the server that served it and nowhere else.
+func TestLivePageFetchesItsViewFromItsOrigin(t *testing.T) {
+	page, err := LivePage(template(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(page)
+	for _, want := range []string{
+		`<script id="zu-data" type="application/json">{"live":true}</script>`,
+		`http-equiv="Content-Security-Policy" content="connect-src 'self'; default-src &#39;none&#39;; worker-src blob:"`,
+	} {
+		if !strings.Contains(s, want) {
+			t.Errorf("live page lacks %s:\n%s", want, s)
+		}
+	}
+}
+
+func TestLivePageNeedsOneMarkerAndOneCSP(t *testing.T) {
+	good := string(template(t))
+	csp := `<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; worker-src blob:">`
+	for name, tmpl := range map[string]string{
+		"no marker": strings.Replace(good, marker, "", 1),
+		"no CSP":    strings.Replace(good, csp, "", 1),
+		"two CSPs":  strings.Replace(good, csp, csp+csp, 1),
+	} {
+		if _, err := LivePage([]byte(tmpl)); err == nil {
+			t.Errorf("%s: accepted", name)
+		}
+	}
+}
+
+// Marshal writes the View as Render inlines it.
+func TestMarshalIsWhatRenderInlines(t *testing.T) {
+	v := newView("project", shopIR(t))
+	v.Sources["x.go"] = "a < b"
+	data, err := Marshal(v)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var page bytes.Buffer
+	if err := Render(&page, template(t), v); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(page.Bytes(), data) || !bytes.Contains(data, []byte(`a \u003c b`)) {
+		t.Errorf("Marshal = %s", data)
+	}
+}

@@ -410,7 +410,7 @@ The served page fetches its View, so it carries a marker instead of one, and its
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 <!-- file: internal/export/testdata/template.html -->
 ```html
@@ -497,9 +497,9 @@ The served page fetches its View, so it carries a marker instead of one, and its
  }
 ```
 
-- [ ] **Run:** `go test ./internal/export` Expected: FAIL (`undefined: LivePage`)
+- [x] **Run:** `go test ./internal/export` Expected: FAIL (`undefined: LivePage`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/internal/export/render.go
@@ -556,7 +556,7 @@ The served page fetches its View, so it carries a marker instead of one, and its
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/export ./internal/cli ./web` Expected: PASS (`cli`'s HTML tests read the changed fixture).
+- [x] **Run:** `go test ./internal/export ./internal/cli ./web` Expected: PASS (`cli`'s HTML tests read the changed fixture).
 
 ### Task 3: `internal/serve`: loopback only, Host-checked, read-only
 

@@ -4,6 +4,8 @@ import (
 	"io/fs"
 	"strings"
 	"testing"
+
+	"zu/internal/export"
 )
 
 func TestAssetsIsRootedAtDist(t *testing.T) {
@@ -42,5 +44,8 @@ func TestBuiltPageIsSelfContained(t *testing.T) {
 	}
 	if !strings.Contains(page, "revokeObjectURL(self.location.href)") {
 		t.Error("no inline worker in the page: ELK would lay out on the main thread")
+	}
+	if _, err := export.LivePage(b); err != nil {
+		t.Errorf("zu serve cannot serve the built page: %v", err)
 	}
 }

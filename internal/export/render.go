@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 )
 
 // marker is the element Render fills. web/index.html carries it exactly once
@@ -23,8 +24,7 @@ func Render(w io.Writer, tmpl []byte, v *View) error {
 	if n := bytes.Count(tmpl, []byte(marker)); n != 1 {
 		return fmt.Errorf("UI template has %d data markers, want 1", n)
 	}
-	sortView(v)
-	data, err := json.Marshal(v)
+	data, err := Marshal(v)
 	if err != nil {
 		return err
 	}
@@ -36,4 +36,32 @@ func Render(w io.Writer, tmpl []byte, v *View) error {
 		}
 	}
 	return nil
+}
+
+// Marshal writes v in canonical order as the JSON Render inlines, which is
+// also what zu serve sends (10).
+func Marshal(v *View) ([]byte, error) {
+	sortView(v)
+	return json.Marshal(v)
+}
+
+// cspAttr opens the page's Content-Security-Policy, which web/vite.config.ts
+// writes as the first element of <head>.
+const cspAttr = `<meta http-equiv="Content-Security-Policy" content="`
+
+// LivePage is the page zu serve sends (10): tmpl with the marker holding
+// {"live":true}, which tells the page to fetch view.json, and its CSP
+// allowing that fetch from the page's own origin and nowhere else. A header
+// CSP could not do it: a page enforces its meta policy and a header policy
+// both, so only the meta policy can grant the fetch.
+func LivePage(tmpl []byte) ([]byte, error) {
+	if n := bytes.Count(tmpl, []byte(marker)); n != 1 {
+		return nil, fmt.Errorf("UI template has %d data markers, want 1", n)
+	}
+	if n := bytes.Count(tmpl, []byte(cspAttr)); n != 1 {
+		return nil, fmt.Errorf("UI template has %d Content-Security-Policy elements, want 1", n)
+	}
+	live := strings.Replace(marker, "{}", `{"live":true}`, 1)
+	page := bytes.Replace(tmpl, []byte(marker), []byte(live), 1)
+	return bytes.Replace(page, []byte(cspAttr), []byte(cspAttr+"connect-src 'self'; "), 1), nil
 }
