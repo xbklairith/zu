@@ -706,7 +706,7 @@ The parser streams the profile, keeps each block once (Deviation 5), sorts each 
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 <!-- file: internal/cover/cover_test.go -->
 ```go
@@ -777,9 +777,9 @@ func TestParseRejects(t *testing.T) {
 }
 ```
 
-- [ ] **Run:** `go test ./internal/cover` Expected: FAIL (`undefined: Parse`)
+- [x] **Run:** `go test ./internal/cover` Expected: FAIL (`undefined: Parse`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 <!-- file: internal/cover/cover.go -->
 ```go
@@ -911,8 +911,8 @@ func parseCount(s string, n *int) bool {
 func cmpPos(a, b Pos) int { return cmp.Or(cmp.Compare(a.Line, b.Line), cmp.Compare(a.Col, b.Col)) }
 ```
 
-- [ ] **Run:** `go test ./internal/cover` Expected: PASS
-- [ ] **Commit:** `Parse go test coverprofiles`
+- [x] **Run:** `go test ./internal/cover` Expected: PASS
+- [x] **Commit:** `Parse go test coverprofiles`
 
 ### Task 4: `export.AddMetrics` joins measures and coverage into the View
 
@@ -2840,7 +2840,7 @@ That makes 39 checks per engine.
 
 - [x] Task 1 · Complexity and span per function
 - [x] Task 2 · `scan.Measures` beside the IR
-- [ ] Task 3 · `internal/cover`
+- [x] Task 3 · `internal/cover`
 - [ ] Task 4 · `export.AddMetrics`
 - [ ] Task 5 · `zu scan -coverprofile`
 - [ ] Task 6 · `zu diff -coverprofile`
