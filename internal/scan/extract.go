@@ -52,12 +52,19 @@ type declFact struct {
 
 // extractFile parses rel from t and pulls out its facts.
 func extractFile(t Tree, rel string) *fileFacts {
+	f, _ := (*Cache)(nil).extract(t, rel)
+	return f
+}
+
+// readFailed is the facts of a file t could not read.
+func readFailed(rel string, err error) *fileFacts {
+	return &fileFacts{Path: rel, Dir: path.Dir(rel), Err: &ir.ParseError{Path: rel, Message: ioMessage(err)}}
+}
+
+// extractSource pulls the facts out of src, the content of rel. They depend
+// on nothing else, which is what lets a Cache reuse them.
+func extractSource(rel string, src []byte) *fileFacts {
 	f := &fileFacts{Path: rel, Dir: path.Dir(rel)}
-	src, err := t.ReadFile(rel)
-	if err != nil {
-		f.Err = &ir.ParseError{Path: rel, Message: ioMessage(err)}
-		return f
-	}
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, rel, src, parser.ParseComments)
 	if err != nil {

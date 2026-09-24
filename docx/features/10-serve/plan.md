@@ -120,7 +120,7 @@ A rescan through a Cache must write the IR a cold scan writes, byte for byte, af
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 <!-- file: internal/scan/cache_test.go -->
 ```go
@@ -208,9 +208,9 @@ func TestRunWithoutACacheParsesEveryFile(t *testing.T) {
 }
 ```
 
-- [ ] **Run:** `go test ./internal/scan -run 'TestCache|TestRunWithoutACache'` Expected: FAIL (`opts.Cache undefined`, `st.Parsed undefined`)
+- [x] **Run:** `go test ./internal/scan -run 'TestCache|TestRunWithoutACache'` Expected: FAIL (`opts.Cache undefined`, `st.Parsed undefined`)
 
-- [ ] **Implement.** `extractFile` keeps its signature for the existing tests; the parse moves to `extractSource`.
+- [x] **Implement.** `extractFile` keeps its signature for the existing tests; the parse moves to `extractSource`.
 
 ```diff
 --- a/internal/scan/extract.go
@@ -399,7 +399,7 @@ func (c *Cache) keep(files []string) {
  }
 ```
 
-- [ ] **Run:** `go test -race ./internal/scan` Expected: PASS, the golden and parity tests unchanged.
+- [x] **Run:** `go test -race ./internal/scan` Expected: PASS, the golden and parity tests unchanged.
 
 ### Task 2: `export.LivePage` and `export.Marshal`
 

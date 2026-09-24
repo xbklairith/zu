@@ -24,6 +24,9 @@ type Options struct {
 	Exclude func(rel string) bool
 	// PolicyHash is recorded in the IR; "" means DefaultPolicyHash.
 	PolicyHash string
+	// Cache, when set, keeps each file's facts for the next scan, which
+	// then parses only the files whose content changed (10).
+	Cache *Cache
 }
 
 // Stats summarise a scan for the one-line report, and carry what the scan
@@ -34,6 +37,7 @@ type Stats struct {
 	ParseErrors     int
 	UnresolvedCalls int
 	Measures        Measures
+	Parsed          int // files this scan parsed; with a Cache, only the new and changed ones (10)
 }
 
 // Run scans opts.Tree. The result is unsorted; ir.Encode canonicalises it.
@@ -44,15 +48,16 @@ func Run(ctx context.Context, opts Options) (*ir.IR, Stats, error) {
 	if err != nil {
 		return nil, Stats{}, err
 	}
-	facts, err := extractAll(ctx, opts.Tree, w, opts.Workers)
+	facts, parsed, err := extractAll(ctx, opts.Tree, w, opts.Workers, opts.Cache)
 	if err != nil {
 		return nil, Stats{}, err
 	}
+	opts.Cache.keep(w.Files)
 	doc, ms := assemble(w, facts)
 	doc.Grouping = "tree"
 	doc.PolicyHash = cmp.Or(opts.PolicyHash, DefaultPolicyHash)
 
-	st := Stats{ParseErrors: len(doc.ParseErrors), Measures: ms}
+	st := Stats{ParseErrors: len(doc.ParseErrors), Measures: ms, Parsed: parsed}
 	for _, n := range doc.Nodes {
 		if n.Kind == ir.KindPackage {
 			st.Packages++
@@ -69,13 +74,16 @@ func Run(ctx context.Context, opts Options) (*ir.IR, Stats, error) {
 	return doc, st, nil
 }
 
-// extractAll parses every file in parallel. Each worker writes only its own
-// slot, so the result order is the sorted file order regardless of timing.
-func extractAll(ctx context.Context, t Tree, w *walkResult, workers int) ([]*fileFacts, error) {
+// extractAll parses every file in parallel, or takes its facts from c when
+// its content is unchanged, and counts the files it parsed. Each worker
+// writes only its own slot, so the result order is the sorted file order
+// regardless of timing.
+func extractAll(ctx context.Context, t Tree, w *walkResult, workers int, c *Cache) ([]*fileFacts, int, error) {
 	if workers <= 0 {
 		workers = runtime.GOMAXPROCS(0)
 	}
 	facts := make([]*fileFacts, len(w.Files))
+	parsed := make([]bool, len(w.Files))
 	next := make(chan int)
 	var wg sync.WaitGroup
 	for range workers {
@@ -83,7 +91,7 @@ func extractAll(ctx context.Context, t Tree, w *walkResult, workers int) ([]*fil
 		go func() {
 			defer wg.Done()
 			for i := range next {
-				facts[i] = extractFile(t, w.Files[i])
+				facts[i], parsed[i] = c.extract(t, w.Files[i])
 			}
 		}()
 	}
@@ -102,5 +110,11 @@ feed:
 	if err == nil {
 		err = ctx.Err()
 	}
-	return facts, err
+	n := 0
+	for _, p := range parsed {
+		if p {
+			n++
+		}
+	}
+	return facts, n, err
 }
