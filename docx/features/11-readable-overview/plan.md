@@ -207,7 +207,7 @@ Pure ranking of one sibling set, then of a whole drawn tree. No UI.
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 <!-- file: web/src/rank.test.ts -->
 ```ts
@@ -268,9 +268,9 @@ describe("siblingTiers", () => {
 });
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/rank.test.ts` Expected: FAIL (`Failed to resolve import "./rank"`)
+- [x] **Run:** `cd web && npx vitest run src/rank.test.ts` Expected: FAIL (`Failed to resolve import "./rank"`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 <!-- file: web/src/rank.ts -->
 ```ts
@@ -470,7 +470,7 @@ export function siblingTiers(parent: ReadonlyMap<string, string>, arcs: readonly
 }
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/rank.test.ts && npx tsc --noEmit` Expected: PASS, 9 tests
+- [x] **Run:** `cd web && npx vitest run src/rank.test.ts && npx tsc --noEmit` Expected: PASS, 9 tests
 
 ### Task 2: The layout places ranks, not edges
 
