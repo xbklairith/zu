@@ -12,24 +12,28 @@ accept.mjs retries once, logs it, and fails on a second crash. A retry of
 therefore reruns the engine once in a fresh browser (`attempt` in
 `web/e2e/accept.mjs`). The rerun is logged as
 `firefox: page crashed, rerunning once: …`, and a second crash fails the run.
+Closing the crashed browser swallows its own error, so a failed close cannot hide
+the crash from the rerun.
 
 Both paths were checked by a throwaway copy of the harness that throws "Page
-crashed" in Firefox's first attempts:
+crashed" at the start of Firefox's first attempts (before a browser is launched,
+so a real crashed browser's close was not exercised):
 
 - one crash: the rerun is logged and Firefox is `ok (39/39 checks)`, exit 0;
 - two crashes: the rerun is logged, the second crash is thrown, exit 1.
 
-After the change, 16 runs in a row gave 39/39 in all three engines, and none of
-them crashed. One run before that exited 1 while reloading `policy.html#d=3`,
-and its message was lost to `tail`, so it is not known whether that was a
-crash on both attempts or a different error.
+Of 22 runs with the rerun in place, 21 gave 39/39 in all three engines, and none
+of those logged a crash; the last 18 passed in a row. The fourth run exited 1
+while reloading `policy.html#d=3`. Its message was lost to `tail`, so it is not
+known whether that was a crash on both attempts or a different error.
 
 ## 1. Gates
 
 - `gofmt -l cmd internal web/*.go`: none; `go vet ./...`: clean.
 - `make check` exit 0: `go vet`, `go test ./...`, golangci-lint, `tsc`, and 135
   vitest tests in 21 files.
-- `npx vite build`, then `npm run accept`:
+- `npx vite build`, then `node accept.mjs` (after the close guard, at the commit
+  that records this file):
 
   ```
   chromium: ok (39/39 checks)

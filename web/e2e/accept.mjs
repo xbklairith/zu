@@ -354,7 +354,7 @@ const channel = process.env.ZU_E2E_CHANNEL;
 // reruns that engine once in a fresh browser and is logged; a second crash fails.
 async function attempt(type, opts) {
   const b = await type.launch(opts);
-  return run(b).finally(() => b.close());
+  return run(b).finally(() => b.close().catch(() => {})); // a crashed browser may not close cleanly
 }
 let failed = 0;
 for (const [name, type, opts] of [["chromium", chromium, channel ? { channel } : {}], ["firefox", firefox, {}], ["webkit", webkit, {}]]) {
