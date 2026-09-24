@@ -2,7 +2,7 @@
 // it needs browsers. Run from web/e2e after `make build`:
 //   npm install && npm run browsers && npm run accept
 // ZU_E2E_CHANNEL=chrome uses an installed Chrome instead of Playwright's Chromium.
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chromium, firefox, webkit } from "playwright-core";
@@ -16,6 +16,8 @@ if (tmpl.split(marker).length !== 2) throw new Error("run make build first: dist
 const page = (v) => tmpl.replace(marker, marker.replace("{}", () => JSON.stringify(v).replaceAll("<", "\\u003c")));
 
 const dir = mkdtempSync(join(tmpdir(), "zu-e2e-"));
+// Removed however the run ends: pass, failed checks, a second crash or an uncaught error.
+process.on("exit", () => rmSync(dir, { recursive: true, force: true }));
 const write = (name, html) => writeFileSync(join(dir, name), html);
 const shop = golden("shop.view.golden.json");
 const change = golden("shop.change.golden.json");
