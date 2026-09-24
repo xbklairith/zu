@@ -81,7 +81,9 @@ func assemble(w *walkResult, facts []*fileFacts) (*ir.IR, Measures) {
 		}
 	}
 	for _, p := range b.ix.pkgs {
-		b.nodes[p.ID].Hash = b.packageHash(p)
+		n := b.nodes[p.ID]
+		n.Hash = b.packageHash(p)
+		n.Main = p.Name == "main"
 	}
 	for _, n := range b.nodes {
 		b.doc.Nodes = append(b.doc.Nodes, *n)

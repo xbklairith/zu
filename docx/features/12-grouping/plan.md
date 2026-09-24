@@ -231,7 +231,7 @@ A package node says whether it is a command (`main`). The field is additive and 
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 diff --git a/internal/scan/build_test.go b/internal/scan/build_test.go
@@ -281,9 +281,9 @@ index ad15250..54e0c36 100644
          {
 ```
 
-- [ ] **Run:** `go test ./internal/scan/` Expected: FAIL (`n.Main undefined`)
+- [x] **Run:** `go test ./internal/scan/` Expected: FAIL (`n.Main undefined`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/internal/ir/ir.go b/internal/ir/ir.go
@@ -324,9 +324,9 @@ index 56f93e3..e4b2e9b 100644
  		b.doc.Nodes = append(b.doc.Nodes, *n)
 ```
 
-- [ ] **Run:** `go test ./... && go vet ./...` Expected: PASS
+- [x] **Run:** `go test ./... && go vet ./...` Expected: PASS
 
-- [ ] **Commit** (one line, imperative; stage these files only)
+- [x] **Commit** (one line, imperative; stage these files only)
 
 ### Task 2: Policy keys `demote` and `budget`
 

@@ -11,6 +11,7 @@
       "id": "example.com/shop",
       "kind": "package",
       "module": "example.com/shop",
+      "main": true,
       "hash": "65552a8a1360f94e104eeaa147f261bc816391cbeea8138ededea871be6cb1e6",
       "locations": [
         {
@@ -415,6 +416,7 @@
       "id": "example.com/shop/tools/gen",
       "kind": "package",
       "module": "example.com/shop/tools",
+      "main": true,
       "hash": "7fa199a3196c0a620c26f5dd7924c9ba0095b41b4a113244f66bcac128cbbfe4",
       "locations": [
         {
