@@ -4,6 +4,7 @@ package cli
 import (
 	"fmt"
 	"io"
+	"runtime"
 
 	"zu/internal/ir"
 	"zu/internal/policy"
@@ -46,8 +47,12 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprint(stdout, usage)
 		return ExitOK
 	case cmd == "version":
-		fmt.Fprintf(stdout, "zu version %s\ncommit %s\nir-schema %s\npolicy-format %s\n",
-			version.Version, version.Commit, ir.SchemaVersion, policy.Format)
+		ui := "embedded"
+		if _, err := uiTemplate(); err != nil {
+			ui = "absent"
+		}
+		fmt.Fprintf(stdout, "zu version %s\ncommit %s\nir-schema %s\npolicy-format %s\ngo %s\nui %s\n",
+			version.Version, version.Commit, ir.SchemaVersion, policy.Format, runtime.Version(), ui)
 		return ExitOK
 	case cmd == "scan":
 		return runScan(args[1:], stdout, stderr)

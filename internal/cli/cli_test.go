@@ -2,6 +2,8 @@ package cli
 
 import (
 	"bytes"
+	"errors"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -30,6 +32,30 @@ func TestVersionReportsAppCommitAndSchema(t *testing.T) {
 		if !strings.Contains(out, want) {
 			t.Errorf("output %q missing %q", out, want)
 		}
+	}
+}
+
+// N3/N4: the record names the toolchain and says whether the UI is inside.
+func TestVersionReportsGoAndEmbeddedUI(t *testing.T) {
+	withUI(t)
+	code, out, _ := run("version")
+	if code != ExitOK {
+		t.Fatalf("exit = %d", code)
+	}
+	want := "policy-format " + policy.Format + "\ngo " + runtime.Version() + "\nui embedded\n"
+	if !strings.HasSuffix(out, want) {
+		t.Errorf("output %q does not end with %q", out, want)
+	}
+}
+
+// A build without web/dist/index.html (go test, a plain go build) says so.
+func TestVersionSaysWhenTheUIIsAbsent(t *testing.T) {
+	old := uiTemplate
+	uiTemplate = func() ([]byte, error) { return nil, errors.New("this zu was built without the UI") }
+	t.Cleanup(func() { uiTemplate = old })
+	code, out, _ := run("version")
+	if code != ExitOK || !strings.HasSuffix(out, "\nui absent\n") {
+		t.Errorf("exit = %d, output %q; want 0 and a last line \"ui absent\"", code, out)
 	}
 }
 

@@ -104,7 +104,7 @@ The first four lines are unchanged. `ui` is `embedded` or `absent`. A release pu
 
 **Files:** `internal/cli/cli_test.go`, `internal/cli/cli.go`
 
-- [ ] **Step 1: failing tests.**
+- [x] **Step 1: failing tests.**
 
 ```diff
 --- a/internal/cli/cli_test.go
@@ -151,9 +151,9 @@ The first four lines are unchanged. `ui` is `embedded` or `absent`. A release pu
  	if code != ExitBadInvocation {
 ```
 
-- [ ] **Run:** `go test ./internal/cli -run 'TestVersion' -count=1` Expected: FAIL (no `go` or `ui` line).
+- [x] **Run:** `go test ./internal/cli -run 'TestVersion' -count=1` Expected: FAIL (no `go` or `ui` line).
 
-- [ ] **Step 2: implement.** `uiTemplate` is 04's seam over `builtTemplate`, which already fails when the page is missing or has no data marker.
+- [x] **Step 2: implement.** `uiTemplate` is 04's seam over `builtTemplate`, which already fails when the page is missing or has no data marker.
 
 ```diff
 --- a/internal/cli/cli.go
@@ -185,7 +185,7 @@ The first four lines are unchanged. `ui` is `embedded` or `absent`. A release pu
 
 The usage line `version   print application, commit, IR schema and Policy format versions` stays. It names the versions, and the two new lines are build facts.
 
-- [ ] **Run:** `go test ./internal/cli -count=1` Expected: PASS.
+- [x] **Run:** `go test ./internal/cli -count=1` Expected: PASS.
 
 ### Task 2: builds without ldflags fall back to the go command's build info
 
@@ -743,4 +743,4 @@ make release-snapshot && rm -rf dist .zu/release
 
 ## Progress
 
-- [ ] Task 1 · [ ] Task 2 · [ ] Task 3 · [ ] Task 4 · [ ] Task 5 · [ ] Task 6
+- [x] Task 1 · [ ] Task 2 · [ ] Task 3 · [ ] Task 4 · [ ] Task 5 · [ ] Task 6
