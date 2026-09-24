@@ -58,6 +58,12 @@ func (o *htmlOptions) prepare() error {
 	case o.path == "-":
 		return errors.New("-html needs a file path")
 	}
+	return o.load()
+}
+
+// load checks the patterns and the link template, and loads the UI page and
+// the coverprofile: everything a View needs besides the scan.
+func (o *htmlOptions) load() error {
 	for _, s := range o.include {
 		if _, err := export.ParsePattern(s, "root.invalid"); err != nil { // syntax only
 			return err
@@ -161,23 +167,33 @@ func builtTemplate() ([]byte, error) {
 // ir.Encode) as the Policy draws it, reading source through the tree the
 // scan read.
 func writeHTML(ctx context.Context, src *source, doc *ir.IR, pol *policy.Policy, ms scan.Measures, o *htmlOptions, stderr io.Writer) error {
+	v, err := projectView(ctx, "scan", src, doc, pol, ms, o, stderr)
+	if err != nil {
+		return err
+	}
+	return renderView("scan", v, o, stderr)
+}
+
+// projectView builds the Project View of doc, which must be sorted, for zu
+// scan -html and zu serve alike.
+func projectView(ctx context.Context, cmd string, src *source, doc *ir.IR, pol *policy.Policy, ms scan.Measures, o *htmlOptions, stderr io.Writer) (*export.View, error) {
 	root := export.RootModule(doc)
 	pats := make([]export.Pattern, 0, len(o.include))
 	for _, s := range o.include {
 		p, err := export.ParsePattern(s, root)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		pats = append(pats, p)
 	}
 	v, err := export.Project(pol.Apply(doc), pats, src.tree.ReadFile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	export.Mark(v, pol, doc)
-	addMetrics("scan", v, ms, o, stderr)
+	addMetrics(cmd, v, ms, o, stderr)
 	if src.ref != nil {
-		warnUncommitted(ctx, "scan", src.root, "drop -ref", o, stderr)
+		warnUncommitted(ctx, cmd, src.root, "drop -ref", o, stderr)
 	}
 	v.Tool = version.Version
 	prefix := "" // a -ref scan runs at the repository top
@@ -185,9 +201,9 @@ func writeHTML(ctx context.Context, src *source, doc *ir.IR, pol *policy.Policy,
 		prefix = gitPrefix(ctx, src.root)
 	}
 	if v.Links, err = export.ForRepo(gitOrigin(ctx, src.root), doc.Ref, o.linkTmpl, prefix); err != nil {
-		return err
+		return nil, err
 	}
-	return renderView("scan", v, o, stderr)
+	return v, nil
 }
 
 // changeSides are the two scanned sides of zu diff, trees still open.

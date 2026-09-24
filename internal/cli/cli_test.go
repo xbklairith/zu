@@ -93,15 +93,3 @@ func TestUnknownCommandIsBadInvocation(t *testing.T) {
 		t.Errorf("stderr %q missing unknown-command message", errOut)
 	}
 }
-
-func TestPlannedCommandsReportNotImplemented(t *testing.T) {
-	for _, cmd := range []string{"serve"} {
-		code, _, errOut := run(cmd)
-		if code != ExitBadInvocation {
-			t.Errorf("%s: exit = %d, want %d", cmd, code, ExitBadInvocation)
-		}
-		if !strings.Contains(errOut, cmd+": not implemented") {
-			t.Errorf("%s: stderr %q missing not-implemented message", cmd, errOut)
-		}
-	}
-}

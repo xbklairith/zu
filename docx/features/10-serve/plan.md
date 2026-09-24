@@ -897,7 +897,7 @@ func crossSite(r *http.Request) bool {
 
 **Steps:**
 
-- [ ] **Write the failing tests.** `serve` is no longer planned, so its not-implemented test goes.
+- [x] **Write the failing tests.** `serve` is no longer planned, so its not-implemented test goes.
 
 <!-- file: internal/cli/serve_test.go -->
 ```go
@@ -1093,9 +1093,9 @@ func TestServeWithoutTheUI(t *testing.T) {
 -}
 ```
 
-- [ ] **Run:** `go test ./internal/cli -run Serve` Expected: FAIL (`zu serve: not implemented`)
+- [x] **Run:** `go test ./internal/cli -run Serve` Expected: FAIL (`zu serve: not implemented`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/internal/cli/html.go
@@ -1331,7 +1331,7 @@ func (s *session) view(ctx context.Context) ([]byte, error) {
 }
 ```
 
-- [ ] **Run:** `go test -race ./internal/cli` Expected: PASS, every `scan -html` and `diff -html` test unchanged.
+- [x] **Run:** `go test -race ./internal/cli` Expected: PASS, every `scan -html` and `diff -html` test unchanged.
 
 ### Task 5: the browser harness serves a tree
 
