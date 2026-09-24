@@ -177,7 +177,7 @@ One binary, subcommands, no daemon.
 | Command | Does | Output |
 | --- | --- | --- |
 | `scan` | Parse the checkout, write the IR | IR file, parse-error summary on stderr |
-| `serve` | Scan if needed, then open the local web UI | URL on stdout, server in foreground |
+| `serve` | Scan the working tree, then serve the local web UI; every page load rescans what changed | URL on stdout, server in foreground |
 | `diff <base> <head>` | Build both IRs and diff them | Structural delta, rendered or serialised |
 | `check` | Evaluate policy rules against the current IR | Violations on stdout, exit code |
 | `policy init` | Generate a starting policy from the repo's own structure | Policy file, never overwriting an existing one |
@@ -187,8 +187,8 @@ One binary, subcommands, no daemon.
 
 - `-out` / `-format json|mermaid|svg` — for piping into CI or a doc.
 - `-no-model` — hard-disables any provider call regardless of configuration. Present so it can be set globally in a CI image.
-- `-open` on `serve` — launches the browser; off by default so CI use never tries.
-- `-port` — defaults to a fixed port, falls back to a free one and says which.
+- `-open` — dropped: zu runs no process but git (ADR 0005); `serve` prints its URL on stdout.
+- `-addr` on `serve` — a loopback `host:port`; defaults to 127.0.0.1:7433, falls back to a free port and says which.
 
 ### Exit codes
 
@@ -262,7 +262,7 @@ N4 comes straight from uml-viewer's packaging issue. Application version, IR sch
 Targets, to be validated against a real repo before they are commitments:
 
 - Cold scan of a 100k-LOC repo: under 30 seconds.
-- Incremental re-scan after one file changes: under 2 seconds.
+- Incremental re-scan after one file changes: under 2 seconds. (Measured by feature 10 on a full kubernetes v1.37.0 worktree: 1.74–1.93 s, request to response.)
 - First paint of a 500-node graph: under 3 seconds.
 - Interaction stays responsive at 2,000 nodes with collapsing on.
 

@@ -1,6 +1,6 @@
 # 10 · `zu serve` — Plan
 
-**Status:** APPROVED 2026-09-25 by the user. The outside review (scrut10) was still running; any finding it upholds arrives as a dated amendment to this plan. Drafted against `main` at e45eb1d, with 09 committed; every diff here is against that commit. Replayed green on a fresh `git archive` of e45eb1d (see Replay record). Proposed doc amendments (decisions.md, requirements-draft.md, CLAUDE.md; none to the glossary) are Deviation 14; they are not task steps. Watch and live redraw are feature 11 (the last section).
+**Status:** Complete 2026-09-25 (Tasks 1–7 and review amendments 1–4; acceptance.md). APPROVED 2026-09-25 by the user. The outside review (scrut10) was still running; any finding it upholds arrives as a dated amendment to this plan. Drafted against `main` at e45eb1d, with 09 committed; every diff here is against that commit. Replayed green on a fresh `git archive` of e45eb1d (see Replay record). Proposed doc amendments (decisions.md, requirements-draft.md, CLAUDE.md; none to the glossary) are Deviation 14; they are not task steps. Watch and live redraw are feature 11 (the last section).
 
 > **Mode:** Quick (single-file)
 > **For Claude:** Use `dev-workflow:spec-driven-implementation` to execute task-by-task. Quick mode is auto-detected from this file's presence.
@@ -25,7 +25,7 @@ The replay needs Go, git, `patch`, Python 3, npm and Node, `golangci-lint` (Task
 
 - **Safety** (requirements, Safety and Standalone viewing): the server binds a loopback address only and refuses any other `-addr` with exit 3. It answers only requests whose `Host` names this machine, which defeats DNS rebinding. It has no write endpoint, serves no file by path, and writes nothing to disk.
 - **The same page:** it serves the page the HTML Export uses (ADR 0006: "the same UI bundle later backs `zu serve`"), not a second UI. Instead of an inlined View the page carries a marker telling it to fetch `view.json`, and its CSP gains exactly `connect-src 'self'`.
-- **Incremental rescan** (requirements, Performance budgets: "Incremental re-scan after one file changes: under 2 seconds"): `scan.Cache` keeps each file's facts keyed by path and content hash, so a rescan parses only the files whose content changed. Everything after extraction runs over the whole tree, which keeps the rescan's IR byte-identical to a cold scan's (ADR 0003). Measured on kubernetes (Task 7): 1.09–1.19 s from request to response after a one-file edit.
+- **Incremental rescan** (requirements, Performance budgets: "Incremental re-scan after one file changes: under 2 seconds"): `scan.Cache` keeps each file's facts keyed by path and content hash, so a rescan parses only the files whose content changed. Everything after extraction runs over the whole tree, which keeps the rescan's IR byte-identical to a cold scan's (ADR 0003). Measured on kubernetes (Task 7): 1.09–1.19 s from request to response after a one-file edit on a copy of its non-test Go files; 1.74–1.93 s on a full worktree (acceptance.md).
 - **Session restore** is the URL hash, which already carries the whole view state (05), on a fixed default port, so a bookmarked or reopened URL restores the view. No other session state.
 
 **Architecture:**
@@ -55,7 +55,7 @@ The replay needs Go, git, `patch`, Python 3, npm and Node, `golangci-lint` (Task
 
 1. **The endpoint serves the View, not the IR.** The page has never read the IR: it reads the View that `internal/export` builds from it (04), and the IR of kubernetes is 99 MB while its Project View is 6.2 MB. `/view.json` is the View JSON `zu scan -html` would inline for the same tree and flags, byte for byte (Task 4).
 2. **Without watch, every page load rescans.** `GET /view.json` lists the working tree, reloads the Policy and rescans through the Cache, so a reload shows the tree as it is now. One rescan runs at a time; a second request waits for the first. Feature 11 replaces "rescan per request" with "rescan when the watcher sees a change, keep the result, push an event".
-3. **The Cache key is path and content hash, with no stat fingerprint.** Every rescan reads and hashes every listed Go file; only a changed hash re-parses. Measured on kubernetes (Task 7): a rescan after a one-file edit takes 1.09–1.19 s end to end over HTTP, 0.64–0.84 s of it in `scan.Run`, so the 2 s budget holds without trusting mtimes. A size-and-mtime fingerprint would save the read and hash (0.27 s serial, warm), but it can miss an edit that keeps both (same size, same timestamp tick). Feature 11's watcher polls size and mtime to decide *when* to rescan; the rescan still trusts only content.
+3. **The Cache key is path and content hash, with no stat fingerprint.** Every rescan reads and hashes every listed Go file; only a changed hash re-parses. Measured on kubernetes (Task 7): a rescan after a one-file edit takes 1.09–1.19 s end to end over HTTP, 0.64–0.84 s of it in `scan.Run`, so the 2 s budget holds without trusting mtimes. On a full worktree (git tracks 31,300 files there, against the copy's Go files and go.mods) the rescan takes 1.74–1.93 s: still met, with 0.07–0.26 s to spare (acceptance.md). A size-and-mtime fingerprint would save the read and hash (0.27 s serial, warm), but it can miss an edit that keeps both (same size, same timestamp tick). Feature 11's watcher polls size and mtime to decide *when* to rescan; the rescan still trusts only content.
 4. **The CSP is rewritten in the page, and the header adds what a meta cannot carry.** A page enforces its meta policy and any header policy together, so a header cannot grant a fetch the meta forbids. `LivePage` therefore prepends `connect-src 'self'; ` to the meta's `content`, independent of how Vite escapes the rest (it writes `&#39;none&#39;`). The response header is `Content-Security-Policy: frame-ancestors 'none'`, which a meta policy ignores. `web/embed_test.go` checks the built page can take the rewrite. Firefox's own favicon loader asks for `/favicon.ico`, which `img-src data:` refuses and logs; the page makes no such request, and the harness ignores that one message (Task 5).
 5. **Addresses.**
    - `-addr host:port`, where host is a loopback IP literal (`127.0.0.1`, any `127.x.y.z`, `::1`) or `localhost`, which binds `127.0.0.1`. zu resolves no name, not even `localhost`: a hosts file can point any name elsewhere, and zu stays offline. An empty host (`:7433`, every interface), `0.0.0.0`, `::` or any other name exits 3 before the scan.
@@ -64,8 +64,8 @@ The replay needs Go, git, `patch`, Python 3, npm and Node, `golangci-lint` (Task
 6. **Three request checks, all before any scan.**
    - `Host` must be `localhost` or a loopback IP, with or without a port; otherwise 421. A rebinding attack's page reaches 127.0.0.1 under its own name, which the browser puts in `Host`.
    - Only `GET` and `HEAD`; otherwise 405 with `Allow: GET, HEAD`. Only `/` and `/view.json`; otherwise 404. There is no path-to-file mapping at all, so no source path can resolve outside the project root: source reaches the page only inside the View, read through the scan's Tree (which refuses links leaving the root) and checked by `addSources`' `filepath.IsLocal`.
-   - `/view.json` refuses `Sec-Fetch-Site: same-site` or `cross-site` with 403. Another site's page cannot read the answer (there is no CORS), but it could make zu rescan at will. Opening `/` from a link elsewhere stays allowed: the page holds no data.
-   Every response carries `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` and `Cache-Control: no-store`. The server sets `ReadHeaderTimeout`.
+   - `/view.json` refuses `Sec-Fetch-Site: same-site` or `cross-site` with 403. Another site's page cannot read the answer (there is no CORS), but it could make zu rescan at will. Opening `/` from a link elsewhere stays allowed: the page holds no data. The check stops other sites' fetches of `view.json` only: a top-level navigation to `/` from anywhere loads the page, whose own same-origin fetch of `view.json` then rescans once (review, 2026-09-25).
+   Every response carries `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` and `Cache-Control: no-store`. The server sets `ReadHeaderTimeout` (10 s) and `IdleTimeout` (60 s).
 7. **No `-open`.** Launching a browser means running a process other than git, which ADR 0005 and `gitref`'s package comment rule out. The URL on stdout is enough to click or pipe.
 8. **"Scan if needed" is "scan on start".** `zu serve` keeps no IR on disk (decisions l.23, "no IR cache") and writes nothing, not even `.zu/`. It scans once before printing the URL, so a tree zu cannot scan (no `go.mod`, a bad Policy) exits 3 instead of serving an error. After that a failed rescan is a 500 whose text the page shows, and the server keeps running.
 9. **Flags are `zu scan -html`'s, minus what does not apply.** `-include`, `-link-template` and `-coverprofile` mean what they mean for `zu scan -html`. `-ref` does not apply (a commit does not change), nor `-out`, `-html` or `-max-parse-errors` (parse errors show in the page's header, as in any export). `-include-ignored` is left for later; nothing asked for it.
@@ -77,7 +77,7 @@ The replay needs Go, git, `patch`, Python 3, npm and Node, `golangci-lint` (Task
     - `decisions.md` l.46, replace "**Watch + session restore:** with `serve`, after the v1 core." with:
       > **Serve (10):** `zu serve [dir] [-addr host:port] [-include …] [-link-template …] [-coverprofile …]` serves the working tree's Project View on a loopback address only (default 127.0.0.1:7433, a free port when that is taken), answers only requests whose Host names this machine, and has no write endpoint; it writes nothing to disk. The page is the HTML Export's, fetching its View from `/view.json` under the export's CSP plus `connect-src 'self'`. Each page load rescans; `scan.Cache` re-parses only files whose content changed, and the IR stays byte-identical to a cold scan's. Session restore is the URL hash on the fixed port. No `-open`: git is the only process zu runs. **Watch** (11): poll the files git lists, rescan on change, redraw over Server-Sent Events keeping the hash. A served Change View is not planned yet.
     - `requirements-draft.md`, CLI surface table, `serve` row: "Scan if needed, then open the local web UI" → "Scan the working tree, then serve the local web UI; every page load rescans what changed". Flags: replace the `-open` bullet with "`-open` — dropped: zu runs no process but git (ADR 0005); `serve` prints its URL on stdout", and the `-port` bullet with "`-addr` on `serve` — a loopback `host:port`; defaults to 127.0.0.1:7433, falls back to a free port and says which".
-    - `requirements-draft.md`, Performance budgets: after "Incremental re-scan after one file changes: under 2 seconds." add "(Measured by feature 10 on kubernetes v1.37.0: 1.09–1.19 s, request to response.)"
+    - `requirements-draft.md`, Performance budgets: after "Incremental re-scan after one file changes: under 2 seconds." add "(Measured by feature 10 on a full kubernetes v1.37.0 worktree: 1.74–1.93 s, request to response.)" (the figure measured in Task 7, not the drafting copy's 1.09–1.19 s)
     - `CLAUDE.md`, Layout: after the `internal/scan` line add "; `Cache` keeps each file's facts by path and content hash, so a rescan parses only changed files (`cache_test.go` proves the rescan's IR equals a cold scan's)", and add a line "- `internal/serve` — `zu serve`'s HTTP layer: loopback-only `Listen`, `Handler` (Host check, read-only, `/` and `/view.json`); `internal/cli/serve.go` holds the session".
     - `glossary.md`: no change. "Project View", "IR" and "HTML Export" cover it; the served page is the HTML Export's page.
 
@@ -1626,7 +1626,7 @@ process.exit(failed ? 1 : 0);
 
 **Steps:**
 
-- [ ] **README**
+- [x] **README**
 
 ```diff
 --- a/README.md
@@ -1665,11 +1665,11 @@ process.exit(failed ? 1 : 0);
  - **`zu diff`** (text, Markdown and JSON `summaryVersion` "1", flags, the merge-base
 ```
 
-- [ ] **Gates**
+- [x] **Gates**
 
-- [ ] **Run:** `test -z "$(gofmt -l cmd internal web/*.go)" && go vet ./... && go test -race ./... && golangci-lint run ./... && cd web && npx tsc --noEmit && npx vitest run` Expected: PASS. golangci-lint exits non-zero on any issue; run by hand through the RTK wrapper it exits 0 regardless, so read its output there.
+- [x] **Run:** `test -z "$(gofmt -l cmd internal web/*.go)" && go vet ./... && go test -race ./... && golangci-lint run ./... && cd web && npx tsc --noEmit && npx vitest run` Expected: PASS. golangci-lint exits non-zero on any issue; run by hand through the RTK wrapper it exits 0 regardless, so read its output there.
 
-- [ ] **The budget on kubernetes.** The Test Corpus checkout is read-only here, so copy its Go files and `go.mod`s (no tests: zu skips them) into a scratch repository, which `zu serve` then lists through git as it would any working tree. The copy is 251 MB with its `.git`. `bench-serve.sh` (below, not committed) starts `zu serve`, loads the View once, then five times appends a function to one file and times the next load.
+- [x] **The budget on kubernetes.** The Test Corpus checkout is read-only here, so copy its Go files and `go.mod`s (no tests: zu skips them) into a scratch repository, which `zu serve` then lists through git as it would any working tree. The copy is 251 MB with its `.git`. `bench-serve.sh` (below, not committed) starts `zu serve`, loads the View once, then five times appends a function to one file and times the next load. Per the review (2026-09-25) the budget was measured on a full worktree instead: see acceptance.md.
 
   ```bash
   K=.zu/corpus/kubernetes@v1.37.0 S=$(mktemp -d)
@@ -1753,10 +1753,10 @@ ok   Task 7: README, gates and the kubernetes budget  green exit=0 test -z "$(go
 
 ## Progress
 
-- [ ] Task 1 · `scan.Cache`
-- [ ] Task 2 · `export.LivePage` and `Marshal`
-- [ ] Task 3 · `internal/serve`
-- [ ] Task 4 · `zu serve`
-- [ ] Task 5 · Browser harness (red)
-- [ ] Task 6 · The page fetches its View
-- [ ] Task 7 · README, gates, kubernetes budget
+- [x] Task 1 · `scan.Cache`
+- [x] Task 2 · `export.LivePage` and `Marshal`
+- [x] Task 3 · `internal/serve`
+- [x] Task 4 · `zu serve`
+- [x] Task 5 · Browser harness (red)
+- [x] Task 6 · The page fetches its View
+- [x] Task 7 · README, gates, kubernetes budget

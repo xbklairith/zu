@@ -2,8 +2,8 @@
 
 zu draws a Go repository's component topology as an interactive diagram, and any
 change to it (an MR, a branch, your working tree) as a structural delta over that
-diagram. It runs locally and offline: one binary, no runtime, no server, no
-telemetry.
+diagram. It runs locally and offline: one binary, no runtime, no telemetry. The one
+server, `zu serve`, listens on localhost only.
 
 ## Install
 
@@ -55,6 +55,7 @@ embedded.
 ```bash
 zu scan                       # write the IR for the working tree to .zu/ir/
 zu scan -html zu.html         # also write a self-contained, offline HTML diagram
+zu serve                      # serve the working tree's diagram at http://127.0.0.1:7433/
 zu diff main                  # the Structural Summary of HEAD against main
 zu diff main -format markdown # the same, for an MR comment
 zu check                      # fail on Policy violations not in the Baseline
@@ -62,6 +63,18 @@ zu policy init                # write a suggested zu.policy.yaml
 ```
 
 Open the HTML file straight from disk (`file://`); it loads nothing from the network.
+
+`zu serve` draws the working tree and rescans it each time you load the page, parsing
+only the files that changed. It listens on a loopback address only (`-addr`, default
+127.0.0.1:7433, or a free port when that one is taken) and answers only requests
+addressed to localhost. It writes nothing to disk. The URL carries the view you are
+looking at, so reopening it restores that view. Stop it with Ctrl-C.
+
+Another site's page cannot fetch the View (zu refuses cross-site requests for
+`view.json`), but a link or redirect to `http://127.0.0.1:7433/` from anywhere opens
+the page, which then fetches its View and so makes zu rescan once. Any 127.x.x.x
+address counts as loopback, but macOS binds only 127.0.0.1 unless you alias another
+(`sudo ifconfig lo0 alias 127.0.0.2`).
 
 ## Output contract
 
