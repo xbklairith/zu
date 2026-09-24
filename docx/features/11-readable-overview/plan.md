@@ -481,7 +481,7 @@ export function siblingTiers(parent: ReadonlyMap<string, string>, arcs: readonly
 
 **Steps:**
 
-- [ ] **Write the failing tests.** "no drawn edge" replaces the old edge assertion. The step-node test now sees only step edges. 07's "keeps edges that climb" becomes "ranks inside siblings of one rank". Four new tests cover architecture ranks, one of them the wrap.
+- [x] **Write the failing tests.** "no drawn edge" replaces the old edge assertion. The step-node test now sees only step edges. 07's "keeps edges that climb" becomes "ranks inside siblings of one rank". Four new tests cover architecture ranks, one of them the wrap.
 
 ```diff
 diff --git a/web/src/layout.test.ts b/web/src/layout.test.ts
@@ -630,9 +630,9 @@ diff --git a/web/src/layout.test.ts b/web/src/layout.test.ts
    const made: { stopped: boolean; jobs: { resolve: (g: ElkNode) => void; reject: (e: Error) => void }[] }[] = [];
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/layout.test.ts` Expected: FAIL (drawn edges still in `elkGraph`, no `tier`, rows not centred)
+- [x] **Run:** `cd web && npx vitest run src/layout.test.ts` Expected: FAIL (drawn edges still in `elkGraph`, no `tier`, rows not centred)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/web/src/scene.ts b/web/src/scene.ts
@@ -902,7 +902,7 @@ diff --git a/web/src/layout.ts b/web/src/layout.ts
    let p = placed.get(id);
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
 
 ### Task 3: Siblings drop their shared prefix
 

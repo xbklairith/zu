@@ -3,7 +3,7 @@ import ELK from "elkjs/lib/elk.bundled.js";
 import type { ElkNode } from "elkjs/lib/elk-api";
 import golden from "../../internal/export/testdata/shop.view.golden.json";
 import { parseView } from "./data";
-import { absolute, elkGraph, inOrder, layout, orderOf, positions, sizeOf, superseding, Superseded, triangles, type Stoppable } from "./layout";
+import { absolute, elkGraph, inOrder, layout, orderOf, positions, sizeOf, superseding, Superseded, triangles, WRAP, type Stoppable } from "./layout";
 import { scene } from "./scene";
 import { DEFAULT_STATE } from "./state";
 import { edge, pkgs, view } from "./testkit";
@@ -24,15 +24,14 @@ describe("layout", () => {
     const [s, i, m] = ["example.com/shop/internal/store", "example.com/shop/internal", "example.com/shop"].map((id) => a.get(id)!);
     expect(abs).toEqual({ x: s.x + i.x + m.x, y: s.y + i.y + m.y });
   });
-  it("sizes come from text: box stats, method rows, container labels; edges only with lines", () => {
+  it("sizes come from text: box stats, method rows, container labels; no drawn edge", () => {
     const g = elkGraph(scene(v, DEFAULT_STATE));
     expect(g.layoutOptions?.["elk.spacing.nodeNode"]).toBe("24");
     expect(g.children?.[0].layoutOptions?.["elk.nodeSize.constraints"]).toBe("MINIMUM_SIZE");
     expect(sizeOf({ id: "x", label: "gen", parent: "", shape: "box", dim: false, selected: false, methods: [] }).w).toBe(204);
     expect(sizeOf({ id: "x", label: "T", parent: "", shape: "decl", dim: false, selected: false, methods: ["Get", "Put"] }))
       .toEqual({ w: 90, h: 76 });
-    expect(g.edges).toHaveLength(7);
-    expect(elkGraph(scene(v, { ...DEFAULT_STATE, lines: false })).edges).toEqual([]);
+    expect(g.edges!.filter((e) => !e.id.includes("__rank:"))).toEqual([]);
   });
   it("triangles sit on the top and bottom edges, apex out (uml-viewer)", () => {
     expect(triangles(100, 40)).toEqual({ in: "50,-10.39 44,0 56,0", out: "44,40 56,40 50,50.39" });
@@ -64,14 +63,11 @@ describe("levels and order (07)", () => {
     expect(absolute(a, "m/x")!.x).toBeLessThan(absolute(a, "m/core")!.x); // order: [m/x, m/core]
   });
 
-  it("steps between ranks, and leaves edges that climb the ranks out of the layout", () => {
+  it("steps between ranks, and gives ELK no other edge", () => {
     const g = elkGraph(scene(levels, { ...DEFAULT_STATE, depth: 3 }));
     const m = g.children![0];
     expect(m.children!.map((c) => c.id)).toEqual(["m/x", "m/core", "m/api", "__rank:m:1"]);
-    expect(g.edges!.map((e) => e.id)).toEqual([
-      "m/api/h→m/core/a", "__rank:m:1→m/x", "__rank:m:1→m/core", "m/api→__rank:m:1",
-    ]);
-    expect(JSON.stringify(elkGraph(scene(v, DEFAULT_STATE)))).not.toContain("__rank");
+    expect(g.edges!.map((e) => e.id)).toEqual(["__rank:m:1→m/x", "__rank:m:1→m/core", "m/api→__rank:m:1"]);
   });
 
   it("never places a higher rank below a lower one on zu's own layering", async () => {
@@ -94,17 +90,13 @@ describe("levels and order (07)", () => {
     expect([...a.keys()].some((id) => id.startsWith("__rank"))).toBe(false);
   });
 
-  it("keeps edges that climb only inside siblings of one rank, and still ranks inside them", async () => {
-    // m/a and m/b both roll up to rank 1, and each imports up into the other:
-    // the edges do not climb between m/a and m/b, so they stay in the input,
-    // where with the steps inside m/a and m/b they form a cycle ELK breaks.
+  it("ranks inside siblings of one rank, whichever way edges point", async () => {
+    // m/a and m/b both roll up to rank 1, and each imports up into the other.
     const x = view(
       [...pkgs(["m/a/hi", "m/b/hi"], "m", { rank: 1 }), ...pkgs(["m/a/lo", "m/b/lo"], "m", { rank: 0 })],
       [{ ...edge("m/a/lo", "m/b/hi"), violation: "levels" }, { ...edge("m/b/lo", "m/a/hi"), violation: "levels" }],
     );
-    const sc = scene(x, { ...DEFAULT_STATE, depth: 3 });
-    expect(elkGraph(sc).edges!.map((e) => e.id)).toEqual(expect.arrayContaining(["m/a/lo→m/b/hi", "m/b/lo→m/a/hi"]));
-    const a = await layout(sc, elk);
+    const a = await layout(scene(x, { ...DEFAULT_STATE, depth: 3 }), elk);
     for (const p of ["m/a", "m/b"]) expect(absolute(a, `${p}/hi`)!.y, p).toBeLessThan(absolute(a, `${p}/lo`)!.y);
   });
 
@@ -129,6 +121,75 @@ describe("levels and order (07)", () => {
       expect(r.x - (l.x + l.w), row[i]).toBe(24); // elk.spacing.nodeNode
     }
     expect(inOrder(elkOnly, orderOf(scene(v, DEFAULT_STATE)))).toBe(elkOnly); // no order: ELK's placement
+  });
+});
+
+// 11: without Levels, each sibling set is ranked from its own dependencies.
+describe("architecture ranks (11)", () => {
+  it("draws a dependency below what depends on it", async () => {
+    // m/web → m/app → m/db, m/web → m/db, and m/tool alone: web over app
+    // over db, tool with db at the bottom. m/app/x → m/app/y inside m/app.
+    const x = view(pkgs(["m/web", "m/app/x", "m/app/y", "m/db", "m/tool"], "m"), [
+      edge("m/web", "m/app/x"), edge("m/app/x", "m/db"), edge("m/web", "m/db"), edge("m/app/x", "m/app/y"),
+    ]);
+    const sc = scene(x, { ...DEFAULT_STATE, depth: 3 });
+    expect(Object.fromEntries(sc.nodes.map((n) => [n.id, n.tier])))
+      .toEqual({ m: 0, "m/app": 1, "m/app/x": 1, "m/app/y": 0, "m/db": 0, "m/tool": 0, "m/web": 2 });
+    const a = await layout(sc, elk);
+    const y = (id: string) => absolute(a, id)!.y;
+    expect(y("m/web")).toBeLessThan(y("m/app"));
+    expect(y("m/app/x")).toBeLessThan(y("m/app/y"));
+    expect(y("m/app") + a.get("m/app")!.h).toBeLessThan(y("m/db"));
+    expect(y("m/tool")).toBe(y("m/db"));
+  });
+
+  it("stacks ranks as rows over one centre, as wide as the widest row, not a staircase", async () => {
+    // m/a → m/b → m/c over six leaves m/l0..m/l5 that m/c imports: hugo's
+    // shape. ELK's default placement drew each rank right of the one below.
+    const leaves = Array.from({ length: 6 }, (_, i) => `m/l${i}`);
+    const x = view(pkgs(["m/a", "m/b", "m/c", ...leaves], "m"), [
+      edge("m/a", "m/b"), edge("m/b", "m/c"), ...leaves.map((l) => edge("m/c", l)),
+    ]);
+    const a = await layout(scene(x, { ...DEFAULT_STATE, focus: "m" }), elk);
+    const mid = (id: string) => a.get(id)!.x + a.get(id)!.w / 2;
+    const row = leaves.map((l) => a.get(l)!);
+    const left = Math.min(...row.map((r) => r.x));
+    const right = Math.max(...row.map((r) => r.x + r.w));
+    for (const id of ["m/a", "m/b", "m/c"]) expect(Math.abs(mid(id) - (left + right) / 2)).toBeLessThan(1);
+    const all = [...a.values()];
+    expect(Math.max(...all.map((r) => r.x + r.w)) - Math.min(...all.map((r) => r.x))).toBe(right - left);
+    // Two ranks are one step layer apart, 12 px either side of it, however
+    // many step edges fan out: kubernetes' 38 boxes were 1208 px high, 808 so.
+    const gap = (hi: string, lo: string) => a.get(lo)!.y - (a.get(hi)!.y + a.get(hi)!.h);
+    expect([gap("m/a", "m/b"), gap("m/c", "m/l0")]).toEqual([24, 24]);
+  });
+
+  it("wraps a rank wider than WRAP boxes into rows of WRAP, in order", async () => {
+    // m/top over 25 leaves of rank 0, as a flat internal/ of leaves would be.
+    const leaves = Array.from({ length: 25 }, (_, i) => `m/l${String(i).padStart(2, "0")}`);
+    const x = view(pkgs(["m/top", ...leaves], "m"), leaves.map((l) => edge("m/top", l)));
+    const a = await layout(scene(x, { ...DEFAULT_STATE, focus: "m" }), elk);
+    const rows = new Map<number, string[]>();
+    for (const l of leaves) rows.set(a.get(l)!.y, [...(rows.get(a.get(l)!.y) ?? []), l]);
+    expect(WRAP).toBe(10);
+    expect([...rows.values()].map((r) => r.length)).toEqual([10, 10, 5]);
+    expect([...rows.values()].map((r) => r[0])).toEqual(["m/l00", "m/l10", "m/l20"]);
+    expect(Math.min(...rows.keys())).toBeGreaterThan(a.get("m/top")!.y);
+  });
+
+  it("uses the Policy's ranks in a sibling set that has one, and tiers in the others", async () => {
+    // m/api is rank 1 and m/core rank 0; m/util/lo and m/util/hi are
+    // unranked, and hi imports lo.
+    const x = {
+      ...view([...pkgs(["m/api"], "m", { rank: 1 }), ...pkgs(["m/core"], "m", { rank: 0 }), ...pkgs(["m/util/hi", "m/util/lo"], "m")],
+        [edge("m/core", "m/api"), edge("m/util/hi", "m/util/lo")]),
+      policy: { hash: "sha256:p", levels: [["m/core"], ["m/api"]] },
+    };
+    const a = await layout(scene(x, { ...DEFAULT_STATE, depth: 3 }), elk);
+    const y = (id: string) => absolute(a, id)!.y;
+    expect(y("m/api")).toBeLessThan(y("m/core")); // the Policy wins over core → api
+    expect(y("m/util")).toBe(y("m/core")); // unranked beside ranked: level 0
+    expect(y("m/util/hi")).toBeLessThan(y("m/util/lo")); // no rank inside m/util: tiers
   });
 });
 

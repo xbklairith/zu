@@ -28,14 +28,25 @@ const rootOptions = {
   "elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES",
   "elk.hierarchyHandling": "INCLUDE_CHILDREN",
   "elk.spacing.nodeNode": String(GAP),
-  "elk.layered.spacing.nodeNodeBetweenLayers": "48",
+  // 11: 12, not 48: ELK routes no edge now, and ranked's step layers
+  // double every gap between two ranks.
+  "elk.layered.spacing.nodeNodeBetweenLayers": "12",
+  // 11: the step nodes are zero-size, and the default placement (Brandes-Köpf)
+  // set each rank beside the one below it, a staircase twice as wide as the
+  // widest rank (hugo 2219 px for a 1800 px rank). Network simplex keeps
+  // them within the widest; centred then puts each over the middle.
+  "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
+  // 11: and a rank's many step edges add no space between two ranks.
+  "elk.layered.spacing.edgeEdgeBetweenLayers": "0",
+  "elk.layered.spacing.edgeNodeBetweenLayers": "0",
 };
 
 // elkGraph is the layout input: containers as compound nodes wide enough for
-// their label, leaves sized by sizeOf, and the edges only when lines are drawn.
-// Siblings in the Policy's order come first; inOrder places them. When any
-// node has a rank, level 0 is drawn at the bottom (decisions.md, Levels rule):
-// see ranked below.
+// their label, and leaves sized by sizeOf. It holds no drawn edge (11): the
+// ranks alone place the nodes, so lines can come and go (edges.ts) and
+// nothing moves. Siblings in the Policy's order come first; inOrder places
+// them. Level 0 is drawn at the bottom (decisions.md, Levels rule): see
+// ranked below.
 export function elkGraph(sc: Scene): ElkNode {
   const byParent = new Map<string, SceneNode[]>();
   for (const n of sc.nodes) {
@@ -45,7 +56,7 @@ export function elkGraph(sc: Scene): ElkNode {
   }
   const last = Number.MAX_SAFE_INTEGER;
   for (const l of byParent.values()) l.sort((a, b) => (a.order ?? last) - (b.order ?? last));
-  const rank = sc.nodes.some((n) => n.rank !== undefined) ? ranked(sc, byParent) : null;
+  const rank = sc.nodes.some((n) => n.rank !== undefined || n.tier !== undefined) ? ranked(byParent) : null;
   const build = (n: SceneNode): ElkNode => {
     if (n.shape !== "container") {
       const { w, h } = sizeOf(n);
@@ -61,60 +72,54 @@ export function elkGraph(sc: Scene): ElkNode {
       children: [...(byParent.get(n.id) ?? []).map(build), ...(rank?.steps.get(n.id) ?? [])],
     };
   };
-  const edges = sc.lines ? sc.edges.filter((e) => rank?.keeps(e) ?? true) : [];
   return {
     id: "__root",
     layoutOptions: rootOptions,
     children: [...(byParent.get("") ?? []).map(build), ...(rank?.steps.get("") ?? [])],
-    edges: [...edges.map((e) => ({ id: e.id, sources: [e.from], targets: [e.to] })), ...(rank?.edges ?? [])],
+    edges: rank?.edges ?? [],
   };
 }
 
 export const STEP = "__rank:"; // the id prefix of ranked's invisible nodes
 
+// WRAP is the most siblings of one rank drawn side by side (11). A wider rank,
+// such as a flat internal/ of leaves that all land in rank 0, wraps into rows
+// of WRAP, in the siblings' order, each row below the last.
+export const WRAP = 10;
+
 // ranked puts siblings with a higher rank above those with a lower one, in
-// every container; unranked nodes count as level 0, as in uml-viewer
-// (layout.clj place-classes, l.293). ELK's own partitioning orders a flat
+// every container. A sibling set in which any node has a Policy rank uses
+// the Policy's ranks, unranked nodes counting as level 0, as in uml-viewer
+// (layout.clj place-classes, l.293); any other set uses the architecture
+// ranks scene computed (rank.ts, 11). ELK's own partitioning orders a flat
 // graph but is ignored inside compound nodes with INCLUDE_CHILDREN, which zu
-// needs (measured in elkjs 0.12), so between each two ranks present among
-// siblings ranked adds an invisible zero-size step node, with an edge from
-// every node of the higher rank to it and from it to every node of the lower:
-// O(n) edges. A drawn edge that climbs the ranks between the siblings under
-// its lowest common container (a violation, or an unranked importer) is left
-// out of the layout input, so it cannot fight those steps; the canvas still
-// draws it. An edge that climbs only deeper, inside siblings of one rank,
-// stays in, and ELK breaks the cycle it makes with the inner steps.
-function ranked(sc: Scene, byParent: ReadonlyMap<string, SceneNode[]>) {
-  const byId = new Map(sc.nodes.map((n) => [n.id, n]));
-  const level = (n: SceneNode) => n.rank ?? 0;
+// needs (measured in elkjs 0.12), so between each two rows ranked adds an
+// invisible zero-size step node, with an edge from every node of the upper
+// row to it and from it to every node of the lower: O(n) edges, and the only
+// edges ELK sees. A row is a rank, or WRAP boxes of a wider one.
+function ranked(byParent: ReadonlyMap<string, SceneNode[]>) {
   const steps = new Map<string, ElkNode[]>();
   const edges: { id: string; sources: string[]; targets: string[] }[] = [];
   for (const [parent, kids] of byParent) {
+    const policy = kids.some((k) => k.rank !== undefined);
+    const level = (n: SceneNode) => (policy ? n.rank : n.tier) ?? 0;
     const levels = [...new Set(kids.map(level))].sort((a, b) => b - a);
-    for (let i = 0; i + 1 < levels.length; i++) {
-      const id = `${STEP}${parent}:${levels[i]}`;
+    const rows: { name: string; nodes: SceneNode[] }[] = [];
+    for (const l of levels) {
+      const at = kids.filter((k) => level(k) === l);
+      for (let i = 0; i < at.length; i += WRAP) rows.push({ name: i === 0 ? `${l}` : `${l}.${i / WRAP}`, nodes: at.slice(i, i + WRAP) });
+    }
+    for (let i = 0; i + 1 < rows.length; i++) {
+      const id = `${STEP}${parent}:${rows[i].name}`;
       steps.set(parent, [...(steps.get(parent) ?? []), { id, width: 0, height: 0 }]);
+      const [upper, lower] = [new Set(rows[i].nodes), new Set(rows[i + 1].nodes)];
       for (const k of kids) {
-        if (level(k) === levels[i]) edges.push({ id: `${k.id}→${id}`, sources: [k.id], targets: [id] });
-        if (level(k) === levels[i + 1]) edges.push({ id: `${id}→${k.id}`, sources: [id], targets: [k.id] });
+        if (upper.has(k)) edges.push({ id: `${k.id}→${id}`, sources: [k.id], targets: [id] });
+        if (lower.has(k)) edges.push({ id: `${id}→${k.id}`, sources: [id], targets: [k.id] });
       }
     }
   }
-  // chain is a node and its containers, outermost first.
-  const chain = (id: string) => {
-    const out: SceneNode[] = [];
-    for (let n = byId.get(id); n; n = byId.get(n.parent)) out.unshift(n);
-    return out;
-  };
-  // keeps: the two sides of the edge under their lowest common container do
-  // not climb the ranks.
-  const keeps = (e: { from: string; to: string }) => {
-    const [a, b] = [chain(e.from), chain(e.to)];
-    let i = 0;
-    while (i < a.length && i < b.length && a[i] === b[i]) i++;
-    return i === a.length || i === b.length || level(a[i]) >= level(b[i]);
-  };
-  return { steps, edges, keeps };
+  return { steps, edges };
 }
 
 // positions flattens ELK's result; x and y are relative to the parent, as
@@ -132,7 +137,7 @@ export function positions(g: ElkNode): Map<string, Placed> {
   return out;
 }
 
-export const layout = async (sc: Scene, engine: Engine) => inOrder(positions(await engine.layout(elkGraph(sc))), orderOf(sc));
+export const layout = async (sc: Scene, engine: Engine) => centred(inOrder(positions(await engine.layout(elkGraph(sc))), orderOf(sc)));
 
 // orderOf is each ordered node's index in the Policy's order.
 export const orderOf = (sc: Scene): ReadonlyMap<string, number> =>
@@ -149,30 +154,10 @@ export const orderOf = (sc: Scene): ReadonlyMap<string, number> =>
 // ELK's placement.
 export function inOrder(placed: Map<string, Placed>, order: ReadonlyMap<string, number>): Map<string, Placed> {
   if (order.size === 0) return placed;
-  const byParent = new Map<string, string[]>();
-  for (const [id, p] of placed) {
-    const l = byParent.get(p.parent ?? "");
-    if (l) l.push(id);
-    else byParent.set(p.parent ?? "", [id]);
-  }
   const out = new Map(placed);
   const last = Number.MAX_SAFE_INTEGER;
-  for (const ids of byParent.values()) {
-    // rows: siblings whose vertical extents overlap share an ELK layer.
-    ids.sort((a, b) => placed.get(a)!.y - placed.get(b)!.y || cmp(a, b));
-    const rows: string[][] = [];
-    let bottom = -Infinity;
-    for (const id of ids) {
-      const p = placed.get(id)!;
-      if (rows.length && p.y < bottom) {
-        rows[rows.length - 1].push(id);
-        bottom = Math.max(bottom, p.y + p.h);
-      } else {
-        rows.push([id]);
-        bottom = p.y + p.h;
-      }
-    }
-    for (const row of rows) {
+  for (const ids of siblings(placed).values()) {
+    for (const row of rowsOf(ids, placed)) {
       if (!row.some((id) => order.has(id))) continue;
       let x = Math.min(...row.map((id) => placed.get(id)!.x));
       row.sort((a, b) => (order.get(a) ?? last) - (order.get(b) ?? last) || cmp(a, b));
@@ -184,6 +169,54 @@ export function inOrder(placed: Map<string, Placed>, order: ReadonlyMap<string, 
     }
   }
   return out;
+}
+
+// centred moves each row of siblings sideways so that its middle is the
+// middle of all the siblings (11): ranks read as a stack, not a staircase. A
+// row keeps its order and spacing, and never leaves its container, which is
+// at least as wide as its widest row. Lines follow, as in inOrder.
+export function centred(placed: Map<string, Placed>): Map<string, Placed> {
+  const out = new Map(placed);
+  for (const ids of siblings(placed).values()) {
+    const at = ids.map((id) => placed.get(id)!);
+    const mid = (Math.min(...at.map((p) => p.x)) + Math.max(...at.map((p) => p.x + p.w))) / 2;
+    for (const row of rowsOf(ids, placed)) {
+      const ps = row.map((id) => placed.get(id)!);
+      const dx = mid - (Math.min(...ps.map((p) => p.x)) + Math.max(...ps.map((p) => p.x + p.w))) / 2;
+      for (const id of row) out.set(id, { ...placed.get(id)!, x: placed.get(id)!.x + dx });
+    }
+  }
+  return out;
+}
+
+// siblings groups placed ids by their container ("" at the top).
+function siblings(placed: ReadonlyMap<string, Placed>): Map<string, string[]> {
+  const byParent = new Map<string, string[]>();
+  for (const [id, p] of placed) {
+    const l = byParent.get(p.parent ?? "");
+    if (l) l.push(id);
+    else byParent.set(p.parent ?? "", [id]);
+  }
+  return byParent;
+}
+
+// rowsOf splits siblings into rows, top to bottom: siblings whose vertical
+// extents overlap share an ELK layer.
+function rowsOf(ids: string[], placed: ReadonlyMap<string, Placed>): string[][] {
+  const sorted = [...ids].sort((a, b) => placed.get(a)!.y - placed.get(b)!.y || cmp(a, b));
+  const rows: string[][] = [];
+  let bottom = -Infinity;
+  for (const id of sorted) {
+    const p = placed.get(id)!;
+    if (rows.length && p.y < bottom) {
+      rows[rows.length - 1].push(id);
+      bottom = Math.max(bottom, p.y + p.h);
+    } else {
+      rows.push([id]);
+      bottom = p.y + p.h;
+    }
+  }
+  return rows;
 }
 
 // absolute is a node's position on the canvas: its own plus its parents'.

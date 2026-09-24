@@ -6,6 +6,7 @@ import { bundlesOver, EXTERNALS, externalsOf, type Bundle } from "./bundle";
 import { declutter, NO_PINS, type Mark, type Pin } from "./declutter";
 import { crapBand, packageRisk, rolledCrap, type Band, type Risk } from "./metrics";
 import { rolledRanks } from "./policy";
+import { siblingTiers } from "./rank";
 import { withinHops } from "./select";
 import type { Known, Stage, ViewState } from "./state";
 
@@ -19,6 +20,7 @@ export type SceneNode = {
   change?: string; // the Change View class (change.ts nodeMark, or "has-change")
   rowMarks?: string[]; // the Change View class of each method row
   rank?: number; // 07: the Policy rank of a box, rolled up (policy.ts rolledRanks)
+  tier?: number; // 11: its architecture rank among its siblings (rank.ts); only the layout reads it
   hidden?: ViewEdge[]; // 07: violating imports with both ends inside this node, so no line shows them
   order?: number; // 07: the box's place in the Policy's order; layout.ts draws it before its siblings
   crap?: { risk: Risk; band: Band }; // 08: a box's rolled μ+σ, a function's own CRAP; null = no coverage data
@@ -166,6 +168,13 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     selected = row.selected;
     for (const n of nodes) n.selected = n.id === selected;
   }
+  // 11: every drawn node's architecture rank, from the bundles this cut
+  // keeps, drawn or not, so showing or hiding lines never moves a box.
+  const tiers = siblingTiers(
+    new Map(nodes.map((n) => [n.id, n.parent])),
+    kept.map((b) => ({ from: shown(b.from), to: shown(b.to), weight: b.pairs })),
+  );
+  for (const n of nodes) n.tier = tiers.get(n.id);
 
   const edges: SceneEdge[] = [];
   for (const a of d.arrows) {
