@@ -21,6 +21,10 @@ the code's own hierarchy, never an invented one. Replaces the retired *Ungrouped
 A rank the Policy gives to Package Tree boxes or packages, listed inner first; an id ranks everything under it, and the longest ranked prefix wins. A
 dependency from a higher-ranked Level to a lower-ranked one is a violation.
 
+## Architecture Rank
+
+Where a box sits in the Project View when the Policy gives its siblings no Levels: dependencies below what depends on them, computed from the imports between the siblings. A placement only: nothing is a violation because of it. Distinct from a Level, which the Policy declares.
+
 ## Foreign
 
 An external module drawn as an oval outside the Package Tree. The Policy can collapse
