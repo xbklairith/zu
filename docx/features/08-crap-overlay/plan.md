@@ -209,7 +209,7 @@ The replay needs Go, git, `patch`, Python 3, `npm ci` (Tasks 7–11 are UI tasks
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 <!-- file: internal/scan/measure_test.go -->
 ```go
@@ -331,9 +331,9 @@ var gen = func() {}
 }
 ```
 
-- [ ] **Run:** `go test ./internal/scan -run 'TestExtract(ComplexityAndSpan|LooseCode)'` Expected: FAIL (`undefined: Pos`)
+- [x] **Run:** `go test ./internal/scan -run 'TestExtract(ComplexityAndSpan|LooseCode)'` Expected: FAIL (`undefined: Pos`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/internal/scan/extract.go
@@ -477,8 +477,8 @@ func position(fset *token.FileSet, p token.Pos) (string, Pos) {
 }
 ```
 
-- [ ] **Run:** `go test ./internal/scan` Expected: PASS
-- [ ] **Commit:** `Measure each function's complexity and span in the one parse`
+- [x] **Run:** `go test ./internal/scan` Expected: PASS
+- [x] **Commit:** `Measure each function's complexity and span in the one parse`
 
 ### Task 2: `scan.Measures` beside the IR
 
@@ -2838,7 +2838,7 @@ That makes 39 checks per engine.
 
 ## Progress
 
-- [ ] Task 1 · Complexity and span per function
+- [x] Task 1 · Complexity and span per function
 - [ ] Task 2 · `scan.Measures` beside the IR
 - [ ] Task 3 · `internal/cover`
 - [ ] Task 4 · `export.AddMetrics`

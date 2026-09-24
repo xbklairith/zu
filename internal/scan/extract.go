@@ -28,6 +28,7 @@ type fileFacts struct {
 	Imports     []importFact
 	Calls       []callSite
 	Embeds      []embedSite
+	Loose       []Span // 08: code no function node holds (see loose)
 }
 
 // declFact is one type, function or method declaration. Ids are formed
@@ -41,6 +42,10 @@ type declFact struct {
 	Hash     string
 	Shape    string // Hash with the name and receiver type blanked
 	Line     int
+	CC       int               // functions only (08): cyclomatic complexity
+	File     string            // functions only (08): the file name a coverprofile keys it by
+	Start    Pos               // functions only (08): func keyword
+	End      Pos               // functions only (08): just past the closing brace
 	node     ast.Node          // released once hashed
 	doc      *ast.CommentGroup // enclosing declaration's doc, for its directives
 }
@@ -102,8 +107,16 @@ func extractFile(t Tree, rel string) *fileFacts {
 			}
 		}
 	}
+	for _, decl := range file.Decls {
+		f.Loose = append(f.Loose, loose(fset, rel, decl)...)
+	}
 	for i := range f.Decls {
 		d := &f.Decls[i]
+		if fn, ok := d.node.(*ast.FuncDecl); ok {
+			d.CC = complexity(fn)
+			d.File, d.Start = position(fset, fn.Pos())
+			_, d.End = position(fset, fn.End())
+		}
 		d.Hash, d.Shape = hashDecl(d.node, []string{d.Name, d.Recv}, d.doc)
 		d.node, d.doc = nil, nil
 	}
