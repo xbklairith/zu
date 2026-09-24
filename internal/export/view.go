@@ -31,6 +31,8 @@ type View struct {
 	// Violations is the Change View's new, fixed and known violations (07),
 	// from the whole Summary zu diff printed.
 	Violations *diff.ViolationDelta `json:"violations,omitempty"`
+	// Metrics is the CRAP overlay (08), only when zu was given a coverprofile.
+	Metrics *Metrics `json:"metrics,omitempty"`
 }
 
 // Node is an IR node reduced to what a view draws.

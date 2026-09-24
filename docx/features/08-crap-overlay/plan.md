@@ -924,7 +924,7 @@ A binary search finds each span's first block. Only ids the View draws are writt
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 <!-- file: internal/export/metrics_test.go -->
 ```go
@@ -1014,9 +1014,9 @@ func TestAddMetricsMissingFunctionCRAP(t *testing.T) {
 }
 ```
 
-- [ ] **Run:** `go test ./internal/export -run TestAddMetrics` Expected: FAIL (`v.Metrics undefined`)
+- [x] **Run:** `go test ./internal/export -run TestAddMetrics` Expected: FAIL (`v.Metrics undefined`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 <!-- file: internal/export/metrics.go -->
 ```go
@@ -1237,8 +1237,8 @@ func before(a, b cover.Pos) bool { return a.Line < b.Line || a.Line == b.Line &&
  // Node is an IR node reduced to what a view draws.
 ```
 
-- [ ] **Run:** `go test ./internal/export` Expected: PASS
-- [ ] **Commit:** `Join function measures and coverage into the View's CRAP metrics`
+- [x] **Run:** `go test ./internal/export` Expected: PASS
+- [x] **Commit:** `Join function measures and coverage into the View's CRAP metrics`
 
 ### Task 5: `zu scan -html … -coverprofile file`
 
@@ -2841,7 +2841,7 @@ That makes 39 checks per engine.
 - [x] Task 1 · Complexity and span per function
 - [x] Task 2 · `scan.Measures` beside the IR
 - [x] Task 3 · `internal/cover`
-- [ ] Task 4 · `export.AddMetrics`
+- [x] Task 4 · `export.AddMetrics`
 - [ ] Task 5 · `zu scan -coverprofile`
 - [ ] Task 6 · `zu diff -coverprofile`
 - [ ] Task 7 · Grade, band and rollup
