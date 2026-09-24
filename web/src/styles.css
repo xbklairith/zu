@@ -18,6 +18,11 @@
   --del-bg: #ffebe9;
   --pin: #cf222e; /* a pinned (violating) edge, 06 */
   --proposal: #9a6700; /* the Proposal banner, gold as in uml-viewer (draw.clj l.650), 07 */
+  /* CRAP fills (08): text stays 4.5:1 on them, and they stay apart for
+     red-green colour blindness (styles.test.ts) */
+  --crap-green: #c8f8c4;
+  --crap-yellow: #f0e49c;
+  --crap-red: #ffdcdc;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color: var(--fg);
   background: var(--bg);
@@ -44,6 +49,11 @@
     --del-bg: #3d1a1c;
     --pin: #ff7b72;
     --proposal: #d29922;
+    /* near uml-viewer draw.clj fill-for (l.40): 4.5:1 text, and apart for
+       red-green colour blindness (styles.test.ts) */
+    --crap-green: #173b2c;
+    --crap-yellow: #3e3814;
+    --crap-red: #3b1d11;
   }
 }
 
@@ -493,6 +503,39 @@ button.st-removed {
 }
 .node.ranked .label {
   padding-left: 18px;
+}
+/* CRAP (08) owns the fill; change marks own border, text and outline, and a
+   hidden violation the red border, so all three show at once. */
+.node.crap-green {
+  background: var(--crap-green);
+}
+.node.crap-yellow {
+  background: var(--crap-yellow);
+}
+.node.crap-red {
+  background: var(--crap-red);
+}
+.node .crap {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  white-space: nowrap;
+  padding: 0 3px;
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 10px;
+  line-height: 14px;
+}
+/* A container's children fill its body, so its badge sits in the header,
+   left of the toggle, and the label stops short of it. */
+.node.container .crap {
+  top: 3px;
+  right: 24px;
+  bottom: auto;
+}
+.node.container[class*="crap-"] .label {
+  padding-right: 72px;
 }
 .node.hides-violation {
   border-color: var(--pin);

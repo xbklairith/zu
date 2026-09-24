@@ -29,5 +29,6 @@ export default defineConfig({
   worker: { format: "iife" },
   // Dev mode reads the Go golden View from internal/export/testdata.
   server: { fs: { allow: [".."] } },
-  test: { environment: "node", include: ["src/**/*.test.ts"] },
+  // css: styles.test.ts reads styles.css?raw (08); vitest empties CSS otherwise.
+  test: { environment: "node", include: ["src/**/*.test.ts"], css: true },
 });

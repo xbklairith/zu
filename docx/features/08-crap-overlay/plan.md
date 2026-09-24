@@ -2080,7 +2080,7 @@ export function rolledCrap(view: View): Map<string, Risk> {
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 <!-- file: web/src/styles.test.ts -->
 ```ts
@@ -2169,9 +2169,9 @@ describe.each([["light", light], ["dark", dark]])("CRAP fills, %s", (_, t) => {
  });
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/styles.test.ts` Expected: FAIL (no `--crap-green` token in `styles.css`)
+- [x] **Run:** `cd web && npx vitest run src/styles.test.ts` Expected: FAIL (no `--crap-green` token in `styles.css`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/web/src/Canvas.tsx
@@ -2310,8 +2310,8 @@ describe.each([["light", light], ["dark", dark]])("CRAP fills, %s", (_, t) => {
    box-shadow: inset 0 0 0 1px var(--pin);
 ```
 
-- [ ] **Run:** `cd web && npx tsc --noEmit && npx vitest run && npx vite build` Expected: PASS
-- [ ] **Commit:** `Fill boxes by CRAP band with a badge`
+- [x] **Run:** `cd web && npx tsc --noEmit && npx vitest run && npx vite build` Expected: PASS
+- [x] **Commit:** `Fill boxes by CRAP band with a badge`
 
 ### Task 10: The panel and the legend
 
@@ -2846,7 +2846,7 @@ That makes 39 checks per engine.
 - [x] Task 6 · `zu diff -coverprofile`
 - [x] Task 7 · Grade, band and rollup
 - [x] Task 8 · CRAP on the scene
-- [ ] Task 9 · Fill and badge
+- [x] Task 9 · Fill and badge
 - [ ] Task 10 · Panel and legend
 - [ ] Task 11 · Browser harness
 - [ ] Task 12 · Acceptance

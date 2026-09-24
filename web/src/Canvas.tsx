@@ -16,6 +16,7 @@ import { edgeMark } from "./change";
 import { parentBox } from "./cut";
 import type { View } from "./data";
 import { absolute, triangles, type Placed } from "./layout";
+import { crapGrade, crapLabel } from "./metrics";
 import type { Scene, SceneNode } from "./scene";
 import { boxStats } from "./tree";
 
@@ -73,10 +74,28 @@ function Toggle({ data }: { data: Data }) {
 }
 
 // cls: the shape, the Change View mark (04 Part B), a violation hidden inside
-// (07), selection and dimming.
+// (07), the CRAP fill (08), selection and dimming.
 const cls = (base: string, n: SceneNode, selected: boolean) =>
   `node ${base}${n.change ? ` ${n.change}` : ""}${n.hidden ? " hides-violation" : ""}${n.rank !== undefined ? " ranked" : ""}` +
-  `${selected ? " selected" : ""}${n.dim ? " dim" : ""}`;
+  `${n.crap ? ` crap-${n.crap.band}` : ""}${selected ? " selected" : ""}${n.dim ? " dim" : ""}`;
+
+// Crap is the CRAP badge (08), at the lower right, or in a container's
+// header: the number and its band in words, so the fill is never the only
+// sign. A box shows its worst μ+σ, a function its CRAP; "?" is no coverage
+// data, which counts as red (decisions.md).
+function Crap({ node }: { node: SceneNode }) {
+  const c = node.crap;
+  if (!c) return null;
+  const what = node.shape === "decl" ? "CRAP" : "worst CRAP μ+σ";
+  const title = c.risk === null
+    ? "No coverage data: counts as red"
+    : `${what} ${c.risk} (grade ${crapGrade(c.risk).toFixed(1)} of 10)`;
+  return (
+    <span className="crap" title={title}>
+      {crapLabel(c.risk)}
+    </span>
+  );
+}
 
 // Rank is the Policy rank at the upper left (uml-viewer README: "Class boxes
 // show the current view's rank (innermost 0) at the upper left").
@@ -95,6 +114,7 @@ function BoxNode({ data, selected }: NodeProps<ZNode>) {
     <div className={cls("box", data.node, selected)} title={data.node.id}>
       <Ends />
       <Rank node={data.node} />
+      <Crap node={data.node} />
       <Toggle data={data} />
       <div className="label">{data.node.label}</div>
       {s && (
@@ -113,6 +133,7 @@ function ContainerNode({ data, selected }: NodeProps<ZNode>) {
     <div className={cls("container", data.node, selected)} title={data.node.id}>
       <Ends />
       <Rank node={data.node} />
+      <Crap node={data.node} />
       <Toggle data={data} />
       <div className="label">{data.node.label}</div>
       <Marks data={data} />
@@ -145,6 +166,7 @@ function DeclNode({ data, selected }: NodeProps<ZNode>) {
   return (
     <div className={cls("decl", node, selected)} title={node.id}>
       <Ends />
+      <Crap node={node} />
       <div className="label">{node.label}</div>
       {node.methods.map((r, i) => (
         <div
