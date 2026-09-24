@@ -1475,7 +1475,7 @@ process.exit(failed ? 1 : 0);
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 --- a/web/src/data.test.ts
@@ -1528,9 +1528,9 @@ process.exit(failed ? 1 : 0);
 +});
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/data.test.ts` Expected: FAIL (`fetchView is not a function`; `readEmbedded` of the marker throws)
+- [x] **Run:** `cd web && npx vitest run src/data.test.ts` Expected: FAIL (`fetchView is not a function`; `readEmbedded` of the marker throws)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/web/src/data.ts
@@ -1609,15 +1609,15 @@ process.exit(failed ? 1 : 0);
        <p className="empty">
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
 
-- [ ] **Run:** `make build` Expected: PASS
+- [x] **Run:** `make build` Expected: PASS
 
-- [ ] **Run:** `go test ./web` Expected: PASS, now against the built page: `LivePage` accepts its CSP element.
+- [x] **Run:** `go test ./web` Expected: PASS, now against the built page: `LivePage` accepts its CSP element.
 
-- [ ] **Run:** `cd web/e2e && npm run accept-serve` Expected: PASS, 5/5 checks in each engine.
+- [x] **Run:** `cd web/e2e && npm run accept-serve` Expected: PASS, 5/5 checks in each engine.
 
-- [ ] **Run:** `cd web/e2e && npm run accept` Expected: PASS, 39/39 in each engine (04–08's pages, from `file://`, unchanged).
+- [x] **Run:** `cd web/e2e && npm run accept` Expected: PASS, 39/39 in each engine (04–08's pages, from `file://`, unchanged).
 
 ### Task 7: README, gates and the kubernetes budget
 

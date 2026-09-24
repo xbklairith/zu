@@ -55,8 +55,22 @@ export function parseView(text: string): View {
   return v as View;
 }
 
-// readEmbedded returns the View zu wrote into the page, or null for the bare template.
-export function readEmbedded(doc: Document): View | null {
+// LIVE is what zu serve writes into the page (10): the View is at view.json.
+const LIVE = '{"live":true}';
+
+// readEmbedded returns the View zu wrote into the page, "live" when zu serve
+// sent the page, or null for the bare template.
+export function readEmbedded(doc: Document): View | "live" | null {
   const text = doc.getElementById("zu-data")?.textContent?.trim();
-  return !text || text === "{}" ? null : parseView(text);
+  if (!text || text === "{}") return null;
+  return text === LIVE ? "live" : parseView(text);
+}
+
+// fetchView asks zu serve for the View, from the origin that sent the page
+// (the CSP allows no other). Each request rescans the working tree.
+export async function fetchView(get: typeof fetch = fetch): Promise<View> {
+  const r = await get("view.json", { cache: "no-store" });
+  const text = await r.text();
+  if (!r.ok) throw new Error(`zu serve: ${text.trim() || r.status}`);
+  return parseView(text);
 }
