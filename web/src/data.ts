@@ -21,6 +21,12 @@ export type Proposal = {
   name: string; layers: { name: string; members: string[] }[]; omit?: string[];
   ranks: Record<string, number>; violations: { from: string; to: string }[];
 };
+// Metrics is the CRAP overlay (08). A package without `crap` has functions
+// but no coverage data; a function without `crap` has no coverage data.
+export type Metrics = {
+  packages: Record<string, { funcs: number; missing?: number; crap?: { mu: number; max: number; sigma: number } }>;
+  funcs: Record<string, { cc: number; stmts: number; covered: number; crap?: number }>;
+};
 export type View = {
   schema: string; kind: "project" | "change"; tool: string; head: Ref; base?: Ref; changed?: string[];
   modules: string[]; nodes: ViewNode[]; edges: ViewEdge[]; sources: Record<string, string>;
@@ -29,6 +35,7 @@ export type View = {
   // 06: only when the Policy has rules; 07: or an order or Proposals.
   policy?: { hash: string; levels: string[][]; order?: string[]; proposals?: Proposal[] };
   violations?: { new: Violation[]; fixed: Violation[]; known: number }; // 07: Change View only
+  metrics?: Metrics; // 08: only when zu was given -coverprofile
   // 07, never written by zu: the box tree a Proposal draws (proposal.ts). cut.ts
   // index reads parent instead of package ids, and scene.ts labels from label.
   regroup?: { parent: Record<string, string>; label: Record<string, string> };

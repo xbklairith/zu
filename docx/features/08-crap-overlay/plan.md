@@ -1762,7 +1762,7 @@ This is uml-viewer's `crap-grade`, `crap-band` and `rolled-crap`, cached per Vie
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 <!-- file: web/src/metrics.test.ts -->
 ```ts
@@ -1811,9 +1811,9 @@ describe("CRAP as uml-viewer grades it", () => {
 });
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/metrics.test.ts` Expected: FAIL (cannot resolve `./metrics`)
+- [x] **Run:** `cd web && npx vitest run src/metrics.test.ts` Expected: FAIL (cannot resolve `./metrics`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/web/src/data.ts
@@ -1912,8 +1912,8 @@ export function rolledCrap(view: View): Map<string, Risk> {
 }
 ```
 
-- [ ] **Run:** `cd web && npx tsc --noEmit && npx vitest run src/metrics.test.ts` Expected: PASS
-- [ ] **Commit:** `Grade CRAP and roll it up to boxes`
+- [x] **Run:** `cd web && npx tsc --noEmit && npx vitest run src/metrics.test.ts` Expected: PASS
+- [x] **Commit:** `Grade CRAP and roll it up to boxes`
 
 ### Task 8: The scene carries CRAP
 
@@ -2844,7 +2844,7 @@ That makes 39 checks per engine.
 - [x] Task 4 · `export.AddMetrics`
 - [x] Task 5 · `zu scan -coverprofile`
 - [x] Task 6 · `zu diff -coverprofile`
-- [ ] Task 7 · Grade, band and rollup
+- [x] Task 7 · Grade, band and rollup
 - [ ] Task 8 · CRAP on the scene
 - [ ] Task 9 · Fill and badge
 - [ ] Task 10 · Panel and legend
