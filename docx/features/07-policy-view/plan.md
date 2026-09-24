@@ -1,6 +1,6 @@
 # 07 · Policy View — Plan
 
-**Status:** approved 2026-09-24 (scrutinized, fixed, advisor sign-off). ADR 0008's banner wording is aligned (Deviation 7). Rulings at approval: every violation list, the Change View section included, puts Levels before cycle. zu fixes `zu diff`'s sort at the source before Task 1. A Proposal member typo makes `zu check` exit 3, like a Levels typo. `inOrder` sorts the rest of an ordered row by id.
+**Status:** Complete 2026-09-24 (see acceptance.md); approved 2026-09-24 (scrutinized, fixed, advisor sign-off). ADR 0008's banner wording is aligned (Deviation 7). Rulings at approval: every violation list, the Change View section included, puts Levels before cycle. zu fixes `zu diff`'s sort at the source before Task 1. A Proposal member typo makes `zu check` exit 3, like a Levels typo. `inOrder` sorts the rest of an ordered row by id.
 
 **Drafted** 2026-09-24, revised after scrutiny (`scrutiny-07.md`: M1–M4, Nits 5–11) and the lead's rulings. 06 is on `main` with its acceptance recorded (34d128c), and every diff here is against that commit. From 06 the plan uses `internal/policy` (`RankOf`, `EdgeRules`, `Normalize`, `Rules`), `export.Mark` and `PolicyInfo`, `diff.ViolationDelta`, and the UI's `violating` and `pinFor` (`web/src/policy.ts`). What 06 does not provide is listed under "07 needs from 06".
 
@@ -2309,9 +2309,9 @@ The expected checks grow from 20 to 29 per engine. This makes Tasks 7 and 10 rep
 
 ### Task 12: Acceptance
 
-- [ ] **1. Gates**
-- [ ] **Run:** `test -z "$(gofmt -l .)" && go vet ./... && go test ./... && golangci-lint run ./... && cd web && npx tsc --noEmit && npx vitest run && npx vite build && cd e2e && npm run accept` Expected: all clean; the harness prints `ok (29/29 checks)` for chromium, firefox and webkit.
-- [ ] **2. zu on itself**, in a scratch copy of the repository after Task 11 (`make build`, then run `bin/zu` from the copy). Write this `zu.policy.yaml`, 06's acceptance layering plus an `order` and a Proposal, and add 06's `internal/ir/bad/bad.go` importing `zu/internal/cli`:
+- [x] **1. Gates**
+- [x] **Run:** `test -z "$(gofmt -l .)" && go vet ./... && go test ./... && golangci-lint run ./... && cd web && npx tsc --noEmit && npx vitest run && npx vite build && cd e2e && npm run accept` Expected: all clean; the harness prints `ok (29/29 checks)` for chromium, firefox and webkit.
+- [x] **2. zu on itself**, in a scratch copy of the repository after Task 11 (`make build`, then run `bin/zu` from the copy). Write this `zu.policy.yaml`, 06's acceptance layering plus an `order` and a Proposal, and add 06's `internal/ir/bad/bad.go` importing `zu/internal/cli`:
 
     ```yaml
     order: [zu/cmd]
@@ -2337,7 +2337,7 @@ The expected checks grow from 20 to 29 per engine. This makes Tasks 7 and 10 rep
   - `order: [zu/cmd]` has no visible effect here: `zu/cmd` is the only rank-6 box, alone in its row. Task 11's `order.html` shows the effect.
   - Choosing Hexagon draws Entry above Adapters above Domain above Unassigned, under the banner, with one red edge at every depth and stage, and the legend reads "violates Proposal Hexagon's layers"; the hash gains `p=Hexagon` and a reload keeps it; "none" clears both.
   - `zu diff master -html` on a branch that adds `internal/ir/bad` exits 1, and the column opens with "New violations (18)" (1 levels, 17 cycle), rows in zu diff's order (the first is `cycle zu/internal/cli → zu/internal/diff`). At `#p=Hexagon` neither the select nor the banner appears.
-- [ ] **3. hugo v0.166.0** (`git -C .zu/corpus/hugo@v0.166.0 archive HEAD` into scratch) with `zu policy init`'s Levels (4 levels over 36 boxes; `zu check .` exits 0). Only the root package `github.com/gohugoio/hugo` and the externals are unranked. Measured with elk.bundled in Node, best of 3 after a warm-up, lines on:
+- [x] **3. hugo v0.166.0** (`git -C .zu/corpus/hugo@v0.166.0 archive HEAD` into scratch) with `zu policy init`'s Levels (4 levels over 36 boxes; `zu check .` exits 0). Only the root package `github.com/gohugoio/hugo` and the externals are unranked. Measured with elk.bundled in Node, best of 3 after a warm-up, lines on:
 
   | depth, stage | scene nodes / edges | step nodes | layout with ranks | without ranks | siblings of a higher rank at or below a lower one |
   |---|---|---|---|---|---|
@@ -2372,4 +2372,4 @@ The expected checks grow from 20 to 29 per engine. This makes Tasks 7 and 10 rep
 - [x] Task 9 · Proposal in the hash, never in a Change View
 - [x] Task 10 · Selector, banner, legend, new violations first
 - [x] Task 11 · The browser harness covers 07
-- [ ] Task 12 · Acceptance
+- [x] Task 12 · Acceptance
