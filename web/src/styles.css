@@ -371,6 +371,15 @@ button.st-removed {
   border-style: dashed;
   border-color: var(--accent);
 }
+.legend .swatch.crap-green {
+  background: var(--crap-green);
+}
+.legend .swatch.crap-yellow {
+  background: var(--crap-yellow);
+}
+.legend .swatch.crap-red {
+  background: var(--crap-red);
+}
 .legend .swatch.violation {
   border-color: var(--pin);
   color: var(--pin);

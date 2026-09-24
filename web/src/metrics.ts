@@ -3,7 +3,7 @@
 // uml-viewer does (config.clj at 79cc1ef) and rolls a box up to the worst
 // package under it.
 import { index } from "./cut";
-import type { View } from "./data";
+import type { View, ViewNode } from "./data";
 
 // config.clj crap-thresholds, l.3–7: μ+σ, lower is better.
 export const CRAP_STOPS = { green: 8, yellow: 12, red: 20 } as const;
@@ -70,4 +70,58 @@ export function rolledCrap(view: View): Map<string, Risk> {
   }
   rolled.set(view, out);
   return out;
+}
+
+export type CrapFacts = { lines: string[]; top: { id: string; crap: number }[] };
+
+const graded = (r: number) => `${r}, grade ${crapGrade(r).toFixed(1)} of 10`;
+
+// crapFacts is what the panel says of id's CRAP: a function's complexity,
+// coverage and CRAP; a package's μ, max, σ and its riskiest drawn functions;
+// a box's worst μ+σ below it, which is box: the drawn scene's own rollup, so
+// the panel and the badge always agree (a Change View draws a subgraph).
+// Null when id is not measured.
+export function crapFacts(view: View, id: string, box?: Risk): CrapFacts | null {
+  const m = view.metrics;
+  if (!m) return null;
+  const f = m.funcs[id];
+  if (f) {
+    const cov = f.stmts === 0 ? 100 : Math.round((100 * f.covered) / f.stmts);
+    const line = f.crap === undefined
+      ? `Complexity ${f.cc} · no coverage data: counts as red`
+      : `Complexity ${f.cc} · ${f.covered} of ${f.stmts} statements covered (${cov}%) · CRAP ${f.crap}`;
+    return { lines: [line], top: [] };
+  }
+  // A package drawn as a box that holds others (its #pkg leaf is itself)
+  // gets the box's facts; its leaf, or a package with no box under it, its own.
+  const leaf = id.endsWith("#pkg");
+  const pkg = leaf ? id.slice(0, -"#pkg".length) : id;
+  const p = m.packages[pkg];
+  if (p && (leaf || !index(view).children.has(pkg))) {
+    const node = new Map(view.nodes.map((n) => [n.id, n]));
+    const top = view.nodes
+      .filter((n) => n.kind === "function" && m.funcs[n.id]?.crap !== undefined && packageOf(node, n.id) === pkg)
+      .map((n) => ({ id: n.id, crap: m.funcs[n.id].crap! }))
+      .sort((a, b) => b.crap - a.crap || (a.id < b.id ? -1 : 1))
+      .slice(0, 5);
+    if (!p.crap) {
+      return { lines: [`No coverage data for its ${p.funcs} function${p.funcs === 1 ? "" : "s"}: counts as red`], top };
+    }
+    const { mu, max, sigma } = p.crap;
+    const lines = [`CRAP μ ${mu} · max ${max} · σ ${sigma} · μ+σ ${graded(round1(mu + sigma))}`];
+    if (p.missing) lines.push(`${p.missing} of ${p.funcs} functions without coverage data`);
+    return { lines, top };
+  }
+  if (box === undefined) return null;
+  // A Change View rolls up only the packages it draws (ruling at approval).
+  const over = view.kind === "change" ? "among drawn" : "below";
+  return { lines: [`Worst CRAP μ+σ ${over}: ${box === null ? "no coverage data, counts as red" : graded(box)}`], top: [] };
+}
+
+// packageOf is the package a declaration belongs to: a method's parent is
+// its type, whose parent is the package.
+function packageOf(node: Map<string, ViewNode>, id: string): string {
+  let p = node.get(id)?.parent ?? "";
+  while (p && node.get(p)?.kind !== "package") p = node.get(p)?.parent ?? "";
+  return p;
 }

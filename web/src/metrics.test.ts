@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { crapBand, crapGrade, crapLabel, rolledCrap } from "./metrics";
+import { changedSubgraph } from "./change";
+import { crapBand, crapFacts, crapGrade, crapLabel, rolledCrap } from "./metrics";
 import { scene } from "./scene";
 import { DEFAULT_STATE } from "./state";
 import { decl, pkgs, view } from "./testkit";
@@ -80,5 +81,64 @@ describe("the scene carries CRAP", () => {
   it("nowhere without metrics", () => {
     const { metrics: _, ...plain } = d;
     expect(scene(plain, { ...DEFAULT_STATE, depth: 3 }).nodes.some((n) => n.crap)).toBe(false);
+  });
+});
+
+describe("the panel's CRAP facts", () => {
+  const d = {
+    ...v,
+    nodes: [...v.nodes, decl("m/a/y.F", "m/a/y", "function"), decl("m/a/y.G", "m/a/y", "function"), decl("m/a/y.H", "m/a/y", "function")],
+    metrics: {
+      ...v.metrics,
+      funcs: {
+        "m/a/y.F": { cc: 3, stmts: 3, covered: 1, crap: 5.7 },
+        "m/a/y.G": { cc: 6, stmts: 10, covered: 0, crap: 42 },
+        "m/a/y.H": { cc: 2, stmts: 4, covered: 2 },
+      },
+    },
+  };
+
+  it("a package: μ, max, σ and grade, the functions without data, the riskiest first", () => {
+    expect(crapFacts(d, "m/a/y#pkg")).toEqual({
+      lines: ["CRAP μ 10 · max 30 · σ 1 · μ+σ 11, grade 6.6 of 10", "1 of 4 functions without coverage data"],
+      top: [
+        { id: "m/a/y.G", crap: 42 },
+        { id: "m/a/y.F", crap: 5.7 },
+      ],
+    });
+    expect(crapFacts(d, "m/b/z")).toEqual({ lines: ["No coverage data for its 1 function: counts as red"], top: [] });
+  });
+
+  it("a box: the worst μ+σ below it, as its badge has it", () => {
+    const r = rolledCrap(d);
+    expect(crapFacts(d, "m/a", r.get("m/a"))?.lines).toEqual(["Worst CRAP μ+σ below: 11, grade 6.6 of 10"]);
+    expect(crapFacts(d, "m", r.get("m"))?.lines).toEqual(["Worst CRAP μ+σ below: no coverage data, counts as red"]);
+    expect(crapFacts(d, "m/c", r.get("m/c"))).toBeNull(); // nothing measured below
+  });
+
+  it("a box in a Change View's changed subgraph says what its badge says", () => {
+    // m/in/x, unchanged and without coverage data, is not drawn: the badge
+    // rolls up only m/in/store, and so must the panel.
+    const whole = {
+      ...view([...pkgs(["m"], "m"), ...pkgs(["m/in/store"], "m", { status: "modified" }), ...pkgs(["m/in/x"], "m")]),
+      kind: "change" as const,
+      changed: ["m/in/store"],
+      metrics: { packages: { "m/in/store": { funcs: 1, crap: { mu: 5, max: 5, sigma: 0 } }, "m/in/x": { funcs: 2, missing: 2 } }, funcs: {} },
+    };
+    const box = scene(changedSubgraph(whole), { ...DEFAULT_STATE, depth: 2 }).nodes.find((n) => n.id === "m/in");
+    expect(box?.crap).toEqual({ risk: 5, band: "green" });
+    // Ruling at approval: a Change View says the rollup is over the drawn packages.
+    expect(crapFacts(whole, "m/in", box?.crap?.risk)?.lines).toEqual(["Worst CRAP μ+σ among drawn: 5, grade 10.0 of 10"]);
+    expect(crapFacts(whole, "m/in", null)?.lines).toEqual(["Worst CRAP μ+σ among drawn: no coverage data, counts as red"]);
+  });
+
+  it("a function: complexity, coverage and CRAP", () => {
+    expect(crapFacts(d, "m/a/y.F")?.lines).toEqual(["Complexity 3 · 1 of 3 statements covered (33%) · CRAP 5.7"]);
+    expect(crapFacts(d, "m/a/y.H")?.lines).toEqual(["Complexity 2 · no coverage data: counts as red"]);
+  });
+
+  it("nothing unmeasured, and nothing without metrics", () => {
+    expect(crapFacts(d, "m/c/w")).toBeNull();
+    expect(crapFacts(view(pkgs(["m/a"], "m")), "m/a")).toBeNull();
   });
 });

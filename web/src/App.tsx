@@ -21,7 +21,9 @@ import { useViewState } from "./useViewState";
 
 const PKG = "#pkg";
 
-function Legend({ change, policy, ranks, proposal }: { change: boolean; policy: boolean; ranks: boolean; proposal: string | null }) {
+type LegendProps = { change: boolean; policy: boolean; ranks: boolean; crap: boolean; proposal: string | null };
+
+function Legend({ change, policy, ranks, crap, proposal }: LegendProps) {
   return (
     <div className="legend" aria-label="Legend">
       {change && (
@@ -36,6 +38,13 @@ function Legend({ change, policy, ranks, proposal }: { change: boolean; policy: 
       )}
       {policy && <span className="swatch violation">{redLegend(proposal)}</span>}
       {ranks && <span>n: Level, 0 = innermost, drawn at the bottom</span>}
+      {crap && (
+        <>
+          <span className="swatch crap-green">CRAP μ+σ ≤ 8 low</span>
+          <span className="swatch crap-yellow">≤ 12 mid</span>
+          <span className="swatch crap-red">&gt; 12 high · ? no coverage data</span>
+        </>
+      )}
     </div>
   );
 }
@@ -214,6 +223,7 @@ export function App({ view: whole }: { view: View }) {
   // when something is ranked; an order-only Policy needs neither.
   const rules = (proposed.policy?.levels.length ?? 0) > 0 || proposed.edges.some((e) => e.violation);
   const ranks = sc.nodes.some((n) => n.rank !== undefined);
+  const crap = sc.nodes.some((n) => n.crap); // 08: only with a coverprofile (A7)
   const boxes = sc.nodes.filter((n) => n.shape === "box" || n.shape === "decl").length;
   const pkg = state.focus.endsWith(PKG) ? state.focus.slice(0, -PKG.length) : state.focus;
 
@@ -246,7 +256,9 @@ export function App({ view: whole }: { view: View }) {
             {PROPOSAL_NOTICE}: {state.proposal}
           </div>
         )}
-        {(change || rules || ranks) && <Legend change={change} policy={rules} ranks={ranks} proposal={proposed === whole ? null : state.proposal} />}
+        {(change || rules || ranks || crap) && (
+          <Legend change={change} policy={rules} ranks={ranks} crap={crap} proposal={proposed === whole ? null : state.proposal} />
+        )}
         {sc !== requested && (
           <div className="notice" id="zu-notice" role="status">
             Collapsed to depth {sc.depth}: depth {requested.depth} has{" "}
@@ -318,6 +330,7 @@ export function App({ view: whole }: { view: View }) {
           edge={edge}
           bundles={sc.bundles}
           hidden={sc.nodes.find((n) => n.id === sc.selected)?.hidden}
+          crap={sc.nodes.find((n) => n.id === sc.selected)?.crap?.risk}
           onReveal={jump}
           onClose={() => choose(null)}
         />

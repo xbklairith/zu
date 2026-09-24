@@ -3,6 +3,7 @@ import type { Bundle } from "./bundle";
 import type { Hunk, Loc, View, ViewEdge, ViewNode } from "./data";
 import { calls, imports, targets, type Row } from "./facts";
 import { linkFor } from "./links";
+import { crapFacts, type Risk } from "./metrics";
 import type { SceneEdge } from "./scene";
 import { EXTERNALS, OUTSIDE, boxStats } from "./tree";
 
@@ -16,6 +17,7 @@ type Props = {
   edge: SceneEdge | null;
   bundles: Bundle[]; // the scene's bundles: an aggregate's real targets come from them
   hidden?: ViewEdge[]; // 07: violating imports inside the selected box, drawn as no line
+  crap?: Risk; // 08: the selected box's CRAP as the scene rolled it up
   onReveal: (id: string) => void;
   onClose: () => void;
 };
@@ -186,7 +188,35 @@ function Hidden({ edges, onReveal }: { edges: ViewEdge[]; onReveal: (id: string)
   );
 }
 
-export function Panel({ view, id, edge, bundles, hidden, onReveal, onClose }: Props) {
+// Crap is what the CRAP overlay knows of the selection (08).
+function Crap({ view, id, box, onReveal }: { view: View; id: string; box?: Risk; onReveal: (id: string) => void }) {
+  const f = crapFacts(view, id, box);
+  if (!f) return null;
+  return (
+    <section className="crap-facts">
+      {f.lines.map((l) => (
+        <p key={l}>{l}</p>
+      ))}
+      {f.top.length > 0 && (
+        <>
+          <h3>Highest CRAP</h3>
+          <ul className="rows">
+            {f.top.map((t) => (
+              <li key={t.id}>
+                <button type="button" className="link" onClick={() => onReveal(t.id)}>
+                  <code>{t.id}</code>
+                </button>
+                <span className="muted"> {t.crap}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  );
+}
+
+export function Panel({ view, id, edge, bundles, hidden, crap, onReveal, onClose }: Props) {
   const title = edge ? `${edge.from} → ${edge.to}` : (id ?? "");
   const node = id === null ? undefined : view.nodes.find((n) => n.id === (id.endsWith(PKG) ? id.slice(0, -PKG.length) : id));
   let body: React.ReactNode;
@@ -244,6 +274,7 @@ export function Panel({ view, id, edge, bundles, hidden, onReveal, onClose }: Pr
         </button>
       </header>
       {!edge && hidden && <Hidden edges={hidden} onReveal={onReveal} />}
+      {!edge && id !== null && <Crap view={view} id={id} box={crap} onReveal={onReveal} />}
       {body}
     </aside>
   );

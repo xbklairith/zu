@@ -2322,7 +2322,7 @@ describe.each([["light", light], ["dark", dark]])("CRAP fills, %s", (_, t) => {
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 --- a/web/src/metrics.test.ts
@@ -2398,9 +2398,9 @@ describe.each([["light", light], ["dark", dark]])("CRAP fills, %s", (_, t) => {
 +});
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/metrics.test.ts` Expected: FAIL (`crapFacts is not a function`)
+- [x] **Run:** `cd web && npx vitest run src/metrics.test.ts` Expected: FAIL (`crapFacts is not a function`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/web/src/App.tsx
@@ -2616,8 +2616,8 @@ describe.each([["light", light], ["dark", dark]])("CRAP fills, %s", (_, t) => {
    color: var(--pin);
 ```
 
-- [ ] **Run:** `cd web && npx tsc --noEmit && npx vitest run && npx vite build` Expected: PASS
-- [ ] **Commit:** `Explain CRAP in the panel and the legend`
+- [x] **Run:** `cd web && npx tsc --noEmit && npx vitest run && npx vite build` Expected: PASS
+- [x] **Commit:** `Explain CRAP in the panel and the legend`
 
 ### Task 11: The browser harness covers 08
 
@@ -2847,6 +2847,6 @@ That makes 39 checks per engine.
 - [x] Task 7 · Grade, band and rollup
 - [x] Task 8 · CRAP on the scene
 - [x] Task 9 · Fill and badge
-- [ ] Task 10 · Panel and legend
+- [x] Task 10 · Panel and legend
 - [ ] Task 11 · Browser harness
 - [ ] Task 12 · Acceptance
