@@ -62,3 +62,34 @@ func TestDiffHTMLDrawsTheLensAndTheViolations(t *testing.T) {
 			strings.Contains(s, `"violation":"levels"`), !strings.Contains(s, "example.com/m/gone"))
 	}
 }
+
+// 07: the View carries zu diff's violation delta, for the Change View's "new
+// violations first", with or without a lens (06's View never carried it).
+func TestDiffHTMLCarriesTheViolationDelta(t *testing.T) {
+	withUI(t)
+	needGit(t)
+	for _, extra := range []string{"", "omit: [example.com/m/gone]\n"} {
+		dir := repo(t, map[string]string{
+			"go.mod":        "module example.com/m\n",
+			"a/a.go":        "package a\n",
+			"gone/gone.go":  "package gone\n",
+			policy.FileName: "levels: [example.com/m/b, example.com/m/a]\n" + extra,
+		})
+		git(t, dir, "init", "-q", "-b", "main")
+		git(t, dir, "add", "-A")
+		git(t, dir, "commit", "-q", "-m", "base")
+		git(t, dir, "checkout", "-q", "-b", "feat")
+		writeFile(t, dir, "b/b.go", "package b\n\nimport _ \"example.com/m/a\"\n")
+		git(t, dir, "add", "-A")
+		git(t, dir, "commit", "-q", "-m", "add b")
+		t.Chdir(dir)
+		out := filepath.Join(t.TempDir(), "change.html")
+		if code, _, errOut := run("diff", "main", "-html", out); code != ExitViolation {
+			t.Fatalf("lens %v: exit %d: %s", extra != "", code, errOut)
+		}
+		want := `"violations":{"new":[{"rule":"levels","from":"example.com/m/b","to":"example.com/m/a"}],"fixed":[],"known":0}`
+		if !strings.Contains(readFile(t, out), want) {
+			t.Errorf("lens %v: Change View lacks %s", extra != "", want)
+		}
+	}
+}

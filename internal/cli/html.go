@@ -120,6 +120,7 @@ type changeSides struct {
 // head, and at the host's compare page when both sides are clean commits.
 func writeChangeHTML(ctx context.Context, c changeSides, sum *diff.Summary, o *htmlOptions, stderr io.Writer) error {
 	base, head := c.base, c.head
+	violations := sum.Violations
 	if c.pol.Lens() {
 		// The View draws both sides as the Policy does, so its changed list
 		// must come from the same IRs; the printed Summary stays whole.
@@ -131,6 +132,7 @@ func writeChangeHTML(ctx context.Context, c changeSides, sum *diff.Summary, o *h
 		return err
 	}
 	export.Mark(v, c.pol, c.head)
+	v.Violations = violations
 	for _, t := range []scan.Tree{c.baseTree, c.headTree} {
 		if ct, ok := t.(*gitref.CommitTree); ok && ct.Err() != nil {
 			return ct.Err()

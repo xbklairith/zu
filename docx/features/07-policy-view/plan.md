@@ -480,7 +480,7 @@ func (p *Policy) Omitted(id string) bool {
 
 **Steps:**
 
-- [ ] **Write the failing test**, without and with a lens
+- [x] **Write the failing test**, without and with a lens
 
 ```diff
 --- a/internal/cli/policy_html_test.go
@@ -522,9 +522,9 @@ func (p *Policy) Omitted(id string) bool {
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/cli -run TestDiffHTMLCarriesTheViolationDelta` Expected: FAIL (`lens false: Change View lacks "violations"…`)
+- [x] **Run:** `go test ./internal/cli -run TestDiffHTMLCarriesTheViolationDelta` Expected: FAIL (`lens false: Change View lacks "violations"…`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/internal/cli/html.go
@@ -569,7 +569,7 @@ func (p *Policy) Omitted(id string) bool {
  // Node is an IR node reduced to what a view draws.
 ```
 
-- [ ] **Run:** `go test ./internal/...` Expected: PASS; 04's and 06's goldens unchanged
+- [x] **Run:** `go test ./internal/...` Expected: PASS; 04's and 06's goldens unchanged
 
 ### Task 4: Boxes carry their rank
 
@@ -2363,7 +2363,7 @@ The expected checks grow from 20 to 29 per engine. This makes Tasks 7 and 10 rep
 
 - [x] Task 1 · `policy.ForProposal` and member validation
 - [x] Task 2 · View `order` and `proposals`
-- [ ] Task 3 · Change View violation delta
+- [x] Task 3 · Change View violation delta
 - [ ] Task 4 · Rolled ranks on boxes
 - [ ] Task 5 · Hidden-violation mark
 - [ ] Task 6 · Level 0 at the bottom, and `order`

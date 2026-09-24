@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"slices"
 
+	"zu/internal/diff"
 	"zu/internal/ir"
 )
 
@@ -26,7 +27,10 @@ type View struct {
 	Honesty Honesty           `json:"honesty"`
 	Changed []string          `json:"changed,omitempty"` // Change View: changed packages, bottom-up
 	Hunks   map[string][]Hunk `json:"hunks,omitempty"`   // Change View: line diffs of changed files
-	Policy  *PolicyInfo       `json:"policy,omitempty"`  // only when the Policy has rules
+	Policy  *PolicyInfo       `json:"policy,omitempty"`  // only when the Policy has rules, an order or Proposals
+	// Violations is the Change View's new, fixed and known violations (07),
+	// from the whole Summary zu diff printed.
+	Violations *diff.ViolationDelta `json:"violations,omitempty"`
 }
 
 // Node is an IR node reduced to what a view draws.
