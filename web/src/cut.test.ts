@@ -1,11 +1,45 @@
 import { describe, expect, it } from "vitest";
-import { autoDepth, cut, leafOf, packageOf, packagesIn, parentBox } from "./cut";
-import { decl, pkgs, view } from "./testkit";
+import { autoDepth, cut, home, leafOf, packageOf, packagesIn, parentBox, upTo } from "./cut";
+import { decl, edge, exts, pkgs, view } from "./testkit";
 
 const shop = view([
   ...pkgs(["ex/shop", "ex/shop/internal/a", "ex/shop/internal/b/c"], "ex/shop"),
   ...pkgs(["ex/shop/tools/gen"], "ex/shop/tools"),
 ]);
+
+describe("home (11)", () => {
+  it("opens through boxes that hold one box and nothing else", () => {
+    // hugo: one module with a root package and child boxes opens at the module.
+    expect(home(view(pkgs(["h", "h/a", "h/b"], "h")))).toBe("h");
+    // a module without a root package, one box deeper, and only one below it.
+    expect(home(view(pkgs(["x.io/m/pkg/a", "x.io/m/pkg/b"], "x.io/m")))).toBe("x.io/m/pkg");
+    // two module roots, as in shop (ex/shop and ex/shop/tools), stay at the root.
+    expect(home(shop)).toBe("");
+    // a box whose only child is a leaf is where the tree ends: stop above it.
+    expect(home(view(pkgs(["x.io/m/a"], "x.io/m")))).toBe("x.io/m");
+    // a box that is also a package holds more than its one child.
+    expect(home(view(pkgs(["h", "h/a", "h/a/x", "h/a/y"], "h")))).toBe("h");
+  });
+  it("is the page root in a Change View, which opens where it did before 11", () => {
+    const one = view(pkgs(["h", "h/a", "h/b"], "h"));
+    expect(home({ ...one, kind: "change" })).toBe("");
+    expect(upTo({ ...one, kind: "change" }, "h")).toBe("");
+  });
+  it("does not count external modules: hugo's root holds its module and an externals oval", () => {
+    const h = view([...pkgs(["h", "h/a", "h/b"], "h"), ...exts(["x.io/e"])], [edge("h/a", "x.io/e")]);
+    expect(home(h)).toBe("h");
+  });
+  it("goes up to the page root, never to a root that differs from home only by the wrapper", () => {
+    const h = view(pkgs(["x.io/m/pkg/a/x", "x.io/m/pkg/a/y", "x.io/m/pkg/b"], "x.io/m"));
+    expect(home(h)).toBe("x.io/m/pkg");
+    expect(upTo(h, "")).toBeNull(); // Esc at the page root does nothing
+    expect(upTo(h, "x.io/m/pkg")).toBeNull(); // nor at home named by a link
+    expect(upTo(h, "x.io/m/pkg/a")).toBe(""); // home's children go to the page root
+    expect(upTo(h, "x.io/m/pkg/a/x")).toBe("x.io/m/pkg/a"); // below that, as 05 did
+    expect(upTo(shop, "ex/shop/internal")).toBe("ex/shop"); // no home: as 05 did
+    expect(upTo(shop, "ex/shop")).toBe("");
+  });
+});
 
 describe("cut", () => {
   it("opens boxes above the depth and records each leaf's container", () => {

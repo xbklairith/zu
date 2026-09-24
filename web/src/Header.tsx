@@ -5,6 +5,7 @@ import { breadcrumb, depthNote, edgesNote, honestyLine, title } from "./headline
 type Props = {
   view: View;
   focus: string;
+  home?: string; // 11: the box the page root draws (cut.ts home)
   boxes: number;
   depth: number;
   onFocus: (box: string) => void;
@@ -15,7 +16,7 @@ type Props = {
   onToggle?: () => void;
 };
 
-export function Header({ view, focus, boxes, depth, onFocus, auto, from, hidden = 0, full, onToggle }: Props) {
+export function Header({ view, focus, home = "", boxes, depth, onFocus, auto, from, hidden = 0, full, onToggle }: Props) {
   const compare = view.links?.compare?.startsWith("https://") ? view.links.compare : null;
   const [showErrors, setShowErrors] = useState(false);
   const errors = view.honesty.parseErrors;
@@ -42,7 +43,7 @@ export function Header({ view, focus, boxes, depth, onFocus, auto, from, hidden 
         </ul>
       )}
       <nav className="crumbs" aria-label="Focus">
-        {breadcrumb(view, focus).map((c, i, all) => (
+        {breadcrumb(view, focus, home).map((c, i, all) => (
           <span key={c.id}>
             {i > 0 && <span className="sep"> / </span>}
             {i === all.length - 1 ? (

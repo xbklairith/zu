@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import golden from "../../internal/export/testdata/shop.view.golden.json";
 import { parseView, type View } from "./data";
 import { breadcrumb, depthNote, edgesNote, honestyLine, redLegend, title, violationsNote } from "./headline";
+import { pkgs, view } from "./testkit";
 
 const v = parseView(JSON.stringify(golden));
 
@@ -37,6 +38,14 @@ describe("header", () => {
       { id: "example.com/shop/internal/store", label: "store" },
     ]);
     expect(breadcrumb(v, "example.com/shop#pkg").at(-1)).toEqual({ id: "example.com/shop#pkg", label: "shop (package)" });
+  });
+  it("breadcrumb starts at home, not at a root around it (11)", () => {
+    const h = view(pkgs(["x.io/m/pkg/a/x", "x.io/m/pkg/a/y", "x.io/m/pkg/b"], "x.io/m"));
+    expect(breadcrumb(h, "", "x.io/m/pkg")).toEqual([{ id: "", label: "x.io/m/pkg" }]);
+    expect(breadcrumb(h, "x.io/m/pkg", "x.io/m/pkg")).toEqual([{ id: "", label: "x.io/m/pkg" }]);
+    expect(breadcrumb(h, "x.io/m/pkg/a/x", "x.io/m/pkg")).toEqual([
+      { id: "", label: "x.io/m/pkg" }, { id: "x.io/m/pkg/a", label: "a" }, { id: "x.io/m/pkg/a/x", label: "x" },
+    ]);
   });
   it("notes the depth and an over-budget level", () => {
     expect(depthNote(5, 3)).toBe("5 boxes at depth 3. Double-click to open a box, Esc to go up.");

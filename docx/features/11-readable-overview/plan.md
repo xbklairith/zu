@@ -1892,7 +1892,7 @@ diff --git a/web/src/styles.css b/web/src/styles.css
 
 **Steps:**
 
-- [ ] **Write the failing tests.** `cut.test.ts` covers `home`, including a Change View, which stays at the page root (Deviation 3).
+- [x] **Write the failing tests.** `cut.test.ts` covers `home`, including a Change View, which stays at the page root (Deviation 3).
 
 ```diff
 diff --git a/web/src/cut.test.ts b/web/src/cut.test.ts
@@ -2008,9 +2008,9 @@ diff --git a/web/src/headline.test.ts b/web/src/headline.test.ts
      expect(depthNote(5, 2, false)).toBe("5 boxes at depth 2 (chosen). Double-click to open a box, Esc to go up.");
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/cut.test.ts src/scene.test.ts src/headline.test.ts` Expected: FAIL (`home` is not exported)
+- [x] **Run:** `cd web && npx vitest run src/cut.test.ts src/scene.test.ts src/headline.test.ts` Expected: FAIL (`home` is not exported)
 
-- [ ] **Implement.** `App` passes `{home: true}` in its three `scene` calls and reads the focus back from the scene. Esc and "Go back one level" go through `upTo`, and the header's breadcrumb starts at home (Deviation 3).
+- [x] **Implement.** `App` passes `{home: true}` in its three `scene` calls and reads the focus back from the scene. Esc and "Go back one level" go through `upTo`, and the header's breadcrumb starts at home (Deviation 3).
 
 ```diff
 diff --git a/web/src/cut.ts b/web/src/cut.ts
@@ -2265,7 +2265,7 @@ diff --git a/web/src/App.tsx b/web/src/App.tsx
              )}{" "}
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
 
 ### Task 6: A readable first view, and a minimap
 

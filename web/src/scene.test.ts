@@ -45,6 +45,23 @@ describe("scene", () => {
     const one = scene(view(pkgs(["x.io/m/a", "x.io/m/b"], "x.io/m")), DEFAULT_STATE);
     expect(one.nodes.map((n) => n.label)).toEqual(["x.io/m", "a", "b"]);
   });
+  it("draws the page root at home, and any other focus as asked (11)", () => {
+    const h = view(pkgs(["h", "h/a", "h/b"], "h"), [edge("h/a", "h/b")]);
+    const root = scene(h, DEFAULT_STATE, { home: true });
+    expect([root.focus, root.depth, root.nodes.map((n) => n.label)]).toEqual(["h", 1, ["h (package)", "a", "b"]]);
+    expect(scene(h, { ...DEFAULT_STATE, focus: "h/a" }, { home: true }).focus).toBe("h/a");
+    expect(scene(h, DEFAULT_STATE).focus).toBe(""); // without the option: the root, as 05 drew it
+  });
+  it("draws the externals at home, and a deep link or a search pick as before (11)", () => {
+    const h = view([...pkgs(["h", "h/a", "h/a/x", "h/b"], "h"), ...exts(["x.io/e"])], [edge("h/a/x", "x.io/e"), edge("h/b", "h/a/x")]);
+    const root = scene(h, DEFAULT_STATE, { home: true });
+    expect([root.focus, root.nodes.filter((n) => n.shape === "oval").map((n) => n.id)]).toEqual(["h", ["x.io/e"]]);
+    for (const s of [{ focus: "h/a" }, { focus: "h/a", depth: 2 }, { selected: "h/a/x" }, { focus: "h/a", selected: "h/a/x" }]) {
+      const deep = { ...DEFAULT_STATE, ...s };
+      expect(scene(h, deep, { home: true }).nodes).toEqual(scene(h, { ...deep, focus: deep.focus || "h" }).nodes);
+    }
+    expect(scene(h, { ...DEFAULT_STATE, selected: "h/a/x" }, { home: true }).nodes.find((n) => n.selected)?.id).toBe("h/a/x");
+  });
   it("hides weak bundles below minPairs unless pinned", () => {
     expect(ids(at({ depth: 2, minPairs: 2 }).edges)).toEqual(["m/api→m/core"]);
     const pinned = scene(v, { ...DEFAULT_STATE, depth: 2, minPairs: 2 }, { pin: (b) => b.to === "x.io/e" });

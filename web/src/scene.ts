@@ -1,7 +1,7 @@
 // scene is the one pure function the canvas draws: View + ViewState → nodes and edges.
 import { nodeMark, unchangedCount } from "./change";
 import type { View, ViewEdge } from "./data";
-import { autoDepth, childrenOf, cmp, cut, declsOf, index, isBox, leafOf, OUTSIDE, packagesIn, PKG } from "./cut";
+import { autoDepth, childrenOf, cmp, cut, declsOf, home, index, isBox, leafOf, OUTSIDE, packagesIn, PKG } from "./cut";
 import { bundlesOver, EXTERNALS, externalsOf, type Bundle } from "./bundle";
 import { declutter, NO_PINS, type Mark, type Pin } from "./declutter";
 import { crapBand, packageRisk, rolledCrap, type Band, type Risk } from "./metrics";
@@ -34,6 +34,7 @@ export type SceneEdge = {
   dir?: Dir; // 11: on a lit edge, out = the selection depends on the other end, in = the other end on it
 };
 export type Scene = {
+  focus: string; // the box drawn: the state's focus, or home() for the page root (11)
   depth: number; stage: Stage;
   lines: boolean; // every edge is drawn at rest; false = the selection's edges, over marks (off) or none (auto)
   nodes: SceneNode[]; edges: SceneEdge[];
@@ -45,16 +46,19 @@ export type Scene = {
   decls: boolean; noDetail: boolean;
 };
 
-// Options for callers other than the Project View: 06 passes pin (violations).
-export type SceneOptions = { pin?: Pin };
+// Options for callers other than the Project View: 06 passes pin (violations);
+// the page passes home (11), which draws the page root at home(view).
+export type SceneOptions = { pin?: Pin; home?: boolean };
 
 const last = (id: string) => id.slice(id.lastIndexOf("/") + 1);
 
 export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene {
   const pin = opts.pin ?? NO_PINS;
   const { node } = index(view);
-  const depth = s.depth ?? autoDepth(view, s.focus);
-  const c = cut(view, s.focus, depth, s.toggled);
+  // 11: the page root opens at home, so the hash keeps no focus for it.
+  const focus = s.focus === "" && opts.home ? home(view) : s.focus;
+  const depth = s.depth ?? autoDepth(view, focus);
+  const c = cut(view, focus, depth, s.toggled);
   let kept = bundlesOver(view, c, { externals: s.externals }).filter((b) => b.pairs >= s.minPairs || pin(b));
   let leaves = new Set([...c.leaves, ...kept.flatMap((b) => [b.from, b.to])]);
   const open = new Set(c.containers);
@@ -113,7 +117,7 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   }
   const bright = (id: string) => selected === null || inSel(id) || lit.has(id);
 
-  const base = s.focus.endsWith(PKG) ? s.focus.slice(0, -PKG.length) : s.focus;
+  const base = focus.endsWith(PKG) ? focus.slice(0, -PKG.length) : focus;
   const externals = externalsOf(view, kept).length;
   // path: the label is the box's path below its container, which 11 shortens.
   const paths = new Set<string>();
@@ -215,7 +219,7 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   edges.sort(byEnds);
   all.sort(byEnds);
   return {
-    depth, stage: s.stage, lines: d.lines && !hush, nodes: nodes.sort((x, y) => cmp(x.id, y.id)), edges, all, hidden, bundles: kept,
+    focus, depth, stage: s.stage, lines: d.lines && !hush, nodes: nodes.sort((x, y) => cmp(x.id, y.id)), edges, all, hidden, bundles: kept,
     selected, selectedRow: row?.selectedRow ?? selectedRow, decls: c.decls, noDetail: c.noDetail,
   };
 }

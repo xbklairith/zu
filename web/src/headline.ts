@@ -31,12 +31,14 @@ export function honestyLine(view: View): string {
 export type Crumb = { id: string; label: string };
 
 // breadcrumb lists the boxes from the page root down to focus.
-export function breadcrumb(view: View, focus: string): Crumb[] {
+// With a home (11, cut.ts), the page root is drawn as home: the trail starts
+// there, named by its id, and its link goes to the page root.
+export function breadcrumb(view: View, focus: string, home = ""): Crumb[] {
   const path: string[] = [];
-  for (let b = focus; b !== ""; b = parentBox(view, b)) path.unshift(b);
-  const crumbs: Crumb[] = [{ id: "", label: "root" }];
+  for (let b = focus; b !== "" && b !== home; b = parentBox(view, b)) path.unshift(b);
+  const crumbs: Crumb[] = [{ id: "", label: home || "root" }];
   for (const id of path) {
-    const parent = crumbs[crumbs.length - 1].id;
+    const parent = crumbs.length === 1 ? home : crumbs[crumbs.length - 1].id;
     let label: string;
     const named = view.regroup?.label[id]; // 07: a Proposal's layer boxes and their tops
     if (named !== undefined) label = named;

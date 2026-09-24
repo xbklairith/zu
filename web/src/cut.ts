@@ -179,6 +179,35 @@ export function leafOf(view: View, c: Cut): (pkg: string) => string {
   };
 }
 
+// home is the box the page root opens at (11): down from the root through
+// every box that holds exactly one child box and nothing else (no package of
+// its own), while that child holds boxes too. A single-module repository with
+// a root package (hugo) opens at the module; kubernetes, with 38 module roots,
+// at the root. The root around one box draws nothing the box does not.
+// A Change View opens at the page root, as it did before 11: its subgraph can
+// be one changed package deep inside a module.
+export function home(view: View): string {
+  if (view.kind === "change") return "";
+  const ix = index(view);
+  let at = "";
+  for (;;) {
+    const kids = childrenOf(view, at);
+    if (kids.length !== 1 || ix.pkg.has(at) || childrenOf(view, kids[0]).length === 0) return at;
+    at = kids[0];
+  }
+}
+
+// upTo is where Esc and "Go back one level" go from focus (11): nowhere
+// (null) at the page root or at home, the page root from home's children, and
+// the parent box elsewhere, as 05 did. So going up never lands on a root that
+// differs from home only by the boxes home descends through.
+export function upTo(view: View, focus: string): string | null {
+  const h = home(view);
+  if (focus === "" || focus === h) return null;
+  const p = parentBox(view, focus);
+  return p === h ? "" : p;
+}
+
 // autoDepth: start at 1 and go deeper while the next level has ≤ 60 leaves and
 // more than this one (decision Q4, relative to the focus).
 export function autoDepth(view: View, focus: string): number {

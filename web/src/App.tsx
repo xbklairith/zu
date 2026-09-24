@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { Canvas } from "./Canvas";
 import { changedSubgraph, nodeMark } from "./change";
-import { parentBox } from "./cut";
+import { home, upTo } from "./cut";
 import type { View } from "./data";
 import { pageEngine } from "./engine";
 import { Header } from "./Header";
@@ -121,6 +121,7 @@ export function App({ view: whole }: { view: View }) {
   // focus: from the start, and on a later hashchange.
   const [full, setFull] = useState(() => change && openFull(changedSubgraph(whole), state.focus));
   const view = useMemo(() => (change && !full ? changedSubgraph(whole) : proposed), [whole, proposed, change, full]);
+  const homeBox = useMemo(() => home(view), [view]); // 11: what the page root draws
   useEffect(() => {
     if (change && !full && openFull(view, state.focus)) setFull(true);
   }, [change, full, view, state.focus]);
@@ -129,7 +130,7 @@ export function App({ view: whole }: { view: View }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [fit, setFit] = useState(0);
   const pin = useMemo(() => pinFor(whole), [whole]); // 06: violations stay red
-  const requested = useMemo(() => scene(view, state, { pin }), [view, state, pin]);
+  const requested = useMemo(() => scene(view, state, { pin, home: true }), [view, state, pin]);
   // A view over DRAW_LIMIT draws the deepest depth that fits and says so; only
   // when even depth 1 is too big does the reader choose (Deviation 8).
   // "Draw depth M anyway" holds for this graph only.
@@ -137,8 +138,8 @@ export function App({ view: whole }: { view: View }) {
   const [confirmed, setConfirmed] = useState<string | null>(null);
   const fitted = useMemo(() => {
     if (confirmed === wanted) return requested;
-    const d = fitDepth(requested, (depth) => scene(view, { ...state, depth }, { pin }));
-    return d === null ? null : d === requested.depth ? requested : scene(view, { ...state, depth: d }, { pin });
+    const d = fitDepth(requested, (depth) => scene(view, { ...state, depth }, { pin, home: true }));
+    return d === null ? null : d === requested.depth ? requested : scene(view, { ...state, depth: d }, { pin, home: true });
   }, [confirmed, wanted, requested, view, state, pin]);
   const sc = fitted ?? requested;
   const ask = fitted === null;
@@ -201,7 +202,7 @@ export function App({ view: whole }: { view: View }) {
       const a = keyAction(e.key, {
         searchOpen,
         selected: state.selected !== null,
-        atRoot: state.focus === "",
+        atRoot: upTo(view, state.focus) === null,
         typing: e.target instanceof HTMLInputElement,
         mod: e.metaKey || e.ctrlKey || e.altKey,
       });
@@ -211,7 +212,7 @@ export function App({ view: whole }: { view: View }) {
       } else if (a === "closeSearch") searchBox.current?.blur();
       else if (a === "fit") setFit((n) => n + 1);
       else if (a === "clearSelection") choose(null);
-      else if (a === "up") update((s) => up(s, parentBox(view, s.focus)));
+      else if (a === "up") update((s) => up(s, upTo(view, s.focus) ?? ""));
       else if (a === "declutter") update((s) => ({ ...s, stage: nextStage(s.stage) }));
       else if (a === "deeper") update((s) => deeper(s, sc.depth));
       else if (a === "shallower") update((s) => shallower(s, sc.depth));
@@ -229,13 +230,14 @@ export function App({ view: whole }: { view: View }) {
   const ranks = sc.nodes.some((n) => n.rank !== undefined);
   const crap = sc.nodes.some((n) => n.crap); // 08: only with a coverprofile (A7)
   const boxes = sc.nodes.filter((n) => n.shape === "box" || n.shape === "decl").length;
-  const pkg = state.focus.endsWith(PKG) ? state.focus.slice(0, -PKG.length) : state.focus;
+  const pkg = sc.focus.endsWith(PKG) ? sc.focus.slice(0, -PKG.length) : sc.focus;
 
   return (
     <div className={`app${change ? " change" : ""}${change && !full ? " subgraph" : ""}`}>
       <Header
         view={proposed}
-        focus={state.focus}
+        focus={sc.focus}
+        home={homeBox}
         boxes={boxes}
         depth={sc.depth}
         auto={state.depth === null}
@@ -298,8 +300,8 @@ export function App({ view: whole }: { view: View }) {
             <button type="button" onClick={() => update((s) => ({ ...s, edges: "off" }))}>
               Hide edges
             </button>{" "}
-            {state.focus !== "" && (
-              <button type="button" onClick={() => update((s) => up(s, parentBox(view, s.focus)))}>
+            {upTo(view, state.focus) !== null && (
+              <button type="button" onClick={() => update((s) => up(s, upTo(view, s.focus) ?? ""))}>
                 Go back one level
               </button>
             )}{" "}
