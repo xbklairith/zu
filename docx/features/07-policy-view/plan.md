@@ -329,7 +329,7 @@ func (p *Policy) Omitted(id string) bool {
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 --- a/internal/export/policy_test.go
@@ -376,9 +376,9 @@ func (p *Policy) Omitted(id string) bool {
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/export` Expected: FAIL (`Policy = null`)
+- [x] **Run:** `go test ./internal/export` Expected: FAIL (`Policy = null`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/internal/export/policy.go
@@ -469,7 +469,7 @@ func (p *Policy) Omitted(id string) bool {
  }
 ```
 
-- [ ] **Run:** `go test ./internal/export ./internal/cli` Expected: PASS
+- [x] **Run:** `go test ./internal/export ./internal/cli` Expected: PASS
 
 ### Task 3: The Change View carries the violation delta
 
@@ -2362,7 +2362,7 @@ The expected checks grow from 20 to 29 per engine. This makes Tasks 7 and 10 rep
 ## Progress
 
 - [x] Task 1 · `policy.ForProposal` and member validation
-- [ ] Task 2 · View `order` and `proposals`
+- [x] Task 2 · View `order` and `proposals`
 - [ ] Task 3 · Change View violation delta
 - [ ] Task 4 · Rolled ranks on boxes
 - [ ] Task 5 · Hidden-violation mark
