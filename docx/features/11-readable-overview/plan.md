@@ -2277,7 +2277,7 @@ The first view (Deviation 6), the lead's screenshot review (Deviation 14), readi
 
 **Steps:**
 
-- [ ] **Write the failing tests.** `viewport.test.ts` is new. `layout.test.ts` adds `textWidth`, text-sized boxes with the longest stats line, the `ROW_MAX` wrap (containers counted), and a container widened to its label but no taller than its rows. `scene.test.ts` adds the uses/used-by counts (the same across edge modes and selection) and the hubs and the against count; `tree.test.ts` the stats line; `rank.test.ts` the pairs set aside; `headline.test.ts` `againstNote`. The WRAP case moves to declarations.
+- [x] **Write the failing tests.** `viewport.test.ts` is new. `layout.test.ts` adds `textWidth`, text-sized boxes with the longest stats line, the `ROW_MAX` wrap (containers counted), and a container widened to its label but no taller than its rows. `scene.test.ts` adds the uses/used-by counts (the same across edge modes and selection) and the hubs and the against count; `tree.test.ts` the stats line; `rank.test.ts` the pairs set aside; `headline.test.ts` `againstNote`. The WRAP case moves to declarations.
 
 <!-- file: web/src/viewport.test.ts -->
 ```ts
@@ -2610,9 +2610,9 @@ diff --git a/web/src/headline.test.ts b/web/src/headline.test.ts
      const at = (head: View["head"], modules = v.modules) => title({ ...v, head, modules });
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/viewport.test.ts src/layout.test.ts src/scene.test.ts src/tree.test.ts src/rank.test.ts src/headline.test.ts` Expected: FAIL (`Failed to resolve import "./viewport"`; `textWidth`, `statsLine`, `ROW_MAX`, `WRAP_GAP`, `ranks`, `siblingRanks`, `againstNote` and `mapByDefault` are not exported; no box has `stats` or `hub`)
+- [x] **Run:** `cd web && npx vitest run src/viewport.test.ts src/layout.test.ts src/scene.test.ts src/tree.test.ts src/rank.test.ts src/headline.test.ts` Expected: FAIL (`Failed to resolve import "./viewport"`; `textWidth`, `statsLine`, `ROW_MAX`, `WRAP_GAP`, `ranks`, `siblingRanks`, `againstNote` and `mapByDefault` are not exported; no box has `stats` or `hub`)
 
-- [ ] **Implement.** `Canvas` drops the `fitView` prop. An effect applies `readableFit` on the first draw (unless the hash centres a node) and on each `f`. The MiniMap shows when the view is not whole, and a Controls button hides and shows it (Deviations 6, 14). `BoxNode` draws the node's `stats`, and a `hub` class. The axis is a column beside the canvas; the legend becomes a strip above it (App, styles.css). `rank.ts` counts the pairs set aside, `scene` carries the sum as `against`, and `Header` shows `againstNote` (Deviation 16). `layout.ts` measures text, wraps at `ROW_MAX`, drops ELK's container minimum and replaces `centred` with `packed`. `arrange` is the post-pass `App` and `layout()` share.
+- [x] **Implement.** `Canvas` drops the `fitView` prop. An effect applies `readableFit` on the first draw (unless the hash centres a node) and on each `f`. The MiniMap shows when the view is not whole, and a Controls button hides and shows it (Deviations 6, 14). `BoxNode` draws the node's `stats`, and a `hub` class. The axis is a column beside the canvas; the legend becomes a strip above it (App, styles.css). `rank.ts` counts the pairs set aside, `scene` carries the sum as `against`, and `Header` shows `againstNote` (Deviation 16). `layout.ts` measures text, wraps at `ROW_MAX`, drops ELK's container minimum and replaces `centred` with `packed`. `arrange` is the post-pass `App` and `layout()` share.
 
 <!-- file: web/src/viewport.ts -->
 ```ts
@@ -3613,7 +3613,7 @@ diff --git a/web/src/Header.tsx b/web/src/Header.tsx
              {" "}
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
 
 ### Task 7: The browser suite
 

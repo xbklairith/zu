@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import golden from "../../internal/export/testdata/shop.view.golden.json";
 import { parseView, type View } from "./data";
-import { breadcrumb, depthNote, edgesNote, honestyLine, redLegend, title, violationsNote } from "./headline";
+import { againstNote, breadcrumb, depthNote, edgesNote, honestyLine, redLegend, title, violationsNote } from "./headline";
 import { pkgs, view } from "./testkit";
 
 const v = parseView(JSON.stringify(golden));
@@ -10,6 +10,14 @@ describe("edgesNote (11)", () => {
   it("counts what auto hides and says how to see it", () => {
     expect(edgesNote(260)).toBe("260 dependencies hidden; select or hover a box to see its own.");
     expect(edgesNote(1)).toBe("1 dependency hidden; select or hover a box to see its own.");
+  });
+});
+
+describe("againstNote (11)", () => {
+  it("counts the dependencies that point up the rows, and says nothing at 0", () => {
+    expect(againstNote(0)).toBe("");
+    expect(againstNote(1)).toBe("1 dependency runs against the order.");
+    expect(againstNote(4)).toBe("4 dependencies run against the order.");
   });
 });
 

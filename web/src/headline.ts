@@ -63,6 +63,12 @@ export function depthNote(boxes: number, depth: number, auto = true, from = dept
 export const edgesNote = (hidden: number): string =>
   `${hidden} ${hidden === 1 ? "dependency" : "dependencies"} hidden; select or hover a box to see its own.`;
 
+// againstNote counts the dependencies that point up the rows (11): those the
+// ranking set aside to break a cycle between boxes, and nothing when there
+// are none. No colour marks them.
+export const againstNote = (n: number): string =>
+  n === 0 ? "" : `${n} ${n === 1 ? "dependency runs" : "dependencies run"} against the order.`;
+
 // violationsNote words the Change View's violations section as zu diff's
 // violationsBlock does (internal/diff/violations.go): new first, then the rest.
 export function violationsNote(d: NonNullable<View["violations"]>): { heading: string; tail: string } {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { View } from "./data";
-import { breadcrumb, depthNote, edgesNote, honestyLine, title } from "./headline";
+import { againstNote, breadcrumb, depthNote, edgesNote, honestyLine, title } from "./headline";
 
 type Props = {
   view: View;
@@ -12,11 +12,12 @@ type Props = {
   auto: boolean; // the depth is autoDepth's, not the reader's
   from?: number; // the requested depth, when the drawn one is shallower (Deviation 8)
   hidden?: number; // 11: lines auto leaves out at rest
+  against?: number; // 11: dependencies against the rows (rank.ts); undefined draws no count
   full?: boolean; // Change View only: showing the full project, not the changed subgraph
   onToggle?: () => void;
 };
 
-export function Header({ view, focus, home = "", boxes, depth, onFocus, auto, from, hidden = 0, full, onToggle }: Props) {
+export function Header({ view, focus, home = "", boxes, depth, onFocus, auto, from, hidden = 0, against, full, onToggle }: Props) {
   const compare = view.links?.compare?.startsWith("https://") ? view.links.compare : null;
   const [showErrors, setShowErrors] = useState(false);
   const errors = view.honesty.parseErrors;
@@ -59,6 +60,7 @@ export function Header({ view, focus, home = "", boxes, depth, onFocus, auto, fr
       <p className="note">
         {depthNote(boxes, depth, auto, from)}
         {hidden > 0 && <span id="zu-edges"> {edgesNote(hidden)}</span>}
+        {against !== undefined && against > 0 && <span id="zu-against"> {againstNote(against)}</span>}
         {full !== undefined && (
           <>
             {" "}

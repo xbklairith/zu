@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import golden from "../../internal/export/testdata/shop.view.golden.json";
 import { autoDepth } from "./cut";
-import { boxStats, parentBox } from "./tree";
+import { boxStats, statsLine, parentBox } from "./tree";
 import { bundles, containers, declLeaves, leavesAt, methodsOf, touchedExternals } from "./testkit";
 import { parseView } from "./data";
 import type { View } from "./data";
@@ -98,5 +98,15 @@ describe("the shop golden", () => {
   it("box stats sum the packages under a box", () => {
     expect(boxStats(v, "example.com/shop/internal")).toEqual({ packages: 3, decls: 23, unresolved: 8 });
     expect(boxStats(v, "example.com/shop#pkg").packages).toBe(1);
+    // Once per View: the scene asks for every box on every change of state.
+    expect(boxStats(v, "example.com/shop/internal")).toBe(boxStats(v, "example.com/shop/internal"));
+    expect(boxStats(v, "example.com/shop/nope")).toEqual({ packages: 0, decls: 0, unresolved: 0 });
+    const one = view(pkgs(["m/a", "m/a/b", "m/c"], "m").map((n) => ({ ...n, decls: 2 })));
+    expect([boxStats(one, "m"), boxStats(one, "m/a"), boxStats(one, "m/a#pkg")].map((s) => [s.packages, s.decls])).toEqual([[3, 6], [2, 4], [1, 2]]);
+  });
+  it("a box's stats line says how it connects, then its packages (11)", () => {
+    // Decls and unresolved calls are in the Panel; the box says what it uses.
+    expect(statsLine({ uses: 2, usedBy: 5, packages: 3 })).toBe("uses 2 · used by 5 · 3 pkgs");
+    expect(statsLine({ uses: 0, usedBy: 1, packages: 1 })).toBe("uses 0 · used by 1");
   });
 });

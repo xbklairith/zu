@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { siblingTiers, tiers, type Arc } from "./rank";
+import { ranks, siblingRanks, siblingTiers, tiers, type Arc } from "./rank";
 
 const arcs = (s: string): Arc[] =>
   s.split(" ").map((p) => {
@@ -36,6 +36,28 @@ describe("tiers", () => {
     const ids = Array.from({ length: 20000 }, (_, i) => `n${String(i).padStart(5, "0")}`);
     const t = tiers(ids, ids.slice(1).map((id, i) => ({ from: ids[i], to: id })));
     expect([t.get(ids[0]), t.get(ids[19999])]).toEqual([19999, 0]);
+  });
+});
+
+describe("against the order (11)", () => {
+  it("counts the sibling pairs whose arcs were set aside, 0 without a cycle", () => {
+    expect(ranks(["a", "b", "c"], arcs("a>b b>c a>c")).against).toBe(0);
+    expect(ranks(["a", "b"], arcs("a>b*5 b>a*1")).against).toBe(1);
+    // Repeated arcs of one pair are one dependency.
+    expect(ranks(["a", "b"], arcs("a>b*3 b>a b>a")).against).toBe(1);
+    // c over a over b: b → c points up.
+    expect(ranks(["a", "b", "c"], arcs("a>b*2 b>c*1 c>a*3")).against).toBe(1);
+    expect(ranks(["a", "b"], arcs("a>b")).tiers).toEqual(tiers(["a", "b"], arcs("a>b")));
+  });
+  it("adds up every sibling set, counting lifted pairs once", () => {
+    const parent = new Map([["A", ""], ["B", ""], ["a1", "A"], ["a2", "A"], ["b1", "B"]]);
+    // A ⇄ B (lifted from three arcs) and a1 ⇄ a2 inside A: two.
+    const r = siblingRanks(parent, arcs("a1>b1*2 a2>b1*2 b1>a1*3 a1>a2*2 a2>a1"));
+    expect(r.against).toBe(2);
+    expect(r.tiers).toEqual(siblingTiers(parent, arcs("a1>b1*2 a2>b1*2 b1>a1*3 a1>a2*2 a2>a1")));
+    // A set the Policy's Levels place is not drawn by these ranks: not counted.
+    expect(siblingRanks(parent, arcs("a1>b1*2 a2>b1*2 b1>a1*3 a1>a2*2 a2>a1"), (p) => p === "").against).toBe(1);
+    expect(siblingRanks(parent, arcs("a1>b1*2 a2>b1*2 b1>a1*3 a1>a2*2 a2>a1"), (p) => p === "A").against).toBe(1);
   });
 });
 

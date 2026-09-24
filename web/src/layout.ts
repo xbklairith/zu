@@ -11,13 +11,48 @@ export type Engine = { layout(graph: ElkNode): Promise<ElkNode> };
 
 const ROW = 18;
 
-// sizeOf estimates a node from its text: the label, the method rows, and for
-// boxes the stats line ("15 decls · 4 unresolved").
-export function sizeOf(n: SceneNode): { w: number; h: number } {
-  const stats = n.shape === "box" ? 24 : 0;
-  const text = Math.max(n.label.length, stats, ...n.methods.map((r) => r.length + 2));
-  return { w: Math.min(280, Math.max(90, text * 7.5 + 24)), h: 40 + ROW * n.methods.length };
+// ADVANCE is the width in px of each glyph from " " to "~", then "·", in the
+// label font (.node .label: 600 12px system-ui), measured with canvas
+// measureText in chromium, firefox and webkit on macOS (they agree to 0.01
+// px) and rounded up. Stats lines are 400 11px, narrower glyph for glyph.
+const ADVANCE = [
+  3.2, 4.1, 6.5, 8, 8, 12, 8.9, 4, 5, 5, 5.8, 8, 4, 5.8, 4, 4, 8, 6, 7.6, 7.9, 8.1, 7.8, 8.1, 7.2, 8.2, 8.1, 4, 4, 8, 8, 8, 6.6,
+  11.1, 8.6, 8.2, 8.9, 8.9, 7.4, 7.1, 9.1, 9.3, 3.7, 7, 8.4, 7.1, 10.8, 9.2, 9.4, 8, 9.4, 8.2, 8, 7.9, 9.1, 8.5, 12, 8.6, 8.3, 8.1,
+  5, 4, 5, 8, 7.4, 6, 7, 7.7, 7, 7.7, 7.1, 4.8, 7.6, 7.5, 3.3, 3.3, 7, 3.4, 11, 7.4, 7.4, 7.7, 7.7, 5.1, 6.7, 4.8, 7.4, 6.9, 9.9,
+  6.8, 7, 6.7, 5, 3.5, 5, 8, 4,
+];
+const WIDEST = 12; // "W", and any glyph not in ADVANCE
+const MONO = 7; // a method row's glyph: .row is 11px ui-monospace, 6.6 px in Menlo
+
+// textWidth is how wide s draws in the label font.
+export function textWidth(s: string): number {
+  let w = 0;
+  for (const ch of s) {
+    const c = ch.codePointAt(0)!;
+    w += c >= 32 && c < 127 ? ADVANCE[c - 32] : ch === "·" ? ADVANCE[95] : WIDEST;
+  }
+  return w;
 }
+
+// INSET is what a node's border box adds to its text: .node's padding, 8 px
+// each side, and its 1 px border.
+export const INSET = 18;
+
+// sizeOf sizes a node to its text (11): the label, plus the rank badge's
+// padding (.node.ranked .label) and the toggle's corner on the label's line;
+// a box's stats line; a type's method rows. Nothing is capped, so no text is
+// clipped: a long name makes a wide box.
+export function sizeOf(n: SceneNode): { w: number; h: number } {
+  const label = textWidth(n.label) + (n.rank !== undefined ? 18 : 0) + (n.toggle ? 22 : 0);
+  const text = Math.max(label, textWidth(n.stats ?? ""), ...n.methods.map((r) => (r.length + 2) * MONO));
+  return { w: Math.max(90, Math.ceil(text + INSET)), h: 40 + ROW * n.methods.length };
+}
+
+// containerWidth is the least a container is drawn: its label, its rank
+// badge, and its header's right end, where the toggle sits, or the CRAP badge
+// beside it (.node.container[class*="crap-"] .label).
+export const containerWidth = (n: SceneNode): number =>
+  Math.ceil(textWidth(n.label) + INSET + (n.rank !== undefined ? 18 : 0) + (n.crap ? 72 : 22));
 
 const GAP = 24; // elk.spacing.nodeNode
 
@@ -34,7 +69,7 @@ const rootOptions = {
   // 11: the step nodes are zero-size, and the default placement (Brandes-Köpf)
   // set each rank beside the one below it, a staircase twice as wide as the
   // widest rank (hugo 2219 px for a 1800 px rank). Network simplex keeps
-  // them within the widest; centred then puts each over the middle.
+  // them within the widest; packed then puts each over the middle.
   "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
   // 11: and a rank's many step edges add no space between two ranks.
   "elk.layered.spacing.edgeEdgeBetweenLayers": "0",
@@ -64,11 +99,8 @@ export function elkGraph(sc: Scene): ElkNode {
     }
     return {
       id: n.id,
-      layoutOptions: {
-        "elk.padding": "[top=24,left=12,bottom=12,right=12]",
-        "elk.nodeSize.constraints": "MINIMUM_SIZE",
-        "elk.nodeSize.minimum": `(${Math.min(280, n.label.length * 7.5 + 24)}, 40)`,
-      },
+      // No minimum size: packed widens a container to its header (11).
+      layoutOptions: { "elk.padding": "[top=24,left=12,bottom=12,right=12]" },
       children: [...(byParent.get(n.id) ?? []).map(build), ...(rank?.steps.get(n.id) ?? [])],
     };
   };
@@ -82,10 +114,19 @@ export function elkGraph(sc: Scene): ElkNode {
 
 export const STEP = "__rank:"; // the id prefix of ranked's invisible nodes
 
-// WRAP is the most siblings of one rank drawn side by side (11). A wider rank,
-// such as a flat internal/ of leaves that all land in rank 0, wraps into rows
-// of WRAP, in the siblings' order, each row below the last.
+// WRAP is the most siblings of one rank drawn side by side (11), and ROW_MAX
+// the widest such a row may be, in layout px. A wider rank, such as a flat
+// internal/ of leaves that all land in rank 0, wraps into rows, in the
+// siblings' order, each row below the last. At the first view's zoom (FLOOR,
+// viewport.ts) ROW_MAX is 1173 screen px, so the top rows show whole on a
+// canvas 1221 px wide. The layout never reads the canvas: resizing the window
+// moves no box.
 export const WRAP = 10;
+export const ROW_MAX = 1280;
+// WRAP_GAP is the space between the rows one rank wraps into, a quarter of
+// the 24 between two ranks, so a wrapped rank reads as one (packed).
+export const WRAP_GAP = 6;
+const PAD_X = 24; // a container's elk.padding, left and right
 
 // ranked puts siblings with a higher rank above those with a lower one, in
 // every container. A sibling set in which any node has a Policy rank uses
@@ -96,19 +137,70 @@ export const WRAP = 10;
 // needs (measured in elkjs 0.12), so between each two rows ranked adds an
 // invisible zero-size step node, with an edge from every node of the upper
 // row to it and from it to every node of the lower: O(n) edges, and the only
-// edges ELK sees. A row is a rank, or WRAP boxes of a wider one.
+// edges ELK sees. A row is a rank, or as much of a wider one as WRAP and
+// ROW_MAX allow; a container counts as wide as its own widest row.
+// levelIn is the level ranked places each of one set of siblings at.
+const levelIn = (kids: readonly SceneNode[]) => {
+  const policy = kids.some((k) => k.rank !== undefined);
+  return (n: SceneNode) => (policy ? n.rank : n.tier) ?? 0;
+};
+
+// levelsOf is every node's level among its siblings, for packed: rows of one
+// level are one rank's wrap. Empty when the scene is not ranked.
+export function levelsOf(sc: Scene): Map<string, number> {
+  if (!sc.nodes.some((n) => n.rank !== undefined || n.tier !== undefined)) return new Map();
+  const byParent = new Map<string, SceneNode[]>();
+  for (const n of sc.nodes) byParent.set(n.parent, [...(byParent.get(n.parent) ?? []), n]);
+  const out = new Map<string, number>();
+  for (const kids of byParent.values()) {
+    const level = levelIn(kids);
+    for (const k of kids) out.set(k.id, level(k));
+  }
+  return out;
+}
+
 function ranked(byParent: ReadonlyMap<string, SceneNode[]>) {
   const steps = new Map<string, ElkNode[]>();
   const edges: { id: string; sources: string[]; targets: string[] }[] = [];
-  for (const [parent, kids] of byParent) {
-    const policy = kids.some((k) => k.rank !== undefined);
-    const level = (n: SceneNode) => (policy ? n.rank : n.tier) ?? 0;
+  const rowsOf = new Map<string, { name: string; nodes: SceneNode[] }[]>();
+  const wide = new Map<string, number>();
+  const widthOf = (n: SceneNode): number => {
+    if (n.shape !== "container") return sizeOf(n).w;
+    let w = wide.get(n.id);
+    if (w === undefined) {
+      const rows = rowsFor(n.id);
+      w = Math.max(containerWidth(n), ...rows.map((r) => span(r.nodes) + PAD_X));
+      wide.set(n.id, w);
+    }
+    return w;
+  };
+  const span = (ns: readonly SceneNode[]) => ns.reduce((w, k) => w + widthOf(k), 0) + GAP * Math.max(0, ns.length - 1);
+  const rowsFor = (parent: string) => {
+    const hit = rowsOf.get(parent);
+    if (hit) return hit;
+    const kids = byParent.get(parent) ?? [];
+    const level = levelIn(kids);
     const levels = [...new Set(kids.map(level))].sort((a, b) => b - a);
     const rows: { name: string; nodes: SceneNode[] }[] = [];
     for (const l of levels) {
-      const at = kids.filter((k) => level(k) === l);
-      for (let i = 0; i < at.length; i += WRAP) rows.push({ name: i === 0 ? `${l}` : `${l}.${i / WRAP}`, nodes: at.slice(i, i + WRAP) });
+      let row: SceneNode[] = [];
+      let part = 0;
+      const close = () => {
+        rows.push({ name: part === 0 ? `${l}` : `${l}.${part}`, nodes: row });
+        part++;
+        row = [];
+      };
+      for (const k of kids.filter((x) => level(x) === l)) {
+        if (row.length > 0 && (row.length === WRAP || span([...row, k]) > ROW_MAX)) close();
+        row.push(k);
+      }
+      close();
     }
+    rowsOf.set(parent, rows);
+    return rows;
+  };
+  for (const [parent, kids] of byParent) {
+    const rows = rowsFor(parent);
     for (let i = 0; i + 1 < rows.length; i++) {
       const id = `${STEP}${parent}:${rows[i].name}`;
       steps.set(parent, [...(steps.get(parent) ?? []), { id, width: 0, height: 0 }]);
@@ -137,7 +229,19 @@ export function positions(g: ElkNode): Map<string, Placed> {
   return out;
 }
 
-export const layout = async (sc: Scene, engine: Engine) => centred(inOrder(positions(await engine.layout(elkGraph(sc))), orderOf(sc)));
+// arrange turns ELK's result into what the canvas draws: flattened, in the
+// Policy's order, packed. The page (App) and layout both use it.
+export const arrange = (
+  out: ElkNode, order: ReadonlyMap<string, number>, header: ReadonlyMap<string, number>, levels: ReadonlyMap<string, number> = new Map(),
+) => packed(inOrder(positions(out), order), header, levels);
+
+export const layout = async (sc: Scene, engine: Engine) =>
+  arrange(await engine.layout(elkGraph(sc)), orderOf(sc), headers(sc), levelsOf(sc));
+
+// headers is the least width of each container: its label and badges. ELK
+// never sees it, so a page keys its layout on it as well as on elkGraph.
+export const headers = (sc: Scene): Map<string, number> =>
+  new Map(sc.nodes.filter((n) => n.shape === "container").map((n) => [n.id, containerWidth(n)]));
 
 // orderOf is each ordered node's index in the Policy's order.
 export const orderOf = (sc: Scene): ReadonlyMap<string, number> =>
@@ -171,20 +275,64 @@ export function inOrder(placed: Map<string, Placed>, order: ReadonlyMap<string, 
   return out;
 }
 
-// centred moves each row of siblings sideways so that its middle is the
-// middle of all the siblings (11): ranks read as a stack, not a staircase. A
-// row keeps its order and spacing, and never leaves its container, which is
-// at least as wide as its widest row. Lines follow, as in inOrder.
-export function centred(placed: Map<string, Placed>): Map<string, Placed> {
+// packed lays each row of siblings side by side, GAP apart and in the order
+// ELK and inOrder gave them, then centres every row in its container (11):
+// ranks read as a stack, not a staircase. A container is as wide as its widest
+// row, or as its own header needs (containerWidth), whichever is more; the
+// deepest are sized first, so a parent packs its children at their final
+// widths. ELK's minimum size for a compound node was not met in width with
+// INCLUDE_CHILDREN, and stretched the node's height instead, so the header's
+// width is applied here. Rows keep ELK's order and the gap ELK left between
+// two ranks, but the rows one rank wraps into (levels: the same level) close
+// up to WRAP_GAP, and a container shrinks by what its rows gave up. Lines
+// follow, as in inOrder.
+export function packed(
+  placed: Map<string, Placed>, header: ReadonlyMap<string, number>, levels: ReadonlyMap<string, number> = new Map(),
+): Map<string, Placed> {
   const out = new Map(placed);
-  for (const ids of siblings(placed).values()) {
-    const at = ids.map((id) => placed.get(id)!);
-    const mid = (Math.min(...at.map((p) => p.x)) + Math.max(...at.map((p) => p.x + p.w))) / 2;
-    for (const row of rowsOf(ids, placed)) {
-      const ps = row.map((id) => placed.get(id)!);
-      const dx = mid - (Math.min(...ps.map((p) => p.x)) + Math.max(...ps.map((p) => p.x + p.w))) / 2;
-      for (const id of row) out.set(id, { ...placed.get(id)!, x: placed.get(id)!.x + dx });
+  const kids = siblings(placed);
+  const depth = (id: string) => {
+    let d = 0;
+    for (let p = placed.get(id)?.parent; p !== undefined; p = placed.get(p)?.parent) d++;
+    return d;
+  };
+  const order = [...kids.keys()].filter((p) => p !== "").sort((a, b) => depth(b) - depth(a) || cmp(a, b));
+  const lay = (ids: string[], left: number, least: number) => {
+    const rows = rowsOf(ids, out).map((r) => r.sort((a, b) => out.get(a)!.x - out.get(b)!.x || cmp(a, b)));
+    const span = (r: string[]) => r.reduce((w, id) => w + out.get(id)!.w, 0) + GAP * (r.length - 1);
+    const inner = Math.max(least, ...rows.map(span));
+    for (const r of rows) {
+      let x = left + (inner - span(r)) / 2;
+      for (const id of r) {
+        out.set(id, { ...out.get(id)!, x });
+        x += out.get(id)!.w + GAP;
+      }
     }
+    return inner;
+  };
+  // stack re-places rows top to bottom and returns how much lower (or, < 0,
+  // higher) the last row's bottom ends than ELK put it.
+  const stack = (ids: string[]) => {
+    const rows = rowsOf(ids, placed);
+    const top = (r: string[]) => Math.min(...r.map((id) => placed.get(id)!.y));
+    const bottom = (r: string[], m: ReadonlyMap<string, Placed>) => Math.max(...r.map((id) => m.get(id)!.y + m.get(id)!.h));
+    const wrap = (a: string[], b: string[]) => levels.has(a[0]) && levels.get(a[0]) === levels.get(b[0]);
+    for (let k = 1; k < rows.length; k++) {
+      const gap = wrap(rows[k - 1], rows[k]) ? WRAP_GAP : top(rows[k]) - bottom(rows[k - 1], placed);
+      const shift = bottom(rows[k - 1], out) + gap - top(rows[k]);
+      for (const id of rows[k]) out.set(id, { ...out.get(id)!, y: placed.get(id)!.y + shift });
+    }
+    return rows.length ? bottom(rows[rows.length - 1], out) - bottom(rows[rows.length - 1], placed) : 0;
+  };
+  for (const c of order) {
+    const inner = lay(kids.get(c)!, PAD_X / 2, (header.get(c) ?? 0) - PAD_X);
+    const grown = stack(kids.get(c)!);
+    out.set(c, { ...out.get(c)!, w: inner + PAD_X, h: placed.get(c)!.h + grown });
+  }
+  const top = kids.get("") ?? [];
+  if (top.length) {
+    lay(top, Math.min(...top.map((id) => placed.get(id)!.x)), 0);
+    stack(top);
   }
   return out;
 }

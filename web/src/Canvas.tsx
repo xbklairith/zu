@@ -1,8 +1,10 @@
 import {
   Background,
+  ControlButton,
   Controls,
   Handle,
   MarkerType,
+  MiniMap,
   Position,
   ReactFlow,
   type Edge,
@@ -19,13 +21,12 @@ import { around } from "./edges";
 import { absolute, triangles, type Placed } from "./layout";
 import { crapGrade, crapLabel } from "./metrics";
 import type { Scene, SceneEdge, SceneNode } from "./scene";
-import { boxStats } from "./tree";
+import { mapByDefault, readableFit } from "./viewport";
 
 type Data = {
   node: SceneNode;
   w: number;
   h: number;
-  stats?: { packages: number; decls: number; unresolved: number };
   row: string | null;
   pick: (id: string) => void;
   toggle?: (id: string) => void;
@@ -78,7 +79,7 @@ function Toggle({ data }: { data: Data }) {
 // (07), the CRAP fill (08), selection and dimming.
 const cls = (base: string, n: SceneNode, selected: boolean) =>
   `node ${base}${n.change ? ` ${n.change}` : ""}${n.hidden ? " hides-violation" : ""}${n.rank !== undefined ? " ranked" : ""}` +
-  `${n.crap ? ` crap-${n.crap.band}` : ""}${selected ? " selected" : ""}${n.dim ? " dim" : ""}`;
+  `${n.crap ? ` crap-${n.crap.band}` : ""}${selected ? " selected" : ""}${n.dim ? " dim" : ""}${n.hub ? " hub" : ""}`;
 
 // Crap is the CRAP badge (08), at the lower right, or in a container's
 // header: the number and its band in words, so the fill is never the only
@@ -110,7 +111,6 @@ function Rank({ node }: { node: SceneNode }) {
 }
 
 function BoxNode({ data, selected }: NodeProps<ZNode>) {
-  const s = data.stats;
   return (
     <div className={cls("box", data.node, selected)} title={data.node.id}>
       <Ends />
@@ -118,12 +118,7 @@ function BoxNode({ data, selected }: NodeProps<ZNode>) {
       <Crap node={data.node} />
       <Toggle data={data} />
       <div className="label">{data.node.label}</div>
-      {s && (
-        <div className="stats">
-          {s.packages > 1 && `${s.packages} pkgs · `}
-          {s.decls} decls{s.unresolved > 0 && ` · ${s.unresolved} unresolved`}
-        </div>
-      )}
+      {data.node.stats && <div className="stats">{data.node.stats}</div>}
       <Marks data={data} />
     </div>
   );
@@ -209,7 +204,7 @@ type Props = {
   onToggle?: (id: string) => void;
   onEdge?: (id: string) => void;
   center?: { id: string; seq: number }; // a node to bring into view
-  fit?: number; // fits the whole scene each time it changes (the f key)
+  fit?: number; // the first view again each time it changes (the f key)
 };
 
 // drawnFor is the drawn node standing for id: itself, its #pkg leaf, or the
@@ -248,16 +243,31 @@ export function Canvas({ view, sc, placed, edge, onSelect, onOpen, onToggle, onE
     const cy = at.y + p.h / 2;
     void rf.setViewport({ x: r.width / 2 - cx * zoom, y: r.height / 2 - cy * zoom, zoom });
   }, [rf, target, placed, center?.seq]);
+  // 11: the first view, unless a node is centred instead, and the f key show
+  // the scene at a readable zoom (viewport.ts), not fitView's; a scene larger
+  // than that gets a minimap, which the reader can hide.
+  const [whole, setWhole] = useState(true);
+  // The minimap covers the canvas's lower right corner; its button in the
+  // controls hides it, and shows it again. A narrow window starts without it.
+  const [map, setMap] = useState(() => mapByDefault(window.innerWidth));
+  const fitted = useRef<number | null>(null);
   useEffect(() => {
-    if (fit) void rf.fitView();
-  }, [rf, fit]);
+    const r = box.current?.getBoundingClientRect();
+    const first = fitted.current === null;
+    if (fitted.current === (fit ?? 0) || !r || r.width === 0 || r.height === 0) return;
+    fitted.current = fit ?? 0;
+    if (first && target !== null) return;
+    const rects = [...placed].map(([id, p]) => ({ ...absolute(placed, id)!, w: p.w, h: p.h }));
+    const { whole: all, ...v } = readableFit(rects, { w: r.width, h: r.height });
+    setWhole(all);
+    void rf.setViewport(v);
+  }, [rf, fit, placed, target]);
   // 11: while lines are on demand, a hovered box draws its own over the rest.
   const [hover, setHover] = useState<string | null>(null);
   const nodes: ZNode[] = useMemo(() => [...sc.nodes]
     .sort((a, b) => depth(byId, a.id) - depth(byId, b.id) || (a.id < b.id ? -1 : 1))
     .map((node) => {
       const p = placed.get(node.id) ?? { x: 0, y: 0, w: 90, h: 40 };
-      const stats = node.shape === "box" ? boxStats(view, node.id) : undefined;
       return {
         id: node.id,
         type: node.shape,
@@ -269,9 +279,9 @@ export function Canvas({ view, sc, placed, edge, onSelect, onOpen, onToggle, onE
         selected: node.selected,
         draggable: false,
         connectable: false,
-        data: { node, w: p.w, h: p.h, stats, row: sc.selectedRow, pick: onSelect, toggle: onToggle },
+        data: { node, w: p.w, h: p.h, row: sc.selectedRow, pick: onSelect, toggle: onToggle },
       };
-    }), [sc, placed, view, onSelect, onToggle]); // byId comes from sc
+    }), [sc, placed, onSelect, onToggle]); // byId comes from sc
   const drawn = new Set(sc.edges.map((e) => e.id));
   const hovered: SceneEdge[] = sc.lines || hover === null || hover === sc.selected ? []
     : around(sc.all, hover, (id) => byId.get(id)?.parent ?? "").filter((e) => !drawn.has(e.id)).map((e) => ({ ...e, hot: true, dim: false }));
@@ -291,18 +301,36 @@ export function Canvas({ view, sc, placed, edge, onSelect, onOpen, onToggle, onE
     };
   });
   return (
-    <div ref={box} className="flow">
+    <div className="flow-row">
+      {/* 11: what the rows mean. Higher rows use lower ones (ranked, rank.ts);
+          the bottom rank uses none of its siblings. Nothing more is promised:
+          longest-path ranks do not lift a box nothing uses to the top. */}
+      <div className="axis" role="note" aria-label="Rows: a box uses the rows below it; at the bottom, boxes that depend on nothing here">
+        <span className="uses">
+          <span className="v">uses</span>
+          <span>↓</span>
+        </span>
+        <span className="v">depends on nothing here</span>
+      </div>
+    {/* 11: Enter or Space on a focused box selects it, as a click does; a
+        button inside the box keeps its own keys. */}
+    <div ref={box} className="flow" onKeyDown={(e) => {
+      const n = e.target as HTMLElement;
+      if (!n.classList?.contains("react-flow__node") || (e.key !== "Enter" && e.key !== " ")) return;
+      e.preventDefault();
+      onSelect(n.getAttribute("data-id"));
+    }}>
       <ReactFlow
         nodes={nodes}
         edges={rfEdges}
         nodeTypes={nodeTypes}
-        fitView={target === null}
         minZoom={0.05}
         zoomOnDoubleClick={false}
         onlyRenderVisibleElements
         onInit={() => performance.mark("zu-drawn")}
         nodesDraggable={false}
         nodesConnectable={false}
+        nodesFocusable
         onNodeClick={(_, n) => onSelect(n.id)}
         onNodeDoubleClick={(_, n) => {
           const node = byId.get(n.id);
@@ -314,8 +342,16 @@ export function Canvas({ view, sc, placed, edge, onSelect, onOpen, onToggle, onE
         onNodeMouseLeave={() => setHover(null)}
       >
         <Background />
-        <Controls showInteractive={false} />
+        <Controls showInteractive={false}>
+          {!whole && (
+            <ControlButton className="zu-map" onClick={() => setMap((m) => !m)} title={map ? "Hide the minimap" : "Show the minimap"} aria-label={map ? "Hide the minimap" : "Show the minimap"} aria-pressed={map}>
+              ▦
+            </ControlButton>
+          )}
+        </Controls>
+        {!whole && map && <MiniMap pannable zoomable ariaLabel="Minimap" />}
       </ReactFlow>
+    </div>
     </div>
   );
 }

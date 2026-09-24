@@ -20,7 +20,15 @@ export type Arc = { from: string; to: string; weight?: number };
 //     nothing among its siblings is 0, any other is one more than its highest
 //     dependency.
 // Arcs to ids outside the set, and self-loops, are ignored.
-export function tiers(ids: readonly string[], arcs: readonly Arc[]): Map<string, number> {
+export const tiers = (ids: readonly string[], arcs: readonly Arc[]): Map<string, number> => ranks(ids, arcs).tiers;
+
+// Ranks is a ranking and how many dependencies run against it: the sibling
+// pairs whose arcs step 2 set aside, so they point up the rows (0 without a
+// cycle). The header shows the count; nothing colours those arcs.
+export type Ranks = { tiers: Map<string, number>; against: number };
+
+// ranks is tiers with the count of pairs set aside.
+export function ranks(ids: readonly string[], arcs: readonly Arc[]): Ranks {
   const nodes = [...new Set(ids)].sort(cmp);
   const known = new Set(nodes);
   const weight = new Map<string, number>(); // "from\nto" → summed weight
@@ -65,7 +73,12 @@ export function tiers(ids: readonly string[], arcs: readonly Arc[]): Map<string,
     }
     return rank.get(v)!;
   };
-  return new Map(nodes.map((n) => [n, visit(n)]));
+  let against = 0;
+  for (const k of weight.keys()) {
+    const [f, t] = k.split("\n");
+    if (comp.get(f) === comp.get(t) && order.get(f)! > order.get(t)!) against++;
+  }
+  return { tiers: new Map(nodes.map((n) => [n, visit(n)])), against };
 }
 
 // components numbers the strongly connected components (Tarjan, iterative).
@@ -163,7 +176,16 @@ function greedy(members: readonly string[], out: ReadonlyMap<string, string[]>, 
 // counts between the two siblings that hold its ends under their lowest
 // common container, and arcs lifted onto the same pair add their weights; an
 // arc between a container and something inside it counts nowhere.
-export function siblingTiers(parent: ReadonlyMap<string, string>, arcs: readonly Arc[]): Map<string, number> {
+export const siblingTiers = (parent: ReadonlyMap<string, string>, arcs: readonly Arc[]): Map<string, number> =>
+  siblingRanks(parent, arcs).tiers;
+
+// siblingRanks is siblingTiers with the pairs set aside, summed over every
+// sibling set these ranks place: a set the Policy's Levels place (placed(its
+// container) is true) is drawn by those, so its pairs are not counted. It is
+// the seam where a grouping (12) would rank its groups.
+export function siblingRanks(
+  parent: ReadonlyMap<string, string>, arcs: readonly Arc[], placed: (container: string) => boolean = () => false,
+): Ranks {
   const chain = (id: string) => {
     const c: string[] = [];
     for (let x: string | undefined = id; x !== undefined && x !== ""; x = parent.get(x)) c.unshift(x);
@@ -189,6 +211,11 @@ export function siblingTiers(parent: ReadonlyMap<string, string>, arcs: readonly
     else lifted.set(p, [arc]);
   }
   const out = new Map<string, number>();
-  for (const [p, ids] of kids) for (const [id, r] of tiers(ids, lifted.get(p) ?? [])) out.set(id, r);
-  return out;
+  let against = 0;
+  for (const [p, ids] of kids) {
+    const r = ranks(ids, lifted.get(p) ?? []);
+    for (const [id, t] of r.tiers) out.set(id, t);
+    if (!placed(p)) against += r.against;
+  }
+  return { tiers: out, against };
 }

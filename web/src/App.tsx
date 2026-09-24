@@ -8,13 +8,13 @@ import { pageEngine } from "./engine";
 import { Header } from "./Header";
 import { redLegend, violationsNote } from "./headline";
 import { keyAction } from "./keys";
-import { elkGraph, inOrder, orderOf, positions, Superseded, type Placed } from "./layout";
+import { arrange, elkGraph, headers, levelsOf, orderOf, Superseded, type Placed } from "./layout";
 import { Panel } from "./Panel";
 import { pinFor } from "./policy";
 import { PROPOSAL_NOTICE, proposalView } from "./proposal";
 import { reveal } from "./search";
 import { SearchBox } from "./SearchBox";
-import { DRAW_LIMIT, fitDepth, openFull, scene, type SceneNode } from "./scene";
+import { DRAW_LIMIT, fitDepth, HUBS, openFull, scene, type SceneNode } from "./scene";
 import { deeper, drill, nextStage, select, shallower, toggle, up } from "./state";
 import { Toolbar } from "./Toolbar";
 import { useViewState } from "./useViewState";
@@ -24,12 +24,15 @@ const PKG = "#pkg";
 type LegendProps = {
   change: boolean; policy: boolean; ranks: boolean; crap: boolean; proposal: string | null;
   onDemand: boolean; // 11: lines show for a selected or hovered box
+  hubs: boolean; // 11: some box is drawn as one of the most used
 };
 
-function Legend({ change, policy, ranks, crap, proposal, onDemand }: LegendProps) {
+function Legend({ change, policy, ranks, crap, proposal, onDemand, hubs }: LegendProps) {
   return (
     <div className="legend" aria-label="Legend">
-      {onDemand && <span className="dirs">a box's lines: solid, it depends on · dashed, depends on it</span>}
+      <span className="rows">rows are dependency order: a box mostly uses the rows below it</span>
+      {onDemand && <span className="dirs">hover or select a box for its lines: solid, it uses · dotted, used by</span>}
+      {hubs && <span className="swatch hub">thick border: the {HUBS} most used</span>}
       {change && (
         <>
           <span className="swatch st-added">added</span>
@@ -164,9 +167,14 @@ export function App({ view: whole }: { view: View }) {
   const engine = useMemo(pageEngine, []);
   useEffect(() => () => engine.dispose(), [engine]);
   const graph = useMemo(() => JSON.stringify(elkGraph(sc)), [sc]);
+  // 11: what packed widens containers to; a change lays out again.
+  const heads = useMemo(() => JSON.stringify([...headers(sc)]), [sc]);
+  const key = graph + "\n" + heads;
   // The Policy's order is a property of the nodes in graph, so a layout of
   // graph may read the order of any scene that produced it.
   const order = useMemo(() => orderOf(sc), [sc]);
+  // 11: likewise each node's level: graph holds the rows ranked made.
+  const levels = useMemo(() => levelsOf(sc), [sc]);
   const [placed, setPlaced] = useState<{ graph: string; at: Map<string, Placed> } | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   useEffect(() => {
@@ -176,13 +184,13 @@ export function App({ view: whole }: { view: View }) {
       (out) => {
         performance.mark("zu-layout-end");
         setFailed(null);
-        setPlaced({ graph, at: inOrder(positions(out), order) });
+        setPlaced({ graph: graph + "\n" + heads, at: arrange(out, order, new Map(JSON.parse(heads) as [string, number][]), levels) });
       },
       (e: Error) => {
         if (!(e instanceof Superseded)) setFailed(e.message);
       },
     );
-  }, [engine, graph, ask]);
+  }, [engine, graph, heads, ask]);
 
   const go = (box: string) => {
     update((s) => drill(s, box));
@@ -243,6 +251,7 @@ export function App({ view: whole }: { view: View }) {
         auto={state.depth === null}
         from={requested.depth}
         hidden={sc.hidden}
+        against={sc.noDetail ? undefined : sc.against}
         onFocus={go}
         full={change ? full : undefined}
         onToggle={flip}
@@ -263,7 +272,7 @@ export function App({ view: whole }: { view: View }) {
             {PROPOSAL_NOTICE}: {state.proposal}
           </div>
         )}
-        {(change || rules || ranks || crap || !sc.lines) && (
+        {!sc.noDetail && (
           <Legend
             change={change}
             policy={rules}
@@ -271,6 +280,7 @@ export function App({ view: whole }: { view: View }) {
             crap={crap}
             proposal={proposed === whole ? null : state.proposal}
             onDemand={!sc.lines}
+            hubs={sc.nodes.some((n) => n.hub)}
           />
         )}
         {sc !== requested && (
@@ -313,7 +323,7 @@ export function App({ view: whole }: { view: View }) {
           <div className="empty" id="zu-status">
             Layout failed: {failed}
           </div>
-        ) : placed && placed.graph === graph ? (
+        ) : placed && placed.graph === key ? (
           <ReactFlowProvider key={`${state.focus}\n${sc.depth}`}>
             <Canvas
               view={view}

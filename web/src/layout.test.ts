@@ -3,10 +3,10 @@ import ELK from "elkjs/lib/elk.bundled.js";
 import type { ElkNode } from "elkjs/lib/elk-api";
 import golden from "../../internal/export/testdata/shop.view.golden.json";
 import { parseView } from "./data";
-import { absolute, elkGraph, inOrder, layout, orderOf, positions, sizeOf, superseding, Superseded, triangles, WRAP, type Stoppable } from "./layout";
+import { absolute, containerWidth, elkGraph, INSET, inOrder, layout, orderOf, positions, ROW_MAX, sizeOf, superseding, Superseded, textWidth, triangles, WRAP, WRAP_GAP, type Stoppable } from "./layout";
 import { scene } from "./scene";
 import { DEFAULT_STATE } from "./state";
-import { edge, pkgs, view } from "./testkit";
+import { decl, edge, pkgs, view } from "./testkit";
 
 const v = parseView(JSON.stringify(golden));
 const elk = new ELK();
@@ -27,11 +27,31 @@ describe("layout", () => {
   it("sizes come from text: box stats, method rows, container labels; no drawn edge", () => {
     const g = elkGraph(scene(v, DEFAULT_STATE));
     expect(g.layoutOptions?.["elk.spacing.nodeNode"]).toBe("24");
-    expect(g.children?.[0].layoutOptions?.["elk.nodeSize.constraints"]).toBe("MINIMUM_SIZE");
-    expect(sizeOf({ id: "x", label: "gen", parent: "", shape: "box", dim: false, selected: false, methods: [] }).w).toBe(204);
+    expect(sizeOf({ id: "x", label: "gen", parent: "", shape: "box", dim: false, selected: false, methods: [] }).w).toBe(90);
     expect(sizeOf({ id: "x", label: "T", parent: "", shape: "decl", dim: false, selected: false, methods: ["Get", "Put"] }))
       .toEqual({ w: 90, h: 76 });
     expect(g.edges!.filter((e) => !e.id.includes("__rank:"))).toEqual([]);
+  });
+  it("measures text with the label font's glyph advances, the widest for any other glyph", () => {
+    expect(textWidth("W")).toBe(12);
+    expect(textWidth("iii")).toBeCloseTo(9.9);
+    expect(textWidth("é")).toBe(12);
+  });
+  it("sizes a box so its label and stats line are never clipped (11)", () => {
+    const box = { id: "x", parent: "", shape: "box" as const, dim: false, selected: false, methods: [] };
+    // The longest stats line: 9,999 boxes either way, 99,999 packages.
+    const stats = "uses 9999 · used by 9999 · 99999 pkgs";
+    expect(sizeOf({ ...box, label: "gen", stats }).w).toBe(Math.ceil(textWidth(stats) + INSET));
+    // No cap: a long label widens its box.
+    const long = "staging/src/k8s.io/apimachinery/pkg/util/managedfields/internal";
+    expect(sizeOf({ ...box, label: long }).w).toBe(Math.ceil(textWidth(long) + INSET));
+    // The rank badge and the toggle take room from the label's line only.
+    expect(sizeOf({ ...box, label: long, rank: 2, toggle: "expand", stats }).w).toBe(Math.ceil(textWidth(long) + INSET + 18 + 22));
+    // A1: kubernetes' mount-utils, a short label over a longer stats line, is
+    // as wide as the line, with or without the packages it would hold.
+    for (const line of ["uses 1 · used by 1", "uses 1 · used by 1 · 12 pkgs"]) {
+      expect(sizeOf({ ...box, label: "mount-utils", stats: line }).w).toBe(Math.max(90, Math.ceil(textWidth(line) + INSET)));
+    }
   });
   it("triangles sit on the top and bottom edges, apex out (uml-viewer)", () => {
     expect(triangles(100, 40)).toEqual({ in: "50,-10.39 44,0 56,0", out: "44,40 56,40 50,50.39" });
@@ -165,16 +185,62 @@ describe("architecture ranks (11)", () => {
   });
 
   it("wraps a rank wider than WRAP boxes into rows of WRAP, in order", async () => {
-    // m/top over 25 leaves of rank 0, as a flat internal/ of leaves would be.
-    const leaves = Array.from({ length: 25 }, (_, i) => `m/l${String(i).padStart(2, "0")}`);
-    const x = view(pkgs(["m/top", ...leaves], "m"), leaves.map((l) => edge("m/top", l)));
-    const a = await layout(scene(x, { ...DEFAULT_STATE, focus: "m" }), elk);
+    // 25 types in one package, 90 px each: WRAP binds before ROW_MAX. (Boxes
+    // carry a stats line, so ROW_MAX binds first for them: the next test.)
+    const types = Array.from({ length: 25 }, (_, i) => `m/p.T${String(i).padStart(2, "0")}`);
+    const x = view([...pkgs(["m/p"], "m"), ...types.map((t) => decl(t, "m/p"))]);
+    const sc = scene(x, { ...DEFAULT_STATE, focus: "m/p" });
+    expect(sc.decls).toBe(true);
+    const a = await layout(sc, elk);
     const rows = new Map<number, string[]>();
-    for (const l of leaves) rows.set(a.get(l)!.y, [...(rows.get(a.get(l)!.y) ?? []), l]);
+    for (const t of types) rows.set(a.get(t)!.y, [...(rows.get(a.get(t)!.y) ?? []), t]);
     expect(WRAP).toBe(10);
     expect([...rows.values()].map((r) => r.length)).toEqual([10, 10, 5]);
-    expect([...rows.values()].map((r) => r[0])).toEqual(["m/l00", "m/l10", "m/l20"]);
-    expect(Math.min(...rows.keys())).toBeGreaterThan(a.get("m/top")!.y);
+    expect([...rows.values()].map((r) => r[0])).toEqual(["m/p.T00", "m/p.T10", "m/p.T20"]);
+  });
+
+  it("wraps a rank before its row grows wider than ROW_MAX, counting what containers hold", async () => {
+    // m/top over 12 leaves with long names, then over three containers of
+    // five such leaves each: no row may be wider than ROW_MAX.
+    const long = (p: string, i: number) => `${p}/${"subsystem_".repeat(3)}${String(i).padStart(2, "0")}`;
+    const leaves = Array.from({ length: 12 }, (_, i) => long("m", i));
+    const inner = ["m/a", "m/b", "m/c"].flatMap((c) => Array.from({ length: 5 }, (_, i) => long(c, i)));
+    const x = view(pkgs(["m/top", ...leaves, ...inner], "m"), leaves.map((l) => edge("m/top", l)));
+    const a = await layout(scene(x, { ...DEFAULT_STATE, focus: "m", depth: 2 }), elk);
+    const top = [...leaves, "m/a", "m/b", "m/c"].filter((id) => a.get(id)!.parent === undefined);
+    const rows = new Map<number, string[]>();
+    for (const id of top) rows.set(a.get(id)!.y, [...(rows.get(a.get(id)!.y) ?? []), id]);
+    const width = (r: string[]) => Math.max(...r.map((id) => a.get(id)!.x + a.get(id)!.w)) - Math.min(...r.map((id) => a.get(id)!.x));
+    expect(ROW_MAX).toBe(1280);
+    expect(rows.size).toBeGreaterThan(3);
+    // A rank's rows sit WRAP_GAP apart, closer than two ranks (24): they read as one.
+    const ys = [...rows.keys()].sort((p, q) => p - q);
+    const bottom = (y: number) => Math.max(...rows.get(y)!.map((id) => a.get(id)!.y + a.get(id)!.h));
+    const topRow = a.get("m/top")!;
+    expect(ys[0] - (topRow.y + topRow.h)).toBe(24);
+    for (let i = 0; i + 1 < ys.length; i++) expect(ys[i + 1] - bottom(ys[i])).toBe(WRAP_GAP);
+    for (const r of rows.values()) expect(width(r)).toBeLessThanOrEqual(ROW_MAX);
+    // each row takes boxes while they fit: the next row's first would not.
+    const sorted = [...rows].sort(([y1], [y2]) => y1 - y2).map(([, r]) => r);
+    for (let i = 0; i + 1 < sorted.length; i++) {
+      const next = a.get(sorted[i + 1][0])!;
+      if (sorted[i].length < WRAP) expect(width(sorted[i]) + 24 + next.w).toBeGreaterThan(ROW_MAX);
+    }
+  });
+
+  it("widens a container to its label, and keeps it as short as its rows (11)", async () => {
+    // One small leaf under a long name, beside a sibling: ELK's minimum size
+    // was not met in width and added height instead.
+    const x = view(pkgs(["m/controller_manager_and_scheduler_plugins/x", "m/y"], "m"));
+    const sc = scene(x, { ...DEFAULT_STATE, focus: "m", depth: 2 });
+    const c = sc.nodes.find((n) => n.id === "m/controller_manager_and_scheduler_plugins")!;
+    const a = await layout(sc, elk);
+    const box = a.get(c.id)!;
+    expect(box.w).toBe(containerWidth(c));
+    expect(box.h).toBe(24 + 40 + 12);
+    const leaf = a.get("m/controller_manager_and_scheduler_plugins/x")!;
+    expect(leaf.x + leaf.w / 2).toBeCloseTo(box.w / 2); // centred in it
+    expect(elkGraph(sc).children!.find((n) => n.id === c.id)!.layoutOptions!["elk.nodeSize.minimum"]).toBeUndefined();
   });
 
   it("uses the Policy's ranks in a sibling set that has one, and tiers in the others", async () => {

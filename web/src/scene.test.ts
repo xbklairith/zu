@@ -21,6 +21,65 @@ const g = parseView(JSON.stringify(golden));
 const store = "example.com/shop/internal/store";
 
 describe("scene", () => {
+  // 11: m/a uses m/b and m/c; m/b uses m/c; m/c holds two packages.
+  const uses = view(pkgs(["m/a", "m/b", "m/c/x", "m/c/y"], "m"), [edge("m/a", "m/b"), edge("m/a", "m/c/x"), edge("m/a", "m/c/y"), edge("m/b", "m/c/x")]);
+  it("gives each box its stats line: the distinct drawn boxes it uses and is used by, then packages (11)", () => {
+    const at = (s: ViewState) => Object.fromEntries(scene(uses, s).nodes.map((n) => [n.id, n.stats]));
+    const want = { "m/a": "uses 2 · used by 0", "m/b": "uses 1 · used by 1", "m/c": "uses 0 · used by 2 · 2 pkgs" };
+    expect(at({ ...DEFAULT_STATE, focus: "m", depth: 1 })).toEqual(want);
+    // The count is the same whatever lines are drawn, selected or hidden.
+    expect(at({ ...DEFAULT_STATE, focus: "m", depth: 1, edges: "off", selected: "m/b" })).toEqual(want);
+    const g = parseView(JSON.stringify(golden));
+    const sc = scene(g, { ...DEFAULT_STATE, focus: "example.com/shop", depth: 1 });
+    expect(sc.nodes.filter((x) => x.shape !== "box" && x.stats !== undefined)).toEqual([]);
+  });
+  it("counts only project boxes in uses and used by, not the externals or the outside (11, A2)", () => {
+    // h/b depends on nothing among its siblings but uses an external module:
+    // it stands in the bottom row, "depends on nothing here", so it reads uses 0.
+    const h = view([...pkgs(["h/a", "h/b", "h/c/x"], "h"), ...exts(["x.io/e"])],
+      [edge("h/a", "h/b"), edge("h/b", "x.io/e"), edge("h/c/x", "h/a")]);
+    const stats = (s: Partial<ViewState>) =>
+      Object.fromEntries(scene(h, { ...DEFAULT_STATE, ...s }, { home: true }).nodes.filter((n) => n.stats).map((n) => [n.id, n.stats]));
+    expect(stats({})).toEqual({ "h/a": "uses 1 · used by 1", "h/b": "uses 0 · used by 1", "h/c": "uses 1 · used by 0" });
+    // Focused on h/c, h/c/x uses the rest of the project, drawn as the outside box.
+    expect(stats({ focus: "h/c" })["h/c/x"]).toBe("uses 0 · used by 0");
+  });
+  it("counts the dependencies that run against the rows (11)", () => {
+    const at = (w: typeof uses, s: Partial<ViewState> = {}) => scene(w, { ...DEFAULT_STATE, focus: "m", depth: 1, ...s }).against;
+    expect(at(uses)).toBe(0);
+    // m/c/x uses m/a: boxes m/a and m/c now form a cycle, and one of its pairs is set aside.
+    const loop = view(pkgs(["m/a", "m/b", "m/c/x", "m/c/y"], "m"), [...uses.edges, edge("m/c/x", "m/a")]);
+    expect(at(loop)).toBe(1);
+    expect(at(loop, { edges: "off", selected: "m/b" })).toBe(1);
+    // With a Level on m/a, the Policy places the top set: its cycle is not counted.
+    const placed = { ...view([...pkgs(["m/a"], "m", { rank: 1 }), ...pkgs(["m/b", "m/c/x", "m/c/y"], "m")], loop.edges), policy: { hash: "sha256:p", levels: [["m/a"]] } };
+    expect(at(placed)).toBe(0);
+  });
+  it("counts uses and used by from the dependencies, not the lines, at every declutter stage (11)", () => {
+    // Depth 2, two containers: the arrows stage merges every line into m/a → m/b.
+    const two = view(pkgs(["m/a/p", "m/a/q", "m/b/r", "m/b/s"], "m"),
+      [edge("m/a/p", "m/b/r"), edge("m/a/q", "m/b/r"), edge("m/a/q", "m/b/s"), edge("m/b/r", "m/b/s")]);
+    const at = (stage: ViewState["stage"]) => {
+      const sc = scene(two, { ...DEFAULT_STATE, focus: "m", depth: 2, stage });
+      return [Object.fromEntries(sc.nodes.filter((n) => n.stats).map((n) => [n.id, n.stats])), sc.nodes.filter((n) => n.hub).map((n) => n.id)];
+    };
+    const want = [
+      { "m/a/p": "uses 1 · used by 0", "m/a/q": "uses 2 · used by 0", "m/b/r": "uses 1 · used by 2", "m/b/s": "uses 0 · used by 2" },
+      ["m/b/r", "m/b/s"],
+    ];
+    expect(at("arrows")).toEqual(want);
+    expect(at("full")).toEqual(want);
+    expect(at("triangles")).toEqual(want);
+  });
+  it("emphasises the 3 most used boxes, at rest only (11)", () => {
+    const hubs = (s: ViewState) => scene(uses, s).nodes.filter((n) => n.hub).map((n) => n.id);
+    // m/a is used by none, so only two qualify.
+    expect(hubs({ ...DEFAULT_STATE, focus: "m", depth: 1 })).toEqual(["m/c", "m/b"].sort());
+    expect(hubs({ ...DEFAULT_STATE, focus: "m", depth: 1, selected: "m/a" })).toEqual([]);
+    // Four boxes used by one each: the ties go by id.
+    const four = view(pkgs(["m/a", "m/b", "m/c", "m/d", "m/e"], "m"), ["m/b", "m/c", "m/d", "m/e"].map((t) => edge("m/a", t)));
+    expect(scene(four, { ...DEFAULT_STATE, focus: "m", depth: 1 }).nodes.filter((n) => n.hub).map((n) => n.id)).toEqual(["m/b", "m/c", "m/d"]);
+  });
   it("draws the cut with labels relative to their container", () => {
     const sc = at({ focus: "", depth: 2 });
     expect(sc.nodes.map((n) => [n.id, n.label, n.shape, n.toggle ?? ""])).toEqual([

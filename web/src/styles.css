@@ -129,10 +129,40 @@ pre {
   grid-column: 2;
   position: relative;
   min-height: 0;
+  display: flex; /* 11: the legend strip, then the axis and the flow */
+  flex-direction: column;
 }
 
-.flow {
+/* 11: the axis beside the canvas says what the rank rows mean. */
+.flow-row {
+  display: flex;
+  flex: 1;
+  min-height: 0;
   width: 100%;
+}
+.axis {
+  flex: 0 0 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-right: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.axis .v {
+  writing-mode: vertical-rl;
+}
+.axis .uses {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.flow {
+  flex: 1;
+  min-width: 0;
   height: 100%;
 }
 
@@ -153,6 +183,9 @@ pre {
   --xy-edge-label-color: var(--fg);
   --xy-controls-button-background-color: var(--box);
   --xy-controls-button-color: var(--fg);
+  --xy-minimap-background-color: var(--bg);
+  --xy-minimap-node-background-color: var(--line);
+  --xy-minimap-mask-background-color: rgba(128, 128, 128, 0.2);
 }
 
 .react-flow__handle {
@@ -205,6 +238,16 @@ pre {
 
 .node.selected {
   outline: 2px solid var(--accent);
+}
+/* 11: one of the most used boxes, at rest. The border is thicker, in its own
+   colour; the padding gives back the 2 px so the text keeps its room. */
+.node.box.hub {
+  border-width: 3px;
+  padding: 2px 6px;
+}
+.legend .swatch.hub {
+  border-width: 3px;
+  border-color: var(--box-border);
 }
 
 .stats,
@@ -347,20 +390,15 @@ button.st-removed {
   stroke-width: 2;
 }
 
+/* 11: a strip above the canvas, not over it, so it never covers a box. */
 .legend {
-  position: absolute;
-  z-index: 5;
-  left: 8px;
-  top: 8px;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  max-width: 60%;
   padding: 4px 8px;
   font-size: 11px;
   background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 6px;
+  border-bottom: 1px solid var(--line);
 }
 .legend .swatch {
   padding: 0 6px;
@@ -482,9 +520,9 @@ button.st-removed {
 }
 
 /* 11: a lit edge is solid when the lit box depends on the other end, and
-   dashed when the other end depends on it. */
+   dotted when the other end depends on it: not 6 4, a removed edge's dash (04). */
 .react-flow__edge.dep-in path {
-  stroke-dasharray: 6 4;
+  stroke-dasharray: 2 3;
 }
 
 .node .toggle {

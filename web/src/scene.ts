@@ -6,8 +6,9 @@ import { bundlesOver, EXTERNALS, externalsOf, type Bundle } from "./bundle";
 import { declutter, NO_PINS, type Mark, type Pin } from "./declutter";
 import { crapBand, packageRisk, rolledCrap, type Band, type Risk } from "./metrics";
 import { rolledRanks } from "./policy";
-import { siblingTiers } from "./rank";
+import { siblingRanks } from "./rank";
 import { always, quiet, type Dir } from "./edges";
+import { boxStats, statsLine } from "./tree";
 import { shorten } from "./labels";
 import { withinHops } from "./select";
 import type { Known, Stage, ViewState } from "./state";
@@ -23,6 +24,8 @@ export type SceneNode = {
   rowMarks?: string[]; // the Change View class of each method row
   rank?: number; // 07: the Policy rank of a box, rolled up (policy.ts rolledRanks)
   tier?: number; // 11: its architecture rank among its siblings (rank.ts); only the layout reads it
+  stats?: string; // 11: a box's stats line (tree.ts statsLine); the canvas draws it and layout.ts sizes by it
+  hub?: boolean; // 11: at rest, one of the HUBS most used boxes; drawn with a thicker border
   hidden?: ViewEdge[]; // 07: violating imports with both ends inside this node, so no line shows them
   order?: number; // 07: the box's place in the Policy's order; layout.ts draws it before its siblings
   crap?: { risk: Risk; band: Band }; // 08: a box's rolled μ+σ, a function's own CRAP; null = no coverage data
@@ -40,6 +43,7 @@ export type Scene = {
   nodes: SceneNode[]; edges: SceneEdge[];
   all: SceneEdge[]; // 11: every edge the cut could draw, drawn or not; the canvas draws a hovered box's from here
   hidden: number; // 11: the lines auto leaves out at rest (edges.ts); 0 when every line is drawn
+  against: number; // 11: dependencies that run against the rows (rank.ts siblingRanks); the header counts them
   bundles: Bundle[]; // the leaf bundles behind the edges, for the panel
   selected: string | null; // the drawn node that stands for the selection
   selectedRow: string | null; // the selected method, drawn as a row of `selected`
@@ -186,9 +190,12 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   }
   // 11: every drawn node's architecture rank, from the bundles this cut
   // keeps, drawn or not, so showing or hiding lines never moves a box.
-  const tiers = siblingTiers(
+  // A sibling set with a Policy rank is placed by it (layout.ts ranked).
+  const byPolicy = new Set(nodes.filter((n) => n.rank !== undefined).map((n) => n.parent));
+  const { tiers, against } = siblingRanks(
     new Map(nodes.map((n) => [n.id, n.parent])),
     kept.map((b) => ({ from: shown(b.from), to: shown(b.to), weight: b.pairs })),
+    (p) => byPolicy.has(p),
   );
   for (const n of nodes) n.tier = tiers.get(n.id);
 
@@ -218,10 +225,47 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   const byEnds = (x: SceneEdge, y: SceneEdge) => cmp(x.from, y.from) || cmp(x.to, y.to);
   edges.sort(byEnds);
   all.sort(byEnds);
+  connect(view, nodes, kept.map((b) => [shown(b.from), shown(b.to)] as const).filter(([f, t]) => ids.has(f) && ids.has(t)), selected === null);
   return {
-    focus, depth, stage: s.stage, lines: d.lines && !hush, nodes: nodes.sort((x, y) => cmp(x.id, y.id)), edges, all, hidden, bundles: kept,
+    focus, depth, stage: s.stage, lines: d.lines && !hush, nodes: nodes.sort((x, y) => cmp(x.id, y.id)), edges, all, hidden, against, bundles: kept,
     selected, selectedRow: row?.selectedRow ?? selectedRow, decls: c.decls, noDetail: c.noDetail,
   };
+}
+
+// HUBS is how many of the most used boxes are emphasised at rest (11).
+export const HUBS = 3;
+
+// connect gives each box its stats line (11): the distinct drawn nodes at the
+// other end of its dependencies, from the bundles the cut keeps, each end
+// drawn where it shows (links), the same source as the ranks. Not from the
+// lines: a declutter stage merges them into its containers' arrows. So the
+// text and the box's size are the same whatever the stage, edge mode, hover
+// or selection. Only project nodes count (A2): the externals oval and the
+// outside box stand beside the rows, not in them, so a box in the bottom row
+// ("depends on nothing here") reads uses 0; the Panel lists its externals.
+// At rest the HUBS boxes used by the most (at least one; ties by id) are
+// marked hub: where to start reading.
+function connect(view: View, nodes: SceneNode[], links: readonly (readonly [string, string])[], rest: boolean) {
+  const aside = new Set(nodes.filter((n) => n.shape === "oval" || n.shape === "outside").map((n) => n.id));
+  const uses = new Map<string, Set<string>>();
+  const usedBy = new Map<string, Set<string>>();
+  const add = (m: Map<string, Set<string>>, k: string, v: string) => {
+    const s = m.get(k);
+    if (s) s.add(v);
+    else m.set(k, new Set([v]));
+  };
+  for (const [from, to] of links) {
+    if (from === to || aside.has(from) || aside.has(to)) continue;
+    add(uses, from, to);
+    add(usedBy, to, from);
+  }
+  const boxes = nodes.filter((n) => n.shape === "box");
+  for (const n of boxes) {
+    n.stats = statsLine({ uses: uses.get(n.id)?.size ?? 0, usedBy: usedBy.get(n.id)?.size ?? 0, packages: boxStats(view, n.id).packages });
+  }
+  if (!rest) return;
+  const by = (n: SceneNode) => usedBy.get(n.id)?.size ?? 0;
+  for (const n of boxes.filter((b) => by(b) > 0).sort((a, b) => by(b) - by(a) || cmp(a.id, b.id)).slice(0, HUBS)) n.hub = true;
 }
 
 // markHidden marks each drawn node that holds both ends of a violating import
