@@ -26,7 +26,7 @@ on the real diagram that do not exist in the code.
   **Foreign** module prefixes, overrides edge kinds, omits nodes or edges, and
   declares **Proposals**.
 - A Proposal is a named regrouping of real packages. It is drawn only on request,
-  under a "PROPOSAL, not instantiated in code" banner, and violations are
+  under a "PROPOSAL — not instantiated in code: <name>" banner (uml-viewer's wording, aligned 2026-09-24, feature 07), and violations are
   re-evaluated for it.
 - The tree is derived from node ids when a view is drawn. The IR records
   `grouping: "tree"` and adds no synthetic segment nodes.
