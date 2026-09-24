@@ -134,3 +134,24 @@ certain calls become `calls` edges.
 Any other call into this repository's code — through a variable, field, interface or
 function value. Never drawn; counted per package, so a view can say how much it is not
 showing.
+
+## CRAP
+
+Change Risk Anti-Patterns score of one function: complexity² × (1 − coverage)³ + complexity,
+from zu's cyclomatic complexity and a `go test -coverprofile`. Drawn as a fill on boxes
+only when a profile is given.
+
+## Risk (μ+σ)
+
+A package's CRAP summary: the mean plus one standard deviation of its functions' CRAP.
+A box shows the worst risk among the packages drawn inside it.
+
+## Band
+
+The risk bucket a fill and badge name: `low` (≤ 8), `mid` (≤ 12), `high` (> 12), as in
+uml-viewer's thresholds.
+
+## Missing
+
+A package with functions but no coverage data for any of them in the given profile.
+Counts as `high` and is badged "?". Without a profile nothing is missing: no CRAP is drawn.

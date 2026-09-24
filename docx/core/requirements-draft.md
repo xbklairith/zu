@@ -143,7 +143,7 @@ Blast radius on a large monorepo can reach most of the graph. Two candidate miti
 
 ## The IR contract
 
-The IR is the only thing the renderer reads. It is written to disk, versioned independently of the application, and diffable by hand.
+The IR is the only thing the renderer reads (except the View's CRAP numbers, see Metrics overlay). It is written to disk, versioned independently of the application, and diffable by hand.
 
 | Field | Holds | Notes |
 | --- | --- | --- |
@@ -152,7 +152,7 @@ The IR is the only thing the renderer reads. It is written to disk, versioned in
 | `nodes[]` | id, kind, name, parent, source location | `kind` = component, module, type, function |
 | `edges[]` | from, to, kind, source locations | `kind` = imports, calls, implements, extends |
 | `policyHash` | Hash of the policy that produced the grouping | A diagram diff is only valid across IRs with the same hash |
-| `metrics?` | Per-node overlay values, keyed by node id | Optional, loaded from a separate snapshot |
+| `metrics?` | Per-node overlay values, keyed by node id | Optional, loaded from a separate snapshot. Amended by feature 08: left unwritten; complexity is measured beside the IR and CRAP is joined into the HTML View |
 | `parseErrors[]` | Files that failed to parse, with reasons | Surfaced in the UI; silence here is how tools lie |
 
 ### Rules
@@ -160,11 +160,11 @@ The IR is the only thing the renderer reads. It is written to disk, versioned in
 - Every node carries a real source location: path, line, and the ref it was read at. A node without one is a bug, not a placeholder.
 - Every edge carries at least one source location justifying it.
 - Node ids are stable across runs and derived from the source identity, not from render order. Mode B's whole diff depends on this.
-- `policyHash` mismatch between two IRs makes them undiffable. The CLI says so rather than producing a diff that is mostly noise from a re-grouping.
+- `policyHash` mismatch between two IRs makes them undiffable. The CLI says so rather than producing a diff that is mostly noise from a re-grouping. (Amended by ADR 0004: `diff` scans both refs under head's Policy, so its two IRs always match.)
 
 ### Metrics overlay
 
-Metrics come from snapshot files produced by tools we do not own — coverage reports, mutation runs, complexity output. The IR references them by node id; it does not compute them. Adding a new metric source means writing a reader, not touching the parser.
+Metrics come from snapshot files produced by tools we do not own — coverage reports, mutation runs, complexity output. The IR references them by node id; it does not compute them. Adding a new metric source means writing a reader, not touching the parser. (Amended by feature 08: cyclomatic complexity is the exception, measured in the parser's one pass and kept beside the IR; coverage comes from a reader.)
 
 ### Storage
 

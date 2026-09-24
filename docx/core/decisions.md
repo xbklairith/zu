@@ -32,7 +32,7 @@ Hard-to-reverse, surprising, real trade-offs — one file each in [`docx/decisio
 - **Mode B surface:** Structural Summary for CI leads; local UI diff view for depth. zu never calls a code-host API and ships no CI snippets — the JSON/Markdown output is documented.
 - **Links (B6):** host detected from the `origin` remote (GitHub/GitLab), `-link-template` override.
 - **Languages:** Go only; other files reported as unsupported, with counts.
-- **Metrics overlay (A7):** CRAP colour in v1 as its own feature after interaction: cyclomatic complexity computed by zu, coverage from `go test -coverprofile`; missing data counts as red (uml-viewer). Mutation score after v1.
+- **Metrics overlay (A7):** CRAP colour in v1 as its own feature after interaction: cyclomatic complexity computed by zu, coverage from `go test -coverprofile`; missing data counts as red (uml-viewer). Mutation score after v1. Settled by feature 08: complexity is measured in the scan's one parse and carried beside the IR (`scan.Stats`), never in it, so the IR and its goldens do not change; the IR's `metrics?` stays unwritten and CRAP lives in the View. Input is an explicit `-coverprofile FILE`, only with `-html`. No profile draws nothing (A7's "degrade silently"); with a profile, a package none of whose function files it covers is red with "?". A Change View shows head's coverage only.
 - **Test corpus:** zu, spf13/cobra, gohugoio/hugo, kubernetes/kubernetes, pinned to tags, fetched by script.
 - **5-minute criterion:** the author, timed, on a public repo they have not read (hugo).
 - **Product focus:** zu explains a project and a code change through interactive diagrams — the diagram is the explanation. No prose or doc-comment text in the UI.
