@@ -123,6 +123,12 @@ Read them as historical.
 - **`decisions.md` Serve (10):** now calls watch feature 13, as renumbered at approval
   (grouping is 12).
 
+## Risks
+
+- A box's stats and the lines it draws when selected or hovered can differ by one: the
+  line to the externals oval is drawn, but "uses N" doesn't count it (A2; accepted at
+  review). `hugolib` reads "uses 23" and draws 24 lines out.
+
 ## Pending, by a person
 
 The plan's last step is the user's check: open `hugo.html` and `k8s.html`. Can you
