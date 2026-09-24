@@ -303,3 +303,45 @@ describe("the root module opens in place (12)", () => {
     expect(upTo(nested, "k")).toBe("");
   });
 });
+
+const roles = view([
+  ...pkgs(["m/cmd/tool"], "m", { main: true }),
+  ...pkgs(["m/internal/x"], "m", { genDecls: 3, decls: 3 }),
+  ...pkgs(["m/internal/y", "m/lib"], "m", { decls: 1 }),
+  // one command among three packages; half commands; a 10 % generated share.
+  ...pkgs(["m/svc/a", "m/half/a"], "m", { main: true }),
+  ...pkgs(["m/svc/b", "m/svc/c", "m/half/b"], "m"),
+  ...pkgs(["m/lowgen/g"], "m", { genDecls: 1, decls: 1 }),
+  // half its declarations generated, in one package (M1: counted per declaration).
+  ...pkgs(["m/mixed"], "m", { genDecls: 5, decls: 10 }),
+  ...pkgs(["m/lowgen/h"], "m", { decls: 9 }),
+  // 30 % generated: under GEN_MIN, so no badge (12, A1).
+  ...pkgs(["m/part"], "m", { genDecls: 3, decls: 10 }),
+], [edge("m/cmd/tool", "m/lib"), edge("m/cmd/tool", "m/internal/y")]);
+
+describe("path-role badges (12)", () => {
+  const badges = (sc: { nodes: { id: string; badges?: string[] }[] }, id: string) => sc.nodes.find((n) => n.id === id)!.badges;
+  it("names a box's role unless its own name says it, and its generated share", () => {
+    const sc = scene(roles, { ...DEFAULT_STATE, depth: 1 }, { home: true });
+    expect(badges(sc, "m/cmd")).toBeUndefined(); // "cmd" is its name
+    expect(badges(sc, "m/internal")).toEqual(["gen 75%"]);
+    expect(badges(sc, "m/lib")).toBeUndefined();
+    const inner = scene(roles, { ...DEFAULT_STATE, focus: "m/internal" }, { home: true });
+    expect(badges(inner, "m/internal/x")).toEqual(["internal", "gen 100%"]);
+    const tool = scene(roles, { ...DEFAULT_STATE, focus: "m/cmd" }, { home: true });
+    expect(badges(tool, "m/cmd/tool")).toEqual(["cmd"]);
+  });
+  it("says cmd only of a command's directory or a box half commands, and gen from 50 %", () => {
+    const sc = scene(roles, { ...DEFAULT_STATE, depth: 1 }, { home: true });
+    expect(badges(sc, "m/svc")).toBeUndefined(); // one package main of three
+    expect(badges(sc, "m/half")).toEqual(["cmd"]);
+    expect(badges(sc, "m/lowgen")).toBeUndefined(); // gen 10 %
+    expect(badges(sc, "m/mixed")).toEqual(["gen 50%"]);
+    expect(badges(sc, "m/part")).toBeUndefined(); // gen 30 %
+  });
+  it("calls the top row entry points only when every box in it holds a program", () => {
+    expect(scene(roles, { ...DEFAULT_STATE, depth: 1 }, { home: true }).entry).toBe(true);
+    const flat = { ...roles, edges: [] };
+    expect(scene(flat, { ...DEFAULT_STATE, depth: 1 }, { home: true }).entry).toBe(false);
+  });
+});

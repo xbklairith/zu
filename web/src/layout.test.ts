@@ -53,6 +53,11 @@ describe("layout", () => {
       expect(sizeOf({ ...box, label: "mount-utils", stats: line }).w).toBe(Math.max(90, Math.ceil(textWidth(line) + INSET)));
     }
   });
+  it("gives a box's role badges a line of their own (12)", () => {
+    const box = { id: "x", parent: "", shape: "box" as const, dim: false, selected: false, methods: [], label: "x" };
+    expect(sizeOf({ ...box, badges: ["cmd", "gen 40%"] }).h).toBe(56);
+    expect(sizeOf(box).h).toBe(40);
+  });
   it("triangles sit on the top and bottom edges, apex out (uml-viewer)", () => {
     expect(triangles(100, 40)).toEqual({ in: "50,-10.39 44,0 56,0", out: "44,40 56,40 50,50.39" });
   });

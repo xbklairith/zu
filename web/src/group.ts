@@ -30,7 +30,8 @@ export const knownGroup = (view: View, id: string) => {
 // every grouping question reads it in O(1), never walking the packages again.
 // decls and gen count declarations (gen: those in generated files, from the
 // IR's per-declaration flag); mains, packages main; changed, any status.
-export type Rollup = { pkgs: number; name: number; generated: number; decls: number; gen: number; mains: number; changed: boolean };
+// module (12, Task 8) is its first package's, for path roles.
+export type Rollup = { pkgs: number; name: number; generated: number; decls: number; gen: number; mains: number; changed: boolean; module: string };
 const rollups = new WeakMap<View, Map<string, Rollup>>();
 
 // rollup counts, per box (and "X#pkg"), its packages and the demoted ones. A
@@ -42,7 +43,7 @@ function rollup(view: View): Map<string, Rollup> {
   const ix = index(view);
   const out = new Map<string, Rollup>();
   const add = (b: string, p: (typeof ix.pkgs)[number], kind: string | undefined) => {
-    const t = out.get(b) ?? { pkgs: 0, name: 0, generated: 0, decls: 0, gen: 0, mains: 0, changed: false };
+    const t = out.get(b) ?? { pkgs: 0, name: 0, generated: 0, decls: 0, gen: 0, mains: 0, changed: false, module: p.module ?? "" };
     t.pkgs++;
     if (kind === "name") t.name++;
     else if (kind === "generated") t.generated++;
@@ -308,3 +309,40 @@ function capLive(counts: readonly number[], max: number): number[] {
   }
   return pack(lo);
 }
+
+// roleOf reads a box's path roles (R6) from its packages and its path below
+// its module: whether it holds a program (a package main, or a cmd
+// directory), whether it is one (a cmd directory or its child, or at least
+// half its packages main), an internal/ package, and the share of its
+// declarations in generated files (M1: per declaration, from the IR). It reads
+// the box's Rollup, so it walks no packages (B1).
+function roleOf(view: View, box: string) {
+  const own = box.endsWith(PKG) ? box.slice(0, -PKG.length) : box;
+  const f = factsOf(view, box) ?? { pkgs: 0, decls: 0, gen: 0, mains: 0, module: "" };
+  const segs = own.startsWith(f.module + "/") ? own.slice(f.module.length + 1).split("/") : [];
+  return {
+    name: own.slice(own.lastIndexOf("/") + 1),
+    program: f.mains > 0 || segs.includes("cmd"),
+    cmd: segs.at(-1) === "cmd" || segs.at(-2) === "cmd" || 2 * f.mains >= Math.max(1, f.pkgs),
+    internal: segs.includes("internal"),
+    generated: f.decls === 0 ? 0 : f.gen / f.decls,
+  };
+}
+
+// GEN_MIN is the least generated share a badge names: from 50 %, since at
+// 20 % half of kubernetes' boxes carried one (12, A1).
+export const GEN_MIN = 0.5;
+
+// badgesOf are a box's role badges, drawn under its stats line; a badge its
+// own name already says is left out, and a generated share under GEN_MIN.
+export function badgesOf(view: View, box: string): string[] {
+  const r = roleOf(view, box);
+  const out: string[] = [];
+  if (r.cmd && r.name !== "cmd") out.push("cmd");
+  if (r.internal && r.name !== "internal") out.push("internal");
+  if (r.generated >= GEN_MIN) out.push(`gen ${Math.round(100 * r.generated)}%`);
+  return out;
+}
+
+// holdsProgram: the box holds a package main or a cmd directory (R6's entry points).
+export const holdsProgram = (view: View, box: string) => roleOf(view, box).program;

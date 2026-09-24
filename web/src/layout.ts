@@ -44,8 +44,10 @@ export const INSET = 18;
 // clipped: a long name makes a wide box.
 export function sizeOf(n: SceneNode): { w: number; h: number } {
   const label = textWidth(n.label) + (n.rank !== undefined ? 18 : 0) + (n.toggle ? 22 : 0);
-  const text = Math.max(label, textWidth(n.stats ?? ""), ...n.methods.map((r) => (r.length + 2) * MONO));
-  return { w: Math.max(90, Math.ceil(text + INSET)), h: 40 + ROW * n.methods.length };
+  const badges = (n.badges ?? []).reduce((w, b) => w + textWidth(b) + 12, 0); // 12: each padded, 4 px apart
+  const text = Math.max(label, textWidth(n.stats ?? ""), badges, ...n.methods.map((r) => (r.length + 2) * MONO));
+  // 12: role badges take a line under the stats, 16 px at 11 px type.
+  return { w: Math.max(90, Math.ceil(text + INSET)), h: 40 + ROW * n.methods.length + (n.badges?.length ? 16 : 0) };
 }
 
 // containerWidth is the least a container is drawn: its label, its rank

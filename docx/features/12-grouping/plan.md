@@ -2914,7 +2914,7 @@ Badges under a box's stats line, 16 px taller: `cmd` on a command's directory or
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 diff --git a/web/src/group.test.ts b/web/src/group.test.ts
@@ -2982,9 +2982,9 @@ index 9c7f00a..440f0ee 100644
    });
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/group.test.ts src/layout.test.ts` Expected: FAIL (4 tests: no badges, no `entry`, a badged box is not taller)
+- [x] **Run:** `cd web && npx vitest run src/group.test.ts src/layout.test.ts` Expected: FAIL (4 tests: no badges, no `entry`, a badged box is not taller)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/web/src/Canvas.tsx b/web/src/Canvas.tsx
@@ -3182,9 +3182,9 @@ index f29028e..0c6b2f9 100644
    border-radius: 6px;
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
 
-- [ ] **Commit** (one line, imperative; stage these files only)
+- [x] **Commit** (one line, imperative; stage these files only)
 
 ### Task 9: The browser suite
 

@@ -11,7 +11,7 @@ import { always, quiet, type Dir } from "./edges";
 import { boxStats, statsLine } from "./tree";
 import { shorten } from "./labels";
 import { withinHops } from "./select";
-import { BUDGET, capRows, factsOf, fold, isFold, isGroup, isStrip, knownGroup, MAX_ROWS, strip, stripText } from "./group";
+import { badgesOf, BUDGET, capRows, factsOf, fold, holdsProgram, isFold, isGroup, isStrip, knownGroup, MAX_ROWS, strip, stripText } from "./group";
 import type { Known, Stage, ViewState } from "./state";
 
 export type Shape = "container" | "box" | "oval" | "decl" | "outside" | "chip";
@@ -34,6 +34,7 @@ export type SceneNode = {
   order?: number; // 07: the box's place in the Policy's order; layout.ts draws it before its siblings
   crap?: { risk: Risk; band: Band }; // 08: a box's rolled μ+σ, a function's own CRAP; null = no coverage data
   demoted?: boolean; // 12: a demoted box, drawn because its strip is open (group.ts)
+  badges?: string[]; // 12: its path roles, drawn under the stats line (group.ts badgesOf)
 };
 export type SceneEdge = {
   id: string; from: string; to: string; pairs: number; members: Bundle["members"];
@@ -49,6 +50,7 @@ export type Scene = {
   all: SceneEdge[]; // 11: every edge the cut could draw, drawn or not; the canvas draws a hovered box's from here
   hidden: number; // 11: the lines auto leaves out at rest (edges.ts); 0 when every line is drawn
   against: number; // 11: dependencies that run against the rows (rank.ts siblingRanks); the header counts them
+  entry: boolean; // 12: every box of the top row holds a program, so the axis names it entry points
   bundles: Bundle[]; // the leaf bundles behind the edges, for the panel
   selected: string | null; // the drawn node that stands for the selection
   selectedRow: string | null; // the selected method, drawn as a row of `selected`
@@ -226,6 +228,10 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
       // 12: a closed fold chip names what it holds in its tooltip, as labels drop their shared prefix.
       n.hint = shorten(grouped.folded.get(id)!.map((b) => b.replace(PKG, ""))).join(", ");
     }
+    if (n.shape === "box" && !c.decls) {
+      const b = badgesOf(view, id);
+      if (b.length) n.badges = b;
+    }
     const m = d.lines ? undefined : d.marks.get(id);
     if (m) n.mark = m;
     // A "#pkg" leaf is its own package; any other box rolls up what it holds.
@@ -327,8 +333,13 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     n.label = t.label;
     if (t.hint) n.hint = t.hint;
   }
+  // 12 (R6): the top row is the entry points when every box in it holds a program.
+  const tops = nodes.filter((n) => n.parent === "" && (n.tier ?? -1) >= 0);
+  const high = Math.max(...tops.map((n) => n.tier!));
+  const topRow = tops.filter((n) => n.tier === high);
+  const entry = !c.decls && topRow.length > 0 && topRow.every((n) => (n.shape === "box" || n.shape === "container") && holdsProgram(view, n.id));
   return {
-    focus, depth, stage: s.stage, lines: d.lines && !hush, nodes: nodes.sort((x, y) => cmp(x.id, y.id)), edges, all, hidden, against, bundles: kept,
+    focus, depth, stage: s.stage, lines: d.lines && !hush, nodes: nodes.sort((x, y) => cmp(x.id, y.id)), edges, all, hidden, against, entry, bundles: kept,
     selected, selectedRow: row?.selectedRow ?? selectedRow, decls: c.decls, noDetail: c.noDetail,
     folded: [...grouped.folds].reduce((n, f) => n + (grouped.groups.get(f)?.length ?? 0), 0),
   };

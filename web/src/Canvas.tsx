@@ -121,6 +121,11 @@ function BoxNode({ data, selected }: NodeProps<ZNode>) {
       <Toggle data={data} />
       <div className="label">{data.node.label}</div>
       {data.node.stats && <div className="stats">{data.node.stats}</div>}
+      {data.node.badges && (
+        <div className="badges">
+          {data.node.badges.map((b) => <span key={b} className="badge">{b}</span>)}
+        </div>
+      )}
       <Marks data={data} />
     </div>
   );
@@ -318,8 +323,10 @@ export function Canvas({ view, sc, placed, edge, onSelect, onOpen, onToggle, onE
       {/* 11: what the rows mean. Higher rows use lower ones (ranked, rank.ts);
           the bottom rank uses none of its siblings. Nothing more is promised:
           longest-path ranks do not lift a box nothing uses to the top. */}
-      <div className="axis" role="note" aria-label="Rows: a box uses the rows below it; at the bottom, boxes that depend on nothing here">
+      <div className="axis" role="note" aria-label={`Rows: ${sc.entry ? "the top row holds the entry points; " : ""}a box uses the rows below it; at the bottom, boxes that depend on nothing here`}>
         <span className="uses">
+          {/* 12 (R6): named only when every box of the top row holds a program. */}
+          {sc.entry && <span className="v entry">entry points</span>}
           <span className="v">uses</span>
           <span>↓</span>
         </span>

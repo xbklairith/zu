@@ -375,6 +375,25 @@ button.st-removed {
   line-height: 28px;
   padding: 0 8px;
 }
+/* 12: a box's path roles (group.ts badgesOf), under its stats line. */
+.badges {
+  display: flex;
+  gap: 4px;
+  margin-top: 2px;
+}
+.badge {
+  font-size: 11px;
+  line-height: 14px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: var(--container);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.axis .entry {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
 /* 12: a group (group.ts) reads as a box set aside: dashed, muted, square. */
 .node.chip.group {
   border-radius: 6px;
