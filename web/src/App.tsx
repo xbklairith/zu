@@ -4,6 +4,7 @@ import { Canvas } from "./Canvas";
 import { changedSubgraph, nodeMark } from "./change";
 import { home, upTo } from "./cut";
 import type { View } from "./data";
+import { isGroup } from "./group";
 import { pageEngine } from "./engine";
 import { Header } from "./Header";
 import { redLegend, violationsNote } from "./headline";
@@ -231,6 +232,7 @@ export function App({ view: whole }: { view: View }) {
 
   const open = (n: SceneNode) => {
     if (n.shape === "box" || n.shape === "container") go(n.id);
+    else if (isGroup(n.id)) update((s) => toggle(s, n.id)); // 12: a group opens in place
   };
   // The legend explains red only when something can be red, and badges only
   // when something is ranked; an order-only Policy needs neither.

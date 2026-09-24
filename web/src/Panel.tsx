@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import type { Bundle } from "./bundle";
 import type { Hunk, Loc, View, ViewEdge, ViewNode } from "./data";
 import { calls, imports, targets, type Row } from "./facts";
+import { isGroup, isStrip } from "./group";
 import { linkFor } from "./links";
 import { crapFacts, type Risk } from "./metrics";
 import type { SceneEdge } from "./scene";
@@ -222,6 +223,14 @@ export function Panel({ view, id, edge, bundles, hidden, crap, onReveal, onClose
   let body: React.ReactNode;
   if (edge) {
     body = <Members view={view} edge={edge} onReveal={onReveal} />;
+  } else if (id !== null && isGroup(id)) {
+    // 12: a group stands for boxes set aside or folded; it opens in place.
+    body = (
+      <>
+        <p className="muted">{isStrip(id) ? "tests, tools and generated code, set aside" : "boxes the first view folded"} · click to open</p>
+        <Rows title="Packages here with dependencies" rows={targets(bundles, id)} onReveal={onReveal} />
+      </>
+    );
   } else if (id === OUTSIDE || id === EXTERNALS) {
     body = (
       <Rows
@@ -274,7 +283,7 @@ export function Panel({ view, id, edge, bundles, hidden, crap, onReveal, onClose
         </button>
       </header>
       {!edge && hidden && <Hidden edges={hidden} onReveal={onReveal} />}
-      {!edge && id !== null && <Crap view={view} id={id} box={crap} onReveal={onReveal} />}
+      {!edge && id !== null && !isGroup(id) && <Crap view={view} id={id} box={crap} onReveal={onReveal} />}
       {body}
     </aside>
   );

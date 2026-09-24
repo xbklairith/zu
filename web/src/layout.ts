@@ -142,7 +142,8 @@ const PAD_X = 24; // a container's elk.padding, left and right
 // levelIn is the level ranked places each of one set of siblings at.
 const levelIn = (kids: readonly SceneNode[]) => {
   const policy = kids.some((k) => k.rank !== undefined);
-  return (n: SceneNode) => (policy ? n.rank : n.tier) ?? 0;
+  // 12: groups sit below every row (tier -1), Levels or not.
+  return (n: SceneNode) => (n.tier !== undefined && n.tier < 0 ? n.tier : (policy ? n.rank : n.tier) ?? 0);
 };
 
 // levelsOf is every node's level among its siblings, for packed: rows of one

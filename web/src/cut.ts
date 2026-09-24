@@ -109,6 +109,7 @@ export type Cut = {
   parent: Map<string, string>; // leaf or container → enclosing container, "" at the top
   decls: boolean; // the leaves are the declarations of one package
   noDetail: boolean; // that package's declarations are not in the file
+  alias?: ReadonlyMap<string, string>; // 12: a box drawn by a group leaf instead (group.ts)
 };
 
 // declsOf are a package's types and functions, sorted; methods are rows of their type.
@@ -164,15 +165,19 @@ export function cut(view: View, focus: string, depth: number, toggled: readonly 
 }
 
 // leafOf maps a package to the leaf that draws it, or OUTSIDE when the cut
-// does not contain it.
+// does not contain it. A box a group leaf stands for (12, Cut.alias) maps to it.
 export function leafOf(view: View, c: Cut): (pkg: string) => string {
   const leaves = new Set(c.leaves);
   const open = new Set(c.containers);
+  const alias = c.alias ?? new Map<string, string>();
+  const drawn = (b: string) => (leaves.has(b) ? b : alias.get(b));
   return (pkg) => {
-    if (leaves.has(pkg)) return pkg;
-    if (open.has(pkg) || pkg === c.focus) return leaves.has(pkg + PKG) ? pkg + PKG : OUTSIDE;
+    const at = drawn(pkg);
+    if (at !== undefined) return at;
+    if (open.has(pkg) || pkg === c.focus) return drawn(pkg + PKG) ?? OUTSIDE;
     for (let b = parentBox(view, pkg); b !== ""; b = parentBox(view, b)) {
-      if (leaves.has(b)) return b;
+      const l = drawn(b);
+      if (l !== undefined) return l;
       if (b === c.focus || open.has(b)) break;
     }
     return OUTSIDE;

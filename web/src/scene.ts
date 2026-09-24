@@ -11,6 +11,7 @@ import { always, quiet, type Dir } from "./edges";
 import { boxStats, statsLine } from "./tree";
 import { shorten } from "./labels";
 import { withinHops } from "./select";
+import { isGroup, isStrip, knownGroup, strip, stripText } from "./group";
 import type { Known, Stage, ViewState } from "./state";
 
 export type Shape = "container" | "box" | "oval" | "decl" | "outside" | "chip";
@@ -24,11 +25,13 @@ export type SceneNode = {
   rowMarks?: string[]; // the Change View class of each method row
   rank?: number; // 07: the Policy rank of a box, rolled up (policy.ts rolledRanks)
   tier?: number; // 11: its architecture rank among its siblings (rank.ts); only the layout reads it
+  hint?: string; // 12: a group's tooltip (group.ts stripText, the fold's names)
   stats?: string; // 11: a box's stats line (tree.ts statsLine); the canvas draws it and layout.ts sizes by it
   hub?: boolean; // 11: at rest, one of the HUBS most used boxes; drawn with a thicker border
   hidden?: ViewEdge[]; // 07: violating imports with both ends inside this node, so no line shows them
   order?: number; // 07: the box's place in the Policy's order; layout.ts draws it before its siblings
   crap?: { risk: Risk; band: Band }; // 08: a box's rolled μ+σ, a function's own CRAP; null = no coverage data
+  demoted?: boolean; // 12: a demoted box, drawn because its strip is open (group.ts)
 };
 export type SceneEdge = {
   id: string; from: string; to: string; pairs: number; members: Bundle["members"];
@@ -62,7 +65,11 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   // 11: the page root opens at home, so the hash keeps no focus for it.
   const focus = s.focus === "" && opts.home ? home(view) : s.focus;
   const depth = s.depth ?? autoDepth(view, focus);
-  const c = cut(view, focus, depth, s.toggled);
+  // 12: demoted boxes wait in a strip at the bottom of their set (group.ts).
+  const grouped = strip(view, cut(view, focus, depth, s.toggled), s.toggled);
+  const c = grouped.cut;
+  const members = (g: string) => grouped.groups.get(g)
+    ?? [...grouped.opened].filter((b) => c.parent.get(b) === grouped.at.get(g));
   let kept = bundlesOver(view, c, { externals: s.externals }).filter((b) => b.pairs >= s.minPairs || pin(b));
   let leaves = new Set([...c.leaves, ...kept.flatMap((b) => [b.from, b.to])]);
   const open = new Set(c.containers);
@@ -82,6 +89,11 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     if (n?.kind === "package" && !c.decls) {
       const l = toLeaf(id);
       return l === OUTSIDE ? null : l;
+    }
+    // 12: a box a group stands for, or one inside it, anchors to the group.
+    for (let x = id; x !== ""; x = index(view).parent.get(x) ?? "") {
+      const g = c.alias?.get(x);
+      if (g !== undefined) return leaves.has(g) ? g : null;
     }
     return null;
   };
@@ -128,6 +140,7 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   const label = (id: string, parent: string): string => {
     const named = view.regroup?.label[id]; // 07: a Proposal's layer boxes and their tops
     if (named !== undefined) return named;
+    if (isStrip(id)) return stripText(view, members(id), 0).label;
     if (id === OUTSIDE) return "outside";
     if (id === EXTERNALS) return `${externals} external modules`;
     if (id.endsWith(PKG)) return `${last(id.slice(0, -PKG.length))} (package)`;
@@ -138,6 +151,7 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     return top ? id.slice(top.length + 1) : id;
   };
   const shape = (id: string): Shape => {
+    if (isGroup(id)) return "chip";
     if (inner.has(id)) return "container";
     if (id === OUTSIDE) return "outside";
     if (id === EXTERNALS || node.get(id)?.kind === "external") return "oval";
@@ -159,7 +173,9 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     };
     n.dim = n.shape !== "container" && !bright(id);
     if (n.shape === "container") n.toggle = "collapse";
+    else if (isStrip(id)) n.toggle = grouped.groups.has(id) ? "expand" : "collapse";
     else if (n.shape === "box" && !folds.has(id) && !id.endsWith(PKG) && childrenOf(view, id).length > 0) n.toggle = "expand";
+    if (grouped.opened.has(id)) n.demoted = true;
     const m = d.lines ? undefined : d.marks.get(id);
     if (m) n.mark = m;
     // A "#pkg" leaf is its own package; any other box rolls up what it holds.
@@ -192,12 +208,15 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   // keeps, drawn or not, so showing or hiding lines never moves a box.
   // A sibling set with a Policy rank is placed by it (layout.ts ranked).
   const byPolicy = new Set(nodes.filter((n) => n.rank !== undefined).map((n) => n.parent));
+  // 12: a strip, and the demoted boxes it opens onto, sit below the rows
+  // and do not rank: what imports them would otherwise climb over them.
+  const bottom = (id: string) => isStrip(id) || grouped.opened.has(id);
   const { tiers, against } = siblingRanks(
-    new Map(nodes.map((n) => [n.id, n.parent])),
+    new Map(nodes.filter((n) => !bottom(n.id)).map((n) => [n.id, n.parent])),
     kept.map((b) => ({ from: shown(b.from), to: shown(b.to), weight: b.pairs })),
     (p) => byPolicy.has(p),
   );
-  for (const n of nodes) n.tier = tiers.get(n.id);
+  for (const n of nodes) n.tier = bottom(n.id) ? -1 : tiers.get(n.id);
 
   // 11: auto draws at rest only what must show when there are too many lines
   // to follow: violations, changed imports, and the imports behind the
@@ -225,7 +244,13 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   const byEnds = (x: SceneEdge, y: SceneEdge) => cmp(x.from, y.from) || cmp(x.to, y.to);
   edges.sort(byEnds);
   all.sort(byEnds);
-  connect(view, nodes, kept.map((b) => [shown(b.from), shown(b.to)] as const).filter(([f, t]) => ids.has(f) && ids.has(t)), selected === null);
+  const usedBy = connect(view, nodes, kept.map((b) => [shown(b.from), shown(b.to)] as const).filter(([f, t]) => ids.has(f) && ids.has(t)), selected === null);
+  for (const n of nodes) {
+    if (!isStrip(n.id)) continue;
+    const t = stripText(view, members(n.id), usedBy.get(n.id)?.size ?? 0);
+    n.label = t.label;
+    if (t.hint) n.hint = t.hint;
+  }
   return {
     focus, depth, stage: s.stage, lines: d.lines && !hush, nodes: nodes.sort((x, y) => cmp(x.id, y.id)), edges, all, hidden, against, bundles: kept,
     selected, selectedRow: row?.selectedRow ?? selectedRow, decls: c.decls, noDetail: c.noDetail,
@@ -245,7 +270,7 @@ export const HUBS = 3;
 // ("depends on nothing here") reads uses 0; the Panel lists its externals.
 // At rest the HUBS boxes used by the most (at least one; ties by id) are
 // marked hub: where to start reading.
-function connect(view: View, nodes: SceneNode[], links: readonly (readonly [string, string])[], rest: boolean) {
+function connect(view: View, nodes: SceneNode[], links: readonly (readonly [string, string])[], rest: boolean): Map<string, Set<string>> {
   const aside = new Set(nodes.filter((n) => n.shape === "oval" || n.shape === "outside").map((n) => n.id));
   const uses = new Map<string, Set<string>>();
   const usedBy = new Map<string, Set<string>>();
@@ -263,9 +288,10 @@ function connect(view: View, nodes: SceneNode[], links: readonly (readonly [stri
   for (const n of boxes) {
     n.stats = statsLine({ uses: uses.get(n.id)?.size ?? 0, usedBy: usedBy.get(n.id)?.size ?? 0, packages: boxStats(view, n.id).packages });
   }
-  if (!rest) return;
+  if (!rest) return usedBy;
   const by = (n: SceneNode) => usedBy.get(n.id)?.size ?? 0;
   for (const n of boxes.filter((b) => by(b) > 0).sort((a, b) => by(b) - by(a) || cmp(a.id, b.id)).slice(0, HUBS)) n.hub = true;
+  return usedBy;
 }
 
 // markHidden marks each drawn node that holds both ends of a violating import
@@ -370,7 +396,7 @@ export function fitDepth(requested: Sized & { depth: number }, at: (depth: numbe
 // under zu.policy.yaml, so it never draws a Proposal's.
 export const knownIds = (view: View): Known => ({
   box: (id) => id === "" || isBox(view, id),
-  folder: (id) => !id.endsWith(PKG) && childrenOf(view, id).length > 0,
+  folder: (id) => knownGroup(view, id) || (!id.endsWith(PKG) && childrenOf(view, id).length > 0),
   node: (id) => isBox(view, id) || index(view).node.has(id) || id === OUTSIDE || id === EXTERNALS,
   proposal: (name) => view.kind !== "change" && (view.policy?.proposals?.some((p) => p.name === name) ?? false),
 });

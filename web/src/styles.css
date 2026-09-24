@@ -375,6 +375,19 @@ button.st-removed {
   line-height: 28px;
   padding: 0 8px;
 }
+/* 12: a group (group.ts) reads as a box set aside: dashed, muted, square. */
+.node.chip.group {
+  border-radius: 6px;
+  line-height: normal;
+  padding: 4px 8px;
+  text-align: left;
+  font-size: 12px;
+  background: var(--container);
+}
+.node.box.demoted {
+  border-style: dashed;
+  color: var(--muted);
+}
 .react-flow__edge.edge-added path {
   stroke: var(--added);
   stroke-width: 2;

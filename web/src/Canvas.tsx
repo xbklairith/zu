@@ -17,6 +17,7 @@ import "@xyflow/react/dist/style.css";
 import { edgeMark } from "./change";
 import { parentBox } from "./cut";
 import type { View } from "./data";
+import { isGroup } from "./group";
 import { around } from "./edges";
 import { absolute, triangles, type Placed } from "./layout";
 import { crapGrade, crapLabel } from "./metrics";
@@ -79,7 +80,8 @@ function Toggle({ data }: { data: Data }) {
 // (07), the CRAP fill (08), selection and dimming.
 const cls = (base: string, n: SceneNode, selected: boolean) =>
   `node ${base}${n.change ? ` ${n.change}` : ""}${n.hidden ? " hides-violation" : ""}${n.rank !== undefined ? " ranked" : ""}` +
-  `${n.crap ? ` crap-${n.crap.band}` : ""}${selected ? " selected" : ""}${n.dim ? " dim" : ""}${n.hub ? " hub" : ""}`;
+  `${n.crap ? ` crap-${n.crap.band}` : ""}${selected ? " selected" : ""}${n.dim ? " dim" : ""}${n.hub ? " hub" : ""}` +
+  `${n.demoted ? " demoted" : ""}`;
 
 // Crap is the CRAP badge (08), at the lower right, or in a container's
 // header: the number and its band in words, so the fill is never the only
@@ -181,8 +183,19 @@ function DeclNode({ data, selected }: NodeProps<ZNode>) {
   );
 }
 
-function ChipNode({ data }: NodeProps<ZNode>) {
-  return <div className={cls("chip", data.node, false)}>{data.node.label}</div>;
+// ChipNode is a "+N" line of a Change View box (04), or a group (12): the
+// strip or a fold chip, which a click opens in place (12, N4: at 1280 × 720
+// the Panel opens over it after the first click, so no double-click).
+function ChipNode({ data, selected }: NodeProps<ZNode>) {
+  if (!isGroup(data.node.id)) return <div className={cls("chip", data.node, false)}>{data.node.label}</div>;
+  return (
+    <div className={cls("chip group", data.node, selected)} title={data.node.hint ?? data.node.label}>
+      <Ends />
+      <Toggle data={data} />
+      <div className="label">{data.node.label}</div>
+      {data.node.stats && <div className="stats">{data.node.stats}</div>}
+    </div>
+  );
 }
 
 const nodeTypes = {
@@ -331,10 +344,14 @@ export function Canvas({ view, sc, placed, edge, onSelect, onOpen, onToggle, onE
         nodesDraggable={false}
         nodesConnectable={false}
         nodesFocusable
-        onNodeClick={(_, n) => onSelect(n.id)}
+        onNodeClick={(_, n) => {
+          onSelect(n.id);
+          const node = byId.get(n.id);
+          if (node && isGroup(node.id)) onOpen(node); // 12: a click opens or closes a group
+        }}
         onNodeDoubleClick={(_, n) => {
           const node = byId.get(n.id);
-          if (node) onOpen(node);
+          if (node && !isGroup(node.id)) onOpen(node);
         }}
         onEdgeClick={(_, e) => onEdge?.(e.id)}
         onPaneClick={() => onSelect(null)}

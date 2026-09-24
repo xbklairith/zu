@@ -6,6 +6,9 @@ export type ViewNode = {
   typeKind?: string; generated?: boolean; loc: Loc; decls?: number; unresolved?: number;
   detail?: boolean; status?: string; movedFrom?: string; hop?: number;
   rank?: number; // 06: the package's Policy Level, 0 = innermost
+  main?: boolean; // 12: package main, a program's entry
+  genDecls?: number; // 12: packages: declarations in generated files
+  demoted?: "name" | "generated"; // 12: set aside in the first view (policy.Demoted)
 };
 export type ViewEdge = {
   from: string; to: string; kind: "imports" | "calls" | "embeds"; count: number; loc: Loc; status?: string;
@@ -33,7 +36,7 @@ export type View = {
   links?: { blob: string; compare?: string };
   hunks?: Record<string, Hunk[]>;
   // 06: only when the Policy has rules; 07: or an order or Proposals.
-  policy?: { hash: string; levels: string[][]; order?: string[]; proposals?: Proposal[] };
+  policy?: { hash: string; levels: string[][]; order?: string[]; proposals?: Proposal[]; budget?: number };
   violations?: { new: Violation[]; fixed: Violation[]; known: number }; // 07: Change View only
   metrics?: Metrics; // 08: only when zu was given -coverprofile
   // 07, never written by zu: the box tree a Proposal draws (proposal.ts). cut.ts
