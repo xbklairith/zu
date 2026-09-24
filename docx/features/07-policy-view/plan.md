@@ -873,7 +873,7 @@ decisions.md's Levels rule says "level 0 drawn at the bottom"; uml-viewer's `lay
 
 **Steps:**
 
-- [ ] **Write the failing test.** It covers zu's own layering, where partitioning failed; an edge that climbs only inside two siblings of one rank (it stays in ELK's input and forms a cycle with their inner steps, which ELK breaks); and the six siblings above, on positions.
+- [x] **Write the failing test.** It covers zu's own layering, where partitioning failed; an edge that climbs only inside two siblings of one rank (it stays in ELK's input and forms a cycle with their inner steps, which ELK breaks); and the six siblings above, on positions.
 
 ```diff
 --- a/web/src/layout.test.ts
@@ -992,9 +992,9 @@ decisions.md's Levels rule says "level 0 drawn at the bottom"; uml-viewer's `lay
    const made: { stopped: boolean; jobs: { resolve: (g: ElkNode) => void; reject: (e: Error) => void }[] }[] = [];
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/layout.test.ts` Expected: FAIL
+- [x] **Run:** `cd web && npx vitest run src/layout.test.ts` Expected: FAIL
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/web/src/App.tsx
@@ -1237,7 +1237,7 @@ decisions.md's Levels rule says "level 0 drawn at the bottom"; uml-viewer's `lay
    if (!c.decls) markHidden(view, nodes, (id) => {
 ```
 
-- [ ] **Run:** `cd web && npx tsc --noEmit && npx vitest run` Expected: PASS
+- [x] **Run:** `cd web && npx tsc --noEmit && npx vitest run` Expected: PASS
 
 ### Task 7: Rank badges, the hidden-violation mark and its panel list
 
@@ -2366,7 +2366,7 @@ The expected checks grow from 20 to 29 per engine. This makes Tasks 7 and 10 rep
 - [x] Task 3 · Change View violation delta
 - [x] Task 4 · Rolled ranks on boxes
 - [x] Task 5 · Hidden-violation mark
-- [ ] Task 6 · Level 0 at the bottom, and `order`
+- [x] Task 6 · Level 0 at the bottom, and `order`
 - [ ] Task 7 · Badges, mark and panel list
 - [ ] Task 8 · `proposalView`
 - [ ] Task 9 · Proposal in the hash, never in a Change View

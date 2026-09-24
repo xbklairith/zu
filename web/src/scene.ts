@@ -19,6 +19,7 @@ export type SceneNode = {
   rowMarks?: string[]; // the Change View class of each method row
   rank?: number; // 07: the Policy rank of a box, rolled up (policy.ts rolledRanks)
   hidden?: ViewEdge[]; // 07: violating imports with both ends inside this node, so no line shows them
+  order?: number; // 07: the box's place in the Policy's order; layout.ts draws it before its siblings
 };
 export type SceneEdge = {
   id: string; from: string; to: string; pairs: number; members: Bundle["members"];
@@ -122,6 +123,7 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   };
 
   const ranks = rolledRanks(view);
+  const order = view.policy?.order ?? [];
   const nodes: SceneNode[] = [...ids].sort(cmp).map((id) => {
     const parent = up(id);
     const n: SceneNode = {
@@ -140,6 +142,8 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     const r = n.shape !== "box" && n.shape !== "container" ? undefined
       : id.endsWith(PKG) ? node.get(id.slice(0, -PKG.length))?.rank : ranks.get(id);
     if (r !== undefined) n.rank = r;
+    const o = order.indexOf(id.endsWith(PKG) ? id.slice(0, -PKG.length) : id);
+    if (o >= 0 && n.shape !== "decl") n.order = o;
     return n;
   });
   if (!c.decls) markHidden(view, nodes, (id) => {

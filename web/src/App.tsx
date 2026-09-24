@@ -7,7 +7,7 @@ import type { View } from "./data";
 import { pageEngine } from "./engine";
 import { Header } from "./Header";
 import { keyAction } from "./keys";
-import { elkGraph, positions, Superseded, type Placed } from "./layout";
+import { elkGraph, inOrder, orderOf, positions, Superseded, type Placed } from "./layout";
 import { Panel } from "./Panel";
 import { pinFor } from "./policy";
 import { reveal } from "./search";
@@ -112,6 +112,9 @@ export function App({ view: whole }: { view: View }) {
   const engine = useMemo(pageEngine, []);
   useEffect(() => () => engine.dispose(), [engine]);
   const graph = useMemo(() => JSON.stringify(elkGraph(sc)), [sc]);
+  // The Policy's order is a property of the nodes in graph, so a layout of
+  // graph may read the order of any scene that produced it.
+  const order = useMemo(() => orderOf(sc), [sc]);
   const [placed, setPlaced] = useState<{ graph: string; at: Map<string, Placed> } | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   useEffect(() => {
@@ -121,7 +124,7 @@ export function App({ view: whole }: { view: View }) {
       (out) => {
         performance.mark("zu-layout-end");
         setFailed(null);
-        setPlaced({ graph, at: positions(out) });
+        setPlaced({ graph, at: inOrder(positions(out), order) });
       },
       (e: Error) => {
         if (!(e instanceof Superseded)) setFailed(e.message);
