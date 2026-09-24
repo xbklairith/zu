@@ -53,6 +53,17 @@ func TestInitFileParsesAndHoldsAsWritten(t *testing.T) {
 	if !strings.Contains(string(src), "abc123") || !strings.Contains(string(src), "# exclude:") {
 		t.Errorf("header or exclude hint missing:\n%s", src)
 	}
+	// 12: the demote and budget hints parse once uncommented.
+	for _, key := range []string{"# demote: ", "# budget: "} {
+		i := strings.Index(string(src), key)
+		if i < 0 {
+			t.Fatalf("%s hint missing:\n%s", key, src)
+		}
+		line, _, _ := strings.Cut(string(src[i+2:]), "\n")
+		if _, err := Parse([]byte(line + "\n")); err != nil {
+			t.Errorf("hint %q: %v", line, err)
+		}
+	}
 }
 
 func TestInitFileWithNoLayering(t *testing.T) {

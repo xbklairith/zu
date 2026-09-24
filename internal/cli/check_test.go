@@ -135,3 +135,25 @@ func TestCheckParseFailureWins(t *testing.T) {
 		t.Fatalf("exit %d, want %d: a file that does not parse hides its imports", code, ExitParseFailure)
 	}
 }
+
+// 12: uncommenting policy init's budget hint keeps an existing Baseline valid:
+// budget and demote draw the first view and are not in the Policy hash.
+func TestCheckKeepsBaselineWhenBudgetUncommented(t *testing.T) {
+	dir := layeredRepo(t)
+	if code, _, _ := run("check", "-update-baseline", dir); code != ExitOK {
+		t.Fatal("-update-baseline")
+	}
+	var hint string
+	for _, l := range strings.Split(string(policy.InitFile(nil, "")), "\n") {
+		if strings.HasPrefix(l, "# budget: ") {
+			hint = strings.TrimPrefix(l, "# ")
+		}
+	}
+	if hint == "" {
+		t.Fatal("policy init writes no budget hint")
+	}
+	writeFile(t, dir, policy.FileName, layeredPolicy+hint+"\ndemote: [\"**/docs\"]\n")
+	if code, out, errOut := run("check", dir); code != ExitOK || !strings.Contains(out, "0 new, 1 known") {
+		t.Fatalf("exit %d, stdout %q, stderr %q", code, out, errOut)
+	}
+}

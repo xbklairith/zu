@@ -338,7 +338,7 @@ index 56f93e3..e4b2e9b 100644
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 diff --git a/internal/cli/check_test.go b/internal/cli/check_test.go
@@ -499,9 +499,9 @@ index 8e8f6af..572a1e7 100644
  func TestInitFileWithNoLayering(t *testing.T) {
 ```
 
-- [ ] **Run:** `go test ./internal/policy/ ./internal/cli/` Expected: FAIL (`undefined: DemotedName`, `p.Demoted undefined`)
+- [x] **Run:** `go test ./internal/policy/ ./internal/cli/` Expected: FAIL (`undefined: DemotedName`, `p.Demoted undefined`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/internal/policy/demote.go b/internal/policy/demote.go
@@ -665,9 +665,9 @@ index 021d526..6cbbda5 100644
  	} else {
 ```
 
-- [ ] **Run:** `go test ./... && go vet ./...` Expected: PASS
+- [x] **Run:** `go test ./... && go vet ./...` Expected: PASS
 
-- [ ] **Commit** (one line, imperative; stage these files only)
+- [x] **Commit** (one line, imperative; stage these files only)
 
 ### Task 3: The View marks demoted packages
 

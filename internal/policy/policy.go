@@ -39,6 +39,8 @@ type Policy struct {
 	OmitEdges []Pair     `yaml:"omit-edges" json:"omitEdges,omitempty"` // dependencies left off
 	EdgeKinds []EdgeKind `yaml:"edge-kinds" json:"edgeKinds,omitempty"` // dependencies the Levels rule exempts
 	Proposals []Proposal `yaml:"proposals" json:"proposals,omitempty"`  // named regroupings, drawn only on request
+	Demote    []string   `yaml:"demote" json:"demote,omitempty"`        // 12: id globs set aside; "!glob" keeps one
+	Budget    *int       `yaml:"budget" json:"budget,omitempty"`        // 12: boxes the first view shows before folding
 }
 
 // Level is one rank: the boxes that share it. In YAML an item is one id or
@@ -118,6 +120,14 @@ func Parse(data []byte) (*Policy, error) {
 }
 
 func (p *Policy) validate() error {
+	for i, g := range p.Demote {
+		if err := checkDemote(g); err != nil {
+			return fmt.Errorf("demote[%d]: %w", i, err)
+		}
+	}
+	if b := p.Budget; b != nil && (*b < 1 || *b > MaxBudget) {
+		return fmt.Errorf("budget: %d: want a number of boxes from 1 to %d", *b, MaxBudget)
+	}
 	for i, g := range p.Exclude {
 		if err := checkGlob(g); err != nil {
 			return fmt.Errorf("exclude[%d]: %w", i, err)
@@ -248,7 +258,7 @@ func checkID(id string) error {
 // "**" in exclude globs collapsed to one. Order, the sequence of levels and
 // of proposals and their layers carry meaning and are kept.
 func (p *Policy) Normalize() *Policy {
-	n := &Policy{Foreign: set(p.Foreign), Omit: set(p.Omit), Cycles: p.Cycles}
+	n := &Policy{Foreign: set(p.Foreign), Omit: set(p.Omit), Cycles: p.Cycles, Demote: set(p.Demote), Budget: p.Budget}
 	for _, g := range p.Exclude {
 		n.Exclude = append(n.Exclude, collapseGlob(g))
 	}
@@ -293,8 +303,13 @@ func set(ids []string) []string {
 // Hash is "sha256:" and the hex SHA-256 of the normalised Policy as JSON plus
 // a newline. Comments, key order, list order within sets and duplicates do
 // not change it (0004); the empty Policy hashes as scan.DefaultPolicyHash.
+// Demote and Budget (12) are left out: they only change what the first view
+// draws, never the IR, a violation or a Baseline, so adding them keeps a
+// Baseline valid.
 func (p *Policy) Hash() string {
-	b, err := json.Marshal(p.Normalize())
+	n := p.Normalize()
+	n.Demote, n.Budget = nil, nil
+	b, err := json.Marshal(n)
 	if err != nil {
 		panic(err) // plain strings and bools cannot fail to marshal
 	}

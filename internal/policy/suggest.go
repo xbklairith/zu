@@ -138,6 +138,11 @@ func InitFile(levels []Level, commit string) []byte {
 	b.WriteString("# what exists today).\n")
 	b.WriteString("# exclude: [\"**/*.pb.go\", \"**/zz_generated*.go\"]\n")
 	b.WriteString("# foreign: [github.com/aws/aws-sdk-go-v2]\n")
+	b.WriteString("# The first view sets aside packages under testdata, test(s), *testing, e2e,\n")
+	b.WriteString("# example(s), sample-*, hack, tools, scripts and third_party, and fully\n")
+	b.WriteString("# generated ones; demote adds id globs, and \"!id\" keeps a box drawn.\n")
+	b.WriteString("# demote: [\"**/docs\", \"!example.com/m/tools\"]\n")
+	b.WriteString("# budget: 15 # boxes the first view shows before folding the rest into +N\n")
 	if len(levels) == 0 {
 		b.WriteString("# No layering found: fewer than two boxes to rank.\nlevels: []\n")
 	} else {
