@@ -1,0 +1,51 @@
+# zu release: one host, CGO off, darwin arm64/amd64 + linux amd64 (N1, N2),
+# UI embedded (N3), a version record and sha256 of every file (N4).
+# Check with `make release-check`; try with `make release-snapshot`.
+version: 2
+project_name: zu
+
+before:
+  hooks:
+    - sh -c 'cd web && npm ci --silent && npm run build'
+    - >-
+      sh -c 'mkdir -p .zu/release && CGO_ENABLED=0 go run -trimpath
+      -ldflags "-X $(go list -m)/internal/version.Version=v{{ .Version }} -X $(go list -m)/internal/version.Commit={{ .FullCommit }}"
+      ./cmd/zu version > .zu/release/zu_{{ .Version }}_version.txt'
+
+builds:
+  - id: zu
+    main: ./cmd/zu
+    binary: zu
+    env: [CGO_ENABLED=0]
+    flags: [-trimpath]
+    ldflags:
+      - -s -w -X {{ .ModulePath }}/internal/version.Version=v{{ .Version }} -X {{ .ModulePath }}/internal/version.Commit={{ .FullCommit }}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    goos: [darwin, linux]
+    goarch: [arm64, amd64]
+    ignore:
+      - goos: linux
+        goarch: arm64
+
+archives:
+  - formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files: [LICENSE, README.md]
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+  extra_files:
+    - glob: .zu/release/zu_{{ .Version }}_version.txt
+
+release:
+  draft: true
+  extra_files:
+    - glob: .zu/release/zu_{{ .Version }}_version.txt
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-snapshot"
+
+changelog:
+  use: git
+  sort: asc

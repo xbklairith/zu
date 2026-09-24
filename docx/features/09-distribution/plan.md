@@ -391,7 +391,7 @@ goreleaser is not a Go dependency and is never compiled here. Install the prebui
 
 There is no red step. Without a config, `goreleaser check` validates its defaults and passes, and the Run steps after Step 3 are the test.
 
-- [ ] **Step 1: config.** The before-hooks run in order: the UI build (N3), then the version record built with the release's own ldflags. In v2.12, `before.hooks` are plain command strings, templated and run without a shell. So each hook that needs `cd` or a redirect is wrapped in `sh -c`. `{{ .ModulePath }}` is still empty when the before-hooks run (the first replay stamped the record `zu version dev` that way), so the record's hook asks `go list -m` itself. The record goes under `.zu/`, which is gitignored, because goreleaser cleans `dist/`.
+- [x] **Step 1: config.** The before-hooks run in order: the UI build (N3), then the version record built with the release's own ldflags. In v2.12, `before.hooks` are plain command strings, templated and run without a shell. So each hook that needs `cd` or a redirect is wrapped in `sh -c`. `{{ .ModulePath }}` is still empty when the before-hooks run (the first replay stamped the record `zu version dev` that way), so the record's hook asks `go list -m` itself. The record goes under `.zu/`, which is gitignored, because goreleaser cleans `dist/`.
 
 <!-- file: .goreleaser.yaml -->
 ```yaml
@@ -448,7 +448,7 @@ changelog:
   sort: asc
 ```
 
-- [ ] **Step 2: the check script.** It runs on any goreleaser `dist/`, snapshot or release. It runs the binary built for this host and inspects the others with `file`.
+- [x] **Step 2: the check script.** It runs on any goreleaser `dist/`, snapshot or release. It runs the binary built for this host and inspects the others with `file`.
 
 <!-- file: scripts/release-verify.sh -->
 ```bash
@@ -491,7 +491,7 @@ echo "release-verify: ok ($n archives, $name)"
 
 The `go` line is left out of the comparison: the record is built by `go run`, with the same toolchain, and the line would only differ if the toolchain changed between hooks.
 
-- [ ] **Step 3: Makefile.** The ldflags name the module through `go list -m`, so the deferred module rename can't silently turn them into no-ops.
+- [x] **Step 3: Makefile.** The ldflags name the module through `go list -m`, so the deferred module rename can't silently turn them into no-ops.
 
 ```diff
 --- a/Makefile
@@ -526,15 +526,15 @@ The `go` line is left out of the comparison: the record is built by `go run`, wi
 
 `.gitignore` already has `/dist/` and `/.zu/`, so it doesn't change.
 
-- [ ] **Run:** `chmod +x scripts/release-verify.sh && make release-check` Expected: PASS.
+- [x] **Run:** `chmod +x scripts/release-verify.sh && make release-check` Expected: PASS.
 
-- [ ] **Run:** `d=$(mktemp -d) && go build -ldflags "-X $(go list -m)/internal/version.Version=v9.9.9" -o "$d/zu" ./cmd/zu && "$d/zu" version | grep -qx 'zu version v9.9.9'; r=$?; rm -rf "$d"; exit $r` Expected: PASS (the Makefile's form of `-X` reaches the variable).
+- [x] **Run:** `d=$(mktemp -d) && go build -ldflags "-X $(go list -m)/internal/version.Version=v9.9.9" -o "$d/zu" ./cmd/zu && "$d/zu" version | grep -qx 'zu version v9.9.9'; r=$?; rm -rf "$d"; exit $r` Expected: PASS (the Makefile's form of `-X` reaches the variable).
 
-- [ ] **Run:** `make release-snapshot` Expected: PASS. This is three cross-builds plus `npm ci`, a few minutes. It ends with `release-verify: ok (3 archives, zu_<v>_version.txt)`.
+- [x] **Run:** `make release-snapshot` Expected: PASS. This is three cross-builds plus `npm ci`, a few minutes. It ends with `release-verify: ok (3 archives, zu_<v>_version.txt)`.
 
-- [ ] **Run:** `rm -rf dist .zu/release` Expected: PASS.
+- [x] **Run:** `rm -rf dist .zu/release` Expected: PASS.
 
-- [ ] **Run:** `gofmt -l cmd internal web/*.go | (! grep .) && go vet ./... && golangci-lint run ./... && go test ./... -count=1` Expected: PASS. Read the lint output, not only its exit code.
+- [x] **Run:** `gofmt -l cmd internal web/*.go | (! grep .) && go vet ./... && golangci-lint run ./... && go test ./... -count=1` Expected: PASS. Read the lint output, not only its exit code.
 
 ### Task 5: the release instructions only a person can carry out
 
@@ -743,4 +743,4 @@ make release-snapshot && rm -rf dist .zu/release
 
 ## Progress
 
-- [x] Task 1 · [x] Task 2 · [x] Task 3 · [ ] Task 4 · [ ] Task 5 · [ ] Task 6
+- [x] Task 1 · [x] Task 2 · [x] Task 3 · [x] Task 4 · [ ] Task 5 · [ ] Task 6
