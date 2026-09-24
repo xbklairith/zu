@@ -1250,7 +1250,7 @@ func before(a, b cover.Pos) bool { return a.Line < b.Line || a.Line == b.Line &&
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 <!-- file: internal/cli/crap_fifo_test.go -->
 ```go
@@ -1426,9 +1426,9 @@ func TestScanCoverprofileBadInvocationExitsBeforeScanning(t *testing.T) {
 }
 ```
 
-- [ ] **Run:** `go test ./internal/cli -run 'CRAP|Coverprofile'` Expected: FAIL (`flag provided but not defined: -coverprofile`)
+- [x] **Run:** `go test ./internal/cli -run 'CRAP|Coverprofile'` Expected: FAIL (`flag provided but not defined: -coverprofile`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/internal/cli/html.go
@@ -1600,8 +1600,8 @@ func TestScanCoverprofileBadInvocationExitsBeforeScanning(t *testing.T) {
  		}
 ```
 
-- [ ] **Run:** `go test ./internal/cli` Expected: PASS
-- [ ] **Commit:** `Add -coverprofile to zu scan -html`
+- [x] **Run:** `go test ./internal/cli` Expected: PASS
+- [x] **Commit:** `Add -coverprofile to zu scan -html`
 
 ### Task 6: `zu diff -html … -coverprofile file`, head only
 
@@ -2842,7 +2842,7 @@ That makes 39 checks per engine.
 - [x] Task 2 · `scan.Measures` beside the IR
 - [x] Task 3 · `internal/cover`
 - [x] Task 4 · `export.AddMetrics`
-- [ ] Task 5 · `zu scan -coverprofile`
+- [x] Task 5 · `zu scan -coverprofile`
 - [ ] Task 6 · `zu diff -coverprofile`
 - [ ] Task 7 · Grade, band and rollup
 - [ ] Task 8 · CRAP on the scene

@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"os"
 	"strings"
 
+	"zu/internal/cover"
 	"zu/internal/diff"
 	"zu/internal/export"
 	"zu/internal/gitref"
@@ -36,7 +38,9 @@ type htmlOptions struct {
 	path     string
 	include  listFlag
 	linkTmpl string
-	tmpl     []byte // the UI page, loaded by prepare
+	cover    string        // -coverprofile (08)
+	tmpl     []byte        // the UI page, loaded by prepare
+	profile  cover.Profile // read by prepare; nil without -coverprofile
 }
 
 // prepare checks everything that does not need the IR, so a bad invocation
@@ -46,6 +50,9 @@ func (o *htmlOptions) prepare() error {
 	case o.path == "":
 		if len(o.include) > 0 || o.linkTmpl != "" {
 			return errors.New("-include and -link-template need -html")
+		}
+		if o.cover != "" {
+			return errors.New("-coverprofile needs -html")
 		}
 		return nil
 	case o.path == "-":
@@ -64,7 +71,78 @@ func (o *htmlOptions) prepare() error {
 		return fmt.Errorf("html: %w", err)
 	}
 	o.tmpl = tmpl
+	if o.cover != "" {
+		if o.profile, err = readProfile(o.cover); err != nil {
+			return fmt.Errorf("-coverprofile %s: %w", o.cover, err)
+		}
+	}
 	return nil
+}
+
+// readProfile reads the coverprofile the user named. Like -out it may be
+// anywhere. It must be a regular file, checked before it is opened: opening
+// a FIFO blocks until something writes to it, and a device never ends.
+func readProfile(name string) (cover.Profile, error) {
+	fi, err := os.Stat(name)
+	if err != nil {
+		return nil, pathless(err)
+	}
+	if !fi.Mode().IsRegular() {
+		return nil, errors.New("not a regular file")
+	}
+	f, err := os.Open(name)
+	if err != nil {
+		return nil, pathless(err)
+	}
+	defer f.Close()
+	if fi, err = f.Stat(); err != nil {
+		return nil, err
+	}
+	if !fi.Mode().IsRegular() { // replaced since the Stat
+		return nil, errors.New("not a regular file")
+	}
+	return cover.Parse(f)
+}
+
+// pathless drops the path from an *fs.PathError: the message names it once.
+func pathless(err error) error {
+	var pe *fs.PathError
+	if errors.As(err, &pe) {
+		return pe.Err
+	}
+	return err
+}
+
+// addMetrics draws CRAP when prepare read a profile, and says how much of
+// the scan it covers: a profile from another tree covers little, and one
+// from another revision puts blocks where no function is.
+func addMetrics(cmd string, v *export.View, ms scan.Measures, o *htmlOptions, stderr io.Writer) {
+	if o.profile == nil {
+		return
+	}
+	unmatched := export.AddMetrics(v, ms, o.profile)
+	funcs, missing := 0, 0
+	for _, p := range v.Metrics.Packages {
+		funcs, missing = funcs+p.Funcs, missing+p.Missing
+	}
+	fmt.Fprintf(stderr, "zu %s: CRAP: coverage for %d of %d functions\n", cmd, funcs-missing, funcs)
+	switch {
+	case unmatched == 1:
+		fmt.Fprintf(stderr, "zu %s: CRAP: 1 profile block matches no function: profile may be from another revision\n", cmd)
+	case unmatched > 1:
+		fmt.Fprintf(stderr, "zu %s: CRAP: %d profile blocks match no function: profile may be from another revision\n", cmd, unmatched)
+	}
+}
+
+// warnUncommitted says when the profile is matched to a commit while the
+// working tree, where go test runs, has uncommitted changes.
+func warnUncommitted(ctx context.Context, cmd, top, fix string, o *htmlOptions, stderr io.Writer) {
+	if o.profile == nil {
+		return
+	}
+	if _, dirty := gitHead(ctx, top); dirty {
+		fmt.Fprintf(stderr, "zu %s: CRAP: the working tree has uncommitted changes; if go test ran on them, %s\n", cmd, fix)
+	}
 }
 
 func builtTemplate() ([]byte, error) {
@@ -82,7 +160,7 @@ func builtTemplate() ([]byte, error) {
 // writeHTML writes the Project View export of doc (already sorted by
 // ir.Encode) as the Policy draws it, reading source through the tree the
 // scan read.
-func writeHTML(ctx context.Context, src *source, doc *ir.IR, pol *policy.Policy, o *htmlOptions, stderr io.Writer) error {
+func writeHTML(ctx context.Context, src *source, doc *ir.IR, pol *policy.Policy, ms scan.Measures, o *htmlOptions, stderr io.Writer) error {
 	root := export.RootModule(doc)
 	pats := make([]export.Pattern, 0, len(o.include))
 	for _, s := range o.include {
@@ -97,6 +175,10 @@ func writeHTML(ctx context.Context, src *source, doc *ir.IR, pol *policy.Policy,
 		return err
 	}
 	export.Mark(v, pol, doc)
+	addMetrics("scan", v, ms, o, stderr)
+	if src.ref != nil {
+		warnUncommitted(ctx, "scan", src.root, "drop -ref", o, stderr)
+	}
 	v.Tool = version.Version
 	prefix := "" // a -ref scan runs at the repository top
 	if src.ref == nil {

@@ -34,7 +34,8 @@ var (
 
 // runScan implements `zu scan [dir] [-ref commit | -include-ignored]
 // [-out -|path] [-max-parse-errors N] [-html file [-include pattern]…
-// [-link-template url]]`. Flags may come before or after dir.
+// [-link-template url] [-coverprofile file]]`. Flags may come before or
+// after dir.
 func runScan(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("zu scan", flag.ContinueOnError)
 	fs.SetOutput(stderr)
@@ -46,6 +47,7 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 	fs.StringVar(&hopts.path, "html", "", "also write a self-contained HTML Project View to `file`")
 	fs.Var(&hopts.include, "include", "with -html, inline declarations and source of packages matching `pattern` (repeatable; ./ = root module; not -include-ignored)")
 	fs.StringVar(&hopts.linkTmpl, "link-template", "", "source link `url` with {commit} {path} {line}; overrides origin detection")
+	fs.StringVar(&hopts.cover, "coverprofile", "", "with -html, colour packages by CRAP from `file`, written by go test -coverprofile over this tree")
 	dir, err := parseWithDir(fs, args)
 	if err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
@@ -112,7 +114,7 @@ func runScan(args []string, stdout, stderr io.Writer) int {
 		return ExitBadInvocation
 	}
 	if hopts.path != "" {
-		if err := writeHTML(ctx, src, doc, pol, &hopts, stderr); err != nil {
+		if err := writeHTML(ctx, src, doc, pol, stats.Measures, &hopts, stderr); err != nil {
 			fmt.Fprintf(stderr, "zu scan: html: %v\n", err)
 			return ExitBadInvocation
 		}
