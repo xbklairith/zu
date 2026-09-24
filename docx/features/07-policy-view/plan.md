@@ -1248,7 +1248,7 @@ The badge sits at the upper left (uml-viewer README l.333, "Class boxes show the
 
 **Steps:**
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/web/src/App.tsx
@@ -1394,7 +1394,7 @@ The badge sits at the upper left (uml-viewer README l.333, "Class boxes show the
    left: 0;
 ```
 
-- [ ] **Run:** `cd web && npx tsc --noEmit && npx vitest run && npx vite build && cd .. && go test ./web` Expected: PASS; the build writes `dist/index.html`
+- [x] **Run:** `cd web && npx tsc --noEmit && npx vitest run && npx vite build && cd .. && go test ./web` Expected: PASS; the build writes `dist/index.html`
 
 
 ### Task 8: `proposalView`: a Proposal as a regrouped View
@@ -2367,7 +2367,7 @@ The expected checks grow from 20 to 29 per engine. This makes Tasks 7 and 10 rep
 - [x] Task 4 · Rolled ranks on boxes
 - [x] Task 5 · Hidden-violation mark
 - [x] Task 6 · Level 0 at the bottom, and `order`
-- [ ] Task 7 · Badges, mark and panel list
+- [x] Task 7 · Badges, mark and panel list
 - [ ] Task 8 · `proposalView`
 - [ ] Task 9 · Proposal in the hash, never in a Change View
 - [ ] Task 10 · Selector, banner, legend, new violations first

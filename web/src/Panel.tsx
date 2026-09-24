@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { Bundle } from "./bundle";
-import type { Hunk, Loc, View, ViewNode } from "./data";
+import type { Hunk, Loc, View, ViewEdge, ViewNode } from "./data";
 import { calls, imports, targets, type Row } from "./facts";
 import { linkFor } from "./links";
 import type { SceneEdge } from "./scene";
@@ -15,6 +15,7 @@ type Props = {
   id: string | null;
   edge: SceneEdge | null;
   bundles: Bundle[]; // the scene's bundles: an aggregate's real targets come from them
+  hidden?: ViewEdge[]; // 07: violating imports inside the selected box, drawn as no line
   onReveal: (id: string) => void;
   onClose: () => void;
 };
@@ -161,7 +162,31 @@ function Members({ view, edge, onReveal }: { view: View; edge: SceneEdge; onReve
   );
 }
 
-export function Panel({ view, id, edge, bundles, onReveal, onClose }: Props) {
+// Hidden lists the violating imports a box holds (07): no line draws them, so
+// the box is marked red and they are listed here.
+function Hidden({ edges, onReveal }: { edges: ViewEdge[]; onReveal: (id: string) => void }) {
+  return (
+    <section className="hidden-violations">
+      <h3>Violations inside ({edges.length})</h3>
+      <ul className="rows">
+        {edges.map((e) => (
+          <li key={`${e.from}\n${e.to}`}>
+            <span className="muted">{e.violation} </span>
+            <button type="button" className="link" onClick={() => onReveal(e.from)}>
+              <code>{e.from}</code>
+            </button>
+            {" → "}
+            <button type="button" className="link" onClick={() => onReveal(e.to)}>
+              <code>{e.to}</code>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+export function Panel({ view, id, edge, bundles, hidden, onReveal, onClose }: Props) {
   const title = edge ? `${edge.from} → ${edge.to}` : (id ?? "");
   const node = id === null ? undefined : view.nodes.find((n) => n.id === (id.endsWith(PKG) ? id.slice(0, -PKG.length) : id));
   let body: React.ReactNode;
@@ -218,6 +243,7 @@ export function Panel({ view, id, edge, bundles, onReveal, onClose }: Props) {
           ×
         </button>
       </header>
+      {!edge && hidden && <Hidden edges={hidden} onReveal={onReveal} />}
       {body}
     </aside>
   );

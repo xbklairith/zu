@@ -265,6 +265,7 @@ export function App({ view: whole }: { view: View }) {
           id={state.selected}
           edge={edge}
           bundles={sc.bundles}
+          hidden={sc.nodes.find((n) => n.id === sc.selected)?.hidden}
           onReveal={jump}
           onClose={() => choose(null)}
         />

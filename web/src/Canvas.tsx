@@ -72,15 +72,29 @@ function Toggle({ data }: { data: Data }) {
   );
 }
 
-// cls: the shape, the Change View mark (04 Part B), selection and dimming.
+// cls: the shape, the Change View mark (04 Part B), a violation hidden inside
+// (07), selection and dimming.
 const cls = (base: string, n: SceneNode, selected: boolean) =>
-  `node ${base}${n.change ? ` ${n.change}` : ""}${selected ? " selected" : ""}${n.dim ? " dim" : ""}`;
+  `node ${base}${n.change ? ` ${n.change}` : ""}${n.hidden ? " hides-violation" : ""}${n.rank !== undefined ? " ranked" : ""}` +
+  `${selected ? " selected" : ""}${n.dim ? " dim" : ""}`;
+
+// Rank is the Policy rank at the upper left (uml-viewer README: "Class boxes
+// show the current view's rank (innermost 0) at the upper left").
+function Rank({ node }: { node: SceneNode }) {
+  if (node.rank === undefined) return null;
+  return (
+    <span className="rank" title={`Level ${node.rank} (0 = innermost)`}>
+      {node.rank}
+    </span>
+  );
+}
 
 function BoxNode({ data, selected }: NodeProps<ZNode>) {
   const s = data.stats;
   return (
     <div className={cls("box", data.node, selected)} title={data.node.id}>
       <Ends />
+      <Rank node={data.node} />
       <Toggle data={data} />
       <div className="label">{data.node.label}</div>
       {s && (
@@ -98,6 +112,7 @@ function ContainerNode({ data, selected }: NodeProps<ZNode>) {
   return (
     <div className={cls("container", data.node, selected)} title={data.node.id}>
       <Ends />
+      <Rank node={data.node} />
       <Toggle data={data} />
       <div className="label">{data.node.label}</div>
       <Marks data={data} />
