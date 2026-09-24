@@ -191,7 +191,7 @@ The usage line `version   print application, commit, IR schema and Policy format
 
 **Files:** `internal/version/version_test.go` (new), `internal/version/version.go`
 
-- [ ] **Step 1: failing test.**
+- [x] **Step 1: failing test.**
 
 <!-- file: internal/version/version_test.go -->
 ```go
@@ -234,9 +234,9 @@ func TestFromBuildInfo(t *testing.T) {
 }
 ```
 
-- [ ] **Run:** `go test ./internal/version -count=1` Expected: FAIL (`fromBuildInfo` undefined).
+- [x] **Run:** `go test ./internal/version -count=1` Expected: FAIL (`fromBuildInfo` undefined).
 
-- [ ] **Step 2: implement.** A dirty checkout's commit gets `-dirty`, as `git describe --dirty` marks the Makefile's version, so a build is never labelled with a commit it doesn't match.
+- [x] **Step 2: implement.** A dirty checkout's commit gets `-dirty`, as `git describe --dirty` marks the Makefile's version, so a build is never labelled with a commit it doesn't match.
 
 <!-- file: internal/version/version.go -->
 ```go
@@ -292,7 +292,7 @@ func fromBuildInfo(bi *debug.BuildInfo, ok bool, version, commit string) (string
 }
 ```
 
-- [ ] **Run:** `go test ./internal/version ./internal/cli -count=1` Expected: PASS.
+- [x] **Run:** `go test ./internal/version ./internal/cli -count=1` Expected: PASS.
 
 ### Task 3: README
 
@@ -743,4 +743,4 @@ make release-snapshot && rm -rf dist .zu/release
 
 ## Progress
 
-- [x] Task 1 · [ ] Task 2 · [ ] Task 3 · [ ] Task 4 · [ ] Task 5 · [ ] Task 6
+- [x] Task 1 · [x] Task 2 · [ ] Task 3 · [ ] Task 4 · [ ] Task 5 · [ ] Task 6
