@@ -1,6 +1,6 @@
 // Header text: what the view is, what it leaves out, and where the reader is.
 import type { View } from "./data";
-import { BOX_BUDGET, parentBox } from "./tree";
+import { DEPTH_LEAVES, parentBox } from "./tree";
 
 const PKG = "#pkg";
 
@@ -53,10 +53,12 @@ export function breadcrumb(view: View, focus: string, home = ""): Crumb[] {
 // auto is false when the reader chose the depth (A6), which the note says.
 // from is the requested depth; when a large view was drawn shallower
 // (Deviation 8), the note says that instead.
-export function depthNote(boxes: number, depth: number, auto = true, from = depth): string {
+// folded (12) is how many boxes the Budget folded into "+N more" chips.
+export function depthNote(boxes: number, depth: number, auto = true, from = depth, folded = 0): string {
   const how = from !== depth ? ` (collapsed from ${from})` : auto ? "" : " (chosen)";
-  const note = `${boxes} boxes at depth ${depth}${how}. Double-click to open a box, Esc to go up.`;
-  return boxes > BOX_BUDGET ? `${note} More than ${BOX_BUDGET} boxes, drawn anyway.` : note;
+  const fold = folded > 0 ? `, ${folded} boxes folded` : "";
+  const note = `${boxes} boxes at depth ${depth}${how}${fold}. Double-click to open a box, Esc to go up.`;
+  return boxes > DEPTH_LEAVES ? `${note} More than ${DEPTH_LEAVES} boxes, drawn anyway.` : note;
 }
 
 // edgesNote says what auto left out (11): the lines, and how to see a box's own.

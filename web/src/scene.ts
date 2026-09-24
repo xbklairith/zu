@@ -1,7 +1,7 @@
 // scene is the one pure function the canvas draws: View + ViewState → nodes and edges.
 import { nodeMark, unchangedCount } from "./change";
 import type { View, ViewEdge } from "./data";
-import { autoDepth, childrenOf, cmp, cut, declsOf, home, index, isBox, leafOf, OUTSIDE, packagesIn, PKG } from "./cut";
+import { autoDepth, childrenOf, cmp, cut, declsOf, home, index, isBox, leafOf, OUTSIDE, packageOf, packagesIn, PKG, within } from "./cut";
 import { bundlesOver, EXTERNALS, externalsOf, type Bundle } from "./bundle";
 import { declutter, NO_PINS, type Mark, type Pin } from "./declutter";
 import { crapBand, packageRisk, rolledCrap, type Band, type Risk } from "./metrics";
@@ -11,7 +11,7 @@ import { always, quiet, type Dir } from "./edges";
 import { boxStats, statsLine } from "./tree";
 import { shorten } from "./labels";
 import { withinHops } from "./select";
-import { isGroup, isStrip, knownGroup, strip, stripText } from "./group";
+import { BUDGET, factsOf, fold, isFold, isGroup, isStrip, knownGroup, strip, stripText } from "./group";
 import type { Known, Stage, ViewState } from "./state";
 
 export type Shape = "container" | "box" | "oval" | "decl" | "outside" | "chip";
@@ -51,6 +51,7 @@ export type Scene = {
   selected: string | null; // the drawn node that stands for the selection
   selectedRow: string | null; // the selected method, drawn as a row of `selected`
   decls: boolean; noDetail: boolean;
+  folded: number; // 12: the boxes closed fold chips hold; the header says so (N9)
 };
 
 // Options for callers other than the Project View: 06 passes pin (violations);
@@ -66,7 +67,39 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   const focus = s.focus === "" && opts.home ? home(view) : s.focus;
   const depth = s.depth ?? autoDepth(view, focus);
   // 12: demoted boxes wait in a strip at the bottom of their set (group.ts).
-  const grouped = strip(view, cut(view, focus, depth, s.toggled), s.toggled);
+  let grouped = strip(view, cut(view, focus, depth, s.toggled), s.toggled);
+  // 12: at the automatic depth, a budget of boxes; the rest of each row folds
+  // into a chip, ranked as the rows were before folding (group.ts fold).
+  let before: Map<string, number> | null = null;
+  const into = new Map<string, Set<string>>(); // strip → the boxes that import into it, before folding (M4)
+  if (s.depth === null && !grouped.cut.decls) {
+    const c1 = grouped.cut;
+    const low = (id: string) => isGroup(id) || grouped.opened.has(id);
+    const pre = bundlesOver(view, c1, { externals: s.externals }).filter((b) => b.pairs >= s.minPairs || pin(b));
+    for (const b of pre) if (isStrip(b.to)) into.set(b.to, (into.get(b.to) ?? new Set()).add(b.from));
+    const arcs = pre.filter((b) => !low(b.from) && !low(b.to));
+    const { tiers } = siblingRanks(
+      new Map([...c1.leaves, ...c1.containers].filter((id) => !low(id)).map((id) => [id, c1.parent.get(id) ?? ""])),
+      arcs.map((b) => ({ from: b.from, to: b.to, weight: b.pairs })),
+    );
+    // Pinned boxes (the Policy's order) never fold. Every fact is the box's
+    // Rollup, summed once per View (B1).
+    const named = view.policy?.order ?? [];
+    const own = (id: string) => (id.endsWith(PKG) ? id.slice(0, -PKG.length) : id);
+    // The selection's package and the boxes above it: the chip holding one opens (N3).
+    const selPkg = s.selected === null ? undefined : packageOf(view, s.selected);
+    const chain = new Set<string>();
+    for (let b = selPkg ?? s.selected ?? ""; b !== ""; b = index(view).parent.get(b) ?? "") chain.add(b);
+    const folded = fold(grouped, s.toggled, {
+      budget: view.policy?.budget ?? BUDGET, arcs,
+      first: (b) => (factsOf(view, b)?.changed ?? false) || named.some((o) => o === own(b) || (!b.endsWith(PKG) && within(view, o, b))),
+      main: (b) => (factsOf(view, b)?.mains ?? 0) > 0,
+      size: (b) => { const f = factsOf(view, b); return f ? f.decls - f.gen : 0; },
+      holds: (b) => (b.endsWith(PKG) ? own(b) === selPkg : chain.has(b)),
+    });
+    if (folded !== grouped) before = tiers;
+    grouped = folded;
+  }
   const c = grouped.cut;
   const members = (g: string) => grouped.groups.get(g)
     ?? [...grouped.opened].filter((b) => c.parent.get(b) === grouped.at.get(g));
@@ -141,6 +174,7 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     const named = view.regroup?.label[id]; // 07: a Proposal's layer boxes and their tops
     if (named !== undefined) return named;
     if (isStrip(id)) return stripText(view, members(id), 0).label;
+    if (isFold(id)) return grouped.groups.has(id) ? `+${grouped.folded.get(id)!.length} more` : `fold ${grouped.folded.get(id)!.length}`;
     if (id === OUTSIDE) return "outside";
     if (id === EXTERNALS) return `${externals} external modules`;
     if (id.endsWith(PKG)) return `${last(id.slice(0, -PKG.length))} (package)`;
@@ -173,9 +207,13 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     };
     n.dim = n.shape !== "container" && !bright(id);
     if (n.shape === "container") n.toggle = "collapse";
-    else if (isStrip(id)) n.toggle = grouped.groups.has(id) ? "expand" : "collapse";
+    else if (isGroup(id)) n.toggle = grouped.groups.has(id) ? "expand" : "collapse";
     else if (n.shape === "box" && !folds.has(id) && !id.endsWith(PKG) && childrenOf(view, id).length > 0) n.toggle = "expand";
     if (grouped.opened.has(id)) n.demoted = true;
+    if (isFold(id) && grouped.groups.has(id)) {
+      // 12: a closed fold chip names what it holds in its tooltip, as labels drop their shared prefix.
+      n.hint = shorten(grouped.folded.get(id)!.map((b) => b.replace(PKG, ""))).join(", ");
+    }
     const m = d.lines ? undefined : d.marks.get(id);
     if (m) n.mark = m;
     // A "#pkg" leaf is its own package; any other box rolls up what it holds.
@@ -210,13 +248,17 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   const byPolicy = new Set(nodes.filter((n) => n.rank !== undefined).map((n) => n.parent));
   // 12: a strip, and the demoted boxes it opens onto, sit below the rows
   // and do not rank: what imports them would otherwise climb over them.
-  const bottom = (id: string) => isStrip(id) || grouped.opened.has(id);
+  // A fold chip joins them, and the boxes left keep the rows they had
+  // before the others folded.
+  const bottom = (id: string) => isGroup(id) || grouped.opened.has(id);
   const { tiers, against } = siblingRanks(
     new Map(nodes.filter((n) => !bottom(n.id)).map((n) => [n.id, n.parent])),
     kept.map((b) => ({ from: shown(b.from), to: shown(b.to), weight: b.pairs })),
     (p) => byPolicy.has(p),
   );
-  for (const n of nodes) n.tier = bottom(n.id) ? -1 : tiers.get(n.id);
+  for (const n of nodes) {
+    n.tier = bottom(n.id) ? -1 : before?.get(n.id) ?? tiers.get(n.id);
+  }
 
   // 11: auto draws at rest only what must show when there are too many lines
   // to follow: violations, changed imports, and the imports behind the
@@ -245,15 +287,26 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   edges.sort(byEnds);
   all.sort(byEnds);
   const usedBy = connect(view, nodes, kept.map((b) => [shown(b.from), shown(b.to)] as const).filter(([f, t]) => ids.has(f) && ids.has(t)), selected === null);
+  // A strip's "used by" counts boxes: a closed fold chip counts as each of
+  // its boxes that imports into the strip (M4).
+  const users = (strip: string) => {
+    const out = new Set<string>();
+    for (const u of usedBy.get(strip) ?? []) {
+      if (isFold(u) && grouped.groups.has(u)) for (const m of grouped.groups.get(u)!) { if (into.get(strip)?.has(m)) out.add(m); }
+      else out.add(u);
+    }
+    return out.size;
+  };
   for (const n of nodes) {
     if (!isStrip(n.id)) continue;
-    const t = stripText(view, members(n.id), usedBy.get(n.id)?.size ?? 0);
+    const t = stripText(view, members(n.id), users(n.id));
     n.label = t.label;
     if (t.hint) n.hint = t.hint;
   }
   return {
     focus, depth, stage: s.stage, lines: d.lines && !hush, nodes: nodes.sort((x, y) => cmp(x.id, y.id)), edges, all, hidden, against, bundles: kept,
     selected, selectedRow: row?.selectedRow ?? selectedRow, decls: c.decls, noDetail: c.noDetail,
+    folded: [...grouped.folds].reduce((n, f) => n + (grouped.groups.get(f)?.length ?? 0), 0),
   };
 }
 

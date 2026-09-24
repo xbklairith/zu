@@ -61,6 +61,8 @@ describe("header", () => {
     expect(depthNote(5, 2, false, 4)).toBe("5 boxes at depth 2 (collapsed from 4). Double-click to open a box, Esc to go up.");
     expect(depthNote(5, 2, false, 2)).toBe("5 boxes at depth 2 (chosen). Double-click to open a box, Esc to go up.");
     expect(depthNote(70, 1)).toBe("70 boxes at depth 1. Double-click to open a box, Esc to go up. More than 60 boxes, drawn anyway.");
+    // 12 (N9): the boxes the Budget folded, when there are any.
+    expect(depthNote(15, 1, true, 1, 20)).toBe("15 boxes at depth 1, 20 boxes folded. Double-click to open a box, Esc to go up.");
   });
 });
 

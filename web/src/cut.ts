@@ -3,7 +3,8 @@ import type { View, ViewNode } from "./data";
 
 export const PKG = "#pkg"; // suffix of the leaf that stands for a container's own package
 export const OUTSIDE = "outside"; // the aggregate for every package outside the focus
-export const BOX_BUDGET = 60;
+// DEPTH_LEAVES is the most leaves autoDepth draws (04); not the Budget (12, group.ts BUDGET).
+export const DEPTH_LEAVES = 60;
 
 type Index = {
   node: Map<string, ViewNode>;
@@ -220,7 +221,7 @@ export function autoDepth(view: View, focus: string): number {
   for (;;) {
     const here = cut(view, focus, d).leaves.length;
     const next = cut(view, focus, d + 1).leaves.length;
-    if (next > BOX_BUDGET || next <= here) return d;
+    if (next > DEPTH_LEAVES || next <= here) return d;
     d++;
   }
 }

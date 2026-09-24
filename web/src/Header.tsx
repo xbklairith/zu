@@ -7,6 +7,7 @@ type Props = {
   focus: string;
   home?: string; // 11: the box the page root draws (cut.ts home)
   boxes: number;
+  folded?: number; // 12: boxes the Budget folded
   depth: number;
   onFocus: (box: string) => void;
   auto: boolean; // the depth is autoDepth's, not the reader's
@@ -17,7 +18,7 @@ type Props = {
   onToggle?: () => void;
 };
 
-export function Header({ view, focus, home = "", boxes, depth, onFocus, auto, from, hidden = 0, against, full, onToggle }: Props) {
+export function Header({ view, focus, home = "", boxes, folded = 0, depth, onFocus, auto, from, hidden = 0, against, full, onToggle }: Props) {
   const compare = view.links?.compare?.startsWith("https://") ? view.links.compare : null;
   const [showErrors, setShowErrors] = useState(false);
   const errors = view.honesty.parseErrors;
@@ -58,7 +59,7 @@ export function Header({ view, focus, home = "", boxes, depth, onFocus, auto, fr
         ))}
       </nav>
       <p className="note">
-        {depthNote(boxes, depth, auto, from)}
+        {depthNote(boxes, depth, auto, from, folded)}
         {hidden > 0 && <span id="zu-edges"> {edgesNote(hidden)}</span>}
         {against !== undefined && against > 0 && <span id="zu-against"> {againstNote(against)}</span>}
         {full !== undefined && (

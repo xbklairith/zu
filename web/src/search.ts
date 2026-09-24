@@ -1,5 +1,6 @@
 // U8/A9: find a node by name and the state that shows it.
 import type { NodeKind, View } from "./data";
+import { demotedBox, STRIP } from "./group";
 import { childrenOf, cmp, index, packageOf, parentBox, PKG } from "./cut";
 import { EXTERNALS } from "./bundle";
 import { scene } from "./scene";
@@ -38,7 +39,11 @@ export function reveal(view: View, id: string, from: ViewState = DEFAULT_STATE):
   const n = index(view).node.get(id);
   if (!n) return from;
   const reset = { ...from, toggled: [] as string[], hops: null, minPairs: 1, externals: true };
-  if (n.kind === "package") return { ...reset, focus: parentBox(view, id), depth: 1, selected: id };
+  if (n.kind === "package") {
+    // 12: a demoted package waits in its strip, so the strip opens.
+    const focus = parentBox(view, id);
+    return { ...reset, focus, depth: 1, selected: id, toggled: demotedBox(view, id) ? [focus + STRIP] : [] };
+  }
   if (n.kind === "external") {
     const s = { ...reset, focus: "", depth: null, selected: id };
     return scene(view, s).nodes.some((x) => x.id === id) ? s : { ...s, selected: EXTERNALS };

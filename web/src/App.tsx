@@ -249,6 +249,7 @@ export function App({ view: whole }: { view: View }) {
         focus={sc.focus}
         home={homeBox}
         boxes={boxes}
+        folded={sc.folded}
         depth={sc.depth}
         auto={state.depth === null}
         from={requested.depth}

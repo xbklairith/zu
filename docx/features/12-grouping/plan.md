@@ -1632,7 +1632,7 @@ At auto depth, a view with more boxes than the Budget keeps changed and Policy-o
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 diff --git a/web/src/group.test.ts b/web/src/group.test.ts
@@ -1793,9 +1793,9 @@ index 563a381..c60432f 100644
  
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/group.test.ts` Expected: FAIL (12 tests: 20 boxes drawn, want 15; no chip; no `folded`)
+- [x] **Run:** `cd web && npx vitest run src/group.test.ts` Expected: FAIL (12 tests: 20 boxes drawn, want 15; no chip; no `folded`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/web/src/App.tsx b/web/src/App.tsx
@@ -2268,9 +2268,9 @@ index dee0df8..268359e 100644
  export type BoxStats = { packages: number; decls: number; unresolved: number };
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
 
-- [ ] **Commit** (one line, imperative; stage these files only)
+- [x] **Commit** (one line, imperative; stage these files only)
 
 ### Task 6: At most 7 rows, merged bottom-up
 

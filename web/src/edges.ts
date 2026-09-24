@@ -9,7 +9,7 @@ import type { EdgeMode } from "./state";
 // EDGE_LIMIT is the most lines auto draws at rest. Measured on the Test
 // Corpus's default views (11 acceptance): zu 23 and cobra 6 stay drawn, hugo
 // 260 and kubernetes 175 go on demand. At 40 or fewer, over at most 60 boxes
-// (BOX_BUDGET), each line can still be followed from end to end.
+// (DEPTH_LEAVES), each line can still be followed from end to end.
 export const EDGE_LIMIT = 40;
 
 // quiet says auto hides the lines at rest: lines would be drawn (not off, not

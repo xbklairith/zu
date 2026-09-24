@@ -2,7 +2,7 @@
 import type { View, ViewNode } from "./data";
 import { index, PKG } from "./cut";
 
-export { BOX_BUDGET, OUTSIDE, parentBox } from "./cut";
+export { DEPTH_LEAVES, OUTSIDE, parentBox } from "./cut";
 export { EXTERNALS } from "./bundle";
 
 export type BoxStats = { packages: number; decls: number; unresolved: number };
