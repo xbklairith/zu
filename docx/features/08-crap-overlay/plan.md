@@ -1612,7 +1612,7 @@ func TestScanCoverprofileBadInvocationExitsBeforeScanning(t *testing.T) {
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 --- a/internal/cli/crap_test.go
@@ -1678,9 +1678,9 @@ func TestScanCoverprofileBadInvocationExitsBeforeScanning(t *testing.T) {
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/cli -run 'TestDiffHTML.*CRAP'` Expected: FAIL (`flag provided but not defined: -coverprofile`)
+- [x] **Run:** `go test ./internal/cli -run 'TestDiffHTML.*CRAP'` Expected: FAIL (`flag provided but not defined: -coverprofile`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/internal/cli/diff.go
@@ -1749,8 +1749,8 @@ func TestScanCoverprofileBadInvocationExitsBeforeScanning(t *testing.T) {
  		if ct, ok := t.(*gitref.CommitTree); ok && ct.Err() != nil {
 ```
 
-- [ ] **Run:** `test -z "$(gofmt -l cmd internal)" && go vet ./... && go test ./... && golangci-lint run ./...` Expected: PASS
-- [ ] **Commit:** `Add -coverprofile to zu diff -html for head's CRAP`
+- [x] **Run:** `test -z "$(gofmt -l cmd internal)" && go vet ./... && go test ./... && golangci-lint run ./...` Expected: PASS
+- [x] **Commit:** `Add -coverprofile to zu diff -html for head's CRAP`
 
 ### Task 7: `metrics.ts`: the grade, the band and the rollup
 
@@ -2843,7 +2843,7 @@ That makes 39 checks per engine.
 - [x] Task 3 · `internal/cover`
 - [x] Task 4 · `export.AddMetrics`
 - [x] Task 5 · `zu scan -coverprofile`
-- [ ] Task 6 · `zu diff -coverprofile`
+- [x] Task 6 · `zu diff -coverprofile`
 - [ ] Task 7 · Grade, band and rollup
 - [ ] Task 8 · CRAP on the scene
 - [ ] Task 9 · Fill and badge

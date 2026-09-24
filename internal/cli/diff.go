@@ -29,8 +29,9 @@ func loadPolicy(tree scan.Tree) (*policy.Policy, error) {
 
 // runDiff implements `zu diff <base> [head] [-format text|markdown|json]
 // [-worktree [-include-ignored]] [-max-parse-errors N] [-html file
-// [-link-template T]]`: the Structural Summary of head against the
-// merge-base of base and head, and optionally the Change View export.
+// [-link-template T] [-coverprofile file]]`: the Structural Summary of head
+// against the merge-base of base and head, and optionally the Change View
+// export.
 // Exit 2 when head fails to parse, else 1 when the change adds violations
 // of the Policy's rules, else 0.
 func runDiff(args []string, stdout, stderr io.Writer) int {
@@ -44,6 +45,7 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 	fs.StringVar(&hopts.path, "html", "", "also write a self-contained HTML Change View to `file`")
 	fs.StringVar(&hopts.linkTmpl, "link-template", "", "with -html, link source to `url` with {commit}, {path} and {line}")
 	fs.Var(&hopts.include, "include", "not accepted: the change decides what -html inlines")
+	fs.StringVar(&hopts.cover, "coverprofile", "", "with -html, colour head's packages by CRAP from `file`, written by go test -coverprofile over head")
 	refs, err := parsePositional(fs, args)
 	bad := func(format string, a ...any) int {
 		fmt.Fprintf(stderr, "zu diff: "+format+"\n", a...)
@@ -100,7 +102,7 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 		return bad("head: %v", err)
 	}
 	defer head.close()
-	headDoc, pol, _, err := scanSource(ctx, head)
+	headDoc, pol, headStats, err := scanSource(ctx, head)
 	if err != nil {
 		return bad("head: %v", err)
 	}
@@ -145,7 +147,7 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 	fmt.Fprintf(stderr, "zu diff: %d packages changed, %d affected, parse errors base=%d head=%d\n",
 		len(s.Packages), len(s.Affected), len(baseDoc.ParseErrors), len(headDoc.ParseErrors))
 	if hopts.path != "" {
-		c := changeSides{top: top, base: baseDoc, head: headDoc, baseTree: baseTree, headTree: head.tree, pol: pol}
+		c := changeSides{top: top, base: baseDoc, head: headDoc, baseTree: baseTree, headTree: head.tree, pol: pol, measures: headStats.Measures}
 		if err := writeChangeHTML(ctx, c, s, &hopts, stderr); err != nil {
 			return bad("html: %v", err)
 		}

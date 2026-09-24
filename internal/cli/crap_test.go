@@ -127,3 +127,58 @@ func TestScanCoverprofileBadInvocationExitsBeforeScanning(t *testing.T) {
 		noZu(t, dir)
 	}
 }
+
+func TestDiffHTMLDrawsHeadsCRAP(t *testing.T) {
+	withUI(t)
+	diffRepo(t)
+	out := filepath.Join(t.TempDir(), "change.html")
+	prof := profileFor(t, "mode: set\nexample.com/m/a/a.go:3.14,3.26 1 1\n")
+	code, _, errOut := run("diff", "main", "-html", out, "-coverprofile", prof)
+	if code != ExitOK {
+		t.Fatalf("exit %d: %s", code, errOut)
+	}
+	s := readFile(t, out)
+	want := `"metrics":{"packages":{"example.com/m/a":{"funcs":2,"crap":{"mu":1,"max":1,"sigma":0}},` +
+		`"example.com/m/b":{"funcs":1,"missing":1}}`
+	if !strings.Contains(s, want) {
+		t.Errorf("html lacks %s", want)
+	}
+	if !strings.Contains(errOut, "zu diff: CRAP: coverage for 2 of 3 functions\n") {
+		t.Errorf("stderr = %q", errOut)
+	}
+	if strings.Contains(errOut, "uncommitted") {
+		t.Errorf("a clean tree: stderr = %q", errOut)
+	}
+	if code, _, errOut := run("diff", "main", "-coverprofile", prof); code != ExitBadInvocation ||
+		!strings.Contains(errOut, "-coverprofile needs -html") {
+		t.Errorf("without -html: exit %d, stderr %q", code, errOut)
+	}
+}
+
+// zu diff's head is the HEAD commit unless -worktree, while go test runs
+// the working tree: with uncommitted changes, say how to match them.
+func TestDiffHTMLCRAPWarnsOfUncommittedChanges(t *testing.T) {
+	withUI(t)
+	dir := diffRepo(t)
+	writeFile(t, dir, "a/a.go", "package a\n\n// F is two.\nfunc F() int { return 2 }\n\nfunc G() {}\n")
+	out := filepath.Join(t.TempDir(), "change.html")
+	prof := profileFor(t, "mode: set\nexample.com/m/a/a.go:4.14,4.26 1 1\n")
+	const want = "zu diff: CRAP: the working tree has uncommitted changes; if go test ran on them, add -worktree\n"
+	for _, worktree := range []bool{false, true} {
+		args := []string{"diff", "main", "-html", out, "-coverprofile", prof}
+		if worktree {
+			args = append(args, "-worktree")
+		}
+		code, _, errOut := run(args...)
+		if code != ExitOK {
+			t.Fatalf("%v: exit %d: %s", args, code, errOut)
+		}
+		if got := strings.Contains(errOut, want); got == worktree {
+			t.Errorf("-worktree %v: warned %v, stderr %q", worktree, got, errOut)
+		}
+		// HEAD has a blank line where the working tree has F's block.
+		if got := strings.Contains(errOut, "1 profile block matches no function"); got == worktree {
+			t.Errorf("-worktree %v: unmatched block reported %v, stderr %q", worktree, got, errOut)
+		}
+	}
+}

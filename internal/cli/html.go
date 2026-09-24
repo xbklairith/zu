@@ -196,6 +196,7 @@ type changeSides struct {
 	base, head         *ir.IR
 	baseTree, headTree scan.Tree
 	pol                *policy.Policy // head's, which the hash check proved is base's
+	measures           scan.Measures  // head's (08)
 }
 
 // writeChangeHTML writes the Change View export of base → head. Links point at
@@ -214,6 +215,10 @@ func writeChangeHTML(ctx context.Context, c changeSides, sum *diff.Summary, o *h
 		return err
 	}
 	export.Mark(v, c.pol, c.head)
+	addMetrics("diff", v, c.measures, o, stderr)
+	if _, commit := c.headTree.(*gitref.CommitTree); commit {
+		warnUncommitted(ctx, "diff", c.top, "add -worktree", o, stderr)
+	}
 	v.Violations = violations
 	for _, t := range []scan.Tree{c.baseTree, c.headTree} {
 		if ct, ok := t.(*gitref.CommitTree); ok && ct.Err() != nil {
