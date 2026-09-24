@@ -751,7 +751,7 @@ The test drives the real `scene` with 06's `pinFor`, as 06 tested red edges, and
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 --- a/web/src/policy.test.ts
@@ -796,9 +796,9 @@ The test drives the real `scene` with 06's `pinFor`, as 06 tested red edges, and
 +});
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/policy.test.ts` Expected: FAIL (two tests: `hidden` is never set)
+- [x] **Run:** `cd web && npx vitest run src/policy.test.ts` Expected: FAIL (two tests: `hidden` is never set)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/web/src/scene.ts
@@ -858,7 +858,7 @@ The test drives the real `scene` with 06's `pinFor`, as 06 tested red edges, and
  // onto its changed declarations with a "+N unchanged" chip. A box that folds
 ```
 
-- [ ] **Run:** `cd web && npx tsc --noEmit && npx vitest run` Expected: PASS
+- [x] **Run:** `cd web && npx tsc --noEmit && npx vitest run` Expected: PASS
 
 ### Task 6: Level 0 at the bottom, and `order`
 
@@ -2365,7 +2365,7 @@ The expected checks grow from 20 to 29 per engine. This makes Tasks 7 and 10 rep
 - [x] Task 2 · View `order` and `proposals`
 - [x] Task 3 · Change View violation delta
 - [x] Task 4 · Rolled ranks on boxes
-- [ ] Task 5 · Hidden-violation mark
+- [x] Task 5 · Hidden-violation mark
 - [ ] Task 6 · Level 0 at the bottom, and `order`
 - [ ] Task 7 · Badges, mark and panel list
 - [ ] Task 8 · `proposalView`

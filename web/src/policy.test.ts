@@ -68,3 +68,37 @@ describe("rank badges (07)", () => {
     ]);
   });
 });
+
+// 06 acceptance: at the root, ir/bad → cli lifts to a zu/internal self-loop,
+// which 05 Deviation 1 drops, and the violation vanished.
+const bad = {
+  ...view(pkgs(["m/cmd", "m/internal/cli", "m/internal/ir", "m/internal/ir/bad"], "m"), [
+    edge("m/cmd", "m/internal/cli"),
+    { ...edge("m/internal/cli", "m/internal/ir"), violation: "cycle" as const },
+    { ...edge("m/internal/ir/bad", "m/internal/cli"), violation: "levels" as const },
+  ]),
+  policy: { hash: "sha256:p", levels: [["m/internal/ir"], ["m/internal/cli"]] },
+};
+
+describe("violations hidden inside a box (07)", () => {
+  const hidden = (depth: number, stage: (typeof DEFAULT_STATE)["stage"]) =>
+    scene(bad, { ...DEFAULT_STATE, depth, stage }, { pin: pinFor(bad) }).nodes
+      .filter((n) => n.hidden)
+      .map((n) => [n.id, n.hidden!.map((e) => `${e.violation} ${e.from}→${e.to}`)]);
+  // Levels first: the cycle arcs of one bad import can outnumber it.
+  const both = [["m/internal", ["levels m/internal/ir/bad→m/internal/cli", "cycle m/internal/cli→m/internal/ir"]]];
+
+  it("marks the box when both ends are inside it at this depth", () => {
+    expect(hidden(2, "full")).toEqual(both);
+  });
+
+  it("marks the container when declutter lifts the violation to a self-loop", () => {
+    for (const stage of ["arrows", "triangles", "elements", "classes"] as const) {
+      expect(hidden(3, stage), stage).toEqual(both);
+    }
+  });
+
+  it("marks nothing while the violation is drawn as a red edge", () => {
+    expect(hidden(3, "full")).toEqual([]);
+  });
+});

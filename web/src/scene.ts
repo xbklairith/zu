@@ -1,6 +1,6 @@
 // scene is the one pure function the canvas draws: View + ViewState → nodes and edges.
 import { nodeMark, unchangedCount } from "./change";
-import type { View } from "./data";
+import type { View, ViewEdge } from "./data";
 import { autoDepth, childrenOf, cmp, cut, declsOf, index, isBox, leafOf, OUTSIDE, packagesIn, PKG } from "./cut";
 import { bundlesOver, EXTERNALS, externalsOf, type Bundle } from "./bundle";
 import { declutter, NO_PINS, type Mark, type Pin } from "./declutter";
@@ -18,6 +18,7 @@ export type SceneNode = {
   change?: string; // the Change View class (change.ts nodeMark, or "has-change")
   rowMarks?: string[]; // the Change View class of each method row
   rank?: number; // 07: the Policy rank of a box, rolled up (policy.ts rolledRanks)
+  hidden?: ViewEdge[]; // 07: violating imports with both ends inside this node, so no line shows them
 };
 export type SceneEdge = {
   id: string; from: string; to: string; pairs: number; members: Bundle["members"];
@@ -141,6 +142,11 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     if (r !== undefined) n.rank = r;
     return n;
   });
+  if (!c.decls) markHidden(view, nodes, (id) => {
+    const l = toLeaf(id);
+    const at = l === OUTSIDE ? null : d.lift(shown(l));
+    return at !== null && ids.has(at) ? at : null;
+  });
   const row = view.kind === "change" ? markChanges(view, c.decls, nodes, d.rows, s.selected) : null;
   if (row !== null) {
     selected = row.selected;
@@ -163,6 +169,24 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     depth, stage: s.stage, lines: d.lines, nodes: nodes.sort((x, y) => cmp(x.id, y.id)), edges, bundles: kept,
     selected, selectedRow: row?.selectedRow ?? selectedRow, decls: c.decls, noDetail: c.noDetail,
   };
+}
+
+// markHidden marks each drawn node that holds both ends of a violating import
+// (07). Such an import has no line: bundlesOver drops an edge inside one leaf,
+// and declutter a bundle it lifts to a self-loop (05 Deviation 1). The mark
+// keeps "violations stay red" true at every depth and stage. Levels come
+// first: one bad import can close many cycle arcs.
+function markHidden(view: View, nodes: SceneNode[], drawn: (pkg: string) => string | null) {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  for (const e of view.edges) {
+    if (e.violation === undefined || e.kind !== "imports") continue;
+    const at = drawn(e.from);
+    if (at === null || at !== drawn(e.to)) continue;
+    const n = byId.get(at)!;
+    (n.hidden ??= []).push(e);
+  }
+  const first = (e: ViewEdge) => (e.violation === "levels" ? 0 : 1);
+  for (const n of nodes) n.hidden?.sort((a, b) => first(a) - first(b) || cmp(a.from, b.from) || cmp(a.to, b.to));
 }
 
 // markChanges is 04 Part B's Change View marking (Q4), unchanged: each node
