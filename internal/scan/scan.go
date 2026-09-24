@@ -26,12 +26,14 @@ type Options struct {
 	PolicyHash string
 }
 
-// Stats summarise a scan for the one-line report.
+// Stats summarise a scan for the one-line report, and carry what the scan
+// measured but the IR does not hold (08).
 type Stats struct {
 	Packages        int
 	Files           int // Go files parsed, excluding build-ignored ones
 	ParseErrors     int
 	UnresolvedCalls int
+	Measures        Measures
 }
 
 // Run scans opts.Tree. The result is unsorted; ir.Encode canonicalises it.
@@ -46,11 +48,11 @@ func Run(ctx context.Context, opts Options) (*ir.IR, Stats, error) {
 	if err != nil {
 		return nil, Stats{}, err
 	}
-	doc := assemble(w, facts)
+	doc, ms := assemble(w, facts)
 	doc.Grouping = "tree"
 	doc.PolicyHash = cmp.Or(opts.PolicyHash, DefaultPolicyHash)
 
-	st := Stats{ParseErrors: len(doc.ParseErrors)}
+	st := Stats{ParseErrors: len(doc.ParseErrors), Measures: ms}
 	for _, n := range doc.Nodes {
 		if n.Kind == ir.KindPackage {
 			st.Packages++

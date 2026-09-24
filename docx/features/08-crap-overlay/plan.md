@@ -489,7 +489,7 @@ func position(fset *token.FileSet, p token.Pos) (string, Pos) {
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 --- a/internal/scan/measure_test.go
@@ -536,9 +536,9 @@ func position(fset *token.FileSet, p token.Pos) (string, Pos) {
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/scan -run TestRunMeasuresFunctions` Expected: FAIL (`stats.Measures undefined`)
+- [x] **Run:** `go test ./internal/scan -run TestRunMeasuresFunctions` Expected: FAIL (`stats.Measures undefined`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/internal/scan/build.go
@@ -694,8 +694,8 @@ func position(fset *token.FileSet, p token.Pos) (string, Pos) {
  			st.Packages++
 ```
 
-- [ ] **Run:** `go test ./... ` Expected: PASS (goldens unchanged)
-- [ ] **Commit:** `Carry function measures out of the scan beside the IR`
+- [x] **Run:** `go test ./... ` Expected: PASS (goldens unchanged)
+- [x] **Commit:** `Carry function measures out of the scan beside the IR`
 
 ### Task 3: `internal/cover` reads a coverprofile
 
@@ -2839,7 +2839,7 @@ That makes 39 checks per engine.
 ## Progress
 
 - [x] Task 1 · Complexity and span per function
-- [ ] Task 2 · `scan.Measures` beside the IR
+- [x] Task 2 · `scan.Measures` beside the IR
 - [ ] Task 3 · `internal/cover`
 - [ ] Task 4 · `export.AddMetrics`
 - [ ] Task 5 · `zu scan -coverprofile`

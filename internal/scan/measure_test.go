@@ -114,3 +114,39 @@ var gen = func() {}
 		t.Fatalf("Loose =\n%+v\nwant\n%+v", f.Loose, want)
 	}
 }
+
+func TestRunMeasuresFunctions(t *testing.T) {
+	root := tree(t, map[string]string{
+		"go.mod":       "module example.com/m\n",
+		"p/a_linux.go": "//go:build linux\n\npackage p\n\nfunc F(x int) {\n\tif x > 0 {\n\t}\n}\n",
+		"p/a_other.go": "//go:build !linux\n\npackage p\n\nfunc F(x int) {}\n",
+		"p/t.go":       "package p\n\ntype T struct{}\n\nfunc (T) M() {}\n",
+		"p/v.go":       "package p\n\nvar V = func() {}\n\n//line gen.y:10\nfunc G() {}\n",
+		"p/x.go":       "//go:build ignore\n\npackage p\n\nvar X = func() {}\n",
+	})
+	_, stats := run(t, root, 1)
+	// Each build variant keeps its own complexity: coverage from a darwin
+	// run must not be scored with the linux body's branches. Files holds
+	// every file key the scan parsed, gen.y included and x.go not, with the
+	// spans of code no function node holds.
+	want := Measures{
+		Funcs: map[string]Measure{
+			"example.com/m/p.F": {Pkg: "example.com/m/p", Spans: []Span{
+				{"p/a_linux.go", "a_linux.go", 2, Pos{5, 1}, Pos{8, 2}},
+				{"p/a_other.go", "a_other.go", 1, Pos{5, 1}, Pos{5, 17}},
+			}},
+			"example.com/m/p.G":   {Pkg: "example.com/m/p", Spans: []Span{{"p/v.go", "gen.y", 1, Pos{10, 0}, Pos{10, 0}}}},
+			"example.com/m/p.T.M": {Pkg: "example.com/m/p", Spans: []Span{{"p/t.go", "t.go", 1, Pos{5, 1}, Pos{5, 16}}}},
+		},
+		Files: map[string][]Span{
+			"example.com/m/p/a_linux.go": nil,
+			"example.com/m/p/a_other.go": nil,
+			"example.com/m/p/gen.y":      nil,
+			"example.com/m/p/t.go":       nil,
+			"example.com/m/p/v.go":       {{"p/v.go", "v.go", 0, Pos{3, 9}, Pos{3, 18}}},
+		},
+	}
+	if !reflect.DeepEqual(stats.Measures, want) {
+		t.Fatalf("Measures =\n%+v\nwant\n%+v", stats.Measures, want)
+	}
+}

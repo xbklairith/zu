@@ -29,10 +29,17 @@ type Measure struct {
 	Spans []Span // sorted by path, then start
 }
 
-// Measures maps a function or method node id to its Measure. They are not
-// part of the IR: the IR carries no metrics (requirements, Metrics overlay),
-// and export joins them with a coverage profile.
-type Measures map[string]Measure
+// Measures are what the scan measures for a coverage profile (08). They are
+// not part of the IR: the IR carries no metrics (requirements, Metrics
+// overlay), and export joins them with a profile.
+type Measures struct {
+	// Funcs maps a function or method node id to its Measure.
+	Funcs map[string]Measure
+	// Files maps every file the scan parsed, by the key a profile gives it
+	// (package id + "/" + file name after //line), to the spans in it of
+	// code no function node holds (see loose).
+	Files map[string][]Span
+}
 
 // complexity is gocyclo's cyclomatic complexity: 1, plus one per if, for,
 // range, non-default case or comm clause, && and ||, closures included.

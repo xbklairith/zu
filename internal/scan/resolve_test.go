@@ -20,7 +20,7 @@ func scanTree(t *testing.T, files map[string]string) *ir.IR {
 	for i, f := range w.Files {
 		facts[i] = extractFile(d, f)
 	}
-	doc := assemble(w, facts)
+	doc, _ := assemble(w, facts)
 	ir.Sort(doc)
 	return doc
 }

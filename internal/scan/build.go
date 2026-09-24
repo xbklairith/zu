@@ -33,8 +33,9 @@ type edgeID struct {
 	Kind     ir.EdgeKind
 }
 
-// assemble turns per-file facts into an IR (unsorted; ir.Encode sorts).
-func assemble(w *walkResult, facts []*fileFacts) *ir.IR {
+// assemble turns per-file facts into an IR (unsorted; ir.Encode sorts) and
+// the Measures of its function and method nodes.
+func assemble(w *walkResult, facts []*fileFacts) (*ir.IR, Measures) {
 	b := &builder{
 		ix: buildIndex(w, facts),
 		doc: &ir.IR{
@@ -53,6 +54,7 @@ func assemble(w *walkResult, facts []*fileFacts) *ir.IR {
 			b.doc.ParseErrors = append(b.doc.ParseErrors, *f.Err)
 		}
 	}
+	ms := Measures{Funcs: map[string]Measure{}, Files: map[string][]Span{}}
 	for _, f := range facts {
 		if f.Skip || f.Err != nil {
 			continue
@@ -69,10 +71,14 @@ func assemble(w *walkResult, facts []*fileFacts) *ir.IR {
 		names := b.imports(p, f)
 		b.calls(p, f, names)
 		b.embeds(p, f, names)
+		files(ms.Files, p.ID, f)
 	}
 	dropped := b.dropCollisions()
 	for id, ds := range b.decls {
 		b.nodes[id] = mergeDecls(id, ds[0].Pkg, ds)
+		if ds[0].Kind == ir.KindFunction {
+			ms.Funcs[id] = measure(ds)
+		}
 	}
 	for _, p := range b.ix.pkgs {
 		b.nodes[p.ID].Hash = b.packageHash(p)
@@ -85,7 +91,36 @@ func assemble(w *walkResult, facts []*fileFacts) *ir.IR {
 			b.doc.Edges = append(b.doc.Edges, *e)
 		}
 	}
-	return b.doc
+	return b.doc, ms
+}
+
+// measure merges the declarations of one function node, which mergeDecls
+// has sorted by location: a span for each.
+func measure(ds []declAt) Measure {
+	m := Measure{Pkg: ds[0].Pkg}
+	for _, d := range ds {
+		m.Spans = append(m.Spans, Span{Path: d.Loc.Path, File: d.File, CC: d.CC, Start: d.Start, End: d.End})
+	}
+	return m
+}
+
+// files records the file keys f gives a coverprofile (its own name, and
+// any that its //line directives name) with its loose code's spans.
+func files(into map[string][]Span, pkg string, f *fileFacts) {
+	parsed := func(file string) {
+		if _, ok := into[pkg+"/"+file]; !ok {
+			into[pkg+"/"+file] = nil
+		}
+	}
+	parsed(path.Base(f.Path))
+	for _, d := range f.Decls {
+		if d.File != "" {
+			parsed(d.File)
+		}
+	}
+	for _, s := range f.Loose {
+		into[pkg+"/"+s.File] = append(into[pkg+"/"+s.File], s)
+	}
 }
 
 // dropCollisions removes every declaration id that is also a package id, or
