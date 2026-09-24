@@ -33,6 +33,17 @@ describe("scene", () => {
     expect(sc.edges.map((e) => [e.id, e.pairs]))
       .toEqual([["m#pkg→m/api", 1], ["m/api→m/core", 2], ["m/api→x.io/e", 1]]);
   });
+  it("drops the path prefix drawn siblings share, never from externals, the outside or a lone box (11)", () => {
+    const k = view([...pkgs(["k8s.io/api"], "k8s.io/api"), ...pkgs(["k8s.io/kubelet/cm"], "k8s.io/kubelet"),
+      ...pkgs(["k8s.io/kubernetes/pkg/a", "k8s.io/kubernetes/pkg/b"], "k8s.io/kubernetes"), ...exts(["k8s.io/klog"])],
+      [edge("k8s.io/api", "k8s.io/klog")]);
+    const top = scene(k, DEFAULT_STATE);
+    expect(top.nodes.filter((n) => n.parent === "").map((n) => [n.id, n.label])).toEqual([
+      ["k8s.io/api", "api"], ["k8s.io/klog", "k8s.io/klog"], ["k8s.io/kubelet", "kubelet"], ["k8s.io/kubernetes", "kubernetes"],
+    ]);
+    const one = scene(view(pkgs(["x.io/m/a", "x.io/m/b"], "x.io/m")), DEFAULT_STATE);
+    expect(one.nodes.map((n) => n.label)).toEqual(["x.io/m", "a", "b"]);
+  });
   it("hides weak bundles below minPairs unless pinned", () => {
     expect(ids(at({ depth: 2, minPairs: 2 }).edges)).toEqual(["m/api→m/core"]);
     const pinned = scene(v, { ...DEFAULT_STATE, depth: 2, minPairs: 2 }, { pin: (b) => b.to === "x.io/e" });
@@ -126,9 +137,9 @@ describe("scene", () => {
     const top = scene(g, DEFAULT_STATE);
     expect(top.depth).toBe(3);
     expect(top.nodes.map((n) => [n.label, n.shape])).toEqual([
-      ["example.com/shop", "container"], ["shop (package)", "box"], ["internal", "container"],
+      ["shop", "container"], ["shop (package)", "box"], ["internal", "container"],
       ["checkout", "box"], ["money", "box"], ["store", "box"],
-      ["example.com/shop/tools", "container"], ["gen", "box"],
+      ["shop/tools", "container"], ["gen", "box"],
       ["github.com/lib/pq", "oval"], ["golang.org/x/sync", "oval"],
     ]);
     expect(top.edges).toHaveLength(7);

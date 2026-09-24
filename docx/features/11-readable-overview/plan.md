@@ -912,7 +912,7 @@ diff --git a/web/src/layout.ts b/web/src/layout.ts
 
 **Steps:**
 
-- [ ] **Write the failing tests.** The snapshot's two labels change (Deviation 9).
+- [x] **Write the failing tests.** The snapshot's two labels change (Deviation 9).
 
 <!-- file: web/src/labels.test.ts -->
 ```ts
@@ -1197,9 +1197,9 @@ diff --git a/web/src/__snapshots__/scene04.json b/web/src/__snapshots__/scene04.
      "rows": [],
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/labels.test.ts src/scene.test.ts` Expected: FAIL (`Failed to resolve import "./labels"`)
+- [x] **Run:** `cd web && npx vitest run src/labels.test.ts src/scene.test.ts` Expected: FAIL (`Failed to resolve import "./labels"`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 <!-- file: web/src/labels.ts -->
 ```ts
@@ -1264,7 +1264,7 @@ diff --git a/web/src/scene.ts b/web/src/scene.ts
      const at = l === OUTSIDE ? null : d.lift(shown(l));
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
 
 ### Task 4: Edges on demand: auto, on, off
 

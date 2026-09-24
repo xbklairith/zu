@@ -7,6 +7,7 @@ import { declutter, NO_PINS, type Mark, type Pin } from "./declutter";
 import { crapBand, packageRisk, rolledCrap, type Band, type Risk } from "./metrics";
 import { rolledRanks } from "./policy";
 import { siblingTiers } from "./rank";
+import { shorten } from "./labels";
 import { withinHops } from "./select";
 import type { Known, Stage, ViewState } from "./state";
 
@@ -110,6 +111,8 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
 
   const base = s.focus.endsWith(PKG) ? s.focus.slice(0, -PKG.length) : s.focus;
   const externals = externalsOf(view, kept).length;
+  // path: the label is the box's path below its container, which 11 shortens.
+  const paths = new Set<string>();
   const label = (id: string, parent: string): string => {
     const named = view.regroup?.label[id]; // 07: a Proposal's layer boxes and their tops
     if (named !== undefined) return named;
@@ -118,6 +121,7 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     if (id.endsWith(PKG)) return `${last(id.slice(0, -PKG.length))} (package)`;
     if (node.get(id)?.kind === "external") return id;
     if (c.decls) return id.slice(base.length + 1);
+    paths.add(id);
     const top = parent || base;
     return top ? id.slice(top.length + 1) : id;
   };
@@ -158,6 +162,10 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     if (o >= 0 && n.shape !== "decl") n.order = o;
     return n;
   });
+  // 11: siblings drop the path prefix they share (labels.ts).
+  const sets = new Map<string, SceneNode[]>();
+  for (const n of nodes) if (paths.has(n.id)) sets.set(n.parent, [...(sets.get(n.parent) ?? []), n]);
+  for (const set of sets.values()) shorten(set.map((n) => n.label)).forEach((l, i) => (set[i].label = l));
   if (!c.decls) markHidden(view, nodes, (id) => {
     const l = toLeaf(id);
     const at = l === OUTSIDE ? null : d.lift(shown(l));
