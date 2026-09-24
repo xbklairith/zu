@@ -45,6 +45,14 @@ const round1 = (x: number) => Math.round(x * 10) / 10;
 const worse = (a: Risk | undefined, b: Risk): Risk =>
   a === undefined ? b : a === null || b === null ? null : Math.max(a, b);
 
+// packageRisk is a package's own μ+σ: null without coverage data, undefined
+// when it has no functions to measure.
+export function packageRisk(view: View, id: string): Risk | undefined {
+  const pm = view.metrics?.packages[id];
+  if (!pm) return undefined;
+  return pm.crap ? round1(pm.crap.mu + pm.crap.sigma) : null;
+}
+
 const rolled = new WeakMap<View, Map<string, Risk>>();
 
 // rolledCrap is every measured package's μ+σ and every box's worst among
@@ -54,12 +62,10 @@ export function rolledCrap(view: View): Map<string, Risk> {
   const hit = rolled.get(view);
   if (hit) return hit;
   const out = new Map<string, Risk>();
-  const m = view.metrics?.packages ?? {};
   const { parent, pkgs } = index(view);
   for (const p of pkgs) {
-    const pm = m[p.id];
-    if (!pm) continue;
-    const r: Risk = pm.crap ? round1(pm.crap.mu + pm.crap.sigma) : null;
+    const r = packageRisk(view, p.id);
+    if (r === undefined) continue;
     for (let b = p.id; b !== ""; b = parent.get(b) ?? "") out.set(b, worse(out.get(b), r));
   }
   rolled.set(view, out);

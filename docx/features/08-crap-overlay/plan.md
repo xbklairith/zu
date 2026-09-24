@@ -1927,7 +1927,7 @@ export function rolledCrap(view: View): Map<string, Risk> {
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 --- a/web/src/metrics.test.ts
@@ -1987,9 +1987,9 @@ export function rolledCrap(view: View): Map<string, Risk> {
 +});
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/metrics.test.ts` Expected: FAIL (`crap` is undefined on every node)
+- [x] **Run:** `cd web && npx vitest run src/metrics.test.ts` Expected: FAIL (`crap` is undefined on every node)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 --- a/web/src/metrics.ts
@@ -2067,8 +2067,8 @@ export function rolledCrap(view: View): Map<string, Risk> {
      return n;
 ```
 
-- [ ] **Run:** `cd web && npx tsc --noEmit && npx vitest run` Expected: PASS
-- [ ] **Commit:** `Carry CRAP on scene boxes and functions`
+- [x] **Run:** `cd web && npx tsc --noEmit && npx vitest run` Expected: PASS
+- [x] **Commit:** `Carry CRAP on scene boxes and functions`
 
 ### Task 9: The fill and the badge
 
@@ -2845,7 +2845,7 @@ That makes 39 checks per engine.
 - [x] Task 5 · `zu scan -coverprofile`
 - [x] Task 6 · `zu diff -coverprofile`
 - [x] Task 7 · Grade, band and rollup
-- [ ] Task 8 · CRAP on the scene
+- [x] Task 8 · CRAP on the scene
 - [ ] Task 9 · Fill and badge
 - [ ] Task 10 · Panel and legend
 - [ ] Task 11 · Browser harness

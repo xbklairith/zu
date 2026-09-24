@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { crapBand, crapGrade, crapLabel, rolledCrap } from "./metrics";
-import { pkgs, view } from "./testkit";
+import { scene } from "./scene";
+import { DEFAULT_STATE } from "./state";
+import { decl, pkgs, view } from "./testkit";
 
 // m/a/x μ+σ 4, m/a/y 11, m/b/z measured without coverage data, m/c/w not
 // measured (no functions).
@@ -39,5 +41,44 @@ describe("CRAP as uml-viewer grades it", () => {
 
   it("rolls nothing without metrics", () => {
     expect(rolledCrap(view(pkgs(["m/a"], "m"))).size).toBe(0);
+  });
+});
+
+describe("the scene carries CRAP", () => {
+  const d = {
+    ...v,
+    nodes: [
+      ...v.nodes.map((n) => ({ ...n, detail: true })),
+      decl("m/a/x.F", "m/a/x", "function"), decl("m/a/x.G", "m/a/x", "function"), decl("m/a/x.T", "m/a/x"),
+    ],
+    metrics: { ...v.metrics, funcs: { "m/a/x.F": { cc: 2, stmts: 4, covered: 4, crap: 2 }, "m/a/x.G": { cc: 3, stmts: 1, covered: 0 } } },
+  };
+  const crap = (depth: number | null, focus = "") =>
+    Object.fromEntries(scene(d, { ...DEFAULT_STATE, depth, focus }).nodes.map((n) => [n.id, n.crap]));
+
+  it("on every box and container, rolled up; none on an unmeasured box", () => {
+    expect(crap(2)).toEqual({
+      m: { risk: null, band: "red" }, "m/a": { risk: 11, band: "yellow" },
+      "m/b": { risk: null, band: "red" }, "m/c": undefined,
+    });
+    expect(crap(3)["m/a/x"]).toEqual({ risk: 4, band: "green" });
+  });
+
+  it("on a function by its own CRAP; none on a type", () => {
+    expect(crap(null, "m/a/x#pkg")).toEqual({
+      "m/a/x.F": { risk: 2, band: "green" }, "m/a/x.G": { risk: null, band: "red" }, "m/a/x.T": undefined,
+    });
+  });
+
+  it("on a package's own #pkg leaf by its own CRAP, not its box's", () => {
+    const root = { ...d, nodes: [...pkgs(["m"], "m"), ...d.nodes] }; // package m itself is unmeasured
+    const sc = scene(root, { ...DEFAULT_STATE, depth: 2 });
+    expect(sc.nodes.find((n) => n.id === "m#pkg")?.crap).toBeUndefined();
+    expect(sc.nodes.find((n) => n.id === "m")?.crap).toEqual({ risk: null, band: "red" });
+  });
+
+  it("nowhere without metrics", () => {
+    const { metrics: _, ...plain } = d;
+    expect(scene(plain, { ...DEFAULT_STATE, depth: 3 }).nodes.some((n) => n.crap)).toBe(false);
   });
 });

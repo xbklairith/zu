@@ -4,6 +4,7 @@ import type { View, ViewEdge } from "./data";
 import { autoDepth, childrenOf, cmp, cut, declsOf, index, isBox, leafOf, OUTSIDE, packagesIn, PKG } from "./cut";
 import { bundlesOver, EXTERNALS, externalsOf, type Bundle } from "./bundle";
 import { declutter, NO_PINS, type Mark, type Pin } from "./declutter";
+import { crapBand, packageRisk, rolledCrap, type Band, type Risk } from "./metrics";
 import { rolledRanks } from "./policy";
 import { withinHops } from "./select";
 import type { Known, Stage, ViewState } from "./state";
@@ -20,6 +21,7 @@ export type SceneNode = {
   rank?: number; // 07: the Policy rank of a box, rolled up (policy.ts rolledRanks)
   hidden?: ViewEdge[]; // 07: violating imports with both ends inside this node, so no line shows them
   order?: number; // 07: the box's place in the Policy's order; layout.ts draws it before its siblings
+  crap?: { risk: Risk; band: Band }; // 08: a box's rolled μ+σ, a function's own CRAP; null = no coverage data
 };
 export type SceneEdge = {
   id: string; from: string; to: string; pairs: number; members: Bundle["members"];
@@ -125,6 +127,8 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   };
 
   const ranks = rolledRanks(view);
+  const craps = rolledCrap(view);
+  const funcs = view.metrics?.funcs ?? {};
   const order = view.policy?.order ?? [];
   const nodes: SceneNode[] = [...ids].sort(cmp).map((id) => {
     const parent = up(id);
@@ -144,6 +148,10 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     const r = n.shape !== "box" && n.shape !== "container" ? undefined
       : id.endsWith(PKG) ? node.get(id.slice(0, -PKG.length))?.rank : ranks.get(id);
     if (r !== undefined) n.rank = r;
+    const k = n.shape === "decl" ? (node.get(id)?.kind === "function" && funcs[id] ? (funcs[id].crap ?? null) : undefined)
+      : n.shape !== "box" && n.shape !== "container" ? undefined
+      : id.endsWith(PKG) ? packageRisk(view, id.slice(0, -PKG.length)) : craps.get(id);
+    if (k !== undefined) n.crap = { risk: k, band: crapBand(k) };
     const o = order.indexOf(id.endsWith(PKG) ? id.slice(0, -PKG.length) : id);
     if (o >= 0 && n.shape !== "decl") n.order = o;
     return n;
