@@ -43,7 +43,7 @@ The replay needs Go, git, `patch`, Python 3, npm and Node, `golangci-lint` (Task
 - ADR 0002 (one parse per file, AST dropped), ADR 0003 (byte-identical IR), ADR 0005 (git is the only process zu runs), ADR 0006 (the page is the export's).
 
 **Out of scope:**
-- Watching the tree and pushing a redraw (A11, U1's "preserved across re-renders in watch mode"): feature 11, below.
+- Watching the tree and pushing a redraw (A11, U1's "preserved across re-renders in watch mode"): feature 13 (planned below as 11).
 - A served Change View (Mode B). It is not trivial: it needs the base ref, the merge-base, `-worktree`, the base tree kept open for hunks, and `diff`'s violation delta, all of which live in `runDiff` today. A later feature can add `zu serve -base ref` on the same session.
 - `-open`, which would launch a browser (Deviation 7).
 - Re-reading `-coverprofile` while serving (Deviation 10).
@@ -1708,6 +1708,8 @@ process.exit(failed ? 1 : 0);
   Budget: under 2 s. **Met**, with 0.8 s to spare. Of a rescan, `scan.Run` takes 0.64–0.84 s (measured in-process with an overlay Tree; 0.45 s of it is `assemble`, which runs over the whole tree by design); git's two `ls-files` and `status`, the Lstat of the 14,461 listed files, `projectView` and the 6.2 MB of JSON take the rest. Peak RSS over the run: 642 MB. Record the implementer's numbers in `acceptance.md`.
 
 ## Feature 11 (next): watch and live redraw
+
+Built as feature 13, which differs: `-poll` defaults to 1 s; the event carries a generation counter, not a SHA-256; `/view.json` still rescans on a page load and `?latest` serves the kept View; a hidden page closes its stream; there is no heartbeat. See `docx/features/13-watch/plan.md`.
 
 `zu serve -watch`, or watch by default (11 decides): a goroutine polls the size and mtime of the files the last rescan listed, plus `zu.policy.yaml` and every `go.mod`, every 500 ms, and re-lists through git every few seconds to see added files. On a change it runs the session's rescan once (debounced), keeps the View bytes behind a mutex or atomic pointer, and `/view.json` then serves the kept bytes instead of rescanning per request. `/events` is a Server-Sent Events stream (stdlib `http.Flusher`, same Host and `Sec-Fetch-Site` checks) that sends `event: view` with the View's SHA-256 whenever it changes, and a comment heartbeat; the page subscribes with `EventSource("events")` (CSP `connect-src 'self'` already allows it), refetches `view.json`, and redraws with the state from the URL hash, so pan, zoom, depth and selection survive (U1, A11). The budget stays 2 s from the write to the event. It may also re-read `-coverprofile` when its mtime changes (Deviation 10). About 4 tasks: the poller with a fake clock, the session's kept View and `/events`, the page's subscription and redraw, and a browser check that edits a file and sees the redraw without a reload, keeping the hash.
 

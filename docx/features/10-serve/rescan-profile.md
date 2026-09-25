@@ -1,6 +1,6 @@
 # 10 · zu serve — where a kubernetes rescan spends its time
 
-Measured 2026-09-25 for feature 12 (watch), which keeps the 2 s budget from a write to
+Measured 2026-09-25 for feature 13 (watch), which keeps the 2 s budget from a write to
 the redraw. This is measurement only: no production code changed. Apple M2 (8 cores,
 16 GB), macOS, Go 1.24.5, `bin/zu` at `5a3b7ef`.
 
@@ -139,7 +139,7 @@ refreshed index. None of the fixes was implemented, so no estimate is measured.
    - `Head`'s `status` only sets `Dirty`. It can run concurrently with `scan.Run`,
      which hides 131 ms (340 ms racy).
    - `ls-files --others` (120 ms) can also run concurrently with `ls-files --cached`.
-   - Under feature 12, the watcher already knows what changed, so re-listing and
+   - Under feature 13, the watcher already knows what changed, so re-listing and
      `status` can move to its slower timer. That takes both off the path from write
      to redraw.
 3. **A size and mtime key, with the hash as a fallback: about 0.1 s.**
@@ -148,7 +148,7 @@ refreshed index. None of the fixes was implemented, so no estimate is measured.
    - This is the only fix that trades away correctness. Deviation 3 rejected it
      because an edit that keeps both size and mtime (the same tick) goes unseen, and a
      hash fallback on a changed stat does not help that case.
-   - Feature 12 could accept the trade for the watch path only, and keep a full-hash
+   - Feature 13 could accept the trade for the watch path only, and keep a full-hash
      rescan on page load.
 4. **Reuse the View when nothing changed: about 0.34 s, but only on a no-change
    rescan.**
@@ -171,3 +171,5 @@ refreshed index. None of the fixes was implemented, so no estimate is measured.
 - Adding fix 1 would bring it to about 0.5 s.
 - For watch, fixes 2 and 3 matter most on the path from write to redraw, and fix 1 is
   the only one that removes the part that grows with the size of the tree.
+
+**Taken by feature 13 (2026-09-25):** fix 2, and fix 3 on the watch path only, with ctime and inode in the stamp. Fix 5 was considered and dropped, because `ListTree`'s own `Lstat` gives the stamps. A watch rescan after one edit on kubernetes takes 0.86–0.96 s; see `docx/features/13-watch/plan.md`, Measurements.

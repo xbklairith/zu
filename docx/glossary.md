@@ -175,3 +175,7 @@ uml-viewer's thresholds.
 
 A package with functions but no coverage data for any of them in the given profile.
 Counts as `high` and is badged "?". Without a profile nothing is missing: no CRAP is drawn.
+
+## Generation
+
+The count zu serve's watch keeps of the Views it has published, starting at 1 with the first scan. `/events` sends it, and `/view.json` carries it as `Zu-Generation`, read under the lock the watch publishes under. The page draws only a later one. It restarts with zu serve.

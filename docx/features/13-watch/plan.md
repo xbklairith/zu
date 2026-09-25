@@ -1,6 +1,6 @@
 # 13 · Watch — Plan
 
-**Status:** APPROVED 2026-09-25 (scrutiny-13 rulings applied, replay green on 31fcff8, advisor sign-off). History: Revised for scrutiny-13, not approved. First drafted 2026-09-25, then revised the same day under the lead's rulings on scrutiny-13 (see **Revision for scrutiny-13**).
+**Status:** Complete 2026-09-25 (Tasks 1–8; see acceptance.md; the user's check is pending). APPROVED 2026-09-25 (scrutiny-13 rulings applied, replay green on 31fcff8, advisor sign-off). History: Revised for scrutiny-13, not approved. First drafted 2026-09-25, then revised the same day under the lead's rulings on scrutiny-13 (see **Revision for scrutiny-13**).
 
 The plan has two parts:
 - 13a (Go: Tasks 1–4) makes `zu serve` watch the tree and push each new View;
@@ -3706,7 +3706,7 @@ index 9848bc7..5786df4 100644
 
 **Steps:**
 
-- [ ] **Add the measurement script**
+- [x] **Add the measurement script**
 
 ```diff
 diff --git a/docx/features/13-watch/measure.mjs b/docx/features/13-watch/measure.mjs
@@ -3783,13 +3783,13 @@ index 0000000..46640f4
 +process.exit(0);
 ```
 
-- [ ] **Run:** `make check` Expected: PASS (read the lint output)
+- [x] **Run:** `make check` Expected: PASS (read the lint output)
 
-- [ ] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (55 checks in each engine; nothing in 12's acceptance moved)
+- [x] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (55 checks in each engine; nothing in 12's acceptance moved)
 
-- [ ] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS
+- [x] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS
 
-- [ ] **Measure** (by hand; not a replay step). After `make build`:
+- [x] **Measure** (by hand; not a replay step). After `make build`:
   1. Make a writable copy of the Test Corpus's kubernetes. On APFS use `cp -cRp`, which is a clonefile copy with no extra blocks. Never clone it, and never write to `.zu/corpus/` itself.
   2. Run `node docx/features/13-watch/measure.mjs "$K" pkg/util/env 1s 11` twice.
   3. Check the budget: every watch rescan under 2 s, and the median save → drawn at most 2 s. Record the idle CPU, save → drawn (the worst case too) and the rescans in `acceptance.md`, next to the Measurements table.
@@ -3803,7 +3803,7 @@ index 0000000..46640f4
   5. Undo and save. The banner goes.
   6. Switch to another tab for a while, save a change, and switch back. The change is drawn.
 
-- [ ] **Commit:** `Record watch's acceptance`
+- [x] **Commit:** `Record watch's acceptance`
 
 ---
 

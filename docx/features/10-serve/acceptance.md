@@ -48,7 +48,7 @@ timed alone, take 0.25 s (`status --porcelain --untracked-files=no` 0.12 s,
 `ls-files -z --others --exclude-standard` 0.12 s, `ls-files -z` 0.01 s). The rest
 of the difference was not broken down.
 
-The margin is thin. Feature 11's watcher, which rescans on a change rather than per
+The margin is thin. Feature 13's watcher, which rescans on a change rather than per
 request, keeps the same 2 s budget from the write to the event, so it should
 start from this number.
 
