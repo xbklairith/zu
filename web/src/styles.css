@@ -697,6 +697,24 @@ button.st-removed {
   background: var(--mark);
 }
 
+/* 13: what zu serve's watch says over the drawing it keeps: a file that
+   does not parse, a failed rescan, or zu serve not answering. */
+.live-notice {
+  position: fixed;
+  z-index: 20;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  padding: 4px 10px;
+  font-size: 13px;
+  color: var(--fg);
+  background: var(--mark);
+  border: 1px solid var(--modified);
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+
 /* Deviation 8: the view was collapsed to fit the layout limit. */
 .notice {
   position: absolute;

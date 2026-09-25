@@ -31,13 +31,16 @@ describe("readEmbedded", () => {
 });
 
 describe("fetchView", () => {
-  const answer = (status: number, body: string) => async (url: RequestInfo | URL, init?: RequestInit) => {
+  const answer = (status: number, body: string, gen?: string) => async (url: RequestInfo | URL, init?: RequestInit) => {
     expect([url, init?.cache]).toEqual(["view.json", "no-store"]);
-    return new Response(body, { status });
+    return new Response(body, { status, headers: gen ? { "Zu-Generation": gen } : {} });
   };
-  it("reads the View zu serve sends", async () => {
-    const v = await fetchView(answer(200, JSON.stringify(golden)));
-    expect(v.nodes.length).toBe(golden.nodes.length);
+  it("reads the View zu serve sends, and its text (13)", async () => {
+    const { view, text, gen } = await fetchView(answer(200, JSON.stringify(golden)));
+    expect([view.nodes.length, text, gen]).toEqual([golden.nodes.length, JSON.stringify(golden), 0]);
+  });
+  it("reads the generation zu serve's watch had drawn when it sent the View (13)", async () => {
+    expect((await fetchView(answer(200, JSON.stringify(golden), "7"))).gen).toBe(7);
   });
   it("says why zu serve could not build it", async () => {
     await expect(fetchView(answer(500, "zu.policy.yaml: line 3: bad level\n"))).rejects.toThrow(

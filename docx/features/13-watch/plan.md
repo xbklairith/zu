@@ -3149,7 +3149,7 @@ index 0000000..fc42c7a
 
 **Steps:**
 
-- [ ] **Write the failing browser check**
+- [x] **Write the failing browser check**
 
 ```diff
 diff --git a/web/e2e/serve.mjs b/web/e2e/serve.mjs
@@ -3227,9 +3227,9 @@ index f2d87c6..d081b33 100644
  
 ```
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node serve.mjs` Expected: FAIL (`live = [false,true]` in each engine: the page never redraws)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node serve.mjs` Expected: FAIL (`live = [false,true]` in each engine: the page never redraws)
 
-- [ ] **Write the failing unit test**
+- [x] **Write the failing unit test**
 
 ```diff
 diff --git a/web/src/data.test.ts b/web/src/data.test.ts
@@ -3260,9 +3260,9 @@ index e443ece..1021780 100644
      await expect(fetchView(answer(500, "zu.policy.yaml: line 3: bad level\n"))).rejects.toThrow(
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/data.test.ts` Expected: FAIL (`Cannot read properties of undefined (reading 'nodes')`)
+- [x] **Run:** `cd web && npx vitest run src/data.test.ts` Expected: FAIL (`Cannot read properties of undefined (reading 'nodes')`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/web/src/data.ts b/web/src/data.ts
@@ -3406,11 +3406,11 @@ index 0c6b2f9..548f1a8 100644
    position: absolute;
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node serve.mjs` Expected: PASS (9 checks in each engine)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node serve.mjs` Expected: PASS (9 checks in each engine)
 
-- [ ] **Commit:** `Redraw a served page when zu serve publishes a new View`
+- [x] **Commit:** `Redraw a served page when zu serve publishes a new View`
 
 ### Task 7: Keep pan, zoom and state across a redraw
 

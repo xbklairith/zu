@@ -1,6 +1,6 @@
-// Browser acceptance for zu serve (10 Task 6). Not part of make check: it
-// needs browsers and a bin/zu built with the UI. Run from web/e2e after
-// `make build`: npm run accept-serve
+// Browser acceptance for zu serve (10 Task 6) and its watch (13). Not part
+// of make check: it needs browsers and a bin/zu built with the UI. Run from
+// web/e2e after `make build`: npm run accept-serve
 import { spawn } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -65,6 +65,47 @@ async function run(name, b) {
   await settle(p);
   out.added = [before, await has(p, id)];
   await p.close();
+  // 13: a saved file is drawn without a reload, and the hash stays. A file
+  // that does not parse keeps the drawing and says so.
+  p = await b.newPage();
+  p.on("pageerror", (e) => errors.push("pageerror " + e.message.slice(0, 120)));
+  await p.goto(url + view);
+  await drawn(p);
+  await settle(p);
+  const hash = () => p.evaluate(() => location.hash);
+  const hash0 = await hash();
+  const live = `example.com/shop/internal/store.Live${name}`;
+  const file = join(dir, "internal", "store", `live${name}.go`);
+  const node = (id) => p.locator(`.react-flow__node[data-id="${id}"]`).waitFor({ timeout: 15000 }).then(() => true, () => false);
+  writeFileSync(file, `package store\n\nfunc Live${name}() {}\n`);
+  const came = await node(live);
+  await settle(p);
+  out.live = [came, (await hash()) === hash0];
+  const notice = p.locator("#zu-live");
+  writeFileSync(file, `package store\n\nfunc Live${name}( {}\n`);
+  const said = await notice.waitFor({ timeout: 15000 }).then(() => notice.textContent(), () => "");
+  out.broken = [said.includes(`live${name}.go`), await has(p, live)];
+  writeFileSync(file, `package store\n\nfunc Live${name}() {}\n\nfunc Again${name}() {}\n`);
+  out.fixed = [await node(`example.com/shop/internal/store.Again${name}`), await notice.count()];
+  await p.close();
+  // 13: a hidden page holds no stream, so a seventh page still loads,
+  // though a browser opens at most six connections to one host.
+  const ctx = await b.newContext();
+  const tabs = [];
+  for (let i = 0; i < 6; i++) {
+    tabs.push(await ctx.newPage());
+    await tabs[i].goto(url + view);
+    await drawn(tabs[i]);
+  }
+  for (const t of tabs) {
+    await t.evaluate(() => {
+      Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+  }
+  const seventh = await ctx.newPage();
+  out.tabs = await seventh.goto(url + view, { timeout: 15000 }).then(() => drawn(seventh)).then(() => true, () => false);
+  await ctx.close();
   out.errors = errors;
   return out;
 }
@@ -74,6 +115,10 @@ const want = {
   hash: view,
   reopened: ".Get",
   added: [0, 1],
+  live: [true, true],
+  broken: [true, 1],
+  fixed: [true, 0],
+  tabs: true,
   errors: [],
 };
 

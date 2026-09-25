@@ -70,10 +70,15 @@ export function readEmbedded(doc: Document): View | "live" | null {
 }
 
 // fetchView asks zu serve for the View, from the origin that sent the page
-// (the CSP allows no other). Each request rescans the working tree.
-export async function fetchView(get: typeof fetch = fetch): Promise<View> {
+// (the CSP allows no other). Each request rescans the working tree. The text
+// and the generation zu serve's watch had published come too (13, live.ts):
+// the page draws only a later generation, and only when its text differs.
+export async function fetchView(get: typeof fetch = fetch): Promise<Loaded> {
   const r = await get("view.json", { cache: "no-store" });
   const text = await r.text();
   if (!r.ok) throw new Error(`zu serve: ${text.trim() || r.status}`);
-  return parseView(text);
+  return { view: parseView(text), text, gen: Number(r.headers.get("Zu-Generation")) || 0 };
 }
+
+// Loaded is a View zu serve sent, with its text and generation (0 without a watch).
+export type Loaded = { view: View; text: string; gen: number };
