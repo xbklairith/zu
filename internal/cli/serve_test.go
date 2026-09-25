@@ -114,7 +114,7 @@ func TestServeSendsTheViewScanHTMLInlines(t *testing.T) {
 // Every load of the page rescans, parsing only the files that changed.
 func TestServeRescansOnlyWhatChanged(t *testing.T) {
 	dir := repo(t, small)
-	url, stderr := startServe(t, dir)
+	url, stderr := startServe(t, dir, "-poll", "0") // no watch: every line is a page load's
 	if !strings.Contains(stderr.String(), "1 files, 1 parsed") {
 		t.Errorf("startup scan: %s", stderr.String())
 	}
@@ -148,6 +148,8 @@ func TestServeBadInvocations(t *testing.T) {
 		{[]string{"-html", "x.html"}, "flag provided but not defined: -html"},
 		{[]string{"-ref", "HEAD"}, "flag provided but not defined: -ref"},
 		{[]string{noGoMod}, "no go.mod"},
+		{[]string{"-poll", "-1s"}, "-poll -1s: want 0 (off) or at least 100ms"},
+		{[]string{"-poll", "10ms"}, "-poll 10ms: want 0 (off) or at least 100ms"},
 	} {
 		dir := repo(t, small)
 		args := append([]string{"serve", "-addr", "127.0.0.1:0", dir}, tc.args...)
@@ -201,7 +203,7 @@ func TestServeRescansOneAtATime(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if _, err := s.view(context.Background()); err != nil {
+			if _, _, err := s.view(context.Background()); err != nil {
 				t.Error(err)
 			}
 		}()

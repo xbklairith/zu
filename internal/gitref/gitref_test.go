@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"testing"
 )
 
@@ -155,5 +156,44 @@ func TestOrigin(t *testing.T) {
 	run(t, dir, "remote", "add", "origin", "git@github.com:o/r.git")
 	if got := Origin(ctx, dir); got != "git@github.com:o/r.git" {
 		t.Errorf("Origin = %q", got)
+	}
+}
+
+// Meta names the files a commit, checkout, reset or add rewrites, which 13's
+// watch polls beside the tree: HEAD, the index, the ref HEAD names and
+// packed-refs. A ref lives in the common directory of a linked worktree.
+func TestMeta(t *testing.T) {
+	needGit(t)
+	dir := t.TempDir()
+	run(t, dir, "init", "-q")
+	run(t, dir, "symbolic-ref", "HEAD", "refs/heads/trunk")
+	top, err := filepath.EvalSymlinks(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := filepath.Join(top, ".git")
+	want := []string{filepath.Join(g, "HEAD"), filepath.Join(g, "index"), filepath.Join(g, "packed-refs"), filepath.Join(g, "refs", "heads", "trunk")}
+	if got := Meta(context.Background(), dir); !slices.Equal(got, want) {
+		t.Errorf("Meta = %v, want %v", got, want)
+	}
+	run(t, dir, "commit", "-q", "--allow-empty", "-m", "one")
+	wt := filepath.Join(t.TempDir(), "wt")
+	run(t, dir, "worktree", "add", "-q", "-b", "side", wt)
+	wtop, err := filepath.EvalSymlinks(wt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wg := filepath.Join(g, "worktrees", filepath.Base(wtop))
+	want = []string{filepath.Join(wg, "HEAD"), filepath.Join(wg, "index"), filepath.Join(g, "packed-refs"), filepath.Join(g, "refs", "heads", "side")}
+	if got := Meta(context.Background(), wt); !slices.Equal(got, want) {
+		t.Errorf("a linked worktree: Meta = %v, want %v", got, want)
+	}
+	run(t, dir, "checkout", "-q", "--detach")
+	want = []string{filepath.Join(g, "HEAD"), filepath.Join(g, "index"), filepath.Join(g, "packed-refs")}
+	if got := Meta(context.Background(), dir); !slices.Equal(got, want) {
+		t.Errorf("a detached HEAD: Meta = %v, want %v", got, want)
+	}
+	if got := Meta(context.Background(), t.TempDir()); got != nil {
+		t.Errorf("outside a repository: %v", got)
 	}
 }

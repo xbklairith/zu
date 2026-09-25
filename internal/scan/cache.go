@@ -60,7 +60,9 @@ type stamper interface {
 	stamp(rel string) Stamp
 }
 
-func stampIn(t Tree, rel string) Stamp {
+// StampIn is rel's Stamp as t listed it: zero unless t is a ListTree whose
+// Files ran. zu serve's watch starts from the first scan's (13).
+func StampIn(t Tree, rel string) Stamp {
 	if s, ok := t.(stamper); ok {
 		return s.stamp(rel)
 	}
@@ -76,7 +78,7 @@ func NewCache() *Cache { return &Cache{files: map[string]cached{}} }
 // file whose Stamp is the one c kept is not read at all (13): an edit that
 // keeps both size and mtime then goes unseen until the file changes again.
 func (c *Cache) extract(t Tree, rel string, trust bool) (f *fileFacts, parsed bool) {
-	st := stampIn(t, rel)
+	st := StampIn(t, rel)
 	var e cached
 	var ok bool
 	if c != nil {

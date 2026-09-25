@@ -7,11 +7,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"zu/internal/export"
+	"zu/internal/gitref"
 	"zu/internal/ir"
+	"zu/internal/policy"
 	"zu/internal/scan"
 	"zu/internal/serve"
 )
@@ -29,6 +34,7 @@ func runServe(args []string, stdout, stderr io.Writer) int {
 	fs.Var(&o.include, "include", "inline declarations and source of packages matching `pattern` (repeatable; ./ = root module)")
 	fs.StringVar(&o.linkTmpl, "link-template", "", "source link `url` with {commit} {path} {line}; overrides origin detection")
 	fs.StringVar(&o.cover, "coverprofile", "", "colour packages by CRAP from `file`, written by go test -coverprofile over this tree; read once, at start")
+	poll := fs.Duration("poll", time.Second, "look for changes every `interval` and redraw the open page; 0: never")
 	dir, err := parseWithDir(fs, args)
 	if err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
@@ -39,6 +45,9 @@ func runServe(args []string, stdout, stderr io.Writer) int {
 	bad := func(err error) int {
 		fmt.Fprintf(stderr, "zu serve: %v\n", err)
 		return ExitBadInvocation
+	}
+	if *poll < 0 || *poll > 0 && *poll < minPoll {
+		return bad(fmt.Errorf("-poll %v: want 0 (off) or at least %v", *poll, minPoll))
 	}
 	if err := o.load(); err != nil {
 		return bad(err)
@@ -59,13 +68,30 @@ func runServe(args []string, stdout, stderr io.Writer) int {
 	ctx, stop := interruptContext()
 	defer stop()
 	s := &session{dir: dir, o: &o, cache: scan.NewCache(), stderr: stderr}
-	if _, err := s.view(ctx); err != nil { // a tree zu cannot scan fails here, not in the page
+	first, _, err := s.view(ctx)
+	if err != nil { // a tree zu cannot scan fails here, not in the page
 		return bad(err)
 	}
-	srv := newServer(serve.Handler(page, serve.Views{Scan: func(ctx context.Context) ([]byte, uint64, error) {
-		data, err := s.view(ctx)
-		return data, 0, err
-	}}))
+	var hub *serve.Hub
+	if *poll > 0 {
+		hub = serve.NewHub(first)
+		s.hub = hub
+	}
+	srv := newServer(serve.Handler(page, serve.Views{Scan: s.view, Hub: hub}))
+	if hub != nil {
+		srv.RegisterOnShutdown(hub.Close) // open streams end, so Shutdown need not wait them out
+		wctx, stopWatch := context.WithCancel(ctx)
+		var watching sync.WaitGroup
+		watching.Add(1)
+		go func() {
+			defer watching.Done()
+			s.watch(wctx, *poll)
+		}()
+		defer func() {
+			stopWatch()
+			watching.Wait()
+		}()
+	}
 	done := make(chan error, 1)
 	go func() { done <- srv.Serve(ln) }()
 	fmt.Fprintf(stdout, "http://%s/\n", ln.Addr())
@@ -96,45 +122,98 @@ type session struct {
 	stderr io.Writer
 	// scanning, when set, runs while a rescan holds mu (a test seam).
 	scanning func()
+
+	// The watch (13), guarded by mu. hub is nil with -poll 0.
+	hub    *serve.Hub
+	begun  bool            // the first scan ran: the fields below are set
+	git    bool            // the tree is a git working tree
+	seen   *gitref.Listing // what the first scan listed; nil outside git
+	first  scan.Tree       // the first scan's tree, which knows each listed file's Stamp
+	policy scan.Stamp      // the Policy's, taken before the first scan read it
+	errs   map[string]bool // the paths with parse errors in the View hub holds
+	commit string          // the commit of the View hub holds
+
+	// scans counts page loads' scans; polledAt is scans when the watch
+	// last began a poll. When they differ, a page load may have listed a
+	// file the watch's listing lacks.
+	scans, polledAt atomic.Int64
 }
 
 // view rescans the working tree under its Policy, as zu scan does, and
-// returns the Project View JSON that zu scan -html would inline.
-func (s *session) view(ctx context.Context) ([]byte, error) {
+// returns the Project View JSON that zu scan -html would inline, and the
+// generation of the watch's latest View (0 without a watch), read under mu:
+// the View returned is at least that new. It reads and hashes every file,
+// as a page load always has (10 Deviation 3).
+func (s *session) view(ctx context.Context) ([]byte, uint64, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.scanning != nil {
 		s.scanning()
 	}
-	start := time.Now()
+	if !s.begun {
+		fi, _ := os.Lstat(filepath.Join(s.dir, policy.FileName))
+		s.policy = scan.StampOf(fi)
+	}
 	src, err := openSource(ctx, s.dir, "", false)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer src.close()
+	s.scans.Add(1)
+	data, doc, err := s.build(ctx, src, false, "")
+	if err != nil {
+		return nil, 0, err
+	}
+	if !s.begun {
+		s.begun, s.git, s.seen, s.first = true, src.listing != nil, src.listing, src.tree
+		s.errs, s.commit = errPaths(doc), doc.Ref.Commit
+	}
+	var gen uint64
+	if s.hub != nil {
+		_, gen, _ = s.hub.Latest()
+	}
+	return data, gen, nil
+}
+
+// build scans src under its Policy and returns the Project View JSON and the
+// IR it came from. With trust the Cache trusts each file's Stamp (13's
+// watch). HEAD is read beside the scan, off its path (10
+// rescan-profile, fix 2). what prefixes the stderr line.
+func (s *session) build(ctx context.Context, src *source, trust bool, what string) ([]byte, *ir.IR, error) {
+	start := time.Now()
 	pol, err := loadPolicy(src.tree)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	doc, stats, err := scan.Run(ctx, scan.Options{Tree: src.tree, Exclude: pol.Excluded, PolicyHash: pol.Hash(), Cache: s.cache})
+	type head struct {
+		commit string
+		dirty  bool
+	}
+	heads := make(chan head, 1)
+	go func() {
+		c, d := gitHead(ctx, src.root)
+		heads <- head{c, d}
+	}()
+	doc, stats, err := scan.Run(ctx, scan.Options{Tree: src.tree, Exclude: pol.Excluded, PolicyHash: pol.Hash(), Cache: s.cache, TrustStamps: trust})
+	h := <-heads
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	doc.Ref.Commit, doc.Ref.Dirty = gitHead(ctx, src.root)
-	doc.Ref.Dirty = doc.Ref.Commit != "" && (doc.Ref.Dirty || src.extra)
+	doc.Ref.Commit = h.commit
+	doc.Ref.Dirty = h.commit != "" && (h.dirty || src.extra)
 	if err := ctx.Err(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	ir.Sort(doc) // as ir.Encode does before zu scan -html builds its View
 	v, err := projectView(ctx, "serve", src, doc, pol, stats.Measures, s.o, s.stderr)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	data, err := export.Marshal(v)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	fmt.Fprintf(s.stderr, "zu serve: scanned in %v: %d packages, %d files, %d parsed, %d parse errors\n",
-		time.Since(start).Round(time.Millisecond), stats.Packages, stats.Files, stats.Parsed, stats.ParseErrors)
-	return data, nil
+	fmt.Fprintf(s.stderr, "zu serve: %sscanned in %v: %d packages, %d files, %d parsed, %d parse errors\n",
+		what, time.Since(start).Round(time.Millisecond), stats.Packages, stats.Files, stats.Parsed, stats.ParseErrors)
+	return data, doc, nil
 }

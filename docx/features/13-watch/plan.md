@@ -1941,7 +1941,7 @@ Two session tests drive `view` and `changed` directly, one for each M1 race.
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/internal/cli/serve_test.go b/internal/cli/serve_test.go
@@ -2332,9 +2332,9 @@ index 0970a17..954e426 100644
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/cli/ ./internal/gitref/` Expected: FAIL (`undefined: Meta`; `s.view` returns 2 values)
+- [x] **Run:** `go test ./internal/cli/ ./internal/gitref/` Expected: FAIL (`undefined: Meta`; `s.view` returns 2 values)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/internal/cli/scan.go b/internal/cli/scan.go
@@ -2795,9 +2795,9 @@ index 24436b2..36b5750 100644
  	if c != nil {
 ```
 
-- [ ] **Run:** `go test -race ./... && go vet ./... && golangci-lint run ./...` Expected: PASS (read the lint output: through RTK it exits 0 with issues)
+- [x] **Run:** `go test -race ./... && go vet ./... && golangci-lint run ./...` Expected: PASS (read the lint output: through RTK it exits 0 with issues)
 
-- [ ] **Commit:** `Watch the tree in zu serve and push each new View`
+- [x] **Commit:** `Watch the tree in zu serve and push each new View`
 
 ## 13b: draw in place (the page)
 

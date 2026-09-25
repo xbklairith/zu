@@ -7,6 +7,7 @@ import (
 	"context"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -64,4 +65,28 @@ func Origin(ctx context.Context, dir string) string {
 		return ""
 	}
 	return strings.TrimSpace(out)
+}
+
+// Meta returns the files in dir's git directory that change when HEAD moves
+// or the index is written: HEAD, the index, packed-refs, and the ref HEAD
+// names unless it is detached. A ref is in the common directory, which a
+// linked worktree shares. zu serve's watch polls them (13). Outside a
+// repository it returns nil.
+func Meta(ctx context.Context, dir string) []string {
+	out, err := git(ctx, dir, "rev-parse", "--absolute-git-dir", "--git-common-dir")
+	lines := strings.Split(strings.TrimSpace(out), "\n")
+	if err != nil || len(lines) != 2 {
+		return nil
+	}
+	gd, common := lines[0], lines[1]
+	if !filepath.IsAbs(common) { // relative to dir
+		if common, err = filepath.EvalSymlinks(filepath.Join(dir, common)); err != nil {
+			return nil
+		}
+	}
+	m := []string{filepath.Join(gd, "HEAD"), filepath.Join(gd, "index"), filepath.Join(common, "packed-refs")}
+	if ref, err := git(ctx, dir, "symbolic-ref", "-q", "HEAD"); err == nil {
+		m = append(m, filepath.Join(common, filepath.FromSlash(strings.TrimSpace(ref))))
+	}
+	return m
 }

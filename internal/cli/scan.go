@@ -136,8 +136,11 @@ type source struct {
 	root  string  // where default output goes
 	ref   *ir.Ref // known up front for a commit; nil for the working tree
 	extra bool    // the working tree has files HEAD lacks: the IR is dirty
-	err   func() error
-	close func()
+	// listing is what git listed of the working tree; nil for a commit or
+	// outside git. zu serve's watch starts from it (13).
+	listing *gitref.Listing
+	err     func() error
+	close   func()
 }
 
 // openSource opens the commit ref names or, without one, the working tree:
@@ -160,7 +163,7 @@ func openSource(ctx context.Context, dir, ref string, withIgnored bool) (*source
 		}
 		none := func() error { return nil }
 		return &source{
-			tree: tree, root: dir, extra: listing != nil && listing.Extra,
+			tree: tree, root: dir, extra: listing != nil && listing.Extra, listing: listing,
 			err: none, close: func() {},
 		}, nil
 	}
