@@ -99,6 +99,22 @@ byte, and passes.
 - **The committed and pushed median** leaves 0.14–0.36 s of headroom under 3 s on a
   loaded machine.
 
+**After the first ruling: two `clean` runs on a second fresh copy.** This was a new
+`cp -cRp` copy with the same faked push and base. The copy was deleted afterwards, and
+the corpus's `git status` was clean.
+
+| | fresh 1 | fresh 2 |
+|---|---|---|
+| load average (1 / 5 / 15 min) at the start | 3.89 / 4.90 / 4.97 | 7.90 / 5.69 / 5.25 |
+| watch rescans (11) | 1.54–**2.68** s | 1.29–1.95 s |
+| save → drawn: median / worst | **2.95** / 3.64 s | 2.71 / 3.11 s |
+| save → `view.json` links it: median / worst | 3.01 / 3.72 s | 2.81 / 3.18 s |
+
+- The rescan gate was missed again on the first run of a freshly copied tree, and not on
+  the run after it. Both fresh first runs missed: 2.30 s, then 2.68 s.
+- Fresh 1's median came within 0.05 s of the 3 s gate.
+- Steering records the rescan gate as not met on a cold tree. The remedy is feature 16.
+
 ## Doc amendments
 
 Applied as the plan's exact text:
