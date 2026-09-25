@@ -1450,7 +1450,7 @@ The tests:
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/internal/cli/diff_test.go b/internal/cli/diff_test.go
@@ -1648,9 +1648,9 @@ index 26c99ba..f217c81 100644
  	diffRepo(t)
 ```
 
-- [ ] **Run:** `go test ./internal/cli/ -run DiffHTML` Expected: FAIL (a compile failure: `undefined: gitDiff`, the seam the fallback test stubs)
+- [x] **Run:** `go test ./internal/cli/ -run DiffHTML` Expected: FAIL (a compile failure: `undefined: gitDiff`, the seam the fallback test stubs)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/internal/cli/html.go b/internal/cli/html.go
@@ -1799,9 +1799,9 @@ index 9d5a82a..9959d17 100644
  // renderView writes v into the UI page at o.path and says what it inlined.
 ```
 
-- [ ] **Run:** `go test -race ./... && go vet ./... && golangci-lint run ./...` Expected: PASS (read the lint output)
+- [x] **Run:** `go test -race ./... && go vet ./... && golangci-lint run ./...` Expected: PASS (read the lint output)
 
-- [ ] **Commit:** `Write each change's host links into zu diff's Change View, from git's diff, for pushed commits`
+- [x] **Commit:** `Write each change's host links into zu diff's Change View, from git's diff, for pushed commits`
 
 ### Task 5: The panel links to the hunk, and removed code to base
 

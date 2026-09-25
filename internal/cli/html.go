@@ -23,9 +23,11 @@ import (
 
 // Seams for tests: the built UI page and the repository facts links need.
 var (
-	uiTemplate = builtTemplate
-	gitOrigin  = gitref.Origin
-	gitPrefix  = gitref.Prefix
+	uiTemplate  = builtTemplate
+	gitOrigin   = gitref.Origin
+	gitPrefix   = gitref.Prefix
+	gitDiff     = gitref.Diff
+	gitOnRemote = gitref.OnRemote
 )
 
 // listFlag collects a repeatable flag.
@@ -216,9 +218,20 @@ type changeSides struct {
 	delta              diff.Delta     // diff.Compare(base, head), computed once (14)
 }
 
-// writeChangeHTML writes the Change View export of base → head. Links point at
-// head, and at the host's compare page when both sides are clean commits.
+// writeChangeHTML writes the Change View export of base → head.
 func writeChangeHTML(ctx context.Context, c changeSides, sum *diff.Summary, o *htmlOptions, stderr io.Writer) error {
+	v, err := changeView(ctx, "diff", c, sum, o, stderr)
+	if err != nil {
+		return err
+	}
+	return renderView("diff", v, o, stderr)
+}
+
+// changeView builds the Change View of base → head, for zu diff -html and
+// zu serve -base alike. Links point at head, and, when both sides are clean
+// commits, at the host's compare page: each changed file and declaration at
+// its place there (14). The base side always links to the base commit.
+func changeView(ctx context.Context, cmd string, c changeSides, sum *diff.Summary, o *htmlOptions, stderr io.Writer) (*export.View, error) {
 	base, head, d := c.base, c.head, c.delta
 	violations := sum.Violations
 	if c.pol.Lens() {
@@ -230,31 +243,92 @@ func writeChangeHTML(ctx context.Context, c changeSides, sum *diff.Summary, o *h
 	}
 	v, err := export.Change(base, head, d, sum, c.baseTree, c.headTree)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	export.Mark(v, c.pol, c.head)
-	addMetrics("diff", v, c.measures, o, stderr)
+	addMetrics(cmd, v, c.measures, o, stderr)
 	if _, commit := c.headTree.(*gitref.CommitTree); commit {
-		warnUncommitted(ctx, "diff", c.top, "add -worktree", o, stderr)
+		warnUncommitted(ctx, cmd, c.top, "add -worktree", o, stderr)
 	}
 	v.Violations = violations
 	for _, t := range []scan.Tree{c.baseTree, c.headTree} {
 		if ct, ok := t.(*gitref.CommitTree); ok && ct.Err() != nil {
-			return ct.Err()
+			return nil, ct.Err()
 		}
 	}
 	v.Tool = version.Version
-	origin := gitOrigin(ctx, c.top) // diff always runs at the repository top
-	if v.Links, err = export.ForRepo(origin, c.head.Ref, o.linkTmpl, ""); err != nil {
-		return err
+	origin := gitOrigin(ctx, c.top) // both sides are scanned at the repository top
+	baseRef, headRef := c.base.Ref, c.head.Ref
+	if o.linkTmpl == "" && export.Hosted(origin) {
+		// The host shows only what was pushed: a commit no remote-tracking
+		// ref holds gets no host link yet (14). -link-template is trusted.
+		baseRef, headRef = onHost(ctx, cmd, c.top, baseRef, stderr), onHost(ctx, cmd, c.top, headRef, stderr)
 	}
-	if cmp := export.CompareURL(origin, c.base.Ref, c.head.Ref); cmp != "" {
+	if v.Links, err = export.ForRepo(origin, headRef, o.linkTmpl, ""); err != nil {
+		return nil, err
+	}
+	if cmp := export.CompareURL(origin, baseRef, headRef); cmp != "" {
 		if v.Links == nil {
 			v.Links = &export.Links{}
 		}
 		v.Links.Compare = cmp
+		// Link lines come from git's own diff of the two commits, the one
+		// the compare page shows, not from zu's hunks (14).
+		files, err := gitDiff(ctx, c.top, baseRef.Commit, headRef.Commit)
+		switch {
+		case err == nil:
+			export.DiffLinks(v, origin, hostFiles(files), c.measures)
+		case ctx.Err() != nil:
+			return nil, ctx.Err()
+		default:
+			// The View does not depend on git diff: without it, each
+			// changed declaration links to its file's diff.
+			fmt.Fprintf(stderr, "zu %s: note: git diff failed (%v); host links point at each file's diff\n", cmd, err)
+			export.DiffLinks(v, origin, fileOnly(v), c.measures)
+		}
 	}
-	return renderView("diff", v, o, stderr)
+	if b := export.BaseBlob(origin, baseRef, o.linkTmpl); b != "" {
+		if v.Links == nil {
+			v.Links = &export.Links{}
+		}
+		v.Links.Base = b
+	}
+	return v, nil
+}
+
+// onHost is r, or no commit when r is a clean commit that no remote-tracking
+// ref holds; zu diff says why its links are missing.
+func onHost(ctx context.Context, cmd, top string, r ir.Ref, stderr io.Writer) ir.Ref {
+	if r.Commit == "" || r.Dirty || gitOnRemote(ctx, top, r.Commit) {
+		return r
+	}
+	if cmd == "diff" {
+		fmt.Fprintf(stderr, "zu diff: note: %s is on no remote-tracking ref; its host links are left out until it is pushed and fetched\n", r.Commit[:min(12, len(r.Commit))])
+	}
+	return ir.Ref{}
+}
+
+// fileOnly is one HostFile without hunks for each file the View has hunks
+// for, so DiffLinks gives files and declarations their file anchor only.
+func fileOnly(v *export.View) []export.HostFile {
+	out := make([]export.HostFile, 0, len(v.Hunks))
+	for p := range v.Hunks {
+		out = append(out, export.HostFile{Path: p, OldPath: p})
+	}
+	return out
+}
+
+// hostFiles converts git's per-file diff for export.
+func hostFiles(files []gitref.FileDiff) []export.HostFile {
+	out := make([]export.HostFile, len(files))
+	for i, f := range files {
+		hs := make([]export.Hunk, len(f.Hunks))
+		for j, h := range f.Hunks {
+			hs[j] = export.Hunk{BaseStart: h.BaseStart, BaseLines: h.BaseLines, HeadStart: h.HeadStart, HeadLines: h.HeadLines, Lines: h.Lines}
+		}
+		out[i] = export.HostFile{Path: f.Path, OldPath: f.OldPath, Hunks: hs}
+	}
+	return out
 }
 
 // renderView writes v into the UI page at o.path and says what it inlined.
