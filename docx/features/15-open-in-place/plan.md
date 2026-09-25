@@ -1585,7 +1585,7 @@ The tests:
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/web/e2e/place.mjs b/web/e2e/place.mjs
@@ -1679,11 +1679,11 @@ index b3404f4..3ca8695 100644
  });
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/place.test.ts` Expected: FAIL (1 of 9: the drawing is the open's layout, not the first view's)
+- [x] **Run:** `cd web && npx vitest run src/place.test.ts` Expected: FAIL (1 of 9: the drawing is the open's layout, not the first view's)
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node place.mjs` Expected: FAIL (6/7 in each engine: `raced`)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node place.mjs` Expected: FAIL (6/7 in each engine: `raced`)
 
-- [ ] **Guard the layout effect**
+- [x] **Guard the layout effect**
 
 ```diff
 diff --git a/web/src/App.tsx b/web/src/App.tsx
@@ -1730,11 +1730,11 @@ index 4c7d4ca..27ff3b9 100644
  }
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS (265 tests)
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS (265 tests)
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node place.mjs` Expected: PASS (7 checks in each engine)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node place.mjs` Expected: PASS (7 checks in each engine)
 
-- [ ] **Commit:** `Draw only the layout of the current hash, whatever order layouts finish in`
+- [x] **Commit:** `Draw only the layout of the current hash, whatever order layouts finish in`
 
 ### Task 5: Show an opened box that grew past the canvas (M4)
 

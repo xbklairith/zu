@@ -210,7 +210,8 @@ export function App({ view: whole }: { view: View }) {
     const made = { whole, view, sc };
     performance.mark("zu-layout-start");
     if (frames.current.size > FRAMES) frames.current.clear();
-    show(
+    // 15 (B1): once the page wants another layout, this one draws nothing.
+    return show(
       sc, engine, frames.current,
       (at) => {
         performance.mark("zu-layout-end");

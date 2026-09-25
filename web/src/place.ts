@@ -112,10 +112,20 @@ export async function place(sc: Scene, engine: Engine, cache: Map<string, Map<st
 }
 
 // show is the page's layout effect (App.tsx): it places sc and hands the
-// layout to draw, or the error to fail.
+// layout to draw, or the error to fail. It returns the effect's cleanup:
+// once the page asks for another layout, this one draws nothing, even when
+// it finishes last. A toggle closed again before its region is laid out
+// comes from cache at once, so no newer engine job supersedes the open (B1).
 export function show(
   sc: Scene, engine: Engine, cache: Map<string, Map<string, Placed>>,
   draw: (at: Map<string, Placed>) => void, fail: (e: Error) => void,
-): void {
-  place(sc, engine, cache).then(draw, fail);
+): () => void {
+  let live = true;
+  place(sc, engine, cache).then(
+    (at) => live && draw(at),
+    (e: Error) => live && fail(e),
+  );
+  return () => {
+    live = false;
+  };
 }

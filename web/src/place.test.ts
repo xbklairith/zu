@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import ELK from "elkjs/lib/elk.bundled.js";
 import type { View } from "./data";
 import { isGroup } from "./group";
-import type { Placed } from "./layout";
-import { frameKey, place } from "./place";
+import type { Engine, Placed } from "./layout";
+import { frameKey, place, show } from "./place";
 import { scene } from "./scene";
 import { DEFAULT_STATE, toggle, type ViewState } from "./state";
 import { decl, edge, exts, nested, pkgs, town, view } from "./testkit";
@@ -158,6 +158,26 @@ describe("open in place (15, U2)", () => {
     expect(found).toEqual([]);
     const all = await Promise.all(orders.map((o) => lay(o, cache)));
     for (const m of all) expect([...m]).toEqual([...all[0]]);
+  });
+  it("draws the hash's layout when an earlier toggle's finishes after it (B1)", async () => {
+    // The reader opens m/k00 and closes it again before its region is laid
+    // out. The close comes from cache at once; the open finishes last. The
+    // page runs each layout as an effect, and React runs an effect's cleanup
+    // before the next one starts.
+    const v = town();
+    const s = state({ depth: 1 });
+    const cache = new Map<string, Map<string, Placed>>();
+    const first = scene(v, s, { home: true });
+    await place(first, elk, cache);
+    const slow: Engine = { layout: (g) => new Promise((ok) => setTimeout(ok, 30)).then(() => elk.layout(g)) };
+    let drawn: Map<string, Placed> | null = null;
+    const draw = (at: Map<string, Placed>) => (drawn = at);
+    const fail = (e: Error) => { throw e; };
+    const opened = show(scene(v, toggle(s, "m/k00"), { home: true }), slow, cache, draw, fail) as (() => void) | void;
+    if (opened) opened();
+    show(first, slow, cache, draw, fail);
+    await new Promise((ok) => setTimeout(ok, 200));
+    expect([...drawn!]).toEqual([...(await place(first, elk))]);
   });
   it("sets in place a container the view draws with other children than the opening view did (regrown)", async () => {
     // Closed at the declarations, the changed root package m keeps its box

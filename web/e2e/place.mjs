@@ -127,7 +127,7 @@ async function measure(name, b) {
 // drawn above m/k00's row or left of m/k00 in it (place.test.ts proves the
 // rest: what moves, moves aside by what the box grew). Closing it draws the
 // first view again exactly, with no blank page between and the reader's pan
-// and zoom kept.
+// and zoom kept, and so does closing it before it is laid out (B1).
 async function accept(name, b, file) {
   const { p, errors } = await open(b, file);
   await p.mouse.move(700, 450);
@@ -142,6 +142,21 @@ async function accept(name, b, file) {
   const c = await flip(p, "m/k00/s0");
   await settle(p);
   const back = await drawing(p);
+  // B1: open a box not opened before and close it again a task later, once
+  // its layout has started and before its region is laid out (no wait). The
+  // page must draw the hash: the first view, with the box closed.
+  const fresh = await p.evaluate(() => [...document.querySelectorAll(".react-flow__node:not(.react-flow__node-container) .toggle")]
+    .map((e) => e.closest(".react-flow__node").dataset.id).find((id) => !id.includes("#") && id !== "m/k00/s0"));
+  await p.evaluate(async (id) => {
+    const toggle = () => document.querySelector(`.react-flow__node[data-id="${CSS.escape(id)}"] .toggle`).click();
+    toggle();
+    await new Promise((ok) => setTimeout(ok, 0));
+    toggle();
+  }, fresh);
+  await settle(p);
+  await settle(p);
+  const raced = await drawing(p);
+  const hashed = await p.evaluate(() => decodeURIComponent(location.hash));
   const k00 = box(first["m/k00"]);
   const aside = Object.keys(first).filter((k) => {
     const b = box(first[k]);
@@ -152,11 +167,12 @@ async function accept(name, b, file) {
     others: aside.length >= 5 && aside.every((k) => first[k] === opened[k]),
     restored: Object.keys(first).every((k) => back[k] === first[k]), // WebKit may draw more of the edge of the screen
     kept: vp !== "" && vp === vpOpen && vp === (await viewport(p)),
+    raced: fresh !== undefined && !hashed.includes(fresh) && Object.keys(first).every((k) => raced[k] === first[k]),
     blank: o.blank || c.blank,
     errors,
   };
 }
-const want = { opened: true, others: true, restored: true, kept: true, blank: false, errors: [] };
+const want = { opened: true, others: true, restored: true, kept: true, raced: true, blank: false, errors: [] };
 
 const channel = process.env.ZU_E2E_CHANNEL;
 const engines = [["chromium", chromium, channel ? { channel } : {}], ["firefox", firefox, {}], ["webkit", webkit, {}]];
