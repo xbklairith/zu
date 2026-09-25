@@ -2551,7 +2551,7 @@ index f9ae039..f4f433a 100644
 
 **Steps:**
 
-- [ ] **Add the measurement script**
+- [x] **Add the measurement script**
 
 ```diff
 diff --git a/docx/features/14-review-links/measure.mjs b/docx/features/14-review-links/measure.mjs
@@ -2684,13 +2684,13 @@ index 0000000..01e646f
 +}
 ```
 
-- [ ] **Run:** `make check` Expected: PASS (read the lint output)
+- [x] **Run:** `make check` Expected: PASS (read the lint output)
 
-- [ ] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (56 checks in each engine)
+- [x] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (56 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS (10 checks in each engine)
+- [x] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS (10 checks in each engine)
 
-- [ ] **Measure** (by hand; not a replay step). After `make build`:
+- [x] **Measure** (by hand; not a replay step). After `make build`:
   1. Make a writable copy of the Test Corpus's kubernetes with `cp -cRp` (APFS clonefile) into `$K`. Never clone it, and never write to `.zu/corpus/` itself.
   2. Fake a push of its HEAD: `git -C "$K" update-ref refs/remotes/origin/master HEAD`.
   3. Take the base as a full sha: `B=$(git -C "$K" rev-parse HEAD~50)`. A relative `-base HEAD~50` would move with each commit the `clean` mode makes, and the base would be rescanned every round.
@@ -2704,7 +2704,7 @@ index 0000000..01e646f
   3. Select a removed declaration and click "View at". The base commit's file opens at it.
   4. Run `zu serve -base main`, open a changed package and save an edit. It is redrawn as a change, in place.
 
-- [ ] **Commit:** `Record review links' acceptance`
+- [x] **Commit:** `Record review links' acceptance`
 
 ---
 

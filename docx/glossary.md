@@ -122,7 +122,7 @@ View, which answers "what did this change do to it?".
 The Mode B picture: the Project View of the head ref, compared against the merge-base.
 Every package and dependency is marked added, removed, modified or unchanged. New rule
 violations are called out, the Affected Set is outlined, Moves are dashed, and unchanged
-neighbours one hop away are dimmed.
+neighbours one hop away are dimmed. zu diff -html writes one; zu serve -base serves one (14).
 
 ## HTML Export
 

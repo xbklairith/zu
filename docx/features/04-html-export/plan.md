@@ -35,7 +35,7 @@
 
    If even the first level exceeds 60 boxes, it is drawn anyway with a note giving the count.
 2. **Externals have their own budget.** kubernetes has 111 external modules, and the external toggle is deferred to 05. Rule *(mine)*: draw each external as an oval when a view touches ≤ 20 of them; otherwise draw one oval, "N external modules", and list them in the side panel.
-3. **Links are `#Lx`, not `#Lx-Ly`.** `ir.Location` has a start line only. A range needs an IR schema change (feature 01's golden). Deferred.
+3. **Links are `#Lx`, not `#Lx-Ly`.** `ir.Location` has a start line only. A range needs an IR schema change (feature 01's golden). Deferred. Feature 14 bounds a declaration by its measured span (a head function) or by the next declaration drawn in its file (the rest), to pick its first changed line (14 Deviation 3).
 4. **Links need a clean commit.** No links when `ref.commit` is empty or `ref.dirty` is true: the inlined worktree source would not match the linked commit.
 5. **ELK runs on the main thread in 04**, not in a Worker as the settled stack says. A `blob:` worker inside a single-file `file://` page adds CSP and browser risk, and 04 never draws more than about 60 boxes. The Worker moves to 05, which adds views that can be large.
 6. **A package's source files are the files its declarations live in.** The IR's package node records only its first file (`internal/scan/build.go:134`), so a file with no declarations (only imports or comments) is not inlined.

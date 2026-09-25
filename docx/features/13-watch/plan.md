@@ -94,7 +94,7 @@ The worst case is reported, not gated.
 - rescan-profile fix 1 (incremental `assemble`) and fix 4 (reuse the View when nothing parsed);
 - fix 5 (hand the listing's `Lstat` to the scan). The listing's own `Lstat` already gives the stamps. Dropped under the ruling on scrutiny-13; see Deviation 8.
 - re-reading `-coverprofile` when it changes (10 Deviation 10 stays);
-- watching a served Change View (none exists);
+- watching a served Change View (none existed; feature 14 adds one, and this watch redraws it);
 - a heartbeat on `/events`;
 - an adaptive poll interval;
 - fsnotify;
