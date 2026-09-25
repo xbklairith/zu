@@ -3431,7 +3431,7 @@ The flow's transform must not change. Without the `Drawing`, the provider remoun
 
 **Steps:**
 
-- [ ] **Write the failing browser check**
+- [x] **Write the failing browser check**
 
 ```diff
 diff --git a/web/e2e/serve.mjs b/web/e2e/serve.mjs
@@ -3492,9 +3492,9 @@ index d081b33..4d231ad 100644
    errors: [],
 ```
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node serve.mjs` Expected: FAIL (`live = [true,false,true]`: the transform changed)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node serve.mjs` Expected: FAIL (`live = [true,false,true]`: the transform changed)
 
-- [ ] **Write the failing unit test**
+- [x] **Write the failing unit test**
 
 ```diff
 diff --git a/web/src/proposal.test.ts b/web/src/proposal.test.ts
@@ -3526,9 +3526,9 @@ index 952eed3..02368c0 100644
      expect(knownIds(change).proposal?.("Flip")).toBe(false);
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/proposal.test.ts` Expected: FAIL (`revalidate is not a function`)
+- [x] **Run:** `cd web && npx vitest run src/proposal.test.ts` Expected: FAIL (`revalidate is not a function`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/web/src/App.tsx b/web/src/App.tsx
@@ -3690,11 +3690,11 @@ index 9848bc7..5786df4 100644
      window.addEventListener("hashchange", onHash);
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node serve.mjs` Expected: PASS
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node serve.mjs` Expected: PASS
 
-- [ ] **Commit:** `Keep pan, zoom and the hash when a served page redraws`
+- [x] **Commit:** `Keep pan, zoom and the hash when a served page redraws`
 
 ## Acceptance
 

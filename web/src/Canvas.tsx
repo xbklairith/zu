@@ -251,11 +251,16 @@ export function Canvas({ view, sc, placed, edge, onSelect, onOpen, onToggle, onE
   // and these are sized by the layout. The canvas is measured here, after the
   // commit that may have opened the panel beside it; setCenter would use React
   // Flow's stored width, which updates only after that resize is observed.
+  // Each request centres once (13): a new layout of the same boxes, such as
+  // one zu serve's watch sends, leaves the reader's pan and zoom alone.
+  const centred = useRef<string | null>(null);
   useEffect(() => {
     const p = target === null ? undefined : placed.get(target);
     const at = target === null ? null : absolute(placed, target);
     const r = box.current?.getBoundingClientRect();
-    if (!p || !at || !r || r.width === 0 || r.height === 0) return;
+    const asked = `${center?.seq}\n${target}`;
+    if (!p || !at || !r || r.width === 0 || r.height === 0 || centred.current === asked) return;
+    centred.current = asked;
     const zoom = Math.min(1.2, (0.8 * r.width) / p.w, (0.8 * r.height) / p.h);
     const cx = at.x + p.w / 2;
     const cy = at.y + p.h / 2;

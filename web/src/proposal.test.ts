@@ -3,7 +3,7 @@ import { childrenOf } from "./cut";
 import type { View } from "./data";
 import { breadcrumb } from "./headline";
 import { pinFor } from "./policy";
-import { PROPOSAL_NOTICE, proposalView, readHash, UNASSIGNED } from "./proposal";
+import { PROPOSAL_NOTICE, proposalView, readHash, revalidate, UNASSIGNED } from "./proposal";
 import { knownIds, scene } from "./scene";
 import { DEFAULT_STATE, encodeHash, propose } from "./state";
 import { decl, edge, pkgs, view } from "./testkit";
@@ -87,6 +87,13 @@ describe("a Proposal in the URL hash (07)", () => {
     expect(readHash("#f=proposal%3A0&p=Flip", v)).toEqual({ ...DEFAULT_STATE, focus: "proposal:0", proposal: "Flip" });
     expect(readHash("#f=proposal%3A0", v)).toEqual(DEFAULT_STATE);
     expect(readHash("#f=m%2Fapp&p=Nope", v)).toEqual({ ...DEFAULT_STATE, focus: "m/app" });
+  });
+
+  it("is read again against a newer View, which drops what it lost (13)", () => {
+    const s = { ...DEFAULT_STATE, focus: "m/app", selected: "m/app/api" };
+    expect(revalidate(s, v)).toBe(s);
+    const lost: View = { ...v, nodes: v.nodes.filter((n) => n.id !== "m/app/api") };
+    expect(revalidate(s, lost)).toEqual({ ...DEFAULT_STATE, focus: "m/app" });
   });
 
   it("is never read in a Change View, so a pasted link cannot draw one there", () => {

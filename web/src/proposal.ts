@@ -5,7 +5,7 @@
 // badges all work; the page never evaluates a rule itself.
 import type { View, ViewEdge, ViewNode } from "./data";
 import { knownIds } from "./scene";
-import { decodeHash, type ViewState } from "./state";
+import { decodeHash, encodeHash, type ViewState } from "./state";
 
 // PROPOSAL_NOTICE is uml-viewer's banner (policy.clj proposal-notice, l.62).
 export const PROPOSAL_NOTICE = "PROPOSAL — not instantiated in code";
@@ -92,4 +92,12 @@ export function proposalView(view: View, name: string): View {
 export function readHash(hash: string, view: View): ViewState {
   const s = decodeHash(hash, knownIds(view));
   return s.proposal === null ? s : decodeHash(hash, knownIds(proposalView(view, s.proposal)));
+}
+
+// revalidate reads s again against a newer View (13), dropping what that View
+// no longer has, such as a deleted selection. It returns s itself when
+// nothing is dropped, so an unchanged state renders nothing again.
+export function revalidate(s: ViewState, view: View): ViewState {
+  const next = readHash(encodeHash(s), view);
+  return encodeHash(next) === encodeHash(s) ? s : next;
 }

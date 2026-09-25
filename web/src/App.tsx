@@ -15,7 +15,7 @@ import { pinFor } from "./policy";
 import { PROPOSAL_NOTICE, proposalView } from "./proposal";
 import { reveal } from "./search";
 import { SearchBox } from "./SearchBox";
-import { DRAW_LIMIT, fitDepth, HUBS, openFull, scene, type SceneNode } from "./scene";
+import { DRAW_LIMIT, fitDepth, HUBS, openFull, scene, type Scene, type SceneNode } from "./scene";
 import { deeper, drill, nextStage, select, shallower, toggle, up } from "./state";
 import { Toolbar } from "./Toolbar";
 import { useViewState } from "./useViewState";
@@ -111,6 +111,9 @@ function ChangedList({ view, onPick }: { view: View; onPick: (id: string) => voi
   );
 }
 
+// Drawing is a finished layout and what it was made for.
+type Drawing = { whole: View; view: View; sc: Scene; graph: string; at: Map<string, Placed> };
+
 export function App({ view: whole }: { view: View }) {
   const change = whole.kind === "change";
   const [state, update] = useViewState(whole);
@@ -177,16 +180,20 @@ export function App({ view: whole }: { view: View }) {
   // 11: likewise each node's level: graph holds the rows ranked made.
   const levels = useMemo(() => levelsOf(sc), [sc]);
   const ownTiers = useMemo(() => ownTiersOf(sc), [sc]); // 12: a merged row's order
-  const [placed, setPlaced] = useState<{ graph: string; at: Map<string, Placed> } | null>(null);
+  // 13: a layout keeps the View and scene it was made for, so while zu
+  // serve's newer View lays out the page goes on drawing the last one, in the
+  // same React Flow, and the reader's pan and zoom stay.
+  const [placed, setPlaced] = useState<Drawing | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   useEffect(() => {
     if (ask) return;
+    const made = { whole, view, sc };
     performance.mark("zu-layout-start");
     engine.layout(JSON.parse(graph)).then(
       (out) => {
         performance.mark("zu-layout-end");
         setFailed(null);
-        setPlaced({ graph: graph + "\n" + heads, at: arrange(out, order, new Map(JSON.parse(heads) as [string, number][]), levels, ownTiers) });
+        setPlaced({ ...made, graph: graph + "\n" + heads, at: arrange(out, order, new Map(JSON.parse(heads) as [string, number][]), levels, ownTiers) });
       },
       (e: Error) => {
         if (!(e instanceof Superseded)) setFailed(e.message);
@@ -242,6 +249,14 @@ export function App({ view: whole }: { view: View }) {
   const crap = sc.nodes.some((n) => n.crap); // 08: only with a coverprofile (A7)
   const boxes = sc.nodes.filter((n) => n.shape === "box" || n.shape === "decl").length;
   const pkg = sc.focus.endsWith(PKG) ? sc.focus.slice(0, -PKG.length) : sc.focus;
+  const frame = `${state.focus}\n${sc.depth}`; // a new one starts at the first view
+  const shown: Pick<Drawing, "view" | "sc" | "at"> | null = !placed
+    ? null
+    : placed.graph === key
+      ? { view, sc, at: placed.at }
+      : placed.whole !== whole && `${state.focus}\n${placed.sc.depth}` === frame
+        ? placed
+        : null;
 
   return (
     <div className={`app${change ? " change" : ""}${change && !full ? " subgraph" : ""}`}>
@@ -327,12 +342,12 @@ export function App({ view: whole }: { view: View }) {
           <div className="empty" id="zu-status">
             Layout failed: {failed}
           </div>
-        ) : placed && placed.graph === key ? (
-          <ReactFlowProvider key={`${state.focus}\n${sc.depth}`}>
+        ) : shown ? (
+          <ReactFlowProvider key={frame}>
             <Canvas
-              view={view}
-              sc={sc}
-              placed={placed.at}
+              view={shown.view}
+              sc={shown.sc}
+              placed={shown.at}
               edge={edgeId}
               onSelect={choose}
               onEdge={(id) => {

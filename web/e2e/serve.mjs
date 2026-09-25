@@ -65,26 +65,35 @@ async function run(name, b) {
   await settle(p);
   out.added = [before, await has(p, id)];
   await p.close();
-  // 13: a saved file is drawn without a reload, and the hash stays. A file
-  // that does not parse keeps the drawing and says so.
+  // 13: a saved file is drawn without a reload, in place: the hash, pan and
+  // zoom stay. A file that does not parse keeps the drawing and says so.
   p = await b.newPage();
   p.on("pageerror", (e) => errors.push("pageerror " + e.message.slice(0, 120)));
   await p.goto(url + view);
   await drawn(p);
   await settle(p);
+  await p.keyboard.press("/"); // a search centres its pick; a redraw must not centre it again
+  await p.keyboard.type("Repo.Get");
+  await p.keyboard.press("Enter");
+  await settle(p);
+  const pane = await p.locator(".react-flow").boundingBox();
+  await p.mouse.move(pane.x + pane.width / 3, pane.y + pane.height / 3);
+  await p.mouse.wheel(0, 300); // zoom out around the pointer: zoom and pan both change
+  await settle(p);
+  const frame = () => p.locator(".react-flow__viewport").getAttribute("style");
   const hash = () => p.evaluate(() => location.hash);
-  const hash0 = await hash();
+  const [frame0, hash0] = [await frame(), await hash()];
   const live = `example.com/shop/internal/store.Live${name}`;
   const file = join(dir, "internal", "store", `live${name}.go`);
   const node = (id) => p.locator(`.react-flow__node[data-id="${id}"]`).waitFor({ timeout: 15000 }).then(() => true, () => false);
   writeFileSync(file, `package store\n\nfunc Live${name}() {}\n`);
   const came = await node(live);
   await settle(p);
-  out.live = [came, (await hash()) === hash0];
+  out.live = [came, (await frame()) === frame0, (await hash()) === hash0];
   const notice = p.locator("#zu-live");
   writeFileSync(file, `package store\n\nfunc Live${name}( {}\n`);
   const said = await notice.waitFor({ timeout: 15000 }).then(() => notice.textContent(), () => "");
-  out.broken = [said.includes(`live${name}.go`), await has(p, live)];
+  out.broken = [said.includes(`live${name}.go`), await has(p, live), (await frame()) === frame0];
   writeFileSync(file, `package store\n\nfunc Live${name}() {}\n\nfunc Again${name}() {}\n`);
   out.fixed = [await node(`example.com/shop/internal/store.Again${name}`), await notice.count()];
   await p.close();
@@ -115,8 +124,8 @@ const want = {
   hash: view,
   reopened: ".Get",
   added: [0, 1],
-  live: [true, true],
-  broken: [true, 1],
+  live: [true, true, true],
+  broken: [true, 1, true],
   fixed: [true, 0],
   tabs: true,
   errors: [],
