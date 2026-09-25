@@ -1,6 +1,6 @@
 # 12 · Grouping — Plan
 
-**Status:** APPROVED 2026-09-25 (scrutiny-12 rulings applied, replay green on 145322e, advisor sign-off), with amendments A1–A2 below. History: Drafted 2026-09-25 for the lead's review; not approved. Revised 2026-09-25 for the lead's screenshot rulings L1–L6 (**Rulings on the screenshots**, below). Then built the lead's ruling (a) on the `plugin` conflict: the open root module's children are kept first (Task 7). Revised again 2026-09-25 for the lead's rulings on scrutiny-12 (B1, M1–M4, N1–N10; **Rulings on the scrutiny**, below). Two parts, 12a (Go: Tasks 1–3) and 12b (the page: Tasks 4–10), because the work has more than 8 tasks. 12a can ship alone: it adds package facts and Policy keys the page ignores until 12b. Drafted in a scratch copy and replayed green on a fresh `git archive` of `main` at 145322e (Replay record). The brief said to replay on an archive of a8cbbbb followed by 11's `replay.py`. 11 has since been committed to `main` (5a23176…145322e, with its amendments A1–A3), so an archive of 145322e is that same state. 12's diffs were rebased onto it; one hunk in `scene.ts` `connect` needed merging with 11's A2. Proposed doc amendments are under **Doc amendments**, as exact text; they are not task steps.
+**Status:** Complete 2026-09-25 (Tasks 1–10 and A1–A2; see acceptance.md; the user's 10-second check is pending). APPROVED 2026-09-25 (scrutiny-12 rulings applied, replay green on 145322e, advisor sign-off), with amendments A1–A2 below. History: Drafted 2026-09-25 for the lead's review; not approved. Revised 2026-09-25 for the lead's screenshot rulings L1–L6 (**Rulings on the screenshots**, below). Then built the lead's ruling (a) on the `plugin` conflict: the open root module's children are kept first (Task 7). Revised again 2026-09-25 for the lead's rulings on scrutiny-12 (B1, M1–M4, N1–N10; **Rulings on the scrutiny**, below). Two parts, 12a (Go: Tasks 1–3) and 12b (the page: Tasks 4–10), because the work has more than 8 tasks. 12a can ship alone: it adds package facts and Policy keys the page ignores until 12b. Drafted in a scratch copy and replayed green on a fresh `git archive` of `main` at 145322e (Replay record). The brief said to replay on an archive of a8cbbbb followed by 11's `replay.py`. 11 has since been committed to `main` (5a23176…145322e, with its amendments A1–A3), so an archive of 145322e is that same state. 12's diffs were rebased onto it; one hunk in `scene.ts` `connect` needed merging with 11's A2. Proposed doc amendments are under **Doc amendments**, as exact text; they are not task steps.
 
 **Amendments at approval (apply during the named task; they win over the text below):**
 - **A1 (Task 8, badges): `gen N%` shows from 50 %, not 20 %.** With M1 the 20 % bar badged 8 of kubernetes's 15 boxes; a badge on half the boxes is noise, not a signal. `GEN_MIN = 0.5`. On kubernetes only api, client-go (83 %) and apiextensions-apiserver (61 %) keep it. Change the test to "says cmd only of a command's directory or a box half commands, and gen from 50 %" and add a box at 30 % that has no badge. Wherever the text says "from 20 %" (the mapping table, L3, the requirements amendment, the contract's Badges line, Task 8's intro and the Prototype evidence row), zu writes "from 50 %".
@@ -3382,9 +3382,9 @@ index 7978a41..41116b6 100644
 
 **Steps:**
 
-- [ ] **Run:** `test -z "$(gofmt -l cmd internal web/*.go)" && go vet ./... && go test ./... && golangci-lint run ./... && cd web && npm run typecheck && npx vitest run` Expected: PASS. A bare `golangci-lint` exits non-zero on any issue. Through the RTK wrapper it exits 0 whatever it finds, so read its output there.
+- [x] **Run:** `test -z "$(gofmt -l cmd internal web/*.go)" && go vet ./... && go test ./... && golangci-lint run ./... && cd web && npm run typecheck && npx vitest run` Expected: PASS. A bare `golangci-lint` exits non-zero on any issue. Through the RTK wrapper it exits 0 whatever it finds, so read its output there.
 
-- [ ] **Acceptance** (by hand; zu writes acceptance.md next to this file). After `make build`, export the two Test Corpus checkouts (read-only; never clone) and measure the first views in three engines with `measure.mjs`, next to this file:
+- [x] **Acceptance** (by hand; zu writes acceptance.md next to this file). After `make build`, export the two Test Corpus checkouts (read-only; never clone) and measure the first views in three engines with `measure.mjs`, next to this file:
 
   ```bash
   O=$(mktemp -d); Z=$PWD/bin/zu
@@ -3402,7 +3402,7 @@ index 7978a41..41116b6 100644
 
   On kubernetes, the `kubernetes` module must be opened at the top (`plugin` and `cmd` above `pkg`, and "+2 more" holding `build` and `cluster`), with the staging modules below it. Click "+N more" and a Strip: each opens in place. Esc from inside `kubernetes/pkg` goes to the page root.
 
-- [ ] **Speed** (by hand, B1): time `scene` on the same exports with `probe.mjs`, next to this file, for this tree and for `main`:
+- [x] **Speed** (by hand, B1): time `scene` on the same exports with `probe.mjs`, next to this file, for this tree and for `main`:
 
   ```bash
   node docx/features/12-grouping/probe.mjs web k8s="$O/k8s.html" hugo="$O/hugo.html"

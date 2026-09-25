@@ -25,6 +25,22 @@ dependency from a higher-ranked Level to a lower-ranked one is a violation.
 
 Where a box sits in the Project View when the Policy gives its siblings no Levels: dependencies below what depends on them, computed from the imports between the siblings. A placement only: nothing is a violation because of it. Distinct from a Level, which the Policy declares.
 
+## Demoted
+
+A package the first view sets aside: a segment of its directory is on zu's built-in list (tests, test data, examples, tools), a Policy `demote:` glob names it, or every one of its declarations is in a generated file. A changed package is never demoted. Demoted packages are counted and can be opened; nothing is removed.
+
+## Strip
+
+The one chip that holds a sibling set's Demoted boxes, drawn in its bottom row, on one line: how many, of which kind, and how many boxes use them, counting those in closed Fold chips ("258 tests & tools · used by 3"). A click opens it and draws its boxes in place.
+
+## Budget
+
+How many boxes a view drawn at its automatic depth shows before the rest fold, across all its sibling sets: 15, or the Policy's `budget:`.
+
+## Fold Chip
+
+The "+N more" chip that holds the boxes of one sibling set that fell past the view's Budget, drawn in the set's bottom row, their names in its tooltip. A click opens it and draws them in place; it stays drawn as "fold N" to close them again.
+
 ## Foreign
 
 An external module drawn as an oval outside the Package Tree. The Policy can collapse

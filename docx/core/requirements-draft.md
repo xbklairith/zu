@@ -79,7 +79,7 @@ Grouping is the one place judgement is needed and the parser cannot supply it. T
 | A3 | Nest components to arbitrary depth; open a component to reveal its elements | Must |
 | A4 | Render dependency edges with direction, derived from real imports and call sites | Must |
 | A5 | Click any node to open the defining source at the right line | Must |
-| A6 | Collapse and expand levels; hide edges below a configurable weight to declutter dense graphs | Must |
+| A6 | Collapse and expand levels; hide edges below a configurable weight; set aside tests, tools and generated packages, and fold boxes past a budget, each counted and expandable, to declutter dense graphs | Must |
 | A7 | Overlay metrics onto nodes as colour when a metrics snapshot is present; degrade silently when absent | Should |
 | A8 | Flag cycles and layer violations against the policy's declared layering | Should |
 | A9 | Search for a symbol and centre the diagram on its component | Should |
