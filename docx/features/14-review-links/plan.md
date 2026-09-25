@@ -1317,7 +1317,7 @@ The test: `TestSummarizeDeltaIsSummarize` checks that the Summary is `Summarize`
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 diff --git a/internal/diff/summary_test.go b/internal/diff/summary_test.go
@@ -1343,9 +1343,9 @@ index ad7b543..5ceb045 100644
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/diff/` Expected: FAIL (a compile failure: `undefined: SummarizeDelta`)
+- [x] **Run:** `go test ./internal/diff/` Expected: FAIL (a compile failure: `undefined: SummarizeDelta`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/internal/cli/diff.go b/internal/cli/diff.go
@@ -1422,9 +1422,9 @@ index 5687723..2657fa5 100644
  		Base:           base.Ref,
 ```
 
-- [ ] **Run:** `go test -race ./... && go vet ./...` Expected: PASS
+- [x] **Run:** `go test -race ./... && go vet ./...` Expected: PASS
 
-- [ ] **Commit:** `Compare the two sides once per zu diff`
+- [x] **Commit:** `Compare the two sides once per zu diff`
 
 ### Task 4: `zu diff -html` writes the links
 

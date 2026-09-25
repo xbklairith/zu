@@ -183,3 +183,16 @@ func TestSummaryRowOrderBottomUp(t *testing.T) {
 		t.Fatalf("rows = %v, want %v (leaves first; one cycle shares a rank)", ids, want)
 	}
 }
+
+// A caller that already compared the sides summarizes that Delta instead of
+// comparing again (14): the Summary is the same.
+func TestSummarizeDeltaIsSummarize(t *testing.T) {
+	base, head := shopPair(t)
+	d := Compare(base, head)
+	if got, want := SummarizeDelta(base, head, d), Summarize(base, head); !reflect.DeepEqual(got, want) {
+		t.Errorf("SummarizeDelta =\n%+v\nwant\n%+v", got, want)
+	}
+	if !reflect.DeepEqual(d, Compare(base, head)) {
+		t.Error("SummarizeDelta changed the Delta it was given")
+	}
+}

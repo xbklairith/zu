@@ -213,20 +213,22 @@ type changeSides struct {
 	baseTree, headTree scan.Tree
 	pol                *policy.Policy // head's, which the hash check proved is base's
 	measures           scan.Measures  // head's (08)
+	delta              diff.Delta     // diff.Compare(base, head), computed once (14)
 }
 
 // writeChangeHTML writes the Change View export of base → head. Links point at
 // head, and at the host's compare page when both sides are clean commits.
 func writeChangeHTML(ctx context.Context, c changeSides, sum *diff.Summary, o *htmlOptions, stderr io.Writer) error {
-	base, head := c.base, c.head
+	base, head, d := c.base, c.head, c.delta
 	violations := sum.Violations
 	if c.pol.Lens() {
 		// The View draws both sides as the Policy does, so its changed list
 		// must come from the same IRs; the printed Summary stays whole.
 		base, head = c.pol.Apply(base), c.pol.Apply(head)
-		sum = diff.Summarize(base, head)
+		d = diff.Compare(base, head)
+		sum = diff.SummarizeDelta(base, head, d)
 	}
-	v, err := export.Change(base, head, diff.Compare(base, head), sum, c.baseTree, c.headTree)
+	v, err := export.Change(base, head, d, sum, c.baseTree, c.headTree)
 	if err != nil {
 		return err
 	}

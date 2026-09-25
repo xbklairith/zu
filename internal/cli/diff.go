@@ -125,7 +125,8 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "zu diff: warning: %v (zu check fails on it)\n", err)
 	}
 
-	s := diff.Summarize(baseDoc, headDoc)
+	delta := diff.Compare(baseDoc, headDoc)
+	s := diff.SummarizeDelta(baseDoc, headDoc, delta)
 	if pol.Rules() {
 		s.Violations = diff.Violations(pol.Check(baseDoc), pol.Check(headDoc))
 	}
@@ -147,7 +148,7 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 	fmt.Fprintf(stderr, "zu diff: %d packages changed, %d affected, parse errors base=%d head=%d\n",
 		len(s.Packages), len(s.Affected), len(baseDoc.ParseErrors), len(headDoc.ParseErrors))
 	if hopts.path != "" {
-		c := changeSides{top: top, base: baseDoc, head: headDoc, baseTree: baseTree, headTree: head.tree, pol: pol, measures: headStats.Measures}
+		c := changeSides{top: top, base: baseDoc, head: headDoc, baseTree: baseTree, headTree: head.tree, pol: pol, measures: headStats.Measures, delta: delta}
 		if err := writeChangeHTML(ctx, c, s, &hopts, stderr); err != nil {
 			return bad("html: %v", err)
 		}

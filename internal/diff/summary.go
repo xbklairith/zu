@@ -62,7 +62,13 @@ type SideErrors struct {
 
 // Summarize builds the Structural Summary of base → head.
 func Summarize(base, head *ir.IR) *Summary {
-	d := Compare(base, head)
+	return SummarizeDelta(base, head, Compare(base, head))
+}
+
+// SummarizeDelta is Summarize given d, the Delta Compare(base, head) already
+// returned, so a caller that needs both compares once (14). It reads d and
+// never changes it.
+func SummarizeDelta(base, head *ir.IR, d Delta) *Summary {
 	s := &Summary{
 		SummaryVersion: SummaryVersion,
 		Base:           base.Ref,
