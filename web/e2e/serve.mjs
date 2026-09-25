@@ -1,29 +1,45 @@
-// Browser acceptance for zu serve (10 Task 6) and its watch (13). Not part
+// Browser acceptance for zu serve (10 Task 6), its watch (13) and -base (14). Not part
 // of make check: it needs browsers and a bin/zu built with the UI. Run from
 // web/e2e after `make build`: npm run accept-serve
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chromium, firefox, webkit } from "playwright-core";
 
 const here = new URL(".", import.meta.url).pathname;
+// benign is WebKit's one harmless page error, a known flake since 13 (14, A1):
+// matched exactly, so any other ResizeObserver error still counts.
+const benign = (e) => e.message === "ResizeObserver loop completed with undelivered notifications.";
 const dir = mkdtempSync(join(tmpdir(), "zu-serve-"));
 cpSync(join(here, "../../internal/scan/testdata/shop"), dir, { recursive: true });
-const server = spawn(join(here, "../../bin/zu"), ["serve", dir, "-addr", "127.0.0.1:0", "-include", "./internal/store"], {
-  stdio: ["ignore", "pipe", "pipe"],
-});
+// 14: the shop again, committed on main with feat checked out, for -base.
+const changeDir = mkdtempSync(join(tmpdir(), "zu-serve-base-"));
+cpSync(join(here, "../../internal/scan/testdata/shop"), changeDir, { recursive: true });
+const git = (...a) => execFileSync("git", ["-c", "user.name=zu", "-c", "user.email=zu@example.com", ...a], { cwd: changeDir });
+git("init", "-q", "-b", "main");
+git("add", "-A");
+git("commit", "-q", "-m", "base");
+git("checkout", "-q", "-b", "feat");
+const servers = [];
 // Stopped and removed however the run ends.
 process.on("exit", () => {
-  server.kill();
+  for (const s of servers) s.kill();
   rmSync(dir, { recursive: true, force: true });
+  rmSync(changeDir, { recursive: true, force: true });
 });
 let log = "";
-server.stderr.on("data", (d) => (log += d));
-const url = await new Promise((ok, fail) => {
-  server.stdout.once("data", (d) => ok(String(d).trim()));
-  server.once("exit", (code) => fail(new Error(`zu serve exited ${code}: ${log}`)));
-});
+async function start(...args) {
+  const s = spawn(join(here, "../../bin/zu"), ["serve", ...args, "-addr", "127.0.0.1:0"], { stdio: ["ignore", "pipe", "pipe"] });
+  servers.push(s);
+  s.stderr.on("data", (d) => (log += d));
+  return new Promise((ok, fail) => {
+    s.stdout.once("data", (d) => ok(String(d).trim()));
+    s.once("exit", (code) => fail(new Error(`zu serve exited ${code}: ${log}`)));
+  });
+}
+const url = await start(dir, "-include", "./internal/store");
+const changeURL = await start(changeDir, "-base", "main");
 
 const drawn = (p) => p.locator(".react-flow__node").first().waitFor({ timeout: 30000 });
 const settle = (p) => p.waitForTimeout(900);
@@ -37,7 +53,7 @@ async function run(name, b) {
   let p = await b.newPage();
   const csp = (t) => /Content.Security|CSP|refused/i.test(t);
   p.on("console", (m) => csp(m.text()) && errors.push(m.text().slice(0, 160)));
-  p.on("pageerror", (e) => errors.push("pageerror " + e.message.slice(0, 120)));
+  p.on("pageerror", (e) => benign(e) || errors.push("pageerror " + e.message.slice(0, 120)));
   // A view's URL opens that view: the page fetched its View and applied the hash.
   await p.goto(url + view);
   await drawn(p);
@@ -68,7 +84,7 @@ async function run(name, b) {
   // 13: a saved file is drawn without a reload, in place: the hash, pan and
   // zoom stay. A file that does not parse keeps the drawing and says so.
   p = await b.newPage();
-  p.on("pageerror", (e) => errors.push("pageerror " + e.message.slice(0, 120)));
+  p.on("pageerror", (e) => benign(e) || errors.push("pageerror " + e.message.slice(0, 120)));
   await p.goto(url + view);
   await drawn(p);
   await settle(p);
@@ -115,6 +131,26 @@ async function run(name, b) {
   const seventh = await ctx.newPage();
   out.tabs = await seventh.goto(url + view, { timeout: 15000 }).then(() => drawn(seventh)).then(() => true, () => false);
   await ctx.close();
+  // 14: with -base the page draws the Change View against main, and a save
+  // is drawn as a change, in place.
+  p = await b.newPage();
+  p.on("pageerror", (e) => benign(e) || errors.push("pageerror " + e.message.slice(0, 120)));
+  const storePkg = "example.com/shop/internal/store";
+  await p.goto(changeURL + `#f=${storePkg}`);
+  await p.waitForSelector(".app", { timeout: 30000 });
+  await settle(p);
+  const changeHash = await hash();
+  const grown = `${storePkg}.Change${name}`;
+  writeFileSync(join(changeDir, "internal", "store", `change${name}.go`), `package store\n\nfunc Change${name}() {}\n`);
+  const shown = await node(grown);
+  await settle(p);
+  out.change = [
+    await p.locator(".header").innerText().then((t) => t.startsWith("Change View")),
+    shown,
+    await p.locator(`.react-flow__node[data-id="${grown}"] .node`).getAttribute("class").then((c) => c.split(" ").includes("st-added"), () => false),
+    (await hash()) === changeHash,
+  ];
+  await p.close();
   out.errors = errors;
   return out;
 }
@@ -128,6 +164,7 @@ const want = {
   broken: [true, 1, true],
   fixed: [true, 0],
   tabs: true,
+  change: [true, true, true, true],
   errors: [],
 };
 

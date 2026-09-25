@@ -26,6 +26,9 @@ after. 13a (Tasks 1–4) can ship without 13b.
   acceptance moved.
 - **`node serve.mjs`:** 9/9 in each engine.
 - **08's Firefox reload flake** did not occur in any run.
+- **A WebKit flake, found later:** `serve.mjs` on main failed 2 of 5 webkit runs on the
+  page error `ResizeObserver loop completed with undelivered notifications.`, which is
+  harmless. Since 14 (A1), `serve.mjs` ignores that exact message.
 
 ## Red for the right reason
 

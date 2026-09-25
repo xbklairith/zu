@@ -9,10 +9,14 @@ import (
 	"testing"
 )
 
-// withUI points the uiTemplate seam at the export package's fixture template.
+// uiFixture is the export package's fixture template, made absolute before
+// any test changes directory (diffRepo does).
+var uiFixture, _ = filepath.Abs("../export/testdata/template.html")
+
+// withUI points the uiTemplate seam at uiFixture.
 func withUI(t *testing.T) {
 	t.Helper()
-	tmpl, err := os.ReadFile("../export/testdata/template.html")
+	tmpl, err := os.ReadFile(uiFixture)
 	if err != nil {
 		t.Fatal(err)
 	}

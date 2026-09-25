@@ -22,10 +22,12 @@ import (
 )
 
 // runServe implements `zu serve [dir] [-addr host:port] [-include pattern]…
-// [-link-template url] [-coverprofile file]` (10): the Project View of the
-// working tree, on a loopback address, until interrupted. Every load of the
-// page rescans the tree, parsing only the files whose content changed.
-// Flags may come before or after dir. It writes nothing to disk.
+// [-link-template url] [-coverprofile file] [-poll interval] [-base ref]`
+// (10): the Project View of the working tree, on a loopback address, until
+// interrupted, or with -base (14) the Change View zu diff ref -worktree
+// -html writes. Every load of the page rescans the tree, parsing only the
+// files whose content changed. Flags may come before or after dir. It
+// writes nothing to disk.
 func runServe(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("zu serve", flag.ContinueOnError)
 	fs.SetOutput(stderr)
@@ -35,6 +37,7 @@ func runServe(args []string, stdout, stderr io.Writer) int {
 	fs.StringVar(&o.linkTmpl, "link-template", "", "source link `url` with {commit} {path} {line}; overrides origin detection")
 	fs.StringVar(&o.cover, "coverprofile", "", "colour packages by CRAP from `file`, written by go test -coverprofile over this tree; read once, at start")
 	poll := fs.Duration("poll", time.Second, "look for changes every `interval` and redraw the open page; 0: never")
+	base := fs.String("base", "", "show the Change View of the working tree against the merge-base of `ref` and HEAD, as zu diff ref -worktree -html")
 	dir, err := parseWithDir(fs, args)
 	if err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
@@ -48,6 +51,18 @@ func runServe(args []string, stdout, stderr io.Writer) int {
 	}
 	if *poll < 0 || *poll > 0 && *poll < minPoll {
 		return bad(fmt.Errorf("-poll %v: want 0 (off) or at least %v", *poll, minPoll))
+	}
+	ctx, stop := interruptContext()
+	defer stop()
+	if *base != "" {
+		if len(o.include) > 0 {
+			return bad(errors.New("-include does not apply with -base: the change decides what the page inlines"))
+		}
+		top, _, err := gitResolve(ctx, dir, *base)
+		if err != nil {
+			return bad(fmt.Errorf("-base: %w", err))
+		}
+		dir = top // the working tree zu diff -worktree reads
 	}
 	if err := o.load(); err != nil {
 		return bad(err)
@@ -65,9 +80,7 @@ func runServe(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "zu serve: %s is in use; serving on a free port\n", serve.DefaultAddr)
 	}
 
-	ctx, stop := interruptContext()
-	defer stop()
-	s := &session{dir: dir, o: &o, cache: scan.NewCache(), stderr: stderr}
+	s := &session{dir: dir, base: *base, o: &o, cache: scan.NewCache(), stderr: stderr}
 	first, _, err := s.view(ctx)
 	if err != nil { // a tree zu cannot scan fails here, not in the page
 		return bad(err)
@@ -120,6 +133,10 @@ type session struct {
 	o      *htmlOptions
 	cache  *scan.Cache
 	stderr io.Writer
+	// base is -base's ref (14); baseDoc, guarded by mu, is the IR of the
+	// merge-base last scanned, under the Policy whose hash it carries.
+	base    string
+	baseDoc *ir.IR
 	// scanning, when set, runs while a rescan holds mu (a test seam).
 	scanning func()
 
@@ -175,7 +192,7 @@ func (s *session) view(ctx context.Context) ([]byte, uint64, error) {
 	return data, gen, nil
 }
 
-// build scans src under its Policy and returns the Project View JSON and the
+// build scans src under its Policy and returns the View JSON (viewOf) and the
 // IR it came from. With trust the Cache trusts each file's Stamp (13's
 // watch). HEAD is read beside the scan, off its path (10
 // rescan-profile, fix 2). what prefixes the stderr line.
@@ -205,7 +222,7 @@ func (s *session) build(ctx context.Context, src *source, trust bool, what strin
 		return nil, nil, err
 	}
 	ir.Sort(doc) // as ir.Encode does before zu scan -html builds its View
-	v, err := projectView(ctx, "serve", src, doc, pol, stats.Measures, s.o, s.stderr)
+	v, err := s.viewOf(ctx, src, doc, pol, stats.Measures)
 	if err != nil {
 		return nil, nil, err
 	}

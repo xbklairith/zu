@@ -2121,7 +2121,7 @@ The tests:
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/internal/cli/change_test.go b/internal/cli/change_test.go
@@ -2373,11 +2373,11 @@ index 4d231ad..2ac7019 100644
  
 ```
 
-- [ ] **Run:** `go test ./internal/cli/ -run ServeBase` Expected: FAIL (`flag provided but not defined: -base`)
+- [x] **Run:** `go test ./internal/cli/ -run ServeBase` Expected: FAIL (`flag provided but not defined: -base`)
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node serve.mjs` Expected: FAIL (`zu serve exited 3`: the `-base` server's flag is not defined)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node serve.mjs` Expected: FAIL (`zu serve exited 3`: the `-base` server's flag is not defined)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/internal/cli/change.go b/internal/cli/change.go
@@ -2535,11 +2535,11 @@ index f9ae039..f4f433a 100644
  	}
 ```
 
-- [ ] **Run:** `go test -race ./... && go vet ./... && golangci-lint run ./...` Expected: PASS (read the lint output)
+- [x] **Run:** `go test -race ./... && go vet ./... && golangci-lint run ./...` Expected: PASS (read the lint output)
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node serve.mjs` Expected: PASS (10 checks in each engine)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node serve.mjs` Expected: PASS (10 checks in each engine)
 
-- [ ] **Commit:** `Serve the Change View against a base ref with zu serve -base`
+- [x] **Commit:** `Serve the Change View against a base ref with zu serve -base`
 
 ## Acceptance
 
