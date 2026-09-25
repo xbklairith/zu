@@ -301,6 +301,36 @@ func TestDiffHTMLWritesTheChangeView(t *testing.T) {
 	}
 }
 
+// With -mr N (14b) every host diff link, the header's too, targets the pull
+// request's files page; the base blob stays.
+func TestDiffHTMLLinksTheMergeRequest(t *testing.T) {
+	withUI(t)
+	dir := diffRepo(t)
+	git(t, dir, "remote", "add", "origin", "git@github.com:o/r.git")
+	base := git(t, dir, "rev-parse", "main")
+	git(t, dir, "update-ref", "refs/remotes/origin/feat", "HEAD") // pushed and fetched
+	out := filepath.Join(t.TempDir(), "change.html")
+	if code, _, errOut := run("diff", "main", "-html", out, "-mr", "7"); code != ExitOK {
+		t.Fatalf("exit %d: %s", code, errOut)
+	}
+	s := readFile(t, out)
+	const pr = "https://github.com/o/r/pull/7/files"
+	for _, want := range []string{
+		`"compare":"` + pr + `"`,
+		`"mr":"PR #7"`,
+		`"base":"https://github.com/o/r/blob/` + base + `/{path}#L{line}"`,
+		`"files":{"a/a.go":"` + pr + `#diff-` + aGo + `"}`,
+		`"nodes":{"example.com/m/a.F":"` + pr + `#diff-` + aGo + `R3"}`,
+	} {
+		if !strings.Contains(s, want) {
+			t.Errorf("html lacks %s", want)
+		}
+	}
+	if strings.Contains(s, "/compare/") {
+		t.Error("with -mr a link still targets the compare page")
+	}
+}
+
 // aGo is GitHub's anchor of a/a.go: printf %s a/a.go | shasum -a 256.
 const aGo = "6f0e76217f46bde75131273709c148632e8120c9be0617a825f09640d38454a5"
 
@@ -456,6 +486,33 @@ func TestDiffHTMLBadInvocations(t *testing.T) {
 	} {
 		if code, _, errOut := run(args...); code != ExitBadInvocation {
 			t.Errorf("%v: exit %d, want %d (%s)", args, code, ExitBadInvocation, errOut)
+		}
+	}
+	if _, err := os.Stat(out); err == nil {
+		t.Error("a bad invocation wrote the html")
+	}
+}
+
+// -mr (14b) takes an integer from 1, with -html, and needs a merge request
+// to point at: never with -link-template, nor without a hosted origin.
+func TestDiffHTMLMergeRequestBadInvocations(t *testing.T) {
+	withUI(t)
+	diffRepo(t) // no origin
+	out := filepath.Join(t.TempDir(), "change.html")
+	for _, tc := range []struct {
+		args []string
+		want string
+	}{
+		{[]string{"-html", out, "-mr", "x"}, "-mr wants a merge request number from 1"},
+		{[]string{"-html", out, "-mr", "0"}, "-mr wants a merge request number from 1"},
+		{[]string{"-html", out, "-mr", "-3"}, "-mr wants a merge request number from 1"},
+		{[]string{"-mr", "7"}, "-mr needs -html"},
+		{[]string{"-html", out, "-mr", "7", "-link-template", "https://h/{commit}/{path}"}, "-mr does not apply with -link-template"},
+		{[]string{"-html", out, "-mr", "7"}, "-mr needs an origin on GitHub or GitLab"},
+	} {
+		code, _, errOut := run(append([]string{"diff", "main"}, tc.args...)...)
+		if code != ExitBadInvocation || !strings.Contains(errOut, tc.want) {
+			t.Errorf("%v: exit %d, stderr %q; want exit 3 with %q", tc.args, code, errOut, tc.want)
 		}
 	}
 	if _, err := os.Stat(out); err == nil {

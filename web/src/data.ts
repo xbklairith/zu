@@ -34,7 +34,7 @@ export type View = {
   schema: string; kind: "project" | "change"; tool: string; head: Ref; base?: Ref; changed?: string[];
   modules: string[]; nodes: ViewNode[]; edges: ViewEdge[]; sources: Record<string, string>;
   // 14: base, files and nodes only in a Change View (export.DiffLinks).
-  links?: { blob: string; compare?: string; base?: string; files?: Record<string, string>; nodes?: Record<string, string> };
+  links?: { blob: string; compare?: string; mr?: string; base?: string; files?: Record<string, string>; nodes?: Record<string, string> };
   hunks?: Record<string, Hunk[]>;
   // 06: only when the Policy has rules; 07: or an order or Proposals.
   policy?: { hash: string; levels: string[][]; order?: string[]; proposals?: Proposal[]; budget?: number };

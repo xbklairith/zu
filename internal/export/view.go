@@ -136,6 +136,7 @@ func sortView(v *View) {
 type Links struct {
 	Blob    string            `json:"blob"`
 	Compare string            `json:"compare,omitempty"`
+	MR      string            `json:"mr,omitempty"` // with -mr (14b): Compare is that merge request's page, and this how the host names it
 	Base    string            `json:"base,omitempty"`
 	Files   map[string]string `json:"files,omitempty"`
 	Nodes   map[string]string `json:"nodes,omitempty"`

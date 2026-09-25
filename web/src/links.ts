@@ -27,3 +27,10 @@ export function diffLink(links: Links, id: string): string | null {
 export function fileDiffLink(links: Links, path: string): string | null {
   return https(own(links?.files, path));
 }
+
+// compareLabel is the header's host link's text: the compare of base and
+// head, or with -mr (14b) the merge request as the host names it.
+export function compareLabel(links: Links, base: string | undefined, head: string): string {
+  if (links?.mr) return `${links.mr} on the host`;
+  return `Compare ${base?.slice(0, 12)}…${head.slice(0, 12)} on the host`;
+}

@@ -119,6 +119,9 @@ func TestServeBaseBadInvocations(t *testing.T) {
 		{[]string{dir, "-base", "main", "-include", "./a"}, "-include does not apply with -base"},
 		{[]string{dir, "-base", "no-such-ref"}, "-base"},
 		{[]string{notGit, "-base", "main"}, "-base"},
+		{[]string{dir, "-base", "main", "-mr", "x"}, "-mr wants a merge request number from 1"},
+		{[]string{dir, "-mr", "7"}, "-mr needs -base"},
+		{[]string{dir, "-base", "main", "-mr", "7"}, "-mr needs an origin on GitHub or GitLab"}, // no origin
 	} {
 		code, out, errOut := run(append([]string{"serve", "-addr", "127.0.0.1:0"}, tc.args...)...)
 		if code != ExitBadInvocation || out != "" || !strings.Contains(errOut, tc.want) {

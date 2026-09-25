@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { diffLink, fileDiffLink, linkFor } from "./links";
+import { compareLabel, diffLink, fileDiffLink, linkFor } from "./links";
 
 const gh = { blob: "https://github.com/o/r/blob/90cb22a/{path}#L{line}" };
 
@@ -38,5 +38,13 @@ describe("Change View links (14)", () => {
     expect(diffLink(change, "m/a.G")).toBeNull();
     expect(diffLink(change, "constructor")).toBeNull();
     expect(fileDiffLink(gh, "a/a.go")).toBeNull();
+  });
+});
+
+describe("the header's host link (14b)", () => {
+  it("names the compare, or with -mr the merge request as the host does", () => {
+    expect(compareLabel({ blob: "" }, "bbbbbbbbbbbbbb", "hhhhhhhhhhhhhh")).toBe("Compare bbbbbbbbbbbb…hhhhhhhhhhhh on the host");
+    expect(compareLabel({ blob: "", mr: "PR #7" }, "b", "h")).toBe("PR #7 on the host");
+    expect(compareLabel({ blob: "", mr: "MR !7" }, "b", "h")).toBe("MR !7 on the host");
   });
 });

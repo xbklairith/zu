@@ -3,6 +3,7 @@ package export
 import (
 	"errors"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"zu/internal/ir"
@@ -64,6 +65,20 @@ func CompareURL(origin string, base, head ir.Ref) string {
 		return "https://gitlab.com/" + repo + "/-/compare/" + base.Commit + "..." + head.Commit
 	}
 	return ""
+}
+
+// MergeRequest returns merge request n's diff page on the host and how the
+// page names it ("PR #n", "MR !n"), or "" for an origin not on GitHub or
+// GitLab (-mr, 14b). The page takes the compare page's anchors.
+func MergeRequest(origin string, n int) (page, label string) {
+	host, repo := parseRemote(origin)
+	switch host {
+	case "github.com":
+		return "https://github.com/" + repo + "/pull/" + strconv.Itoa(n) + "/files", "PR #" + strconv.Itoa(n)
+	case "gitlab.com":
+		return "https://gitlab.com/" + repo + "/-/merge_requests/" + strconv.Itoa(n) + "/diffs", "MR !" + strconv.Itoa(n)
+	}
+	return "", ""
 }
 
 // parseRemote returns host and repository path from an https, ssh or scp-style

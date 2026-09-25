@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"strconv"
 	"strings"
 
 	"zu/internal/cover"
@@ -41,6 +42,7 @@ type htmlOptions struct {
 	include  listFlag
 	linkTmpl string
 	cover    string        // -coverprofile (08)
+	mr       int           // -mr (14b): the merge request whose page diff links target; 0 for the compare page
 	tmpl     []byte        // the UI page, loaded by prepare
 	profile  cover.Profile // read by prepare; nil without -coverprofile
 }
@@ -55,6 +57,9 @@ func (o *htmlOptions) prepare() error {
 		}
 		if o.cover != "" {
 			return errors.New("-coverprofile needs -html")
+		}
+		if o.mr > 0 {
+			return errors.New("-mr needs -html")
 		}
 		return nil
 	case o.path == "-":
@@ -74,6 +79,9 @@ func (o *htmlOptions) load() error {
 	if _, err := export.ForRepo("", ir.Ref{}, o.linkTmpl, ""); err != nil { // validates the template
 		return err
 	}
+	if o.mr > 0 && o.linkTmpl != "" {
+		return errors.New("-mr does not apply with -link-template: there is no merge request page to point at")
+	}
 	tmpl, err := uiTemplate()
 	if err != nil {
 		return fmt.Errorf("html: %w", err)
@@ -83,6 +91,25 @@ func (o *htmlOptions) load() error {
 		if o.profile, err = readProfile(o.cover); err != nil {
 			return fmt.Errorf("-coverprofile %s: %w", o.cover, err)
 		}
+	}
+	return nil
+}
+
+// setMR is -mr's parser: a merge request number, from 1 (14b).
+func (o *htmlOptions) setMR(s string) error {
+	n, err := strconv.Atoi(s)
+	if err != nil || n < 1 {
+		return errors.New("-mr wants a merge request number from 1")
+	}
+	o.mr = n
+	return nil
+}
+
+// checkMR is -mr's check against the repository at top: its origin must be
+// on GitHub or GitLab, or there is no merge request page to point at.
+func (o *htmlOptions) checkMR(ctx context.Context, top string) error {
+	if o.mr > 0 && !export.Hosted(gitOrigin(ctx, top)) {
+		return errors.New("-mr needs an origin on GitHub or GitLab: there is no merge request page to point at")
 	}
 	return nil
 }
@@ -272,19 +299,22 @@ func changeView(ctx context.Context, cmd string, c changeSides, sum *diff.Summar
 			v.Links = &export.Links{}
 		}
 		v.Links.Compare = cmp
+		if o.mr > 0 { // the merge request's page instead (14b)
+			v.Links.Compare, v.Links.MR = export.MergeRequest(origin, o.mr)
+		}
 		// Link lines come from git's own diff of the two commits, the one
 		// the compare page shows, not from zu's hunks (14).
 		files, err := gitDiff(ctx, c.top, baseRef.Commit, headRef.Commit)
 		switch {
 		case err == nil:
-			export.DiffLinks(v, origin, hostFiles(files), c.measures)
+			export.DiffLinksMR(v, origin, o.mr, hostFiles(files), c.measures)
 		case ctx.Err() != nil:
 			return nil, ctx.Err()
 		default:
 			// The View does not depend on git diff: without it, each
 			// changed declaration links to its file's diff.
 			fmt.Fprintf(stderr, "zu %s: note: git diff failed (%v); host links point at each file's diff\n", cmd, err)
-			export.DiffLinks(v, origin, fileOnly(v), c.measures)
+			export.DiffLinksMR(v, origin, o.mr, fileOnly(v), c.measures)
 		}
 	}
 	if b := export.BaseBlob(origin, baseRef, o.linkTmpl); b != "" {

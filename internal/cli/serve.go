@@ -22,7 +22,7 @@ import (
 )
 
 // runServe implements `zu serve [dir] [-addr host:port] [-include pattern]…
-// [-link-template url] [-coverprofile file] [-poll interval] [-base ref]`
+// [-link-template url] [-coverprofile file] [-poll interval] [-base ref [-mr N]]`
 // (10): the Project View of the working tree, on a loopback address, until
 // interrupted, or with -base (14) the Change View zu diff ref -worktree
 // -html writes. Every load of the page rescans the tree, parsing only the
@@ -37,6 +37,7 @@ func runServe(args []string, stdout, stderr io.Writer) int {
 	fs.StringVar(&o.linkTmpl, "link-template", "", "source link `url` with {commit} {path} {line}; overrides origin detection")
 	fs.StringVar(&o.cover, "coverprofile", "", "colour packages by CRAP from `file`, written by go test -coverprofile over this tree; read once, at start")
 	poll := fs.Duration("poll", time.Second, "look for changes every `interval` and redraw the open page; 0: never")
+	fs.Func("mr", "with -base, link diffs to merge request `N`'s page, not the compare page", o.setMR)
 	base := fs.String("base", "", "show the Change View of the working tree against the merge-base of `ref` and HEAD, as zu diff ref -worktree -html")
 	dir, err := parseWithDir(fs, args)
 	if err != nil {
@@ -63,6 +64,11 @@ func runServe(args []string, stdout, stderr io.Writer) int {
 			return bad(fmt.Errorf("-base: %w", err))
 		}
 		dir = top // the working tree zu diff -worktree reads
+		if err := o.checkMR(ctx, top); err != nil {
+			return bad(err)
+		}
+	} else if o.mr > 0 {
+		return bad(errors.New("-mr needs -base: only a Change View links diffs"))
 	}
 	if err := o.load(); err != nil {
 		return bad(err)

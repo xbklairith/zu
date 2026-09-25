@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { View } from "./data";
 import { againstNote, breadcrumb, depthNote, edgesNote, honestyLine, title } from "./headline";
+import { compareLabel } from "./links";
 
 type Props = {
   view: View;
@@ -75,7 +76,7 @@ export function Header({ view, focus, home = "", boxes, folded = 0, depth, onFoc
           <>
             {" · "}
             <a href={compare} target="_blank" rel="noopener noreferrer">
-              Compare {view.base?.commit.slice(0, 12)}…{view.head.commit.slice(0, 12)} on the host
+              {compareLabel(view.links, view.base?.commit, view.head.commit)}
             </a>
           </>
         )}

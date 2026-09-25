@@ -45,12 +45,24 @@ func (f *HostFile) key() string {
 // comment), in a generated file or in a file the change deleted, both of
 // which GitHub shows collapsed, it links to its file.
 func DiffLinks(v *View, origin string, files []HostFile, ms scan.Measures) {
+	DiffLinksMR(v, origin, 0, files, ms)
+}
+
+// DiffLinksMR is DiffLinks with each link on merge request mr's diff page
+// instead of the compare page (-mr, 14b); mr 0 is the compare page. The
+// sides must still be clean commits.
+func DiffLinksMR(v *View, origin string, mr int, files []HostFile, ms scan.Measures) {
 	if v.Base == nil || len(files) == 0 {
 		return
 	}
 	cmpURL := CompareURL(origin, *v.Base, v.Head)
 	if cmpURL == "" {
 		return
+	}
+	if mr > 0 {
+		if cmpURL, _ = MergeRequest(origin, mr); cmpURL == "" {
+			return
+		}
 	}
 	host, _ := parseRemote(origin)
 	at, ok := hosts[host]

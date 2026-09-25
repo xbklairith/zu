@@ -29,7 +29,7 @@ func loadPolicy(tree scan.Tree) (*policy.Policy, error) {
 
 // runDiff implements `zu diff <base> [head] [-format text|markdown|json]
 // [-worktree [-include-ignored]] [-max-parse-errors N] [-html file
-// [-link-template T] [-coverprofile file]]`: the Structural Summary of head
+// [-link-template T | -mr N] [-coverprofile file]]`: the Structural Summary of head
 // against the merge-base of base and head, and optionally the Change View
 // export.
 // Exit 2 when head fails to parse, else 1 when the change adds violations
@@ -45,6 +45,7 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 	fs.StringVar(&hopts.path, "html", "", "also write a self-contained HTML Change View to `file`")
 	fs.StringVar(&hopts.linkTmpl, "link-template", "", "with -html, link source to `url` with {commit}, {path} and {line}")
 	fs.Var(&hopts.include, "include", "not accepted: the change decides what -html inlines")
+	fs.Func("mr", "with -html, link diffs to merge request `N`'s page, not the compare page", hopts.setMR)
 	fs.StringVar(&hopts.cover, "coverprofile", "", "with -html, colour head's packages by CRAP from `file`, written by go test -coverprofile over head")
 	refs, err := parsePositional(fs, args)
 	bad := func(format string, a ...any) int {
@@ -81,6 +82,9 @@ func runDiff(args []string, stdout, stderr io.Writer) int {
 	defer stop()
 	top, baseCommit, err := gitResolve(ctx, ".", refs[0])
 	if err != nil {
+		return bad("%v", err)
+	}
+	if err := hopts.checkMR(ctx, top); err != nil {
 		return bad("%v", err)
 	}
 	_, headCommit, err := gitResolve(ctx, top, headName)

@@ -248,3 +248,62 @@ func TestHosted(t *testing.T) {
 		}
 	}
 }
+
+// With -mr N (14b), every diff link targets the merge request's own diff
+// page, anchored as the compare page is; the gate on clean sides stays.
+func TestDiffLinksOnAMergeRequest(t *testing.T) {
+	view := func() *View {
+		return &View{
+			Kind: "change", Base: &ir.Ref{Commit: "bbbb"}, Head: ir.Ref{Commit: "hhhh"},
+			Nodes: []Node{
+				{ID: "m/a.F", Kind: "function", Status: "modified", Loc: ir.Location{Path: "a/a.go", Line: 2}},
+				{ID: "m/a.Old", Kind: "function", Status: "removed", Loc: ir.Location{Path: "a/a.go", Line: 2}},
+			},
+			Hunks: map[string][]Hunk{"a/a.go": fileHunks},
+		}
+	}
+	const (
+		gh   = "https://github.com/o/r/pull/7/files#diff-6f0e76217f46bde75131273709c148632e8120c9be0617a825f09640d38454a5"
+		gl   = "https://gitlab.com/g/r/-/merge_requests/7/diffs?file_path=a%2Fa.go#"
+		glID = gl + "line_cfb4ad65a_"
+	)
+	for _, c := range []struct {
+		origin, file string
+		nodes        map[string]string
+	}{
+		{"git@github.com:o/r.git", gh, map[string]string{"m/a.F": gh + "R2", "m/a.Old": gh + "L2"}},
+		{"https://gitlab.com/g/r.git", gl + "cfb4ad65a271be152f896011f6f2a5ce741005b5", map[string]string{"m/a.F": glID + "A2", "m/a.Old": glID + "2"}},
+	} {
+		v := view()
+		DiffLinksMR(v, c.origin, 7, hostFiles, scan.Measures{})
+		if v.Links == nil {
+			t.Fatalf("%s: no links", c.origin)
+		}
+		if got := v.Links.Files["a/a.go"]; got != c.file {
+			t.Errorf("%s: file link %q, want %q", c.origin, got, c.file)
+		}
+		if !maps.Equal(v.Links.Nodes, c.nodes) {
+			t.Errorf("%s: nodes = %v, want %v", c.origin, v.Links.Nodes, c.nodes)
+		}
+	}
+	v := view()
+	v.Head.Dirty = true
+	if DiffLinksMR(v, "git@github.com:o/r.git", 7, hostFiles, scan.Measures{}); v.Links != nil {
+		t.Errorf("a dirty head links to the MR: %+v", v.Links)
+	}
+}
+
+func TestMergeRequest(t *testing.T) {
+	for _, c := range []struct {
+		origin     string
+		url, label string
+	}{
+		{"git@github.com:o/r.git", "https://github.com/o/r/pull/12/files", "PR #12"},
+		{"https://gitlab.com/g/sub/r.git", "https://gitlab.com/g/sub/r/-/merge_requests/12/diffs", "MR !12"},
+		{"git@bitbucket.org:o/r.git", "", ""},
+	} {
+		if url, label := MergeRequest(c.origin, 12); url != c.url || label != c.label {
+			t.Errorf("MergeRequest(%q, 12) = %q, %q; want %q, %q", c.origin, url, label, c.url, c.label)
+		}
+	}
+}
