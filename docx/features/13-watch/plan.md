@@ -2818,7 +2818,7 @@ index 24436b2..36b5750 100644
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/web/src/live.test.ts b/web/src/live.test.ts
@@ -2997,9 +2997,9 @@ index 0000000..e0250ae
 +});
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/live.test.ts` Expected: FAIL (`Cannot find module './live'`)
+- [x] **Run:** `cd web && npx vitest run src/live.test.ts` Expected: FAIL (`Cannot find module './live'`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/web/src/live.ts b/web/src/live.ts
@@ -3129,9 +3129,9 @@ index 0000000..fc42c7a
 +}
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Commit:** `Follow zu serve's View stream in the page`
+- [x] **Commit:** `Follow zu serve's View stream in the page`
 
 ### Task 6: The page redraws on a save
 
