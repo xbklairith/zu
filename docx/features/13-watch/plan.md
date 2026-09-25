@@ -757,7 +757,7 @@ The tests use a lister that also returns files in pruned directories, as git doe
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/internal/watch/watch_test.go b/internal/watch/watch_test.go
@@ -1112,9 +1112,9 @@ index 0000000..0864274
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/watch/` Expected: FAIL (`undefined: Listing`, `undefined: Watcher`)
+- [x] **Run:** `go test ./internal/watch/` Expected: FAIL (`undefined: Listing`, `undefined: Watcher`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/internal/watch/watch.go b/internal/watch/watch.go
@@ -1459,9 +1459,9 @@ index 0000000..aef462c
 +}
 ```
 
-- [ ] **Run:** `go test -race ./internal/watch/ && go vet ./...` Expected: PASS
+- [x] **Run:** `go test -race ./internal/watch/ && go vet ./...` Expected: PASS
 
-- [ ] **Commit:** `Poll the tree for what a rescan reads`
+- [x] **Commit:** `Poll the tree for what a rescan reads`
 
 ### Task 3: The Hub, `/events` and `/view.json?latest`
 
