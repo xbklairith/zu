@@ -858,7 +858,7 @@ They also check U3: three unsorted orders, opened and closed through one shared 
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/web/src/place.test.ts b/web/src/place.test.ts
@@ -1031,9 +1031,9 @@ index 0000000..b3404f4
 +});
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/place.test.ts` Expected: FAIL (`Cannot find module './place'`)
+- [x] **Run:** `cd web && npx vitest run src/place.test.ts` Expected: FAIL (`Cannot find module './place'`)
 
-- [ ] **Add `place`**
+- [x] **Add `place`**
 
 ```diff
 diff --git a/web/src/layout.ts b/web/src/layout.ts
@@ -1178,9 +1178,9 @@ index 0000000..ca0bfbf
 +}
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS (264 tests)
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS (264 tests)
 
-- [ ] **Commit:** `Lay out only the boxes the reader opened, and set them in place`
+- [x] **Commit:** `Lay out only the boxes the reader opened, and set them in place`
 
 ### Task 3: The page opens a box in place (`App.tsx`)
 

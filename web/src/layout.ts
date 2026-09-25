@@ -129,7 +129,7 @@ export const ROW_MAX = 1280;
 // WRAP_GAP is the space between the rows one rank wraps into, a quarter of
 // the 24 between two ranks, so a wrapped rank reads as one (packed).
 export const WRAP_GAP = 6;
-const PAD_X = 24; // a container's elk.padding, left and right
+export const PAD_X = 24; // a container's elk.padding, left and right
 
 // ranked puts siblings with a higher rank above those with a lower one, in
 // every container. A sibling set in which any node has a Policy rank uses
@@ -380,7 +380,7 @@ function siblings(placed: ReadonlyMap<string, Placed>): Map<string, string[]> {
 
 // rowsOf splits siblings into rows, top to bottom: siblings whose vertical
 // extents overlap share an ELK layer.
-function rowsOf(ids: string[], placed: ReadonlyMap<string, Placed>): string[][] {
+export function rowsOf(ids: string[], placed: ReadonlyMap<string, Placed>): string[][] {
   const sorted = [...ids].sort((a, b) => placed.get(a)!.y - placed.get(b)!.y || cmp(a, b));
   const rows: string[][] = [];
   let bottom = -Infinity;
