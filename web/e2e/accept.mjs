@@ -113,6 +113,16 @@ write("crap-change.html", page({
     funcs: {},
   },
 }));
+// 12 (A2): a root module k with three modules nested under it, as kubernetes
+// has its staging modules. 75 boxes at depth 2 keep the auto depth at 1, so
+// the page root opens k in place (R5); with.html is too small for that.
+const at = (id, path) => ({ ...pkg(id, id.split("/")[0]), loc: { path, line: 1 } });
+const staged = [0, 1, 2].flatMap((m) => Array.from({ length: 25 }, (_, j) => at(`s${m}/p${j}`, `staging/src/s${m}/p${j}/x.go`)));
+write("rooted.html", page({
+  ...shop, modules: ["k", "s0", "s1", "s2"], sources: {},
+  nodes: [at("k/cmd", "cmd/main.go"), at("k/pkg/a", "pkg/a/a.go"), at("k/pkg/b", "pkg/b/b.go"), ...staged],
+  edges: [imp("k/cmd", "k/pkg/a"), imp("k/pkg/a", "s0/p0"), imp("s1/p0", "s0/p0")],
+}));
 // 12: big.html's 24 groups, two testdata packages and a generated one, and a
 // Policy budget of 12; m/g00/p0 imports one testdata package.
 const noise = [["m/testdata/a", "name"], ["m/testdata/b", "name"], ["m/zz_generated", "generated"]];
@@ -496,6 +506,27 @@ async function run(b) {
   await p.keyboard.press("Escape");
   await settle(p);
   out.rootOpen = [shopOpen, await hash(p)];
+  // 12 (A2): closing the root module writes its own token, a literal "#" inside
+  // the hash value; a reload keeps it closed. An old link's t=<root module>
+  // still opens it in place (N10).
+  const kOpen = () => p.locator(".react-flow__node-container[data-id='k']").count();
+  await p.goto(base + "rooted.html");
+  await p.reload();
+  await drawn(p);
+  await settle(p);
+  const opened = await kOpen();
+  await p.locator(".react-flow__node-container[data-id='k'] .toggle").first().click();
+  await settle(p);
+  const closedHash = await p.evaluate(() => location.hash);
+  await p.reload();
+  await drawn(p);
+  await settle(p);
+  const closedAfter = [await kOpen(), await p.locator(".react-flow__node[data-id='k']").count(), await p.evaluate(() => location.hash)];
+  await p.goto(base + "rooted.html#t=k");
+  await p.reload();
+  await drawn(p);
+  await settle(p);
+  out.rootClosed = [opened, closedHash, ...closedAfter, await kOpen()];
   await p.close();
   // 12 (N4): at 1280 × 720 the Panel opens over the canvas after a click, so
   // a group opens on one click, not a double-click.
@@ -579,6 +610,8 @@ const want = {
   rowCap: [7, "entry points", ["cmd"]], // a merged row draws no rule between its ranks
   rootOpen: [1, "#s=example.com/shop/internal"], // up to the page root, the box left selected
   foldNarrow: [true, "fold 10"],
+  // open at first; closed: its token in the hash, a box after a reload, the hash unchanged; an old t= opens it
+  rootClosed: [1, "#t=k%23closed", 0, 1, "#t=k%23closed", 1],
 };
 
 const channel = process.env.ZU_E2E_CHANNEL;
