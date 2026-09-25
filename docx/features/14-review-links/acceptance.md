@@ -133,28 +133,102 @@ Applied as the plan's exact text:
 **Not applied: the plan's CLAUDE.md layout lines.** They wait on the user's own word,
 as 13's did.
 
+## 14b: diff links that land
+
+**zu's rehearsal of 14's step 1** was run in Chrome, signed out, on c14.html's
+`ir.Encode` link: `compare/e314168…b8dd2e3#diff-c9bf87…R60`, 40 commits.
+- **The anchor was right.** The element `diff-c9bf87…R60` exists, and it is the line
+  `func Encode(w io.Writer, doc *IR) error {`.
+- **The page never scrolled there.** The compare opened on its "Commits 40" tab, with
+  the files in the hidden "Files changed 75" tab, and `scrollY` stayed 0.
+- **Switching tabs didn't help.** After a click on "Files changed", the line was
+  visible 35,245 px down, and `scrollY` was still 0.
+
+**The lead's browser study** (2026-09-25, recorded in `amend-14b.md`) found:
+- a GitHub compare of more than 20 commits hides its files behind that tab in every
+  browser;
+- a compare of 20 or fewer shows them inline, and Firefox and Safari scroll to a line
+  in the first loaded batch while Chrome stays at the top;
+- GitLab's compare and merge request links land in every engine;
+- a blob link ("View at") lands everywhere.
+
+**Built (strict TDD, one commit each):**
+
+| Change | Commit | What it did |
+|---|---|---|
+| 1 | `ccae2f1` | `gitref.CommitCount`: `rev-list --count --end-of-options base..head`, refusing a ref that starts with `-` |
+| 2 | `e7c4980` | `-mr N` on `zu diff -html` and `zu serve -base`: GitHub `/pull/N/files`, GitLab `/-/merge_requests/N/diffs`; the header reads "PR #N on the host" or "MR !N on the host" |
+| 3 | `81a6a7b` | a GitHub compare of more than 20 commits, without `-mr`, gets no line or file links, with one note per `zu diff` or `zu serve` session |
+| 4 | this commit | the "Diff on the host" tooltip, the decisions.md sentence and this record |
+
+**Red for the right reason:**
+1. **`CommitCount`:** its test failed first on `undefined: CommitCount`. Its refusal of
+   an option-like ref still passes with both guards removed. Joined into one
+   `base..head` argument, such a ref is neither a valid option nor a revision, so git
+   refuses it anyway. The guards are defense in depth.
+2. **`-mr`:** the export and CLI tests failed first on the missing function and flag.
+   - The `zu diff` rejection cases at first exited 3 only as "flag provided but not
+     defined", which is the wrong reason.
+   - So each case now also checks its own message: "-mr wants a merge request number
+     from 1", "-mr needs -html", "-mr does not apply with -link-template" and "-mr needs
+     an origin on GitHub or GitLab". The `zu serve` cases check "-mr needs -base" and
+     the same number and origin messages.
+3. **The 20-commit cut:**
+   - **The first red:** the tests failed on links present at 21 commits and no note.
+   - **A fault in the tests themselves:** they first read any `"nodes":` as links, but
+     that key is also the View's node list. They now read the parsed `links` object.
+     Because that fix came after the code, each part of the code was proven by breaking
+     it on purpose, then restoring it (checked identical by `cmp`):
+     - nothing hidden: the 21-commit case, the count-failure case and the serve case
+       fail;
+     - the note on every rescan: the serve test fails ("printed 4 times, want once");
+     - `>=` for `>`: the 20-commit case fails;
+     - `-mr` not exempt: the 21-commit `-mr` case fails.
+4. **The tooltip:** `accept.mjs` failed first in all three engines (`diffTitle = null`),
+   then passed.
+
+**Gates:**
+- `make check`: exit 0. `golangci-lint`: no issues. vitest: 250 tests.
+- `accept.mjs`: 57/57 in chromium, firefox and webkit, in two runs in a row.
+- An earlier run stopped when Firefox crashed on a reload twice, the second time in the
+  suite's own rerun. That is 08's Firefox reload flake.
+
 ## Pending, by a person
 
-**B6 is not met** until the user's steps 1 and 2 pass.
+**B6 is not met** until all four steps of the check below pass. That check replaces 14
+Task 7's steps 1–2. Task 7's steps 3–4 (View at on a removed declaration; `zu serve
+-base main` redrawing a saved edit) still stand.
 
-**Step 1's page is ready (amendment A2).**
+**Step 1's page is ready.**
 - **How it was made:**
   - a detached worktree of `origin/main` (`b8dd2e3`);
-  - in it, `zu diff origin/main~40 -html` wrote the page;
+  - in it, `zu diff d8e36c95291c86a7020ee39450581fa7b679007f -html`, where that sha is
+    `origin/main~5` (5 commits);
   - the worktree was then removed.
 - **The file:**
-  `/private/tmp/claude-502/-Users-xb-table-zu/5140d9a4-3505-47d2-9e0f-0f07a8861f30/scratchpad/c14.html`.
-- **What it links to:** the compare page
-  `github.com/xbklairith/zu/compare/e314168…b8dd2e3`, which changes 49 Go files. The page
-  carries 119 line links and a base-blob link.
-- **Files past the fourth on the compare page:** for example `internal/ir/encode.go`,
-  `internal/ir/ir.go` and `internal/scan/build.go`.
+  `/private/tmp/claude-502/-Users-xb-table-zu/5140d9a4-3505-47d2-9e0f-0f07a8861f30/scratchpad/c14b.html`.
+- **What it links to:** the compare page `github.com/xbklairith/zu/compare/d8e36c9…b8dd2e3`.
+  - It lists 22 files, 18 of them Go.
+  - The page carries 41 line links, 8 file links and the base-blob link.
+  - zu printed no hidden-compare note.
+- **Which function to use:** the first four files the compare lists are three docs and
+  `internal/cli/scan.go`, so the function to pick is `runScan` (`…R50`).
+- **A rehearsal of that link** in Chrome, signed out:
+  - the files were inline, with no tabs;
+  - the anchored line was visible 5,872 px down;
+  - Chrome stayed at the top, which the check allows.
 
-The four steps:
-1. **GitHub:** a file past the fourth, then "Diff on the host". The page must load that
-   file and scroll to the line.
-2. **GitLab:** any changed function. The compare page must scroll to its line.
-3. "View at" on a removed declaration opens the base commit's file at it.
-4. `zu serve -base main`, then save an edit. It is redrawn in place as a change.
+The user's check (14b), as written:
+1. **GitHub, small compare:** `zu diff <sha of origin/main~5> -html` in a detached
+   worktree of `origin/main`. Pick a function in a file among the first four the compare
+   page lists, and click "Diff on the host". The compare opens with that file's diff, and
+   the URL carries `#diff-…R<n>`. In Firefox or Safari the page lands on the line; Chrome
+   may stay at the top.
+2. **GitHub, PR:** repeat on a pull request of any public repository you have cloned,
+   with `-mr <PR number>`. The PR's files page opens, with the anchor in the URL. It may
+   not scroll to the line, and that doesn't fail this step.
+3. **GitLab:** any GitLab repository, a compare link. It lands on the line in any
+   browser.
+4. **View at** on a changed function lands on the declaration.
 
 None of them has been run.

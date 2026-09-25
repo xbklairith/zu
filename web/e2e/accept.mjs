@@ -562,6 +562,7 @@ async function run(b) {
   await drawn(p);
   await settle(p);
   const get = await hrefs();
+  out.diffTitle = await p.locator(".panel a.diff-link", { hasText: "Diff on the host" }).getAttribute("title"); // 14b
   await p.goto(base + linked + "ReadWriter");
   await p.reload();
   await drawn(p);
@@ -597,6 +598,7 @@ const want = {
     ["/blob/H/internal/store/store.go#L37", "/compare/B...H#diff-b26d414dR42", "/compare/B...H#diff-b26d414d"],
     ["/blob/B/internal/store/store.go#L19", "/compare/B...H#diff-b26d414dL19", "/compare/B...H#diff-b26d414d"],
   ],
+  diffTitle: "Opens the diff at this line. Some browsers open it at the top; View at always lands on the declaration.",
   errors: [],
   // 07
   ranks: ["m/cmd 2", "m/internal 1", "m/internal/cli 1", "m/internal/ir 0"],

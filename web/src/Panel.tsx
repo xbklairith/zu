@@ -129,7 +129,13 @@ function Change({ view, node }: { view: View; node: ViewNode }) {
       {facts.length > 0 && <p className={`change-facts ${node.status ? `st-${node.status}` : ""}`}>{facts.join(" · ")}</p>}
       {href && (
         <p>
-          <a className="diff-link" href={href} target="_blank" rel="noopener noreferrer">
+          <a
+            className="diff-link"
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Opens the diff at this line. Some browsers open it at the top; View at always lands on the declaration."
+          >
             Diff on the host
           </a>
         </p>
