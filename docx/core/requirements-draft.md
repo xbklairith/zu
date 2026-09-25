@@ -263,7 +263,7 @@ Targets, to be validated against a real repo before they are commitments:
 
 - Cold scan of a 100k-LOC repo: under 30 seconds.
 - Incremental re-scan after one file changes: under 2 seconds. (Measured by feature 10 on a full kubernetes v1.37.0 worktree: 1.74–1.93 s, request to response.)
-- Change to redraw in `zu serve` (13): on kubernetes v1.37.0 at the default 1 s poll, the watch's rescan stays under 2 s (measured 0.86–0.96 s) and save → drawn has a median of at most 2 s (measured 1.66–1.69 s). The worst case is reported, not gated (measured 2.06–2.11 s).
+- Change to redraw in `zu serve` (13): on kubernetes v1.37.0 at the default 1 s poll, the watch's rescan stays under 2 s (measured 0.89–1.67 s at acceptance) and save → drawn has a median of at most 2 s (measured 1.75 s). The worst case is reported, not gated (measured 2.24–2.77 s). The plan's draft figures (0.86–0.96 s, 1.66–1.69 s) came from a script that skipped rescans of 1 s or more.
 - First paint of a 500-node graph: under 3 seconds.
 - Interaction stays responsive at 2,000 nodes with collapsing on.
 
