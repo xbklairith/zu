@@ -957,7 +957,7 @@ The tests use real repositories:
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/internal/gitref/hostdiff_test.go b/internal/gitref/hostdiff_test.go
@@ -1108,9 +1108,9 @@ index 0000000..e293c18
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/gitref/` Expected: FAIL (a compile failure: `undefined: Diff`, `FileDiff`, `Hunk`, `OnRemote`)
+- [x] **Run:** `go test ./internal/gitref/` Expected: FAIL (a compile failure: `undefined: Diff`, `FileDiff`, `Hunk`, `OnRemote`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/internal/gitref/hostdiff.go b/internal/gitref/hostdiff.go
@@ -1301,9 +1301,9 @@ index 0000000..f342b17
 +}
 ```
 
-- [ ] **Run:** `go test -race ./internal/gitref/ && golangci-lint run ./internal/gitref/` Expected: PASS (read the lint output)
+- [x] **Run:** `go test -race ./internal/gitref/ && golangci-lint run ./internal/gitref/` Expected: PASS (read the lint output)
 
-- [ ] **Commit:** `Read git's own diff of two commits, and whether the remote has a commit`
+- [x] **Commit:** `Read git's own diff of two commits, and whether the remote has a commit`
 
 ### Task 3: Compare once (`internal/diff`, `internal/cli`)
 
