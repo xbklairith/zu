@@ -35,11 +35,15 @@ The one chip that holds a sibling set's Demoted boxes, drawn in its bottom row, 
 
 ## Budget
 
-How many boxes a view drawn at its automatic depth shows before the rest fold, across all its sibling sets: 15, or the Policy's `budget:`.
+How many boxes a view drawn at its automatic depth shows before the rest fold, across all its sibling sets: 15, or the Policy's `budget:`. It is decided on the view as it opens: opening a box neither refolds the rest nor folds what the box holds (15).
 
 ## Fold Chip
 
 The "+N more" chip that holds the boxes of one sibling set that fell past the view's Budget, drawn in the set's bottom row, their names in its tooltip. A click opens it and draws them in place; it stays drawn as "fold N" to close them again.
+
+## Region
+
+A box the reader opened, or a container the view draws with other children than the opening view did (regrown), with what it holds, laid out on its own and set in that container's place in the view as it opened: the view the hash draws without the boxes the reader opened or closed, and without the selection (15). A Region inside a Region is drawn there as the view as it opened drew it (a box the reader opened: closed), and is laid out on its own. ("Base" names the other side of a change, so the view as it opened is never called the base.)
 
 ## Foreign
 

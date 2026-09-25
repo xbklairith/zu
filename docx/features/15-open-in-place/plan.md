@@ -2017,13 +2017,13 @@ index 1b6b189..2115c31 100644
 
 **Steps:**
 
-- [ ] **Run:** `make check` Expected: PASS (read the lint output)
+- [x] **Run:** `make check` Expected: PASS (read the lint output)
 
-- [ ] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (57 checks in each engine)
+- [x] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (57 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS (10 checks in each engine)
+- [x] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS (10 checks in each engine)
 
-- [ ] **Measure** (by hand; not a replay step).
+- [x] **Measure** (by hand; not a replay step).
   1. Build `bin/zu` at b753c3a into a scratch copy.
   2. For hugo and kubernetes in `.zu/corpus/` (read-only; never clone), run `zu scan -out <scratch>/ir.json -html <scratch>/before/<name>.html <corpus dir>`. `-out` keeps the IR out of the corpus.
   3. Do the same with Task 5's `bin/zu` into `<scratch>/after/`.
@@ -2045,7 +2045,7 @@ index 1b6b189..2115c31 100644
 
   U2 is recorded as met in `decisions.md` once this passes.
 
-- [ ] **Commit:** `Record open in place's acceptance`
+- [x] **Commit:** `Record open in place's acceptance`
 
 ---
 
@@ -2061,6 +2061,7 @@ index 1b6b189..2115c31 100644
   | kubernetes | `component-base/config` | 1,954 px |
 
   ROW_MAX is 1,280. Task 5's pan shows the box the reader opened. The rest of a wide row is reached by panning, as in any wide view.
+- **Panning at fit zoom** (Q2, accepted as built). At fit zoom the first view fills the canvas, so most opens pan. At a reader's own zoom, only an open that leaves the canvas pans. Relative positions never change. `reveal` fires only after a toggle (Canvas's `flipped` ref), never on 13's live redraw.
 - **`grow` falls back to a whole layout** when a frame and the scene disagree on the nodes drawn. That fallback moves boxes. The tests, the scrutiny's 61 probe layouts and both measured pages never hit it, but a View shape none of them has might. v1 missed one such shape (**Revision for scrutiny-15**, the Change View). A fallback costs the old behaviour for that one toggle, not a wrong drawing.
 - **Counts are the opening view's** (Deviation 2). A reader who opens a neighbour might expect "uses N" to change. It does not, by design.
 - **Memory:** up to 32 scenes and 64 frames per page. The scrutiny measured about 17 MB of heap for 32 kubernetes scenes. The caches are cleared when they overflow, or when the View or the pins change.
