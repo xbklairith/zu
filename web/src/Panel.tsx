@@ -3,7 +3,7 @@ import type { Bundle } from "./bundle";
 import type { Hunk, Loc, View, ViewEdge, ViewNode } from "./data";
 import { calls, imports, targets, type Row } from "./facts";
 import { isGroup, isStrip, rankNote } from "./group";
-import { linkFor } from "./links";
+import { diffLink, fileDiffLink, linkFor } from "./links";
 import { crapFacts, type Risk } from "./metrics";
 import type { SceneEdge } from "./scene";
 import { EXTERNALS, OUTSIDE, boxStats } from "./tree";
@@ -48,9 +48,12 @@ function Rows({ title, rows, onReveal }: { title: string; rows: Row[]; onReveal:
   );
 }
 
-function Where({ view, loc }: { view: View; loc: Loc }) {
+// Where is a location and its source on the host: at head, or at base for
+// what the change removed (14), whose line is base's.
+function Where({ view, loc, removed = false }: { view: View; loc: Loc; removed?: boolean }) {
   if (!loc.path) return null;
-  const href = linkFor(view.links, loc.path, loc.line);
+  const href = linkFor(view.links, loc.path, loc.line, removed ? "base" : "head");
+  const at = (removed ? view.base?.commit : view.head.commit) ?? "";
   return (
     <p>
       <code>
@@ -60,7 +63,7 @@ function Where({ view, loc }: { view: View; loc: Loc }) {
         <>
           {" · "}
           <a href={href} target="_blank" rel="noopener noreferrer">
-            View at {view.head.commit.slice(0, 12)}
+            View at {at.slice(0, 12)}
           </a>
         </>
       )}
@@ -69,11 +72,20 @@ function Where({ view, loc }: { view: View; loc: Loc }) {
 }
 
 // Hunks renders line diffs as React text children only, like Source.
-function Hunks({ path, hunks }: { path: string; hunks: Hunk[] }) {
+function Hunks({ view, path, hunks }: { view: View; path: string; hunks: Hunk[] }) {
+  const href = fileDiffLink(view.links, path);
   return (
     <section>
       <h3>
         Changes in <code>{path}</code>
+        {href && (
+          <>
+            {" · "}
+            <a className="diff-link" href={href} target="_blank" rel="noopener noreferrer">
+              on the host
+            </a>
+          </>
+        )}
       </h3>
       {hunks.map((h) => (
         <pre key={`${h.baseStart},${h.headStart}`} className="hunk">
@@ -105,6 +117,7 @@ function Change({ view, node }: { view: View; node: ViewNode }) {
     node.hop !== undefined && (node.hop === 0 ? "changed (hop 0)" : `affected, ${node.hop} hop${node.hop > 1 ? "s" : ""} from a change`),
   ].filter(Boolean);
   const hunks = view.hunks ?? {};
+  const href = diffLink(view.links, node.id); // 14: its first changed line there
   const files =
     node.kind === "package"
       ? Object.keys(hunks).filter((p) => dir(p) === dir(node.loc.path)).sort()
@@ -114,8 +127,15 @@ function Change({ view, node }: { view: View; node: ViewNode }) {
   return (
     <>
       {facts.length > 0 && <p className={`change-facts ${node.status ? `st-${node.status}` : ""}`}>{facts.join(" · ")}</p>}
+      {href && (
+        <p>
+          <a className="diff-link" href={href} target="_blank" rel="noopener noreferrer">
+            Diff on the host
+          </a>
+        </p>
+      )}
       {files.map((p) => (
-        <Hunks key={p} path={p} hunks={hunks[p]} />
+        <Hunks key={p} view={view} path={p} hunks={hunks[p]} />
       ))}
     </>
   );
@@ -158,7 +178,7 @@ function Members({ view, edge, onReveal }: { view: View; edge: SceneEdge; onReve
             </button>
             {m.count > 1 && <span className="muted"> ×{m.count}</span>}
             {m.status && <span className={`muted edge-${m.status}`}> {m.status}</span>}
-            <Where view={view} loc={m.loc} />
+            <Where view={view} loc={m.loc} removed={m.status === "removed"} />
           </li>
         ))}
       </ul>
@@ -246,7 +266,7 @@ export function Panel({ view, id, edge, bundles, hidden, crap, ownTier, onReveal
     body = (
       <>
         <p className="muted">{node.typeKind ? `${node.kind} (${node.typeKind})` : node.kind}</p>
-        {node.status !== "removed" && <Where view={view} loc={node.loc} />}
+        <Where view={view} loc={node.loc} removed={node.status === "removed"} />
         <Change view={view} node={node} />
         <Rows title="Calls and embeds out" rows={c.out} onReveal={onReveal} />
         <Rows title="Called or embedded by" rows={c.in} onReveal={onReveal} />
@@ -265,7 +285,7 @@ export function Panel({ view, id, edge, bundles, hidden, crap, ownTier, onReveal
     const f = imports(view, id);
     body = (
       <>
-        {node && node.status !== "removed" && <Where view={view} loc={node.loc} />}
+        {node && <Where view={view} loc={node.loc} removed={node.status === "removed"} />}
         {node && <Change view={view} node={node} />}
         <p className="muted">
           {s.packages} packages · {s.decls} declarations · {s.unresolved} unresolved calls

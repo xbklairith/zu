@@ -1815,7 +1815,7 @@ The tests:
 
 **Steps:**
 
-- [ ] **Write the failing browser check** (first: `make build` type-checks the unit tests, so it must run before they name `diffLink`)
+- [x] **Write the failing browser check** (first: `make build` type-checks the unit tests, so it must run before they name `diffLink`)
 
 ```diff
 diff --git a/web/e2e/accept.mjs b/web/e2e/accept.mjs
@@ -1877,9 +1877,9 @@ index 7956fee..84b0c40 100644
    ranks: ["m/cmd 2", "m/internal 1", "m/internal/cli 1", "m/internal/ir 0"],
 ```
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node accept.mjs` Expected: FAIL (`links = [["/blob/H/internal/store/store.go#L37"],[]]` in each engine, 55/56: no diff links, and no link for the removed type)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node accept.mjs` Expected: FAIL (`links = [["/blob/H/internal/store/store.go#L37"],[]]` in each engine, 55/56: no diff links, and no link for the removed type)
 
-- [ ] **Write the failing unit tests**
+- [x] **Write the failing unit tests**
 
 ```diff
 diff --git a/web/src/links.test.ts b/web/src/links.test.ts
@@ -1924,9 +1924,9 @@ index 6677798..6368872 100644
 +});
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/links.test.ts` Expected: FAIL (3 of 6: `diffLink is not a function`, and `linkFor(…, "base")` is null)
+- [x] **Run:** `cd web && npx vitest run src/links.test.ts` Expected: FAIL (3 of 6: `diffLink is not a function`, and `linkFor(…, "base")` is null)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/web/src/Panel.tsx b/web/src/Panel.tsx
@@ -2098,11 +2098,11 @@ index bc590f4..69d20f2 100644
  }
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node accept.mjs` Expected: PASS (56 checks in each engine)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node accept.mjs` Expected: PASS (56 checks in each engine)
 
-- [ ] **Commit:** `Link a changed declaration to its hunk on the host, and removed code to the base`
+- [x] **Commit:** `Link a changed declaration to its hunk on the host, and removed code to the base`
 
 ## 14b: the served Change View
 

@@ -27,6 +27,17 @@ const imp = (from, to) => ({ from, to, kind: "imports", count: 1, loc });
 write("with.html", page(shop));
 write("without.html", page(shop).replace(" worker-src blob:;", ""));
 write("change.html", page(change));
+// 14: the Change View's host links, as zu diff -html writes them on GitHub.
+const gh = "https://github.com/o/r";
+const onHost = `${gh}/compare/${change.base.commit}...${change.head.commit}#diff-b26d414d0eb20deebca0d2b785bd3e1090aa1a7a182e7dc30640d68c53cb40da`;
+write("links.html", page({
+  ...change,
+  links: {
+    blob: `${gh}/blob/${change.head.commit}/{path}#L{line}`, base: `${gh}/blob/${change.base.commit}/{path}#L{line}`,
+    compare: onHost.split("#")[0], files: { "internal/store/store.go": onHost },
+    nodes: { "example.com/shop/internal/store.Repo.Get": onHost + "R42", "example.com/shop/internal/store.ReadWriter": onHost + "L19" },
+  },
+}));
 // Two unchanged packages outside the changed subgraph (openFull).
 const far = ["example.com/shop/far/a", "example.com/shop/far/b"];
 write("far.html", page({ ...change, nodes: [...change.nodes, ...far.map((id) => pkg(id, "example.com/shop"))], edges: [...change.edges, imp(far[0], far[1])] }));
@@ -540,6 +551,23 @@ async function run(b) {
   await settle(p);
   out.foldNarrow = [(await hash(p)).includes("t=m#more"), await p.locator(".node.chip.group .label").first().textContent()];
   await p.close();
+  // 14: a changed declaration links to its line on the compare page and its
+  // file's diff there; a removed one to its source at base.
+  p = await b.newPage();
+  const linked = "links.html#f=example.com/shop/internal/store&s=example.com/shop/internal/store.";
+  // Each href with the host, the commits and the path's hash shortened.
+  const hrefs = () => p.locator(".panel a").evaluateAll((as) => as.map((a) => a.getAttribute("href")
+    .replace("https://github.com/o/r", "").replace(/b{40}/, "B").replace(/h{40}/, "H").replace(/diff-(.{8}).{56}/, "diff-$1")));
+  await p.goto(base + linked + "Repo.Get");
+  await drawn(p);
+  await settle(p);
+  const get = await hrefs();
+  await p.goto(base + linked + "ReadWriter");
+  await p.reload();
+  await drawn(p);
+  await settle(p);
+  out.links = [get, await hrefs()];
+  await p.close();
   out.errors = errors;
   return out;
 }
@@ -565,6 +593,10 @@ const want = {
   hidden: ["#d=4&l=0", 0],
   anyway: 0,
   blocked: "Layout failed: layout worker failed: blocked",
+  links: [
+    ["/blob/H/internal/store/store.go#L37", "/compare/B...H#diff-b26d414dR42", "/compare/B...H#diff-b26d414d"],
+    ["/blob/B/internal/store/store.go#L19", "/compare/B...H#diff-b26d414dL19", "/compare/B...H#diff-b26d414d"],
+  ],
   errors: [],
   // 07
   ranks: ["m/cmd 2", "m/internal 1", "m/internal/cli 1", "m/internal/ir 0"],
