@@ -140,6 +140,21 @@ type anchors struct {
 	line func(compare, path string, c change) string
 }
 
+// githubInlineCommits is the most commits a GitHub compare page shows its
+// files inline for. From 21 they sit behind a "Files changed" tab, where no
+// anchor lands. Observed 2026-09-25 (20 commits × 56 files inline, 21 × 43
+// tabbed); docx/features/14-review-links/amend-14b.md.
+const githubInlineCommits = 20
+
+// CompareCommitLimit is the most commits origin's compare page shows its
+// files inline for, or 0 when its links land at any count (14b).
+func CompareCommitLimit(origin string) int {
+	if host, _ := parseRemote(origin); host == "github.com" {
+		return githubInlineCommits
+	}
+	return 0
+}
+
 // Hosted is whether origin is on a host zu links into by itself: GitHub or
 // GitLab (a -link-template covers any other).
 func Hosted(origin string) bool {

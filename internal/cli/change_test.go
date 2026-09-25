@@ -129,3 +129,18 @@ func TestServeBaseBadInvocations(t *testing.T) {
 		}
 	}
 }
+
+// zu serve -base says once per session that GitHub hides a long compare's
+// files, the first time it happens, not on every rescan (14b).
+func TestServeBaseNotesAHiddenCompareOnce(t *testing.T) {
+	dir := longCompare(t, 21)
+	url, stderr := startServe(t, dir, "-base", "main", "-poll", "0")
+	for range 3 {
+		if l := linksOf(t, fetch(t, url+"view.json")); l.Nodes != nil || l.Files != nil {
+			t.Fatalf("line links on a compare GitHub hides: %+v", l)
+		}
+	}
+	if got := strings.Count(stderr.String(), hiddenNote); got != 1 {
+		t.Errorf("the note is printed %d times, want once: %s", got, stderr.String())
+	}
+}

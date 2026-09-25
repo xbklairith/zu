@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync/atomic"
 
 	"zu/internal/cover"
 	"zu/internal/diff"
@@ -24,11 +25,12 @@ import (
 
 // Seams for tests: the built UI page and the repository facts links need.
 var (
-	uiTemplate  = builtTemplate
-	gitOrigin   = gitref.Origin
-	gitPrefix   = gitref.Prefix
-	gitDiff     = gitref.Diff
-	gitOnRemote = gitref.OnRemote
+	uiTemplate     = builtTemplate
+	gitOrigin      = gitref.Origin
+	gitPrefix      = gitref.Prefix
+	gitDiff        = gitref.Diff
+	gitOnRemote    = gitref.OnRemote
+	gitCommitCount = gitref.CommitCount
 )
 
 // listFlag collects a repeatable flag.
@@ -43,6 +45,7 @@ type htmlOptions struct {
 	linkTmpl string
 	cover    string        // -coverprofile (08)
 	mr       int           // -mr (14b): the merge request whose page diff links target; 0 for the compare page
+	hidNoted atomic.Bool   // filesHidden's note was printed: once per zu diff or zu serve session (14b)
 	tmpl     []byte        // the UI page, loaded by prepare
 	profile  cover.Profile // read by prepare; nil without -coverprofile
 }
@@ -302,19 +305,25 @@ func changeView(ctx context.Context, cmd string, c changeSides, sum *diff.Summar
 		if o.mr > 0 { // the merge request's page instead (14b)
 			v.Links.Compare, v.Links.MR = export.MergeRequest(origin, o.mr)
 		}
-		// Link lines come from git's own diff of the two commits, the one
-		// the compare page shows, not from zu's hunks (14).
-		files, err := gitDiff(ctx, c.top, baseRef.Commit, headRef.Commit)
-		switch {
-		case err == nil:
-			export.DiffLinksMR(v, origin, o.mr, hostFiles(files), c.measures)
-		case ctx.Err() != nil:
-			return nil, ctx.Err()
-		default:
-			// The View does not depend on git diff: without it, each
-			// changed declaration links to its file's diff.
-			fmt.Fprintf(stderr, "zu %s: note: git diff failed (%v); host links point at each file's diff\n", cmd, err)
-			export.DiffLinksMR(v, origin, o.mr, fileOnly(v), c.measures)
+		hidden, err := filesHidden(ctx, cmd, c.top, origin, baseRef, headRef, o, stderr)
+		if err != nil {
+			return nil, err
+		}
+		if !hidden {
+			// Link lines come from git's own diff of the two commits, the
+			// one the compare page shows, not from zu's hunks (14).
+			files, err := gitDiff(ctx, c.top, baseRef.Commit, headRef.Commit)
+			switch {
+			case err == nil:
+				export.DiffLinksMR(v, origin, o.mr, hostFiles(files), c.measures)
+			case ctx.Err() != nil:
+				return nil, ctx.Err()
+			default:
+				// The View does not depend on git diff: without it, each
+				// changed declaration links to its file's diff.
+				fmt.Fprintf(stderr, "zu %s: note: git diff failed (%v); host links point at each file's diff\n", cmd, err)
+				export.DiffLinksMR(v, origin, o.mr, fileOnly(v), c.measures)
+			}
 		}
 	}
 	if b := export.BaseBlob(origin, baseRef, o.linkTmpl); b != "" {
@@ -324,6 +333,31 @@ func changeView(ctx context.Context, cmd string, c changeSides, sum *diff.Summar
 		v.Links.Base = b
 	}
 	return v, nil
+}
+
+// filesHidden is whether the compare page of base and head shows its files
+// behind a tab, where no line or file link lands (14b): a GitHub compare of
+// more than 20 commits, without -mr. It says so once per zu diff or zu serve
+// session. When the commits cannot be counted, the links stay out too.
+func filesHidden(ctx context.Context, cmd, top, origin string, base, head ir.Ref, o *htmlOptions, stderr io.Writer) (bool, error) {
+	limit := export.CompareCommitLimit(origin)
+	if limit == 0 || o.mr > 0 {
+		return false, nil
+	}
+	n, err := gitCommitCount(ctx, top, base.Commit, head.Commit)
+	switch {
+	case err != nil && ctx.Err() != nil:
+		return false, ctx.Err()
+	case err != nil:
+		fmt.Fprintf(stderr, "zu %s: note: counting the compare's commits failed (%v); line links are left out\n", cmd, err)
+		return true, nil
+	case n > limit:
+		if !o.hidNoted.Swap(true) {
+			fmt.Fprintf(stderr, "zu: %d commits: GitHub shows this compare's files behind a tab, so line links are left out; pass -mr <number> to link the pull request\n", n)
+		}
+		return true, nil
+	}
+	return false, nil
 }
 
 // onHost is r, or no commit when r is a clean commit that no remote-tracking

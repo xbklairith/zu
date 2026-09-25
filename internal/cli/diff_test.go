@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"zu/internal/diff"
+	"zu/internal/export"
 	"zu/internal/gitref"
 	"zu/internal/policy"
 )
@@ -328,6 +329,97 @@ func TestDiffHTMLLinksTheMergeRequest(t *testing.T) {
 	}
 	if strings.Contains(s, "/compare/") {
 		t.Error("with -mr a link still targets the compare page")
+	}
+}
+
+// longCompare is diffRepo pushed to a GitHub origin with head n commits past
+// main: F's change, then n-1 empty commits.
+func longCompare(t *testing.T, n int) string {
+	t.Helper()
+	dir := diffRepo(t)
+	git(t, dir, "remote", "add", "origin", "git@github.com:o/r.git")
+	for i := 1; i < n; i++ {
+		git(t, dir, "commit", "-q", "--allow-empty", "-m", "empty")
+	}
+	git(t, dir, "update-ref", "refs/remotes/origin/feat", "HEAD") // pushed and fetched
+	return dir
+}
+
+// linksOf is the host links of a View's JSON.
+func linksOf(t *testing.T, view string) export.Links {
+	t.Helper()
+	var v struct{ Links *export.Links }
+	if err := json.Unmarshal([]byte(view), &v); err != nil || v.Links == nil {
+		t.Fatalf("no links in the View (%v): %.300s", err, view)
+	}
+	return *v.Links
+}
+
+// hiddenNote is what zu says, once, when it leaves line links out (14b).
+const hiddenNote = "zu: 21 commits: GitHub shows this compare's files behind a tab, so line links are left out; pass -mr <number> to link the pull request"
+
+// A GitHub compare of more than 20 commits shows its files behind a tab, so
+// no line or file link lands (14b): they are left out, with a note, unless
+// -mr names the pull request. The header's compare link and the base stay.
+func TestDiffHTMLLeavesOutLinksGitHubHides(t *testing.T) {
+	withUI(t)
+	for _, tc := range []struct {
+		name    string
+		commits int
+		args    []string
+		links   string // a.F's link, or "" for none
+		note    bool
+	}{
+		{"21 commits", 21, nil, "", true},
+		{"20 commits", 20, nil, "/compare/", false},
+		{"21 commits, -mr", 21, []string{"-mr", "7"}, "/pull/7/files#diff-", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			longCompare(t, tc.commits)
+			out := filepath.Join(t.TempDir(), "change.html")
+			code, _, errOut := run(append([]string{"diff", "main", "-html", out}, tc.args...)...)
+			if code != ExitOK {
+				t.Fatalf("exit %d: %s", code, errOut)
+			}
+			s := inlined(t, out)
+			for _, want := range []string{`"compare":"https://github.com/o/r/`, `"base":"https://github.com/o/r/blob/`} {
+				if !strings.Contains(s, want) {
+					t.Errorf("View lacks %s", want)
+				}
+			}
+			l := linksOf(t, s)
+			if tc.links == "" {
+				if l.Nodes != nil || l.Files != nil {
+					t.Errorf("line or file links on a compare GitHub hides: %+v", l)
+				}
+			} else if !strings.Contains(l.Nodes["example.com/m/a.F"], tc.links) || len(l.Files) != 1 {
+				t.Errorf("a.F lacks its %s link: %+v", tc.links, l)
+			}
+			if got := strings.Count(errOut, hiddenNote); got != map[bool]int{true: 1, false: 0}[tc.note] {
+				t.Errorf("the note is printed %d times; stderr %q", got, errOut)
+			}
+		})
+	}
+}
+
+// When the commits cannot be counted, the links stay out, with a note: a
+// link that may not land is not guessed (14b, as 14's Deviation 12).
+func TestDiffHTMLCommitCountFailureLeavesOutLinks(t *testing.T) {
+	withUI(t)
+	longCompare(t, 1)
+	old := gitCommitCount
+	t.Cleanup(func() { gitCommitCount = old })
+	gitCommitCount = func(context.Context, string, string, string) (int, error) { return 0, errors.New("boom") }
+	out := filepath.Join(t.TempDir(), "change.html")
+	code, _, errOut := run("diff", "main", "-html", out)
+	if code != ExitOK {
+		t.Fatalf("exit %d: %s", code, errOut)
+	}
+	if l := linksOf(t, inlined(t, out)); l.Nodes != nil || l.Files != nil || !strings.HasPrefix(l.Compare, "https://github.com/o/r/compare/") {
+		t.Errorf("want the compare link and no line links: %+v", l)
+	}
+	if !strings.Contains(errOut, "zu diff: note: counting the compare's commits failed (boom); line links are left out") {
+		t.Errorf("stderr = %q", errOut)
 	}
 }
 
