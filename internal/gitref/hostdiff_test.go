@@ -138,3 +138,28 @@ func TestOnRemote(t *testing.T) {
 		t.Error("an option or a directory outside git is on no remote")
 	}
 }
+
+func TestCommitCount(t *testing.T) {
+	needGit(t)
+	dir := t.TempDir()
+	run(t, dir, "init", "-q", "-b", "main")
+	base := commit(t, dir, "base")
+	commit(t, dir, "one")
+	commit(t, dir, "two")
+	head := commit(t, dir, "three")
+	ctx := context.Background()
+	if n, err := CommitCount(ctx, dir, base, head); err != nil || n != 3 {
+		t.Errorf("CommitCount(base, head) = %d, %v; want 3", n, err)
+	}
+	if n, err := CommitCount(ctx, dir, head, head); err != nil || n != 0 {
+		t.Errorf("CommitCount(head, head) = %d, %v; want 0", n, err)
+	}
+	for _, bad := range [][2]string{{"-p", head}, {base, "--all"}} {
+		if _, err := CommitCount(ctx, dir, bad[0], bad[1]); err == nil {
+			t.Errorf("CommitCount(%q, %q): an option as a commit must be refused", bad[0], bad[1])
+		}
+	}
+	if _, err := CommitCount(ctx, t.TempDir(), base, head); err == nil {
+		t.Error("CommitCount outside git must fail")
+	}
+}

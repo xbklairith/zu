@@ -168,6 +168,22 @@ func rng(s string) (start, n int, err error) {
 	return start, n, err
 }
 
+// CommitCount is `git rev-list --count base..head`: how many commits a host's
+// compare of the two lists. base and head must be commit ids, never options.
+func CommitCount(ctx context.Context, top, base, head string) (int, error) {
+	if strings.HasPrefix(base, "-") || strings.HasPrefix(head, "-") {
+		return 0, fmt.Errorf("invalid commit %q or %q", base, head)
+	}
+	out, err := git(ctx, top, "rev-list", "--count", "--end-of-options", base+".."+head)
+	if err != nil {
+		if ctx.Err() != nil {
+			return 0, ctx.Err()
+		}
+		return 0, fmt.Errorf("git rev-list: %w", err)
+	}
+	return strconv.Atoi(strings.TrimSpace(out))
+}
+
 // OnRemote is whether a remote-tracking ref contains commit: what the host
 // has, as far as this clone knows. It reads local refs only; zu never
 // fetches.
