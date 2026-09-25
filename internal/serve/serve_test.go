@@ -93,10 +93,11 @@ func get(t *testing.T, method, path, host string, hdr map[string]string, view fu
 	if view == nil {
 		view = func(context.Context) ([]byte, error) { return []byte(`{"schema":"1"}`), nil }
 	}
-	h := Handler([]byte("PAGE"), func(ctx context.Context) ([]byte, error) {
+	h := Handler([]byte("PAGE"), Views{Scan: func(ctx context.Context) ([]byte, uint64, error) {
 		builds++
-		return view(ctx)
-	})
+		data, err := view(ctx)
+		return data, 0, err
+	}})
 	r := httptest.NewRequest(method, path, nil)
 	r.Host = host
 	for k, v := range hdr {
@@ -138,7 +139,7 @@ func TestHandlerAnswersOnlyRequestsForThisMachine(t *testing.T) {
 		}
 	}
 	for _, host := range []string{"", "evil.example", "evil.example:7433", "localhost.evil.example", "10.0.0.1:7433", "[::]:7433"} {
-		for _, path := range []string{"/", "/view.json"} {
+		for _, path := range []string{"/", "/view.json", "/events"} {
 			w, builds := get(t, "GET", path, host, nil, nil)
 			if w.Code != http.StatusMisdirectedRequest || builds != 0 {
 				t.Errorf("Host %q %s: %d, %d builds", host, path, w.Code, builds)

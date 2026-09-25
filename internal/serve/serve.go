@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"syscall"
 )
@@ -72,11 +73,24 @@ func loopbackHost(hostport string) bool {
 	return strings.EqualFold(host, "localhost") || loopbackIP(host)
 }
 
-// Handler serves page at / and, at /view.json, the View JSON that view
-// builds for each request. It answers only requests whose Host names this
-// machine, which defeats DNS rebinding, and builds the View only for its own
+// Views is what Handler serves besides the page.
+type Views struct {
+	// Scan rescans the tree and returns the View JSON: GET /view.json. With
+	// a Hub it returns too the generation of the Hub's View, read under the
+	// lock the watch publishes under (13), so the View is at least that new;
+	// else 0.
+	Scan func(context.Context) ([]byte, uint64, error)
+	// Hub, when set, is the watch's latest View (13): GET /view.json?latest
+	// answers it without a rescan, and GET /events streams its changes.
+	Hub *Hub
+}
+
+// Handler serves page at /; at /view.json, the View JSON that v.Scan builds
+// for each request, or with ?latest v.Hub's; and at /events, v.Hub's
+// changes. It answers only requests whose Host names this machine, which
+// defeats DNS rebinding, and serves the View and its changes only to its own
 // page: a request another site's page makes is refused before any scan.
-func Handler(page []byte, view func(context.Context) ([]byte, error)) http.Handler {
+func Handler(page []byte, v Views) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()
 		h.Set("Content-Security-Policy", "frame-ancestors 'none'") // the page's meta CSP cannot say this
@@ -92,17 +106,28 @@ func Handler(page []byte, view func(context.Context) ([]byte, error)) http.Handl
 		case r.URL.Path == "/":
 			h.Set("Content-Type", "text/html; charset=utf-8")
 			_, _ = w.Write(page)
-		case r.URL.Path != "/view.json":
+		case r.URL.Path != "/view.json" && (r.URL.Path != "/events" || v.Hub == nil):
 			http.NotFound(w, r)
 		case crossSite(r):
 			http.Error(w, "zu serve sends the View only to its own page", http.StatusForbidden)
+		case r.URL.Path == "/events":
+			v.Hub.stream(w, r)
 		default:
-			data, err := view(r.Context())
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
+			var data []byte
+			var gen uint64
+			if v.Hub != nil && r.URL.Query().Has("latest") {
+				data, gen, _ = v.Hub.Latest()
+			} else {
+				var err error
+				if data, gen, err = v.Scan(r.Context()); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
 			}
 			h.Set("Content-Type", "application/json")
+			if gen > 0 {
+				h.Set("Zu-Generation", strconv.FormatUint(gen, 10))
+			}
 			_, _ = w.Write(data)
 		}
 	})

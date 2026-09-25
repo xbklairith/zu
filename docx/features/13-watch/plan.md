@@ -1480,7 +1480,7 @@ index 0000000..aef462c
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/internal/serve/live_test.go b/internal/serve/live_test.go
@@ -1661,9 +1661,9 @@ index 97fa074..6c61bf3 100644
  				t.Errorf("Host %q %s: %d, %d builds", host, path, w.Code, builds)
 ```
 
-- [ ] **Run:** `go test ./internal/serve/` Expected: FAIL (`undefined: Hub`, `undefined: Views`, `undefined: NewHub`)
+- [x] **Run:** `go test ./internal/serve/` Expected: FAIL (`undefined: Hub`, `undefined: Views`, `undefined: NewHub`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/internal/cli/serve.go b/internal/cli/serve.go
@@ -1904,9 +1904,9 @@ index 9e361be..4704b8e 100644
  	})
 ```
 
-- [ ] **Run:** `go test -race ./... && go vet ./...` Expected: PASS
+- [x] **Run:** `go test -race ./... && go vet ./...` Expected: PASS
 
-- [ ] **Commit:** `Stream the latest View's generation and notice at /events`
+- [x] **Commit:** `Stream the latest View's generation and notice at /events`
 
 ### Task 4: `zu serve` watches (`-poll`)
 

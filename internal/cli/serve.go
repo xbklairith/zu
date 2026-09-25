@@ -62,7 +62,10 @@ func runServe(args []string, stdout, stderr io.Writer) int {
 	if _, err := s.view(ctx); err != nil { // a tree zu cannot scan fails here, not in the page
 		return bad(err)
 	}
-	srv := newServer(serve.Handler(page, s.view))
+	srv := newServer(serve.Handler(page, serve.Views{Scan: func(ctx context.Context) ([]byte, uint64, error) {
+		data, err := s.view(ctx)
+		return data, 0, err
+	}}))
 	done := make(chan error, 1)
 	go func() { done <- srv.Serve(ln) }()
 	fmt.Fprintf(stdout, "http://%s/\n", ln.Addr())
@@ -78,7 +81,8 @@ func runServe(args []string, stdout, stderr io.Writer) int {
 }
 
 // newServer bounds how long a client may take to send its headers and keep
-// an idle connection open.
+// an idle connection open. It sets no WriteTimeout: one would cut 13's
+// /events stream, which stays open while the page does.
 func newServer(h http.Handler) *http.Server {
 	return &http.Server{Handler: h, ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second}
 }
