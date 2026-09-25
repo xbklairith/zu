@@ -106,8 +106,9 @@ const median = (xs) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)] 
 
 async function measure(name, b) {
   for (const file of pages) {
-    const { p } = await open(b, file);
+    let { p } = await open(b, file);
     const first = await drawing(p);
+    const vp = await viewport(p);
     const rows = [];
     for (const id of await toggles(p)) {
       const o = await flip(p, id);
@@ -115,10 +116,18 @@ async function measure(name, b) {
       const opened = await drawing(p);
       const c = await flip(p, id);
       await settle(p);
-      rows.push({ open: o.ms, close: c.ms, moved: moved(first, opened, id), wrong: wrong(first, opened, id), restored: await drawing(p).then((d) => Object.keys(first).every((k) => d[k] === first[k])), blank: o.blank || c.blank });
+      // After a pan (15's camera, Task 5) React Flow draws other nodes: compare
+      // those drawn both times, and start the next toggle on a fresh page.
+      const d = await drawing(p);
+      const panned = (await viewport(p)) !== vp;
+      rows.push({ open: o.ms, close: c.ms, moved: moved(first, opened, id), wrong: wrong(first, opened, id), restored: Object.keys(first).every((k) => (panned && !(k in d)) || d[k] === first[k]), blank: o.blank || c.blank, panned });
+      if (panned) {
+        await p.close();
+        ({ p } = await open(b, file));
+      }
     }
     const f = (k) => `${Math.round(median(rows.map((r) => r[k])))} / ${Math.round(Math.max(...rows.map((r) => r[k])))}`;
-    console.log(`| ${basename(file)} | ${name} | ${rows.length} | ${f("open")} | ${f("close")} | ${f("moved")} | ${rows.filter((r) => r.wrong > 0).length} | ${rows.filter((r) => r.restored).length} | ${rows.filter((r) => r.blank).length} |`);
+    console.log(`| ${basename(file)} | ${name} | ${rows.length} | ${f("open")} | ${f("close")} | ${f("moved")} | ${rows.filter((r) => r.wrong > 0).length} | ${rows.filter((r) => r.restored).length} | ${rows.filter((r) => r.blank).length} | ${rows.filter((r) => r.panned).length} |`);
     await p.close();
   }
 }
@@ -162,23 +171,65 @@ async function accept(name, b, file) {
     const b = box(first[k]);
     return b.y + b.h <= k00.y || (b.x + b.w <= k00.x && b.y < k00.y + k00.h);
   });
+  const vpBack = await viewport(p);
+  await p.close();
   return {
     opened: opened["m/k00/s0/u"] !== undefined,
     others: aside.length >= 5 && aside.every((k) => first[k] === opened[k]),
     restored: Object.keys(first).every((k) => back[k] === first[k]), // WebKit may draw more of the edge of the screen
-    kept: vp !== "" && vp === vpOpen && vp === (await viewport(p)),
+    kept: vp !== "" && vp === vpOpen && vp === vpBack,
     raced: fresh !== undefined && !hashed.includes(fresh) && Object.keys(first).every((k) => raced[k] === first[k]),
     blank: o.blank || c.blank,
     errors,
   };
 }
-const want = { opened: true, others: true, restored: true, kept: true, raced: true, blank: false, errors: [] };
+// shown: zoomed in about the canvas's top-left until a box sits near its
+// bottom-right, opening the box pans the camera, never zooms and moves no
+// box, until the box's top-left is in view and as much of it as fits (M4).
+async function shown(b, file) {
+  const { p, errors } = await open(b, file);
+  const pane = await p.locator(".react-flow").boundingBox();
+  await p.mouse.move(pane.x + 5, pane.y + 5);
+  for (let i = 0; i < 6; i++) {
+    await p.mouse.wheel(0, -100);
+    await p.waitForTimeout(300);
+  }
+  const rect = (id) => p.evaluate((id) => {
+    const c = document.querySelector(".react-flow").getBoundingClientRect();
+    const r = document.querySelector(`.react-flow__node[data-id="${CSS.escape(id)}"]`).getBoundingClientRect();
+    return { x: r.x - c.x, y: r.y - c.y, r: r.right - c.x, b: r.bottom - c.y, w: c.width, h: c.height };
+  }, id);
+  // The box with a toggle lowest on the canvas and wholly on it.
+  const id = await p.evaluate(() => {
+    const c = document.querySelector(".react-flow").getBoundingClientRect();
+    return [...document.querySelectorAll(".react-flow__node:not(.react-flow__node-container) .toggle")]
+      .map((e) => [e.closest(".react-flow__node").dataset.id, e.closest(".react-flow__node").getBoundingClientRect()])
+      .filter(([id, r]) => !id.includes("#") && r.x >= c.x && r.y >= c.y && r.right <= c.right && r.bottom <= c.bottom)
+      .sort(([, a], [, b]) => b.bottom - a.bottom)[0]?.[0];
+  });
+  const first = await drawing(p);
+  const zoom = (v) => /scale\(([\d.]+)\)/.exec(v)?.[1];
+  const vp = await viewport(p);
+  await flip(p, id);
+  await settle(p);
+  const r = await rect(id);
+  const moved = await viewport(p);
+  const opened = await drawing(p);
+  await p.close();
+  const fits = (lo, hi, room) => lo >= 0 && lo <= room && (hi <= room + 1 || lo <= 25);
+  return {
+    revealed: id !== undefined && fits(r.x, r.r, r.w) && fits(r.y, r.b, r.h) && moved !== vp && zoom(moved) === zoom(vp),
+    still: wrong(first, opened, id) === 0,
+    errors,
+  };
+}
+const want = { opened: true, others: true, restored: true, kept: true, raced: true, blank: false, revealed: true, still: true, errors: [] };
 
 const channel = process.env.ZU_E2E_CHANNEL;
 const engines = [["chromium", chromium, channel ? { channel } : {}], ["firefox", firefox, {}], ["webkit", webkit, {}]];
 if (pages.length) {
-  console.log("| page | engine | toggles | open ms (median / max) | close ms | others moved | toggles moving a box above or left | restored | blank |");
-  console.log("|---|---|---|---|---|---|---|---|---|");
+  console.log("| page | engine | toggles | open ms (median / max) | close ms | others moved | toggles moving a box above or left | restored | blank | panned |");
+  console.log("|---|---|---|---|---|---|---|---|---|---|");
   for (const [name, type, opts] of engines) {
     const b = await type.launch(opts);
     await measure(name, b).finally(() => b.close().catch(() => {}));
@@ -189,7 +240,10 @@ const file = town();
 let failed = 0;
 for (const [name, type, opts] of engines) {
   const b = await type.launch(opts);
-  const got = await accept(name, b, file).finally(() => b.close().catch(() => {}));
+  const got = await (async () => {
+    const [a, s] = [await accept(name, b, file), await shown(b, file)];
+    return { ...a, ...s, errors: [...a.errors, ...s.errors] };
+  })().finally(() => b.close().catch(() => {}));
   const bad = Object.keys(want).filter((k) => JSON.stringify(got[k]) !== JSON.stringify(want[k]));
   for (const k of bad) console.log(`${name}: ${k} = ${JSON.stringify(got[k])}, want ${JSON.stringify(want[k])}`);
   console.log(`${name}: ${bad.length ? "FAIL" : "ok"} (${Object.keys(want).length - bad.length}/${Object.keys(want).length} checks)`);

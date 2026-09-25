@@ -1755,7 +1755,7 @@ The browser check goes first, because `make build` type-checks the unit tests.
 
 **Steps:**
 
-- [ ] **Write the failing browser check**
+- [x] **Write the failing browser check**
 
 ```diff
 diff --git a/web/e2e/place.mjs b/web/e2e/place.mjs
@@ -1878,9 +1878,9 @@ index bb1274d..bb67c82 100644
    console.log(`${name}: ${bad.length ? "FAIL" : "ok"} (${Object.keys(want).length - bad.length}/${Object.keys(want).length} checks)`);
 ```
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node place.mjs` Expected: FAIL (8/9 in each engine: `revealed`)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node place.mjs` Expected: FAIL (8/9 in each engine: `revealed`)
 
-- [ ] **Write the failing unit tests**
+- [x] **Write the failing unit tests**
 
 ```diff
 diff --git a/web/src/viewport.test.ts b/web/src/viewport.test.ts
@@ -1920,9 +1920,9 @@ index 01e2950..d632809 100644
 +});
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/viewport.test.ts` Expected: FAIL (4 of 10: `reveal is not a function`)
+- [x] **Run:** `cd web && npx vitest run src/viewport.test.ts` Expected: FAIL (4 of 10: `reveal is not a function`)
 
-- [ ] **Pan to what the reader opened**
+- [x] **Pan to what the reader opened**
 
 ```diff
 diff --git a/web/src/Canvas.tsx b/web/src/Canvas.tsx
@@ -2004,11 +2004,11 @@ index 1b6b189..2115c31 100644
 +}
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS (269 tests)
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS (269 tests)
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node place.mjs` Expected: PASS (9 checks in each engine)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node place.mjs` Expected: PASS (9 checks in each engine)
 
-- [ ] **Commit:** `Pan to an opened box that grew past the canvas, moving no box`
+- [x] **Commit:** `Pan to an opened box that grew past the canvas, moving no box`
 
 ### Task 6: Acceptance
 

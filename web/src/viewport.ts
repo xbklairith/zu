@@ -45,3 +45,19 @@ export function readableFit(rects: readonly Rect[], canvas: { w: number; h: numb
   }
   return { x: canvas.w / 2 - cx * zoom, y: PAD - top * zoom, zoom, whole: false };
 }
+
+// reveal is the viewport that brings r (absolute, in layout units) into view
+// on a canvas of w × h px, moved as little as it can and never zoomed (15): a
+// box the reader opened that grew past the canvas's edge. Its top-left comes
+// into view, and as much of it as fits, PAD from the edges. Null when r is in
+// view already.
+export function reveal(v: Viewport, r: Rect, canvas: { w: number; h: number }): Viewport | null {
+  const pan = (at: number, size: number, offset: number, room: number) => {
+    const [start, end] = [at * v.zoom + offset, (at + size) * v.zoom + offset];
+    if (start >= 0 && end <= room) return 0;
+    const d = end > room ? room - PAD - end : 0;
+    return start + d < PAD ? PAD - start : d;
+  };
+  const [dx, dy] = [pan(r.x, r.w, v.x, canvas.w), pan(r.y, r.h, v.y, canvas.h)];
+  return dx === 0 && dy === 0 ? null : { x: v.x + dx, y: v.y + dy, zoom: v.zoom };
+}

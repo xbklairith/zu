@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import css from "./styles.css?raw";
-import { FLOOR, LABEL_PX, mapByDefault, PAD, readableFit, READABLE_PX } from "./viewport";
+import { FLOOR, LABEL_PX, mapByDefault, PAD, readableFit, READABLE_PX, reveal } from "./viewport";
 
 const canvas = { w: 1000, h: 600 };
 
@@ -40,5 +40,24 @@ describe("readableFit (11)", () => {
 describe("mapByDefault (11)", () => {
   it("shows the minimap at first only in a window 900 px wide or more", () => {
     expect([mapByDefault(1600), mapByDefault(900), mapByDefault(899), mapByDefault(390)]).toEqual([true, true, false, false]);
+  });
+});
+
+describe("reveal (15)", () => {
+  // canvas is 1000 × 600; at zoom 2 a layout unit is 2 px.
+  const v = { x: -100, y: -50, zoom: 2 };
+  it("leaves a box in view where it is", () => {
+    expect(reveal(v, { x: 100, y: 50, w: 100, h: 50 }, canvas)).toBeNull(); // 100..300 × 50..150 px
+  });
+  it("pans just enough to show a box that grew past the canvas's right or bottom edge", () => {
+    // 700..1100 × 400..700 px: 100 past the right, 100 past the bottom.
+    expect(reveal(v, { x: 400, y: 225, w: 200, h: 150 }, canvas)).toEqual({ x: -200 - PAD, y: -150 - PAD, zoom: 2 });
+  });
+  it("keeps the box's top-left in view when all of it does not fit", () => {
+    // 700..2700 px wide: its left goes to PAD, and the rest runs off the right.
+    expect(reveal(v, { x: 400, y: 50, w: 1000, h: 50 }, canvas)).toEqual({ x: -100 - (700 - PAD), y: -50, zoom: 2 });
+  });
+  it("brings a box whose top-left is off the canvas back into view", () => {
+    expect(reveal(v, { x: 20, y: 10, w: 50, h: 20 }, canvas)).toEqual({ x: -100 + (60 + PAD), y: -50 + (30 + PAD), zoom: 2 });
   });
 });

@@ -22,7 +22,7 @@ import { around } from "./edges";
 import { absolute, triangles, type Placed } from "./layout";
 import { crapGrade, crapLabel } from "./metrics";
 import type { Scene, SceneEdge, SceneNode } from "./scene";
-import { mapByDefault, readableFit } from "./viewport";
+import { mapByDefault, readableFit, reveal } from "./viewport";
 
 type Data = {
   node: SceneNode;
@@ -285,6 +285,27 @@ export function Canvas({ view, sc, placed, edge, onSelect, onOpen, onToggle, onE
     setWhole(all);
     void rf.setViewport(v);
   }, [rf, fit, placed, target]);
+  // 15 (M4): a box the reader opened keeps its place, and so does every other
+  // box; when it grew past the canvas's edge, the camera pans, just enough to
+  // show its top-left and as much of it as fits (viewport.ts reveal). Never
+  // animated, so reduced motion needs no case of its own.
+  const flipped = useRef<{ id: string; shape: SceneNode["shape"] } | null>(null);
+  const flip = useMemo(() => onToggle && ((t: string) => {
+    const n = sc.nodes.find((x) => (x.toggleId ?? x.id) === t);
+    flipped.current = n ? { id: n.id, shape: n.shape } : null;
+    onToggle(t);
+  }), [onToggle, sc]);
+  useEffect(() => {
+    const f = flipped.current;
+    const p = f === null ? undefined : placed.get(f.id);
+    const at = f === null ? null : absolute(placed, f.id);
+    const r = box.current?.getBoundingClientRect();
+    // Until the layout draws the box the other way, the page draws the last one.
+    if (f === null || byId.get(f.id)?.shape === f.shape || !p || !at || !r || r.width === 0) return;
+    flipped.current = null;
+    const v = reveal(rf.getViewport(), { ...at, w: p.w, h: p.h }, { w: r.width, h: r.height });
+    if (v) void rf.setViewport(v);
+  }, [rf, sc, placed]); // byId comes from sc
   // 11: while lines are on demand, a hovered box draws its own over the rest.
   const [hover, setHover] = useState<string | null>(null);
   const nodes: ZNode[] = useMemo(() => [...sc.nodes]
@@ -302,9 +323,9 @@ export function Canvas({ view, sc, placed, edge, onSelect, onOpen, onToggle, onE
         selected: node.selected,
         draggable: false,
         connectable: false,
-        data: { node, w: p.w, h: p.h, row: sc.selectedRow, pick: onSelect, toggle: onToggle },
+        data: { node, w: p.w, h: p.h, row: sc.selectedRow, pick: onSelect, toggle: flip },
       };
-    }), [sc, placed, onSelect, onToggle]); // byId comes from sc
+    }), [sc, placed, onSelect, flip]); // byId comes from sc
   const drawn = new Set(sc.edges.map((e) => e.id));
   const hovered: SceneEdge[] = sc.lines || hover === null || hover === sc.selected ? []
     : around(sc.all, hover, (id) => byId.get(id)?.parent ?? "").filter((e) => !drawn.has(e.id)).map((e) => ({ ...e, hot: true, dim: false }));
