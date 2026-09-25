@@ -110,3 +110,12 @@ export async function place(sc: Scene, engine: Engine, cache: Map<string, Map<st
   for (const r of regions(sc)) frames.set(r.nodes[0].id, await one(r));
   return grow(sc, frames) ?? one(sc);
 }
+
+// show is the page's layout effect (App.tsx): it places sc and hands the
+// layout to draw, or the error to fail.
+export function show(
+  sc: Scene, engine: Engine, cache: Map<string, Map<string, Placed>>,
+  draw: (at: Map<string, Placed>) => void, fail: (e: Error) => void,
+): void {
+  place(sc, engine, cache).then(draw, fail);
+}

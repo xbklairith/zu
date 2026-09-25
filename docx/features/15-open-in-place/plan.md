@@ -1202,7 +1202,7 @@ The same script, given page files, measures instead (**Measurements**).
 
 **Steps:**
 
-- [ ] **Write the failing browser check**
+- [x] **Write the failing browser check**
 
 ```diff
 diff --git a/web/e2e/package.json b/web/e2e/package.json
@@ -1409,9 +1409,9 @@ index 0000000..6d23380
 +process.exit(failed ? 1 : 0);
 ```
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node place.mjs` Expected: FAIL (3/6 in each engine: `others`, `kept` and `blank`)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node place.mjs` Expected: FAIL (3/6 in each engine: `others`, `kept` and `blank`)
 
-- [ ] **Place the scene, and keep the drawing while a toggle lays out**
+- [x] **Place the scene, and keep the drawing while a toggle lays out**
 
 ```diff
 diff --git a/web/src/App.tsx b/web/src/App.tsx
@@ -1565,11 +1565,11 @@ index ca0bfbf..4c7d4ca 100644
 +}
 ```
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node place.mjs` Expected: PASS (6 checks in each engine)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node place.mjs` Expected: PASS (6 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (57 checks in each engine)
+- [x] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (57 checks in each engine)
 
-- [ ] **Commit:** `Open and close a box in place, keeping every other box where it was`
+- [x] **Commit:** `Open and close a box in place, keeping every other box where it was`
 
 ### Task 4: A layout the page no longer wants never draws (B1)
 

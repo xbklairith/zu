@@ -9,18 +9,21 @@ import { pageEngine } from "./engine";
 import { Header } from "./Header";
 import { redLegend, violationsNote } from "./headline";
 import { keyAction } from "./keys";
-import { arrange, ownTiersOf, elkGraph, headers, levelsOf, orderOf, Superseded, type Placed } from "./layout";
+import { elkGraph, headers, Superseded, type Placed } from "./layout";
+import { show } from "./place";
 import { Panel } from "./Panel";
 import { pinFor } from "./policy";
 import { PROPOSAL_NOTICE, proposalView } from "./proposal";
 import { reveal } from "./search";
 import { SearchBox } from "./SearchBox";
-import { DRAW_LIMIT, fitDepth, HUBS, openFull, scene, type Scene, type SceneNode } from "./scene";
-import { deeper, drill, nextStage, select, shallower, toggle, up } from "./state";
+import { DRAW_LIMIT, fitDepth, HUBS, opening, openFull, scene, type Scene, type SceneNode } from "./scene";
+import { deeper, drill, nextStage, select, shallower, toggle, up, type ViewState } from "./state";
 import { Toolbar } from "./Toolbar";
 import { useViewState } from "./useViewState";
 
 const PKG = "#pkg";
+const FRAMES = 64; // 15: the most layouts the page keeps (place.ts)
+const SCENES = 32; // 15: and scenes
 
 type LegendProps = {
   change: boolean; policy: boolean; ranks: boolean; crap: boolean; proposal: string | null;
@@ -112,7 +115,7 @@ function ChangedList({ view, onPick }: { view: View; onPick: (id: string) => voi
 }
 
 // Drawing is a finished layout and what it was made for.
-type Drawing = { whole: View; view: View; sc: Scene; graph: string; at: Map<string, Placed> };
+type Drawing = { whole: View; view: View; sc: Scene; graph: string; base: string; at: Map<string, Placed> };
 
 export function App({ view: whole }: { view: View }) {
   const change = whole.kind === "change";
@@ -137,7 +140,23 @@ export function App({ view: whole }: { view: View }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [fit, setFit] = useState(0);
   const pin = useMemo(() => pinFor(whole), [whole]); // 06: violations stay red
-  const requested = useMemo(() => scene(view, state, { pin, home: true }), [view, state, pin]);
+  // 15: the scenes of this View by state, so the view as it opened is made
+  // once while the reader opens and closes boxes and selects in it, and
+  // closing the last box draws the first view without making it again.
+  const sceneOf = useMemo(() => {
+    const at = new Map<string, Scene>();
+    const made = (s: ViewState, base: Scene | null): Scene => {
+      const k = JSON.stringify(s);
+      const hit = at.get(k);
+      if (hit) return hit;
+      if (at.size >= SCENES) at.clear();
+      const sc = scene(view, s, { pin, home: true, base });
+      at.set(k, sc);
+      return sc;
+    };
+    return (s: ViewState) => made(s, opening(view, s, (b) => made(b, null)));
+  }, [view, pin]);
+  const requested = useMemo(() => sceneOf(state), [sceneOf, state]);
   // A view over DRAW_LIMIT draws the deepest depth that fits and says so; only
   // when even depth 1 is too big does the reader choose (Deviation 8).
   // "Draw depth M anyway" holds for this graph only.
@@ -145,9 +164,9 @@ export function App({ view: whole }: { view: View }) {
   const [confirmed, setConfirmed] = useState<string | null>(null);
   const fitted = useMemo(() => {
     if (confirmed === wanted) return requested;
-    const d = fitDepth(requested, (depth) => scene(view, { ...state, depth }, { pin, home: true }));
-    return d === null ? null : d === requested.depth ? requested : scene(view, { ...state, depth: d }, { pin, home: true });
-  }, [confirmed, wanted, requested, view, state, pin]);
+    const d = fitDepth(requested, (depth) => sceneOf({ ...state, depth }));
+    return d === null ? null : d === requested.depth ? requested : sceneOf({ ...state, depth: d });
+  }, [confirmed, wanted, requested, sceneOf, state]);
   const sc = fitted ?? requested;
   const ask = fitted === null;
   // A selected bundle edge lives here, not in the hash: its id changes with depth.
@@ -170,30 +189,33 @@ export function App({ view: whole }: { view: View }) {
   // changes, so selecting and dimming never lay out again.
   const engine = useMemo(pageEngine, []);
   useEffect(() => () => engine.dispose(), [engine]);
-  const graph = useMemo(() => JSON.stringify(elkGraph(sc)), [sc]);
+  // 15: and on the view as it opened, which places what the reader did not open.
+  const opened = useMemo(() => JSON.stringify(elkGraph(sc.ref ?? sc)), [sc]);
+  const graph = useMemo(() => JSON.stringify(elkGraph(sc)) + (sc.ref ? opened : ""), [sc, opened]);
   // 11: what packed widens containers to; a change lays out again.
   const heads = useMemo(() => JSON.stringify([...headers(sc)]), [sc]);
   const key = graph + "\n" + heads;
-  // The Policy's order is a property of the nodes in graph, so a layout of
-  // graph may read the order of any scene that produced it.
-  const order = useMemo(() => orderOf(sc), [sc]);
-  // 11: likewise each node's level: graph holds the rows ranked made.
-  const levels = useMemo(() => levelsOf(sc), [sc]);
-  const ownTiers = useMemo(() => ownTiersOf(sc), [sc]); // 12: a merged row's order
+  // 15: every layout of the page's life by its input (place.ts frameKey), so
+  // a toggle lays out only the box it opened, and closing it lays out nothing.
+  const frames = useRef(new Map<string, Map<string, Placed>>());
   // 13: a layout keeps the View and scene it was made for, so while zu
   // serve's newer View lays out the page goes on drawing the last one, in the
-  // same React Flow, and the reader's pan and zoom stay.
+  // same React Flow, and the reader's pan and zoom stay. 15: so too while a
+  // box the reader opened or closed lays out, when the view as it opened is
+  // the same; anything else that lays the view out again starts afresh.
   const [placed, setPlaced] = useState<Drawing | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   useEffect(() => {
     if (ask) return;
     const made = { whole, view, sc };
     performance.mark("zu-layout-start");
-    engine.layout(JSON.parse(graph)).then(
-      (out) => {
+    if (frames.current.size > FRAMES) frames.current.clear();
+    show(
+      sc, engine, frames.current,
+      (at) => {
         performance.mark("zu-layout-end");
         setFailed(null);
-        setPlaced({ ...made, graph: graph + "\n" + heads, at: arrange(out, order, new Map(JSON.parse(heads) as [string, number][]), levels, ownTiers) });
+        setPlaced({ ...made, graph: graph + "\n" + heads, base: opened, at });
       },
       (e: Error) => {
         if (!(e instanceof Superseded)) setFailed(e.message);
@@ -254,8 +276,8 @@ export function App({ view: whole }: { view: View }) {
     ? null
     : placed.graph === key
       ? { view, sc, at: placed.at }
-      : placed.whole !== whole && `${state.focus}\n${placed.sc.depth}` === frame
-        ? placed
+      : (placed.whole !== whole || placed.base === opened) && `${state.focus}\n${placed.sc.depth}` === frame
+        ? placed // 13: a newer View; 15: a toggle, until its layout is done
         : null;
 
   return (

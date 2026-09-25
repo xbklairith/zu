@@ -5,7 +5,8 @@
   "scripts": {
     "browsers": "playwright-core install chromium firefox webkit",
     "accept": "node accept.mjs",
-    "accept-serve": "node serve.mjs"
+    "accept-serve": "node serve.mjs",
+    "accept-place": "node place.mjs"
   },
   "devDependencies": {
     "playwright-core": "1.63.0"
