@@ -3196,7 +3196,7 @@ Seven checks in three engines on two new fixtures (`grouped.html`: 3 demoted pac
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 diff --git a/web/e2e/accept.mjs b/web/e2e/accept.mjs
@@ -3350,9 +3350,9 @@ index cbd0492..c0f5b27 100644
  });
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/group.test.ts` Expected: FAIL (a group id is not a known node)
+- [x] **Run:** `cd web && npx vitest run src/group.test.ts` Expected: FAIL (a group id is not a known node)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/web/src/scene.ts b/web/src/scene.ts
@@ -3370,13 +3370,13 @@ index 7978a41..41116b6 100644
  
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npx tsc --noEmit` Expected: PASS
 
-- [ ] **Run:** `make build` Expected: PASS
+- [x] **Run:** `make build` Expected: PASS
 
-- [ ] **Run:** `cd web/e2e && npm run accept` Expected: PASS, 54/54 in each engine
+- [x] **Run:** `cd web/e2e && npm run accept` Expected: PASS, 54/54 in each engine
 
-- [ ] **Commit** (one line, imperative; stage these files only)
+- [x] **Commit** (one line, imperative; stage these files only)
 
 ### Task 10: Gates and acceptance
 

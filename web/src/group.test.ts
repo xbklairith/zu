@@ -83,6 +83,7 @@ describe("the demotion strip (12)", () => {
   it("lets a hash name a strip as a toggle", () => {
     expect(knownIds(noisy).folder(`m${STRIP}`)).toBe(true);
     expect(knownIds(noisy).folder(`nope${STRIP}`)).toBe(false);
+    expect(knownIds(noisy).node(`m${STRIP}`)).toBe(true); // a selected group survives a reload
     expect(isGroup(`m${STRIP}`)).toBe(true);
   });
 });

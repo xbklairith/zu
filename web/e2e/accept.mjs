@@ -113,6 +113,20 @@ write("crap-change.html", page({
     funcs: {},
   },
 }));
+// 12: big.html's 24 groups, two testdata packages and a generated one, and a
+// Policy budget of 12; m/g00/p0 imports one testdata package.
+const noise = [["m/testdata/a", "name"], ["m/testdata/b", "name"], ["m/zz_generated", "generated"]];
+write("grouped.html", page({
+  ...shop, modules: ["m"], sources: {}, policy: { hash: "sha256:e2e", levels: [], budget: 12 },
+  nodes: [...bigNodes, ...noise.map(([id, demoted]) => ({ ...pkg(id, "m"), demoted }))],
+  edges: [...edges, imp("m/g00/p0", "m/testdata/a")],
+}));
+// 12: a chain of nine, c8 a program: nine ranks drawn in seven rows.
+const chain = Array.from({ length: 9 }, (_, i) => `m/c${i}`);
+write("chain.html", page({
+  ...shop, modules: ["m"], sources: {}, edges: chain.slice(1).map((id, i) => imp(id, chain[i])),
+  nodes: chain.map((id) => ({ ...pkg(id, "m"), ...(id === "m/c8" ? { main: true } : {}) })),
+}));
 
 const base = "file://" + dir + "/";
 const vp = (p) => p.locator(".react-flow__viewport").getAttribute("style");
@@ -296,7 +310,7 @@ async function run(b) {
   await p.getByRole("button", { name: "Show full project" }).click({ timeout: 5000 }).catch(() => {});
   await settle(p);
   out.changeRest = [
-    await p.locator("header").innerText().then((t) => /\d+ boxes at depth \d+/.exec(t)?.[0] ?? ""),
+    await p.locator("header").innerText().then((t) => /\d+ boxes at depth \d+(, \d+ boxes folded)?/.exec(t)?.[0] ?? ""),
     await p.locator(".react-flow__edge").count(),
     await p.locator(".react-flow__edge.edge-mixed, .react-flow__edge.edge-added").count(),
   ];
@@ -434,6 +448,67 @@ async function run(b) {
   await p.locator("#zu-status", { hasText: "Layout failed" }).waitFor({ timeout: 15000 }).catch(() => {});
   out.blocked = await p.locator("#zu-status").textContent().catch(() => null);
   await p.close();
+  // 12: the first view's grouping, at 1600 × 1000.
+  p = await b.newPage({ viewport: { width: 1600, height: 1000 } });
+  const rows = () => p.evaluate(() => {
+    const top = [...document.querySelectorAll(".react-flow__node")].filter((n) => !n.querySelector(".node.container") && !n.closest(".react-flow__node-container"));
+    return new Set(top.map((n) => Math.round(n.getBoundingClientRect().top))).size;
+  });
+  const boxCount = () => p.locator(".react-flow__node .node.box").count();
+  await p.goto(base + "big.html");
+  await drawn(p);
+  await settle(p);
+  await p.locator(".react-flow__controls-fitview").click();
+  await settle(p);
+  const chips = await p.locator(".node.chip.group .label").allTextContents();
+  out.fold = [await boxCount(), chips.length > 0 && chips.every((t) => /^\+\d+ more$/.test(t)), (await rows()) <= 7,
+    await p.locator("header").innerText().then((t) => /\d+ boxes folded/.exec(t)?.[0] ?? "")];
+  await p.locator(".react-flow__node:has(.node.chip.group)").first().click(); // 12 (N4): one click opens a group
+  await settle(p);
+  out.foldOpen = [(await hash(p)).includes("t=m#more"), await p.locator(".node.chip.group .label").first().textContent().then((t) => /^fold \d+$/.test(t))];
+  await p.goto(base + "grouped.html");
+  await p.reload();
+  await drawn(p);
+  await settle(p);
+  await p.locator(".react-flow__controls-fitview").click();
+  await settle(p);
+  const strip = p.locator(".react-flow__node[data-id='m#demoted']");
+  out.strip = [await boxCount(), await strip.locator(".label").textContent(), await strip.locator(".node").getAttribute("title")];
+  await strip.click();
+  await settle(p);
+  out.stripOpen = [await hash(p), await p.locator(".react-flow__node[data-id='m/testdata'] .node.demoted").count()];
+  await p.goto(base + "chain.html");
+  await p.reload();
+  await drawn(p);
+  await settle(p);
+  out.rowCap = [await rows(),
+    await p.locator(".axis .entry").textContent().catch(() => null), await p.locator(".react-flow__node[data-id='m/c8'] .badge").allTextContents()];
+  // with.html: example.com/shop sits at the repository root with a nested
+  // module, so the page root opens it in place; Esc from inside it comes back.
+  await p.goto(base + "with.html");
+  await drawn(p);
+  await settle(p);
+  const shopOpen = await p.locator(".react-flow__node-container[data-id='example.com/shop']").count();
+  await p.goto(base + "with.html#f=example.com/shop/internal");
+  await p.reload();
+  await drawn(p);
+  await settle(p);
+  await p.keyboard.press("Escape");
+  await settle(p);
+  out.rootOpen = [shopOpen, await hash(p)];
+  await p.close();
+  // 12 (N4): at 1280 × 720 the Panel opens over the canvas after a click, so
+  // a group opens on one click, not a double-click.
+  p = await b.newPage({ viewport: { width: 1280, height: 720 } });
+  await p.goto(base + "big.html");
+  await drawn(p);
+  await settle(p);
+  await p.locator(".react-flow__controls-fitview").click();
+  await settle(p);
+  await p.locator(".react-flow__node:has(.node.chip.group)").first().click();
+  await settle(p);
+  out.foldNarrow = [(await hash(p)).includes("t=m#more"), await p.locator(".node.chip.group .label").first().textContent()];
+  await p.close();
   out.errors = errors;
   return out;
 }
@@ -462,7 +537,8 @@ const want = {
   errors: [],
   // 07
   ranks: ["m/cmd 2", "m/internal 1", "m/internal/cli 1", "m/internal/ir 0"],
-  overview: ["144 dependencies hidden; select or hover a box to see its own.", 0, true, true, true, 0, 1],
+  // 12: 24 boxes in at most seven rows fit the first view: no minimap.
+  overview: ["144 dependencies hidden; select or hover a box to see its own.", 0, true, true, true, 0, 0],
   firstView: [0, 3, 0, 0, 1],
   // big.html's 24 groups form a ring, each using the next 6: in any row order the
   // arcs that wrap round run against it, 1 + 2 + … + 6 = 21 at the least.
@@ -471,7 +547,8 @@ const want = {
   keyboard: [0, 1, true, 6, 6],
   narrowMap: [0, 1],
   policyRest: [1, 1],
-  changeRest: ["25 boxes at depth 2", 1, 1],
+  // 12: the full project at the auto depth folds to the budget; m/g02, changed, shows.
+  changeRest: ["15 boxes at depth 2, 10 boxes folded", 1, 1],
   redBox: ["d=1: m/internal", "full:  / 1 0", "arrows:  / 1 0", "triangles:  / 0 2", "elements:  / 1 0", "classes:  / 1 0"],
   panel: ["Violations inside (1)", "levels m/internal/ir/bad → m/internal/cli"],
   proposal: ["#p=Hexagon", "PROPOSAL — not instantiated in code: Hexagon", "violates Proposal Hexagon's layers; a red box holds one"],
@@ -494,6 +571,14 @@ const want = {
   crapChange: [true, true],
   crapChangeBox: ["35 high", "Worst CRAP μ+σ among drawn: 35, grade 1.0 of 10"],
   noCrap: [0, 0],
+  // 12
+  fold: [15, true, true, "10 boxes folded"],
+  foldOpen: [true, true],
+  strip: [12, "3 tests, tools & generated · used by 1", "2 tests & tools · 1 generated"], // the kinds apart in the tooltip
+  stripOpen: ["#t=m#demoted&s=m#demoted", 1], // one click opens it and selects it
+  rowCap: [7, "entry points", ["cmd"]], // a merged row draws no rule between its ranks
+  rootOpen: [1, "#s=example.com/shop/internal"], // up to the page root, the box left selected
+  foldNarrow: [true, "fold 10"],
 };
 
 const channel = process.env.ZU_E2E_CHANNEL;
