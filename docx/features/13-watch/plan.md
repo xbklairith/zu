@@ -329,7 +329,7 @@ The tests:
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/internal/scan/cache_test.go b/internal/scan/cache_test.go
@@ -465,9 +465,9 @@ index 40fea8c..47e5f9e 100644
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/scan/` Expected: FAIL (`unknown field TrustStamps`, `undefined: Stamp`)
+- [x] **Run:** `go test ./internal/scan/` Expected: FAIL (`unknown field TrustStamps`, `undefined: Stamp`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/internal/scan/cache.go b/internal/scan/cache.go
@@ -731,9 +731,9 @@ index 92a5884..c1d82fe 100644
  	var errs []ir.ParseError
 ```
 
-- [ ] **Run:** `go test -race ./... && go vet ./... && CGO_ENABLED=0 GOOS=linux go vet ./internal/scan/ && CGO_ENABLED=0 GOOS=windows go vet ./internal/scan/` Expected: PASS
+- [x] **Run:** `go test -race ./... && go vet ./... && CGO_ENABLED=0 GOOS=linux go vet ./internal/scan/ && CGO_ENABLED=0 GOOS=windows go vet ./internal/scan/` Expected: PASS
 
-- [ ] **Commit** (one line, imperative; stage these files only): `Let a rescan trust each file's size, mtime, ctime and inode`
+- [x] **Commit** (one line, imperative; stage these files only): `Let a rescan trust each file's size, mtime, ctime and inode`
 
 ### Task 2: The poller (`internal/watch`)
 

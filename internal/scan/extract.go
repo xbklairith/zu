@@ -52,7 +52,7 @@ type declFact struct {
 
 // extractFile parses rel from t and pulls out its facts.
 func extractFile(t Tree, rel string) *fileFacts {
-	f, _ := (*Cache)(nil).extract(t, rel)
+	f, _ := (*Cache)(nil).extract(t, rel, false)
 	return f
 }
 

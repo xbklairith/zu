@@ -72,6 +72,7 @@ func openDir(root string) (*dirTree, error) {
 type listTree struct {
 	*dirTree
 	listed []string
+	stamps map[string]Stamp // each listed file's Stamp, from Files' Lstat
 }
 
 // ListTree is the directory at root, restricted to files: slash paths
@@ -89,6 +90,7 @@ func ListTree(root string, files []string) (Tree, error) {
 func (l *listTree) Files() ([]string, []ir.ParseError, error) {
 	var files []string
 	var errs []ir.ParseError
+	stamps := map[string]Stamp{}
 	listed := slices.Sorted(slices.Values(l.listed))
 	for _, rel := range slices.Compact(listed) {
 		dirs := strings.Split(rel, "/")
@@ -109,9 +111,14 @@ func (l *listTree) Files() ([]string, []ir.ParseError, error) {
 			continue
 		}
 		files = append(files, rel)
+		stamps[rel] = StampOf(info)
 	}
+	l.stamps = stamps
 	return files, errs, nil
 }
+
+// stamp is rel's Stamp as Files saw it, or zero before Files runs.
+func (l *listTree) stamp(rel string) Stamp { return l.stamps[rel] }
 
 func (d *dirTree) Files() ([]string, []ir.ParseError, error) {
 	var files []string

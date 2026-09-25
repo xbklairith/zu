@@ -27,6 +27,11 @@ type Options struct {
 	// Cache, when set, keeps each file's facts for the next scan, which
 	// then parses only the files whose content changed (10).
 	Cache *Cache
+	// TrustStamps lets the Cache reuse a file's facts without reading it
+	// when the Tree (ListTree) lists it with the Stamp the Cache kept (13's
+	// watch rescans). Without it every file is read and hashed,
+	// so only a changed content re-parses (10 Deviation 3).
+	TrustStamps bool
 }
 
 // Stats summarise a scan for the one-line report, and carry what the scan
@@ -48,7 +53,7 @@ func Run(ctx context.Context, opts Options) (*ir.IR, Stats, error) {
 	if err != nil {
 		return nil, Stats{}, err
 	}
-	facts, parsed, err := extractAll(ctx, opts.Tree, w, opts.Workers, opts.Cache)
+	facts, parsed, err := extractAll(ctx, opts.Tree, w, opts.Workers, opts.Cache, opts.TrustStamps)
 	if err != nil {
 		return nil, Stats{}, err
 	}
@@ -78,7 +83,7 @@ func Run(ctx context.Context, opts Options) (*ir.IR, Stats, error) {
 // its content is unchanged, and counts the files it parsed. Each worker
 // writes only its own slot, so the result order is the sorted file order
 // regardless of timing.
-func extractAll(ctx context.Context, t Tree, w *walkResult, workers int, c *Cache) ([]*fileFacts, int, error) {
+func extractAll(ctx context.Context, t Tree, w *walkResult, workers int, c *Cache, trust bool) ([]*fileFacts, int, error) {
 	if workers <= 0 {
 		workers = runtime.GOMAXPROCS(0)
 	}
@@ -91,7 +96,7 @@ func extractAll(ctx context.Context, t Tree, w *walkResult, workers int, c *Cach
 		go func() {
 			defer wg.Done()
 			for i := range next {
-				facts[i], parsed[i] = c.extract(t, w.Files[i])
+				facts[i], parsed[i] = c.extract(t, w.Files[i], trust)
 			}
 		}()
 	}
