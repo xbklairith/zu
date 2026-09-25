@@ -36,6 +36,20 @@ func ForRepo(origin string, head ir.Ref, template, prefix string) (*Links, error
 	return nil, nil
 }
 
+// BaseBlob is ForRepo's blob template at base, the Change View's
+// merge-base, for what the change removed (14), or "". A template without
+// {commit} gives none: it would open head's file.
+func BaseBlob(origin string, base ir.Ref, template string) string {
+	if template != "" && !strings.Contains(template, "{commit}") {
+		return ""
+	}
+	l, err := ForRepo(origin, base, template, "")
+	if err != nil || l == nil {
+		return ""
+	}
+	return l.Blob
+}
+
 // CompareURL returns the host's page comparing base with head, or "" when
 // either side is not a clean commit or the origin is not GitHub or GitLab.
 func CompareURL(origin string, base, head ir.Ref) string {

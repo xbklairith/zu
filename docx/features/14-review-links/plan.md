@@ -330,7 +330,7 @@ The tests:
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/internal/export/anchors_test.go b/internal/export/anchors_test.go
@@ -614,9 +614,9 @@ index 94a6207..6b61008 100644
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/export/` Expected: FAIL (a compile failure: `undefined: change`, and the compiler stops at 10 errors, all in `anchors_test.go`)
+- [x] **Run:** `go test ./internal/export/` Expected: FAIL (a compile failure: `undefined: change`, and the compiler stops at 10 errors, all in `anchors_test.go`)
 
-- [ ] **Implement**
+- [x] **Implement**
 
 ```diff
 diff --git a/internal/export/anchors.go b/internal/export/anchors.go
@@ -929,9 +929,9 @@ index 70353ea..da3cc7c 100644
  }
 ```
 
-- [ ] **Run:** `go test -race ./internal/export/ && go vet ./... && golangci-lint run ./internal/export/` Expected: PASS (read the lint output)
+- [x] **Run:** `go test -race ./internal/export/ && go vet ./... && golangci-lint run ./internal/export/` Expected: PASS (read the lint output)
 
-- [ ] **Commit:** `Place each change on the host's compare page from the host's diff`
+- [x] **Commit:** `Place each change on the host's compare page from the host's diff`
 
 ### Task 2: Git's own diff, and what the remote has (`internal/gitref`)
 

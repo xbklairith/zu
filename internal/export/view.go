@@ -130,8 +130,13 @@ func sortView(v *View) {
 }
 
 // Links are URL templates the UI fills with {path} and {line}. Compare is set
-// only in a Change View.
+// only in a Change View, as are the rest (14): Base is Blob at the base
+// commit, for what the change removed; Files maps each path in Hunks, and
+// Nodes each changed declaration, to its place on the compare page.
 type Links struct {
-	Blob    string `json:"blob"`
-	Compare string `json:"compare,omitempty"`
+	Blob    string            `json:"blob"`
+	Compare string            `json:"compare,omitempty"`
+	Base    string            `json:"base,omitempty"`
+	Files   map[string]string `json:"files,omitempty"`
+	Nodes   map[string]string `json:"nodes,omitempty"`
 }

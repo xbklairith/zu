@@ -67,3 +67,18 @@ func TestCompareURL(t *testing.T) {
 		}
 	}
 }
+
+func TestBaseBlob(t *testing.T) {
+	b := ir.Ref{Commit: "bbbb"}
+	cases := []struct{ name, origin, tmpl, want string }{
+		{"github", "git@github.com:o/r.git", "", "https://github.com/o/r/blob/bbbb/{path}#L{line}"},
+		{"template with {commit}", "", "https://h/o/r/src/{commit}/{path}#L{line}", "https://h/o/r/src/bbbb/{path}#L{line}"},
+		{"template without {commit}", "", "https://h/o/r/src/main/{path}#L{line}", ""},
+		{"unknown host", "git@example.com:o/r.git", "", ""},
+	}
+	for _, c := range cases {
+		if got := BaseBlob(c.origin, b, c.tmpl); got != c.want {
+			t.Errorf("%s: %q, want %q", c.name, got, c.want)
+		}
+	}
+}
