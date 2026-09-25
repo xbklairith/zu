@@ -219,25 +219,36 @@ export function fold(g: Grouped, toggled: readonly string[], k: Keep): Grouped {
     return x[0] - y[0] || x[1] - y[1] || x[2] - y[2] || x[3] - y[3] || cmp(a, b);
   });
   const rows = new Map<string, string[]>(); // chip id → the boxes it would hold
-  const at = new Map<string, string>();
   for (const id of order.slice(k.budget)) {
     if (held(id)) continue;
     const p = up(id);
     const chip = `${p === "" ? c.focus : p}${MORE}`;
     rows.set(chip, [...(rows.get(chip) ?? []), id]);
-    at.set(chip, p);
   }
+  return foldInto(g, new Map([...rows].filter(([, ids]) => ids.length >= 2)), toggled, k.holds);
+}
+
+// foldInto folds the boxes each chip holds, as fold chose them: fold for the
+// view as it opens, and scene for a view the reader then opened boxes in
+// (15), so the chips stay as they were. A closed chip hides what its boxes
+// hold, opened or not.
+export function foldInto(
+  g: Grouped, rows: ReadonlyMap<string, readonly string[]>, toggled: readonly string[], holds?: (box: string) => boolean,
+): Grouped {
+  const c = g.cut;
+  const up = (id: string) => c.parent.get(id) ?? "";
   const flip = new Set(toggled);
   const out: Grouped = { ...g, groups: new Map(g.groups), at: new Map(g.at), folds: new Set(g.folds), folded: new Map(g.folded) };
   const alias = new Map(c.alias ?? []);
   const gone = new Set<string>();
-  for (const [chip, ids] of [...rows].sort(([a], [b]) => cmp(a, b))) {
-    if (ids.length < 2) continue;
-    out.at.set(chip, at.get(chip)!);
+  for (const [chip, held] of [...rows].sort(([a], [b]) => cmp(a, b))) {
+    const ids = [...held].sort(cmp);
+    if (ids.some((id) => !c.parent.has(id))) continue; // its box is closed
+    out.at.set(chip, up(ids[0]));
     out.folds.add(chip);
-    out.folded.set(chip, ids.sort(cmp));
+    out.folded.set(chip, ids);
     // A chip that holds the selection opens (N3); its toggle still flips it.
-    if (flip.has(chip) !== (k.holds !== undefined && ids.some(k.holds))) continue;
+    if (flip.has(chip) !== (holds !== undefined && ids.some(holds))) continue;
     out.groups.set(chip, ids);
     for (const id of ids) {
       gone.add(id);
@@ -245,13 +256,19 @@ export function fold(g: Grouped, toggled: readonly string[], k: Keep): Grouped {
     }
   }
   if (out.folds.size === g.folds.size) return g;
+  const hidden = (id: string) => {
+    for (let x = id; x !== ""; x = up(x)) if (gone.has(x)) return true;
+    return false;
+  };
   const parent = new Map(c.parent);
-  for (const id of gone) parent.delete(id);
+  for (const id of parent.keys()) if (hidden(id)) parent.delete(id);
   const chips = [...out.folds].filter((f) => !g.folds.has(f));
   for (const f of chips) parent.set(f, out.at.get(f)!);
-  return { ...out, cut: { ...c, leaves: [...c.leaves.filter((l) => !gone.has(l)), ...chips].sort(cmp), parent, alias } };
+  return {
+    ...out,
+    cut: { ...c, leaves: [...c.leaves.filter((l) => !hidden(l)), ...chips].sort(cmp), containers: c.containers.filter((x) => !hidden(x)), parent, alias },
+  };
 }
-
 
 // rankNote is what the Panel says of a box whose set the row cap merged: its
 // own rank, which the merged row no longer shows (0 = depends on nothing here).

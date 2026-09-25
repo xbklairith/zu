@@ -297,7 +297,7 @@ They check:
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/web/src/keep.test.ts b/web/src/keep.test.ts
@@ -448,9 +448,9 @@ index b455460..7b382a1 100644
 +], [edge("k/cmd", "k/pkg/a"), edge("k/pkg/a", "api/v1"), edge("k/pkg/b", "k/pkg/c/d"), edge("client", "api/v1"), edge("k/pkg/c/e", "api/v2")]);
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/keep.test.ts` Expected: FAIL (6 of 6; e.g. `Cannot read properties of undefined (reading 'nodes')` on `sc.ref`, and `opening is not a function`)
+- [x] **Run:** `cd web && npx vitest run src/keep.test.ts` Expected: FAIL (6 of 6; e.g. `Cannot read properties of undefined (reading 'nodes')` on `sc.ref`, and `opening is not a function`)
 
-- [ ] **Keep the opening view's chips and lift, and copy its rows and counts**
+- [x] **Keep the opening view's chips and lift, and copy its rows and counts**
 
 ```diff
 diff --git a/web/src/declutter.ts b/web/src/declutter.ts
@@ -837,9 +837,9 @@ index 41116b6..1971fed 100644
  // HUBS is how many of the most used boxes are emphasised at rest (11).
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS (256 tests)
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS (256 tests)
 
-- [ ] **Commit:** `Draw beside an opened box what the view drew as it opened`
+- [x] **Commit:** `Draw beside an opened box what the view drew as it opened`
 
 ### Task 2: Lay out only what an opened box holds (`place.ts`)
 

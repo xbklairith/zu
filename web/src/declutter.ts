@@ -28,15 +28,17 @@ export type Decluttered = {
   lines: boolean; // false: draw marks instead of lines
   rows: boolean; // method rows inside types
   marks: Map<string, Mark>; // incoming (top) and outgoing (bottom) triangles, when !lines
+  multi: boolean; // leaves sit in more than one container: arrows and classes lift them
 };
 
 export function declutter(
   stage: Stage, lines: boolean, bundles: readonly Bundle[],
   leaves: readonly string[], parent: ReadonlyMap<string, string>, pin: Pin,
+  given?: boolean, // 15: multi as the view drew it when it opened, so opening a box lifts nothing else
 ): Decluttered {
   const up = (id: string) => parent.get(id) ?? "";
   const leaf = new Set(leaves);
-  const multi = new Set(leaves.map(up).filter((p) => p !== "")).size > 1;
+  const multi = given ?? new Set(leaves.map(up).filter((p) => p !== "")).size > 1;
   const lift = (id: string) => (stage !== "full" && multi && leaf.has(id) && up(id) !== "" ? up(id) : id);
   const folded = (id: string) => stage === "classes" && multi && leaf.has(id) && up(id) !== "";
 
@@ -76,5 +78,5 @@ export function declutter(
       }
     }
   }
-  return { lift, folded, arrows, lines: drawLines, rows: stage === "full" || stage === "arrows" || stage === "triangles", marks };
+  return { lift, folded, arrows, lines: drawLines, rows: stage === "full" || stage === "arrows" || stage === "triangles", marks, multi };
 }

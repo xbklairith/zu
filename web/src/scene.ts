@@ -1,7 +1,7 @@
 // scene is the one pure function the canvas draws: View + ViewState → nodes and edges.
 import { nodeMark, unchangedCount } from "./change";
 import type { View, ViewEdge } from "./data";
-import { autoDepth, childrenOf, cmp, cut, declsOf, home, index, isBox, leafOf, OUTSIDE, packageOf, packagesIn, PKG, ROOT_CLOSED, rootModule, within } from "./cut";
+import { autoDepth, childrenOf, cmp, cut, declsOf, home, index, isBox, leafOf, OUTSIDE, packageOf, packagesIn, PKG, ROOT_CLOSED, rootModule, within, type Cut } from "./cut";
 import { bundlesOver, EXTERNALS, externalsOf, type Bundle } from "./bundle";
 import { declutter, NO_PINS, type Mark, type Pin } from "./declutter";
 import { crapBand, packageRisk, rolledCrap, type Band, type Risk } from "./metrics";
@@ -11,8 +11,8 @@ import { always, quiet, type Dir } from "./edges";
 import { boxStats, statsLine } from "./tree";
 import { shorten } from "./labels";
 import { withinHops } from "./select";
-import { badgesOf, BUDGET, capRows, factsOf, fold, holdsProgram, isFold, isGroup, isStrip, knownGroup, MAX_ROWS, strip, stripText } from "./group";
-import type { Known, Stage, ViewState } from "./state";
+import { badgesOf, BUDGET, capRows, factsOf, fold, foldInto, holdsProgram, isFold, isGroup, isStrip, knownGroup, MAX_ROWS, strip, stripText } from "./group";
+import { toggle, type Known, type Stage, type ViewState } from "./state";
 
 export type Shape = "container" | "box" | "oval" | "decl" | "outside" | "chip";
 
@@ -56,11 +56,54 @@ export type Scene = {
   selectedRow: string | null; // the selected method, drawn as a row of `selected`
   decls: boolean; noDetail: boolean;
   folded: number; // 12: the boxes closed fold chips hold; the header says so (N9)
+  grouping?: Grouping; // 15: what a view with boxes opened in it keeps from this one
+  ref?: Scene; // 15: the view as it opened (baseOf), when the reader has opened or closed boxes in it
+  opened?: SceneNode[]; // 15: each region's box as the view drew it when it opened (a box the reader opened: closed), by id
 };
 
+// Grouping is what a view keeps, once the reader opens boxes in it, of the
+// view as it opened (15): its fold chips and the boxes each holds, whether
+// declutter lifted leaves out of their containers, and its cut.
+export type Grouping = { folded: ReadonlyMap<string, readonly string[]>; multi: boolean; cut: Cut };
+
+// baseOf is the view as it opened (15): the state without the boxes the
+// reader opened or closed, and without the selection; group toggles stay.
+// Null when there are none, or with a hop limit, which draws what lies
+// within it however the boxes open.
+export const baseOf = (s: ViewState): ViewState | null => {
+  if (s.hops !== null) return null;
+  const groups = s.toggled.filter(isGroup);
+  return groups.length === s.toggled.length ? null : { ...s, toggled: groups, selected: null };
+};
+
+// holding is N3's rule: a box holds the selection when it is the selection's
+// package ("#pkg") or a box above it, and the chip holding such a box opens.
+function holding(view: View, selected: string | null): (box: string) => boolean {
+  const selPkg = selected === null ? undefined : packageOf(view, selected);
+  const chain = new Set<string>();
+  for (let b = selPkg ?? selected ?? ""; b !== ""; b = index(view).parent.get(b) ?? "") chain.add(b);
+  return (b) => (b.endsWith(PKG) ? b.slice(0, -PKG.length) === selPkg : chain.has(b));
+}
+
+// opening is the view as it opened (15), made by make: the scene of baseOf(s)
+// or, when s selects a box in one of its Fold chips, of baseOf(s) with that
+// chip toggled, so the chip is open there as it is in s (N3). The selection
+// itself is left out, so selecting another box finds the same scene.
+export function opening(view: View, s: ViewState, make: (b: ViewState) => Scene): Scene | null {
+  const b = baseOf(s);
+  if (b === null) return null;
+  const first = make(b);
+  if (s.selected === null) return first;
+  const holds = holding(view, s.selected);
+  const chip = [...(first.grouping?.folded ?? [])].find(([, ids]) => ids.some(holds))?.[0];
+  return chip === undefined ? first : make(toggle(b, chip));
+}
+
 // Options for callers other than the Project View: 06 passes pin (violations);
-// the page passes home (11), which draws the page root at home(view).
-export type SceneOptions = { pin?: Pin; home?: boolean };
+// the page passes home (11), which draws the page root at home(view). base
+// (15) is opening(view, s, …) with the same options, when the caller keeps
+// it; scene makes it otherwise.
+export type SceneOptions = { pin?: Pin; home?: boolean; base?: Scene | null };
 
 const last = (id: string) => id.slice(id.lastIndexOf("/") + 1);
 
@@ -78,14 +121,20 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   const flips = root === null || s.toggled.includes(root) ? s.toggled
     : shut ? s.toggled.filter((t) => t !== root + ROOT_CLOSED) : [...s.toggled, root];
   let grouped = strip(view, cut(view, focus, depth, flips), s.toggled);
+  // 15: with boxes the reader opened or closed, what is drawn beside them is
+  // what the view drew as it opened (baseOf): its chips, rows and counts.
+  const ref = opts.base !== undefined ? opts.base : opening(view, s, (b) => scene(view, b, { pin: opts.pin, home: opts.home, base: null }));
+  const holds = holding(view, s.selected); // the chip holding the selection opens (N3)
   // 12: at the automatic depth, a budget of boxes; the rest of each row folds
   // into a chip, ranked as the rows were before folding (group.ts fold).
   let before: Map<string, number> | null = null;
   const into = new Map<string, Set<string>>(); // strip → the boxes that import into it, before folding (M4)
-  if (s.depth === null && !grouped.cut.decls) {
+  if (ref?.grouping) grouped = foldInto(grouped, ref.grouping.folded, s.toggled, holds);
+  else if (s.depth === null && !grouped.cut.decls) {
     const c1 = grouped.cut;
     const low = (id: string) => isGroup(id) || grouped.opened.has(id);
-    const pre = bundlesOver(view, c1, { externals: s.externals }).filter((b) => b.pairs >= s.minPairs || pin(b));
+    // A6: the weight filter hides lines; it never moves a box (15), so ranks count every bundle.
+    const pre = bundlesOver(view, c1, { externals: s.externals });
     for (const b of pre) if (isStrip(b.to)) into.set(b.to, (into.get(b.to) ?? new Set()).add(b.from));
     const arcs = pre.filter((b) => !low(b.from) && !low(b.to));
     const { tiers } = siblingRanks(
@@ -98,17 +147,13 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     const rm = focus === "" && view.kind !== "change" ? rootModule(view) : null;
     const named = view.policy?.order ?? [];
     const own = (id: string) => (id.endsWith(PKG) ? id.slice(0, -PKG.length) : id);
-    // The selection's package and the boxes above it: the chip holding one opens (N3).
-    const selPkg = s.selected === null ? undefined : packageOf(view, s.selected);
-    const chain = new Set<string>();
-    for (let b = selPkg ?? s.selected ?? ""; b !== ""; b = index(view).parent.get(b) ?? "") chain.add(b);
     const folded = fold(grouped, s.toggled, {
       budget: view.policy?.budget ?? BUDGET, arcs,
       first: (b) => (factsOf(view, b)?.changed ?? false) || named.some((o) => o === own(b) || (!b.endsWith(PKG) && within(view, o, b))),
       root: (b) => rm !== null && c1.parent.get(b) === rm,
       main: (b) => (factsOf(view, b)?.mains ?? 0) > 0,
       size: (b) => { const f = factsOf(view, b); return f ? f.decls - f.gen : 0; },
-      holds: (b) => (b.endsWith(PKG) ? own(b) === selPkg : chain.has(b)),
+      holds,
     });
     if (folded !== grouped) before = tiers;
     grouped = folded;
@@ -116,8 +161,10 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   const c = grouped.cut;
   const members = (g: string) => grouped.groups.get(g)
     ?? [...grouped.opened].filter((b) => c.parent.get(b) === grouped.at.get(g));
-  let kept = bundlesOver(view, c, { externals: s.externals }).filter((b) => b.pairs >= s.minPairs || pin(b));
-  let leaves = new Set([...c.leaves, ...kept.flatMap((b) => [b.from, b.to])]);
+  // A6: the weight filter hides lines (kept); boxes, ranks and counts read every bundle (15).
+  const every = bundlesOver(view, c, { externals: s.externals });
+  let kept = every.filter((b) => b.pairs >= s.minPairs || pin(b));
+  let leaves = new Set([...c.leaves, ...every.flatMap((b) => [b.from, b.to])]);
   const open = new Set(c.containers);
   const up = (id: string) => c.parent.get(id) ?? "";
   const under = (id: string, outer: string) => {
@@ -153,8 +200,9 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     leaves = new Set([...leaves].filter((l) => near.has(l)));
     kept = kept.filter((b) => near.has(b.from) && near.has(b.to));
   }
+  const ranked = s.hops !== null && selected !== null ? kept : every;
 
-  const d = declutter(s.stage, s.edges !== "off", kept, [...leaves], c.parent, pin);
+  const d = declutter(s.stage, s.edges !== "off", kept, [...leaves], c.parent, pin, ref?.grouping?.multi);
   const shown = (id: string) => (d.folded(id) ? up(id) : id);
   const folds = new Set([...leaves].filter(d.folded).map(up));
   leaves = new Set([...leaves].filter((l) => !d.folded(l)));
@@ -271,7 +319,7 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   const bottom = (id: string) => isGroup(id) || grouped.opened.has(id);
   const { tiers, against } = siblingRanks(
     new Map(nodes.filter((n) => !bottom(n.id)).map((n) => [n.id, n.parent])),
-    kept.map((b) => ({ from: shown(b.from), to: shown(b.to), weight: b.pairs })),
+    ranked.map((b) => ({ from: shown(b.from), to: shown(b.to), weight: b.pairs })),
     (p) => byPolicy.has(p),
   );
   for (const n of nodes) {
@@ -316,7 +364,7 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
   const byEnds = (x: SceneEdge, y: SceneEdge) => cmp(x.from, y.from) || cmp(x.to, y.to);
   edges.sort(byEnds);
   all.sort(byEnds);
-  const usedBy = connect(view, nodes, kept.map((b) => [shown(b.from), shown(b.to)] as const).filter(([f, t]) => ids.has(f) && ids.has(t)), selected === null);
+  const usedBy = connect(view, nodes, ranked.map((b) => [shown(b.from), shown(b.to)] as const).filter(([f, t]) => ids.has(f) && ids.has(t)), selected === null);
   // A strip's "used by" counts boxes: a closed fold chip counts as each of
   // its boxes that imports into the strip (M4).
   const users = (strip: string) => {
@@ -333,6 +381,7 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     n.label = t.label;
     if (t.hint) n.hint = t.hint;
   }
+  const opened = ref ? keep(view, ref, nodes, { up, open, inner, toLeaf, every, shown, members }) : undefined;
   // 12 (R6): the top row is the entry points when every box in it holds a program.
   const tops = nodes.filter((n) => n.parent === "" && (n.tier ?? -1) >= 0);
   const high = Math.max(...tops.map((n) => n.tier!));
@@ -342,7 +391,106 @@ export function scene(view: View, s: ViewState, opts: SceneOptions = {}): Scene 
     focus, depth, stage: s.stage, lines: d.lines && !hush, nodes: nodes.sort((x, y) => cmp(x.id, y.id)), edges, all, hidden, against, entry, bundles: kept,
     selected, selectedRow: row?.selectedRow ?? selectedRow, decls: c.decls, noDetail: c.noDetail,
     folded: [...grouped.folds].reduce((n, f) => n + (grouped.groups.get(f)?.length ?? 0), 0),
+    grouping: ref?.grouping ?? { folded: grouped.folded, multi: d.multi, cut: c },
+    ...(ref ? { ref, opened } : {}),
   };
+}
+
+type Tree = {
+  up: (id: string) => string; open: ReadonlySet<string>; inner: ReadonlySet<string>;
+  toLeaf: (pkg: string) => string; every: readonly Bundle[]; shown: (id: string) => string;
+  members: (group: string) => string[];
+};
+
+// keep gives a view the reader opened or closed boxes in what the view as it
+// opened (ref) drew beside them (15), so they keep their sizes and rows: each
+// node ref drew under the same container keeps its rows (tier, ownTier) and,
+// in the same shape, its counts (stats, a group's label and tooltip). A box
+// the reader opened is a region: what it holds counts every box outside it as
+// the view drew it when it opened, and every other opened box as closed. It
+// returns each opened box as drawn closed, for the layout (place.ts).
+function keep(view: View, ref: Scene, nodes: SceneNode[], t: Tree): SceneNode[] {
+  const { node } = index(view);
+  const was = new Map(ref.nodes.map((n) => [n.id, n]));
+  const baseOpen = new Set(ref.grouping!.cut.containers);
+  const baseLeaf = leafOf(view, ref.grouping!.cut);
+  const aside = (id: string) => id === OUTSIDE || id === EXTERNALS || node.get(id)?.kind === "external";
+  // A region is a box the reader opened, or a container of the view as it
+  // opened that now holds other children (a package closed at the
+  // declarations, whose unchanged ones fold into a row).
+  const kids = (ns: readonly SceneNode[]) => {
+    const m = new Map<string, string[]>();
+    for (const n of ns) m.set(n.parent, [...(m.get(n.parent) ?? []), n.id]);
+    return (id: string) => JSON.stringify((m.get(id) ?? []).sort(cmp));
+  };
+  const [then, now] = [kids(ref.nodes), kids(nodes)];
+  const regrown = (n: SceneNode) => n.shape === "container" && was.get(n.id)?.shape === "container" && then(n.id) !== now(n.id);
+  const opened = new Set(nodes.filter((n) => (t.open.has(n.id) && t.inner.has(n.id) && !baseOpen.has(n.id)) || regrown(n)).map((n) => n.id));
+  const regionOf = (id: string) => {
+    for (let x = t.up(id); x !== ""; x = t.up(x)) if (opened.has(x)) return x;
+    return "";
+  };
+  const under = (id: string, outer: string) => {
+    for (let x = id; x !== ""; x = t.up(x)) if (x === outer) return true;
+    return false;
+  };
+  // item is what x sees of package p: inside x's region, the child of the
+  // region that holds p; outside it, as the region's own box sees p.
+  const item = (p: string, x: string): string | null => {
+    if (node.get(p)?.kind !== "package") return null;
+    for (let q = regionOf(x); ; q = regionOf(q)) {
+      if (q === "") {
+        const l = baseLeaf(p);
+        return aside(l) ? null : l;
+      }
+      if (!within(view, p, q)) continue;
+      let e = t.toLeaf(p);
+      if (e === OUTSIDE) return null;
+      while (t.up(e) !== q && t.up(e) !== "") e = t.up(e);
+      return t.up(e) === q ? e : null;
+    }
+  };
+  const counts = (x: string) => {
+    const uses = new Set<string>();
+    const usedBy = new Set<string>();
+    for (const b of t.every) {
+      const [out, inn] = [under(t.shown(b.from), x), under(t.shown(b.to), x)];
+      if (out === inn) continue;
+      for (const e of b.members) {
+        const i = item(out ? e.to : e.from, x);
+        if (i !== null && !under(i, x)) (out ? uses : usedBy).add(i);
+      }
+    }
+    return { uses: uses.size, usedBy: usedBy.size, packages: boxStats(view, x).packages };
+  };
+  for (const n of nodes) {
+    const w = was.get(n.id);
+    if (w !== undefined && w.parent === n.parent) {
+      if (w.tier === undefined) delete n.tier;
+      else n.tier = w.tier;
+      if (w.ownTier === undefined) delete n.ownTier;
+      else n.ownTier = w.ownTier;
+      if (w.shape === n.shape) {
+        if (w.stats !== undefined) n.stats = w.stats;
+        if (isGroup(n.id)) [n.label, n.hint] = [w.label, w.hint];
+        if (n.hint === undefined) delete n.hint;
+        continue;
+      }
+    }
+    if (n.shape === "box") n.stats = statsLine(counts(n.id));
+    else if (isStrip(n.id)) {
+      const st = stripText(view, t.members(n.id), counts(n.id).usedBy);
+      n.label = st.label;
+      if (st.hint) n.hint = st.hint;
+    }
+  }
+  return nodes.filter((n) => opened.has(n.id)).map((n) => {
+    if (regrown(n)) return was.get(n.id)!; // as the view drew it when it opened
+    const b: SceneNode = { ...n, shape: "box", toggle: "expand", methods: [], stats: statsLine(counts(n.id)) };
+    const g = badgesOf(view, n.id);
+    if (g.length) b.badges = g;
+    return b;
+  });
 }
 
 // HUBS is how many of the most used boxes are emphasised at rest (11).
