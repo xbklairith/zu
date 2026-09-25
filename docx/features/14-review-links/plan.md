@@ -1,6 +1,6 @@
 # 14 · Review links — Plan
 
-**Status:** APPROVED 2026-09-25 (scrutiny-14 rulings applied, replay green on 4195876 but for 13's webkit flake, advisor sign-off), with amendments A1–A2 below. History: Revised for scrutiny-14, not approved. First drafted 2026-09-25 (v1) and revised the same day (v2) under the lead's rulings on scrutiny-14 (**Revision for scrutiny-14**).
+**Status:** APPROVED, amended by `amend-14b.md` (B6 links that land, 2026-09-25); 2026-09-25 (scrutiny-14 rulings applied, replay green on 4195876 but for 13's webkit flake, advisor sign-off), with amendments A1–A2 below. History: Revised for scrutiny-14, not approved. First drafted 2026-09-25 (v1) and revised the same day (v2) under the lead's rulings on scrutiny-14 (**Revision for scrutiny-14**).
 
 **Amendments at approval (they win over the text below):**
 - **A1 (Task 6, before its green step): `serve.mjs` drops the one benign WebKit error.** A `pageerror` whose message is exactly `ResizeObserver loop completed with undelivered notifications.` is not counted. Match it by equality, not a regex, and leave `accept.mjs` alone. It is a pre-existing flake: 13's serve.mjs on main failed 2 of 5 runs in webkit. Add one line recording it to 13's acceptance.md, as 08 recorded Firefox's reload crash. B6 is recorded in decisions.md as met only after Task 7's by-hand steps 1 and 2 pass (answering the drafter's Q2).
