@@ -1,6 +1,6 @@
 # 17 · The Screen — Plan
 
-**Status:** APPROVED 2026-10-19 (lead, after scrutiny-17, one revision and the replay; advisor sign-off). Held: it queues behind 16, which is approved and held; zu builds 16 first, and builds either only when the user says go.
+**Status:** APPROVED 2026-10-19 (lead, after scrutiny-17, one revision and the replay; advisor sign-off); REVISED 2026-10-20 after a review of 17 and 18 (**Notes**), replayed again. Held: it queues behind 16, which is approved and held; zu builds 16 first, and builds either only when the user says go.
 
 **Base.** Every diff here is against `main` at a18ff85. The diffs come from a scratch branch built on a `git archive` of a18ff85, one commit per red step and one per green step. The plan was replayed on a fresh `git archive` of a18ff85 (**Replay record**). 16 lands first, so this plan must be replayed again on `main` after 16, as 15 was after 14 (**Overlap with 16**).
 
@@ -132,6 +132,7 @@ Both are View fields with `omitempty`, on declarations only. An external is on e
   - Esc on the Screen closes search first, then leaves the Screen.
   - The tree's `d`, `+`, `=` and `-` do nothing on the Screen; `/` and `f` work on both.
   - `n` is kept for 18's walk.
+  - A checkbox ("every box", and the Toolbar's externals on the tree) keeps the focus after a click but takes no keys: `App.tsx` no longer counts it as typing, so `s` still leaves the Screen after "every box".
 - **A Proposal (07):** the Screen is drawn over the Proposal's View, as the tree is.
 
 **7. Search (`web/src/search.ts`).** A new rank sits between name prefix and id substring: the query is the starts of consecutive words of the name, from any word.
@@ -163,7 +164,7 @@ After 16 lands, replay this plan on `main` and record the result.
 
 - **The Screen in a Change View (18):** status rows, reversed ghosts, member counts, the `n` walk.
 - **The Code panel and on-demand source in `zu serve` (19).** Highlighting an edge's lines needs every location of an edge; the View keeps only the count and the first location, so 19 changes the export.
-- **Golden walks** (a scripted tour of Screens), after 18.
+- **Golden walks** (a scripted tour of Screens), after 19, as 18 says.
 - **Agent queries over Screens**, unless decisions.md's line on model features is reopened.
 - **A cap per row in the hash** (`m` draws both rows whole), animation, and dragging boxes.
 - **The Panel's slow swap in WebKit** (**Risks**): it is the tree's Panel too, and a follow-up.
@@ -1486,7 +1487,7 @@ The browser check, `screen.mjs`, runs in Chromium, Firefox and WebKit, on three 
 - **wordStart:** `/RW` and Enter re-centre on ReadWriter, with Reader below.
 - **honest:** `/Repo` re-centres on Repo, with Open below. The note says "1 call or embed out of it, with declarations in packages not included" and "4 unresolved calls".
 - **esc:** Esc returns to the tree with Repo selected and centred in the canvas.
-- **more:** `m/core` draws 24 importers and the chip. The chip draws all 30, sets `m=1`, adds no entry, and ticks "every box"; unticking it draws the 24 again.
+- **more:** `m/core` draws 24 importers and the chip. The chip draws all 30, sets `m=1`, adds no entry, and ticks "every box"; unticking it draws the 24 again. Ticked again from the keyboard (focus, Space), the checkbox keeps the focus, and `s` still leaves the Screen.
 - **disabled:** with nothing selected, the Screen button is disabled.
 - **change:** in the Change View, `s` draws nothing, and a `c=` link is ignored.
 - **errors:** no page errors.
@@ -1518,10 +1519,10 @@ index 9ab346a..b56b466 100644
      "playwright-core": "1.63.0"
 diff --git a/web/e2e/screen.mjs b/web/e2e/screen.mjs
 new file mode 100644
-index 0000000..e644c5d
+index 0000000..0c95760
 --- /dev/null
 +++ b/web/e2e/screen.mjs
-@@ -0,0 +1,174 @@
+@@ -0,0 +1,183 @@
 +// Browser acceptance for the Screen (17). Not part of make check: it needs
 +// browsers. Run from web/e2e after `make build`: npm run accept-screen.
 +// ZU_E2E_CHANNEL=chrome uses an installed Chrome instead of Playwright's Chromium.
@@ -1654,10 +1655,19 @@ index 0000000..e644c5d
 +  await every.uncheck();
 +  await p.waitForFunction(() => !location.hash.includes("m=1"));
 +  const again = await drawn(p, "m/core");
++  const same = (await entries(p)) === start;
++  // Ticked from the keyboard, the checkbox keeps the focus; s still leaves the Screen.
++  await every.focus();
++  await p.keyboard.press("Space");
++  await p.waitForFunction(() => location.hash.includes("m=1"));
++  await drawn(p, "m/core");
++  const focused = await p.evaluate(() => document.activeElement?.getAttribute("type"));
++  await p.keyboard.press("s");
++  const left = await drawn(p, null).then(() => centre(p), () => "still on the Screen");
 +  const got = {
 +    more: capped.filter((id) => id.startsWith("up:m/")).length === 24 && capped.includes("up:#more")
-+      && all.filter((id) => id.startsWith("up:m/")).length === 30 && !all.includes("up:#more") && (await entries(p)) === start
-+      && checked && JSON.stringify(again) === JSON.stringify(capped),
++      && all.filter((id) => id.startsWith("up:m/")).length === 30 && !all.includes("up:#more") && same
++      && checked && JSON.stringify(again) === JSON.stringify(capped) && focused === "checkbox" && left === null,
 +    disabled,
 +  };
 +  await p.close();
@@ -1827,7 +1837,7 @@ index a4ebd79..3006283 100644
 
 ```diff
 diff --git a/web/src/App.tsx b/web/src/App.tsx
-index 7d652a0..5205117 100644
+index 7d652a0..5a7aa4f 100644
 --- a/web/src/App.tsx
 +++ b/web/src/App.tsx
 @@ -2,13 +2,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
@@ -1908,7 +1918,7 @@ index 7d652a0..5205117 100644
  
    const go = (box: string) => {
      update((s) => drill(s, box));
-@@ -237,6 +257,16 @@ export function App({ view: whole }: { view: View }) {
+@@ -237,14 +257,26 @@ export function App({ view: whole }: { view: View }) {
      update((s) => ({ ...drill(s, ""), selected: id }));
      setCenter((c) => ({ id, seq: (c?.seq ?? 0) + 1 }));
    };
@@ -1925,15 +1935,18 @@ index 7d652a0..5205117 100644
    useEffect(() => {
      const onKey = (e: KeyboardEvent) => {
        const a = keyAction(e.key, {
-@@ -245,6 +275,7 @@ export function App({ view: whole }: { view: View }) {
+         searchOpen,
+         selected: state.selected !== null,
          atRoot: upTo(view, state.focus) === null,
-         typing: e.target instanceof HTMLInputElement,
+-        typing: e.target instanceof HTMLInputElement,
++        // A checkbox (every box, externals) keeps the focus after a click but takes no keys.
++        typing: e.target instanceof HTMLInputElement && e.target.type !== "checkbox",
          mod: e.metaKey || e.ctrlKey || e.altKey,
 +        screen: onScreen,
        });
        if (a === "search") {
          e.preventDefault();
-@@ -256,10 +287,11 @@ export function App({ view: whole }: { view: View }) {
+@@ -256,10 +288,11 @@ export function App({ view: whole }: { view: View }) {
        else if (a === "declutter") update((s) => ({ ...s, stage: nextStage(s.stage) }));
        else if (a === "deeper") update((s) => deeper(s, sc.depth));
        else if (a === "shallower") update((s) => shallower(s, sc.depth));
@@ -1946,7 +1959,7 @@ index 7d652a0..5205117 100644
  
    const open = (n: SceneNode) => {
      if (n.shape === "box" || n.shape === "container") go(n.id);
-@@ -297,15 +329,36 @@ export function App({ view: whole }: { view: View }) {
+@@ -297,15 +330,36 @@ export function App({ view: whole }: { view: View }) {
          onFocus={go}
          full={change ? full : undefined}
          onToggle={flip}
@@ -1990,7 +2003,7 @@ index 7d652a0..5205117 100644
        </div>
        {change && <ChangedList view={whole} onPick={pick} />}
        <main className="canvas">
-@@ -314,7 +367,7 @@ export function App({ view: whole }: { view: View }) {
+@@ -314,7 +368,7 @@ export function App({ view: whole }: { view: View }) {
              {PROPOSAL_NOTICE}: {state.proposal}
            </div>
          )}
@@ -1999,7 +2012,7 @@ index 7d652a0..5205117 100644
            <Legend
              change={change}
              policy={rules}
-@@ -325,7 +378,7 @@ export function App({ view: whole }: { view: View }) {
+@@ -325,7 +379,7 @@ export function App({ view: whole }: { view: View }) {
              hubs={sc.nodes.some((n) => n.hub)}
            />
          )}
@@ -2008,7 +2021,7 @@ index 7d652a0..5205117 100644
            <div className="notice" id="zu-notice" role="status">
              Collapsed to depth {sc.depth}: depth {requested.depth} has{" "}
              {requested.lines && requested.edges.length > DRAW_LIMIT.edges
-@@ -339,7 +392,11 @@ export function App({ view: whole }: { view: View }) {
+@@ -339,7 +393,11 @@ export function App({ view: whole }: { view: View }) {
              </button>
            </div>
          )}
@@ -2021,7 +2034,7 @@ index 7d652a0..5205117 100644
            <div className="empty">
              Declarations not included. Re-run with <code>-include {pkg}</code>
            </div>
-@@ -389,7 +446,17 @@ export function App({ view: whole }: { view: View }) {
+@@ -389,7 +447,17 @@ export function App({ view: whole }: { view: View }) {
            </div>
          )}
        </main>
@@ -2523,10 +2536,14 @@ index 5786df4..4fe36b4 100644
   - a declaration Centre repeated its package under its full id (Task 4);
   - lines in weight order hid the heaviest boxes at the floor zoom (Task 4);
   - an 11 px small label broke the readable floor (Tasks 4 and 6).
+- **Revision, 2026-10-20.** A review of 17 and 18 together (check-17-18) replayed 16, 17 and 18 in order and probed the result in a browser. It found one problem that 17 owns, fixed in Task 6, and one nit:
+  - **Minor:** after a click on "every box", `s` did nothing until the focus moved, and after 18 neither would `n` or `p`. The key handler counted any focused `<input>` as typing, a checkbox too; main's externals checkbox on the tree has the same hole. `App.tsx` now leaves checkboxes out (Architecture 6). `more` now ticks the box from the keyboard, so the focus is on it in every engine, and presses `s`. On a build without the fix, `more` fails in all three engines: the Screen is still drawn.
+  - **Nit:** golden walks are after 19, as 18 says (**Out of scope**).
+  - Every other diff is unchanged. The fix changes one line of Task 6's `App.tsx`, with a comment, and extends its `more` check.
 
 ## Replay record
 
-Replayed with `replay.py` on a fresh `git archive` of `main` at a18ff85, in a scratch directory. `node_modules` was clone-copied from the repository (`cp -cR`), and Playwright's three browsers were already installed. This plan's directory was copied in, as `git archive HEAD` will give it once the plan is committed. Every step's exit matched its expectation:
+Replayed with `replay.py` on a fresh `git archive` of `main` at a18ff85, in a scratch directory, as revised on 2026-10-20. `node_modules` was clone-copied from the repository (`cp -cR`), and Playwright's three browsers were already installed. This plan's directory was copied in, as `git archive HEAD` will give it once the plan is committed. Every step's exit matched its expectation:
 
 | Task | Step | Command | Exit |
 |---|---|---|---|
@@ -2552,7 +2569,7 @@ Replayed with `replay.py` on a fresh `git archive` of `main` at a18ff85, in a sc
 | 7 | green | `cd web/e2e && node serve.mjs` | 0 |
 | 7 | green | `cd web/e2e && node screen.mjs` | 0 |
 
-- After Task 7, the replayed tree was byte-identical to the scratch branch's last commit (git tree d5ed2fc; 27 files change against a18ff85).
+- After Task 7, the replayed tree was byte-identical to the scratch branch's last commit (git tree 6c74e01; 27 files change against a18ff85).
 - `golangci-lint run ./...` in the replayed tree: no issues.
 - The red reasons were seen as stated:
   - Task 1: the build fails, `n.OffIn` and `n.OffOut` undefined.
@@ -2561,4 +2578,6 @@ Replayed with `replay.py` on a fresh `git archive` of `main` at a18ff85, in a sc
   - Task 5: 7 failures.
   - Task 6: 5 unit tests; `screen.mjs` 0/14 in each engine, because its first wait, for the Screen button, times out; `serve.mjs` 10/11, with lost `[false, true, false]`.
   - Task 6's browser reasons were read on a copy of the scratch branch's red commit, since `replay.py` prints only each step's last line.
+- The approved version of 2026-10-19 also replayed clean. Its tree matched its scratch branch (git tree d5ed2fc).
 - The first draft also replayed clean. Its tree matched its scratch branch, before the scrutiny revision.
+- This revision was also replayed after 16, on a fresh `git archive` of `main` at 7f56652, before 18 and 19 (19's **Replay record**).

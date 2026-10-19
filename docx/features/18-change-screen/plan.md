@@ -1,8 +1,8 @@
 # 18 · The Screen in a Change View — Plan
 
-**Status:** APPROVED 2026-10-20 (lead, after scrutiny-18, one revision and the replay; advisor sign-off). Held: it queues behind 16 and 17, which are approved and held; zu builds them in order 16, 17, 18, and builds any only when the user says go.
+**Status:** APPROVED 2026-10-20 (lead, after scrutiny-18, one revision and the replay; advisor sign-off); REVISED 2026-10-20 after a review of 17 and 18 (**Notes**), replayed again. Held: it queues behind 16 and 17, which are approved and held; zu builds them in order 16, 17, 18, and builds any only when the user says go.
 
-**Base.** Every diff here is against `main` at c6f85b7 with 16's and 17's plans applied, in that order. c6f85b7 differs from a18ff85 only by 17's plan documents. The diffs come from a scratch branch whose first commit is that tree: a `git archive` of a18ff85 with 16's and 17's tasks applied. After it come one commit per red step and one per green step. The plan was replayed on a fresh `git archive` of c6f85b7, after 16's and 17's replays (**Replay record**). Once 16 and 17 land, replay this plan again on `main` (**Overlap with 16 and 17**).
+**Base.** Every diff here is against `main` at c6f85b7 with 16's and 17's plans applied, in that order, 17's as revised on 2026-10-20. c6f85b7 differs from a18ff85 only by 17's plan documents. The diffs come from a scratch branch whose first commit is that tree: a `git archive` of a18ff85 with 16's and 17's tasks applied. After it come one commit per red step and one per green step. The plan was replayed on a fresh `git archive` of c6f85b7, after 16's and 17's replays (**Replay record**). Once 16 and 17 land, replay this plan again on `main` (**Overlap with 16 and 17**).
 
 The proposed doc amendments are under **Doc amendments**, as exact text. They are not task steps.
 
@@ -107,7 +107,9 @@ Base's removed calls and embeds count as hops too, so a removed declaration's ca
   - A walk toolbar sits beside it, labelled "Walk the change": ◂, then "3 of 10" on a Screen ("– of 10" off the walk) or "10 steps" on the tree, then ▸. A button is disabled where its step does nothing.
   - The Legend on a Change View's Screen keeps the change swatches and adds the ghost's: "dotted: where a reversed import was in base". The signs line reads "lines: …", and the tree's rows line is left out.
   - When a Screen line is red, the Legend (on any Screen) adds the red swatch. It reads "violates zu.policy.yaml (levels or cycle)", or the Proposal's layers, without the tree's "a red box holds one": the Screen draws no box red (`headline.ts` `redLegend(proposal, screen)`).
-  - The Screen's Panel reads `screenView`, so a near Centre gets a Panel.
+  - The Screen's Panel reads `screenView`, so a near Centre gets a Panel. Its code shows only when the declaration's file holds a change: the View inlines only those files (05). 19's on-demand source covers the rest in `zu serve`.
+  - On a Screen, a pick from the changed-packages list (U11) or its violations re-centres there, as search does (17), and the walk toolbar reads that package's step. On the tree the list selects and centres, as before.
+- **`Header.tsx`** keeps the change's link to the host after the Screen's note. 17's Screen note replaced the whole line, which in a Change View held that link.
 - **`lens.ts`:** leaving a near Centre selects its package, since the tree does not draw near boxes. When that package is outside the changed subgraph the tree draws, the page first opens the full graph (U10), as a jump to such a node does.
 - **`ScreenCanvas.tsx`** draws each box's mark class and `ghost`, the Centre's members, and each line's status class, sign, `ghost`, and `pinned` for a violation.
 - **`styles.css`:** the changed subgraph dims its affected boxes to 0.6 (`.subgraph .node.affected`). The rule now leaves out `.screen-box`, so an affected Screen box keeps its outline and is not dimmed (Deviation 1).
@@ -117,7 +119,7 @@ Base's removed calls and embeds count as hops too, so a removed declaration's ca
 
 18 is built on both. They land first, in order 16, 17, 18, and each is replayed on `main` after its predecessor lands.
 - **17:** 18 changes most of 17's new code:
-  - `screen.ts`, `lens.ts`, `keys.ts`, `scene.ts` (a comment), `ScreenCanvas.tsx`, `App.tsx` and `styles.css`;
+  - `screen.ts`, `lens.ts`, `keys.ts`, `scene.ts` (a comment), `ScreenCanvas.tsx`, `App.tsx`, `Header.tsx` and `styles.css`;
   - `internal/export/view.go` and `web/src/data.ts`, where 17 added `offIn` and `offOut`;
   - their tests, with `proposal.test.ts` and `state.test.ts`;
   - `web/e2e/screen.mjs`.
@@ -222,7 +224,7 @@ These follow 17's amendments, which land first.
 >
 > On a Screen in a Change View (18), where a reversed import's far end was in base: the box drawn dotted and plain in the row opposite its real one, its line dotted and unsigned, its facts "⇄ in base". The diff reports a reversed import once, in head's direction, so the ghost is how the Screen shows the old direction.
 
-**`docx/glossary.md`, Change View.** Replace its third sentence, "New rule violations are called out, the Affected Set is outlined, Moves are dashed, and unchanged neighbours one hop away are dimmed.", with:
+**`docx/glossary.md`, Change View.** Replace its third sentence, which the file wraps over three lines ("New rule violations are called out, the Affected Set is outlined, Moves are dashed, and unchanged neighbours one hop away are dimmed."), with the following, wrapped as the file is:
 
 > New rule violations are called out, the Affected Set is outlined, and Moves are dashed. Its Screens (18) also draw the unchanged declarations one call or embed from the change.
 
@@ -232,7 +234,7 @@ These follow 17's amendments, which land first.
 
 **`docx/core/decisions.md`, line 41 (UI v1).** Append to the end of the bullet, after 17's **Screen (17)** text:
 
-> **Screen in a Change View (18):** a Change View opens on the tree, and `n` starts the Walk: each new violation's importer, then the changed packages bottom-up, each followed by the Centres of its changed declarations; `p` steps back, and a walk toolbar shows ◂ "3 of 10" ▸. A Screen there reads the View with `near`: the unchanged declarations of head one call or embed from a drawn one (removed calls count, from base), their types, and every method of a type on the page, with the calls and embeds among them all; the tree never reads it. Each box carries its Change Status mark (a type with a changed method: has-change), each line its edges' status and sign (+ − ⇄ ±), and unchanged boxes are plain. A reversed import's far end is drawn in its row and as a Ghost in the other, small, dotted, uncapped. The Centre lists its changed members by id, signed + ~ − →, eight and then "+N more". The header adds where the Centre's package sits in the Affected Set (ADR 0009): changed, with how many packages import it, directly or not; N imports from a changed package; not in it; or removed. A line holding an import the Policy forbids is red on every Screen, as on the tree, and the walk's first steps are the new violations' importers. Leaving a near Centre selects its package and opens the full graph when the changed subgraph leaves that package out.
+> **Screen in a Change View (18):** a Change View opens on the tree, and `n` starts the Walk: each new violation's importer, then the changed packages bottom-up, each followed by the Centres of its changed declarations; `p` steps back, and a walk toolbar shows ◂ "3 of 10" ▸. A Screen there reads the View with `near`: the unchanged declarations of head one call or embed from a drawn one (removed calls count, from base), their types, and every method of a type on the page, with the calls and embeds among them all; the tree never reads it. Each box carries its Change Status mark (a type with a changed method: has-change), each line its edges' status and sign (+ − ⇄ ±), and unchanged boxes are plain. A reversed import's far end is drawn in its row and as a Ghost in the other, small, dotted, uncapped. The Centre lists its changed members by id, signed + ~ − →, eight and then "+N more". The header adds where the Centre's package sits in the Affected Set (ADR 0009): changed, with how many packages import it, directly or not; N imports from a changed package; not in it; or removed. A line holding an import the Policy forbids is red on every Screen, as on the tree, and the walk's first steps are the new violations' importers. Leaving a near Centre selects its package and opens the full graph when the changed subgraph leaves that package out. On a Screen the changed-packages list re-centres, as search does, and the header keeps the change's link to the host.
 
 **`docx/core/decisions.md`, 17's Screen (17) text.** 18 makes three of its phrases untrue:
 - delete "; `n` is kept for 18" from "the tree's `d`, `+` and `-` do nothing on it; `n` is kept for 18." (`n` and `p` are the walk's keys now);
@@ -241,7 +243,7 @@ These follow 17's amendments, which land first.
 
 > with declarations in packages not included, or in a Change View with unchanged declarations more than one call or embed from the change (the View's `offIn` and `offOut`, on types and functions only)
 
-**`docx/core/requirements-draft.md`:** no new row. B3 ("call out a reversed dependency explicitly") and B4 (hop distance) gain the Screen as a second place they are met; U14 (17) covers the Screen.
+**`docx/core/requirements-draft.md`:** no change. B3 ("call out a reversed dependency explicitly") and B4 (hop distance) are now met on the Screen too, and U14 (17) covers the Screen; the requirements table has no column for where a requirement is met.
 
 ## Tasks
 
@@ -1412,7 +1414,7 @@ index 0000000..c2826d5
 
 ```diff
 diff --git a/web/src/App.tsx b/web/src/App.tsx
-index 5205117..9695a3d 100644
+index 5a7aa4f..bfc8d7f 100644
 --- a/web/src/App.tsx
 +++ b/web/src/App.tsx
 @@ -23,6 +23,7 @@ import { ScreenCanvas } from "./ScreenCanvas";
@@ -1423,15 +1425,15 @@ index 5205117..9695a3d 100644
  
  const PKG = "#pkg";
  const FRAMES = 64; // 15: the most layouts the page keeps (place.ts)
-@@ -276,6 +277,7 @@ export function App({ view: whole }: { view: View }) {
-         typing: e.target instanceof HTMLInputElement,
+@@ -277,6 +278,7 @@ export function App({ view: whole }: { view: View }) {
+         typing: e.target instanceof HTMLInputElement && e.target.type !== "checkbox",
          mod: e.metaKey || e.ctrlKey || e.altKey,
          screen: onScreen,
 +        change,
        });
        if (a === "search") {
          e.preventDefault();
-@@ -288,6 +290,8 @@ export function App({ view: whole }: { view: View }) {
+@@ -289,6 +291,8 @@ export function App({ view: whole }: { view: View }) {
        else if (a === "deeper") update((s) => deeper(s, sc.depth));
        else if (a === "shallower") update((s) => shallower(s, sc.depth));
        else if (a === "lens") lens();
@@ -1582,10 +1584,11 @@ The unit tests check:
 - the changed subgraph's dimming of affected boxes leaves out Screen boxes;
 - `redLegend` on the Screen names only what a red line violates.
 
-`screen.mjs` runs in Chromium, Firefox and WebKit. 17's **change** check, that a Change View draws no Screen, is replaced by eight checks on the shop Change View and on **far**. far is the shop Change View with:
+`screen.mjs` runs in Chromium, Firefox and WebKit. 17's **change** check, that a Change View draws no Screen, is replaced by ten checks on the shop Change View and on **far**. far is the shop Change View with:
 - `internal/audit`, which money imports unchanged, so it is in no Affected Set and the changed subgraph leaves it out;
 - its `Check`, a near declaration that `money.Plus` calls;
-- a Policy (Levels checkout, then store) that checkout's import of store breaks, listed as a new violation.
+- a Policy (Levels checkout, then store) that checkout's import of store breaks, listed as a new violation;
+- a link to the change on the host (`links.compare`).
 - **walk:**
   - on the tree, the walk toolbar reads "10 steps";
   - `n` draws store's Screen (checkout and money above; money's ghost and `lib/pq` below), adds one history entry, and reads "1 of 10".
@@ -1601,6 +1604,8 @@ The unit tests check:
 - **leave:** Esc returns to the tree with checkout selected, no `c`, and checkout centred.
 - **full:** on far, from money.Plus's Screen, a click on audit.Check and then `s` select `internal/audit`. That draws the full graph (no `.app.subgraph`), with audit centred.
 - **red:** on far, `n` from the tree draws checkout's Screen, the new violation's importer. Its line to store is `pinned`, it is the only red line, and the Legend reads "violates zu.policy.yaml (levels or cycle)".
+- **list:** on store's Screen, a click on checkout in the changed-packages list re-centres on checkout, which the walk toolbar reads as "7 of 10".
+- **host:** on far's checkout Screen, the header still links to the change on the host.
 
 A Project View's Screen with a red line (Deviation 12) is checked by the unit tests only: Task 2's flags the line, and `redLegend`'s test words the swatch. No browser check opens one.
 
@@ -1608,7 +1613,7 @@ A Project View's Screen with a red line (Deviation 12) is checked by the unit te
 
 **Files:**
 - Tests: `web/src/screen.test.ts`, `web/src/headline.test.ts`, `web/e2e/screen.mjs`
-- Code: `web/src/App.tsx`, `web/src/ScreenCanvas.tsx`, `web/src/styles.css`, `web/src/headline.ts`
+- Code: `web/src/App.tsx`, `web/src/Header.tsx`, `web/src/ScreenCanvas.tsx`, `web/src/styles.css`, `web/src/headline.ts`
 
 **Steps:**
 
@@ -1616,7 +1621,7 @@ A Project View's Screen with a red line (Deviation 12) is checked by the unit te
 
 ```diff
 diff --git a/web/e2e/screen.mjs b/web/e2e/screen.mjs
-index e644c5d..3686a4f 100644
+index 0c95760..cfd0ed9 100644
 --- a/web/e2e/screen.mjs
 +++ b/web/e2e/screen.mjs
 @@ -1,5 +1,6 @@
@@ -1628,7 +1633,7 @@ index e644c5d..3686a4f 100644
  // ZU_E2E_CHANNEL=chrome uses an installed Chrome instead of Playwright's Chromium.
  import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
  import { tmpdir } from "node:os";
-@@ -33,7 +34,25 @@ const many = (() => {
+@@ -33,7 +34,26 @@ const many = (() => {
  
  const S = "example.com/shop/internal/store";
  const C = "example.com/shop/internal/checkout";
@@ -1649,12 +1654,13 @@ index e644c5d..3686a4f 100644
 +  v.policy = { hash: "sha256:far", levels: [[C], [S]] };
 +  for (const e of v.edges) if (e.kind === "imports" && e.from === C && e.to === S) e.violation = "levels";
 +  v.violations = { new: [{ rule: "levels", from: C, to: S }], fixed: [], known: 0 };
++  v.links = { blob: "https://github.com/o/r/blob/h/{path}#L{line}", compare: "https://github.com/o/r/compare/b...h" };
 +  return page("far", v);
 +})();
  
  async function open(b, file, hash) {
    const p = await b.newPage({ viewport: { width: 1400, height: 900 } });
-@@ -140,22 +159,80 @@ async function rows(b) {
+@@ -149,22 +169,88 @@ async function rows(b) {
    return { got, errors: [...bare.errors, ...errors] };
  }
  
@@ -1706,6 +1712,12 @@ index e644c5d..3686a4f 100644
 +  await drawn(p, null);
 +  const left = await hash(p);
 +  got.leave = [left.c ?? null, left.s, await centred(p, C)];
++  // On a Screen, a pick from the changed packages (U11) re-centres there, a step of the walk.
++  await p.keyboard.press("n");
++  await drawn(p, S);
++  await p.click(`nav.changed button[title="${C}"]`);
++  await drawn(p, C).catch(() => {}); // the values below say what was drawn instead
++  got.list = [await centre(p), await at()];
    await p.close();
 -  const linked = await open(b, change, `#c=${enc(S)}`);
 -  const ignored = (await centre(linked.p)) === null && !(await linked.p.locator(".screen").count());
@@ -1729,6 +1741,8 @@ index e644c5d..3686a4f 100644
 +    document.querySelectorAll(".screen .react-flow__edge.pinned").length,
 +    document.querySelector(".legend .swatch.violation")?.textContent ?? null,
 +  ], S);
++  // The Screen's header keeps the change's link to the host.
++  got.host = await r.p.evaluate(() => document.querySelector("header.header a[target=_blank]")?.getAttribute("href") ?? null);
 +  await r.p.close();
 +  return { got, errors: [...errors, ...f.errors, ...r.errors] };
  }
@@ -1740,7 +1754,7 @@ index e644c5d..3686a4f 100644
 +  wordStart: true, honest: true, esc: true, more: true, disabled: true, errors: [],
 +  walk: [true, true, "10 steps", "1 of 10"], marks: [true, true, true, "⇄", true, true, ["~ Order", "− ReadWriter", "~ Repo.Get", "~ Repo.check"]],
 +  affected: true, step: [true, "2 of 10", true, true], near: ["– of 10", true], leave: [null, C, true], full: [A, 0, true],
-+  red: [true, 1, "violates zu.policy.yaml (levels or cycle)"],
++  red: [true, 1, "violates zu.policy.yaml (levels or cycle)"], list: [C, "7 of 10"], host: "https://github.com/o/r/compare/b...h",
  };
  const channel = process.env.ZU_E2E_CHANNEL;
  const engines = [["chromium", chromium, channel ? { channel } : {}], ["firefox", firefox, {}], ["webkit", webkit, {}]];
@@ -1780,13 +1794,13 @@ index 13e7239..89145eb 100644
 
 - [ ] **Run:** `cd web && npx vitest run src/screen.test.ts src/headline.test.ts` Expected: FAIL (3 tests: no ghost rule in the CSS, the subgraph dims every affected box, and `redLegend` takes no Screen)
 
-- [ ] **Run:** `cd web && npx vite build >/dev/null && cd e2e && node screen.mjs` Expected: FAIL (14/21 checks pass in each engine: walk, marks, affected, step, near, full and red fail; there is no walk toolbar, no mark, no red line, and leaving audit.Check keeps the subgraph)
+- [ ] **Run:** `cd web && npx vite build >/dev/null && cd e2e && node screen.mjs` Expected: FAIL (14/23 checks pass in each engine: walk, marks, affected, step, near, full, red, list and host fail; there is no walk toolbar, no mark, no red line, leaving audit.Check keeps the subgraph, the list leaves store's Screen drawn, and the Screen's header has no link to the host)
 
 - [ ] **Draw the walk toolbar, the marks, the ghosts, the red lines and the members**
 
 ```diff
 diff --git a/web/src/App.tsx b/web/src/App.tsx
-index 9695a3d..fbf1cf8 100644
+index bfc8d7f..51c26bf 100644
 --- a/web/src/App.tsx
 +++ b/web/src/App.tsx
 @@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
@@ -1872,7 +1886,7 @@ index 9695a3d..fbf1cf8 100644
    const recentre = (id: string) => {
      const c = centreOf(proposed, id);
      if (c !== null) update((s) => centreAt(s, c));
-@@ -336,22 +346,33 @@ export function App({ view: whole }: { view: View }) {
+@@ -337,22 +347,33 @@ export function App({ view: whole }: { view: View }) {
          screen={screen ? screenNote(screen) : undefined}
        />
        <div className="bar">
@@ -1921,7 +1935,16 @@ index 9695a3d..fbf1cf8 100644
            </div>
          )}
          {!onScreen && (
-@@ -382,6 +403,9 @@ export function App({ view: whole }: { view: View }) {
+@@ -365,7 +386,7 @@ export function App({ view: whole }: { view: View }) {
+         )}
+         <SearchBox view={proposed} input={searchBox} onOpen={setSearchOpen} onPick={onScreen ? recentre : jump} />
+       </div>
+-      {change && <ChangedList view={whole} onPick={pick} />}
++      {change && <ChangedList view={whole} onPick={onScreen ? recentre : pick} />}
+       <main className="canvas">
+         {proposed !== whole && (
+           <div className="proposal-banner" role="status">
+@@ -383,6 +404,9 @@ export function App({ view: whole }: { view: View }) {
              hubs={sc.nodes.some((n) => n.hub)}
            />
          )}
@@ -1931,7 +1954,7 @@ index 9695a3d..fbf1cf8 100644
          {sc !== requested && !onScreen && (
            <div className="notice" id="zu-notice" role="status">
              Collapsed to depth {sc.depth}: depth {requested.depth} has{" "}
-@@ -452,7 +476,7 @@ export function App({ view: whole }: { view: View }) {
+@@ -453,7 +477,7 @@ export function App({ view: whole }: { view: View }) {
        </main>
        {centre !== null && closed !== centre && (
          <Panel
@@ -1940,6 +1963,50 @@ index 9695a3d..fbf1cf8 100644
            id={isBox(proposed, centre + PKG) ? centre + PKG : centre}
            edge={null}
            bundles={[]}
+diff --git a/web/src/Header.tsx b/web/src/Header.tsx
+index 2375415..e42e5d7 100644
+--- a/web/src/Header.tsx
++++ b/web/src/Header.tsx
+@@ -22,6 +22,15 @@ type Props = {
+ 
+ export function Header({ view, focus, home = "", boxes, folded = 0, depth, onFocus, auto, from, hidden = 0, against, full, onToggle, screen }: Props) {
+   const compare = view.links?.compare?.startsWith("https://") ? view.links.compare : null;
++  // The change's link to the host, after the tree's counts or the Screen's note (18).
++  const host = compare && (
++    <>
++      {" · "}
++      <a href={compare} target="_blank" rel="noopener noreferrer">
++        {compareLabel(view.links, view.base?.commit, view.head.commit)}
++      </a>
++    </>
++  );
+   const [showErrors, setShowErrors] = useState(false);
+   const errors = view.honesty.parseErrors;
+   return (
+@@ -49,6 +58,7 @@ export function Header({ view, focus, home = "", boxes, folded = 0, depth, onFoc
+       {screen !== undefined ? (
+         <p className="note" id="zu-screen">
+           {screen}
++          {host}
+         </p>
+       ) : (
+         <>
+@@ -79,14 +89,7 @@ export function Header({ view, focus, home = "", boxes, folded = 0, depth, onFoc
+                 </button>
+               </>
+             )}
+-            {compare && (
+-              <>
+-                {" · "}
+-                <a href={compare} target="_blank" rel="noopener noreferrer">
+-                  {compareLabel(view.links, view.base?.commit, view.head.commit)}
+-                </a>
+-              </>
+-            )}
++            {host}
+           </p>
+         </>
+       )}
 diff --git a/web/src/ScreenCanvas.tsx b/web/src/ScreenCanvas.tsx
 index 546d9bd..8759786 100644
 --- a/web/src/ScreenCanvas.tsx
@@ -2064,7 +2131,7 @@ index 4dc3201..58a51b7 100644
 
 - [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node screen.mjs` Expected: PASS (21 checks in each engine)
+- [ ] **Run:** `make build >/dev/null && cd web/e2e && node screen.mjs` Expected: PASS (23 checks in each engine)
 
 - [ ] **Commit:** `Draw the walk and the change on the Screen`
 
@@ -2085,7 +2152,7 @@ index 4dc3201..58a51b7 100644
 
 - [ ] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS (11 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node screen.mjs` Expected: PASS (21 checks in each engine)
+- [ ] **Run:** `cd web/e2e && node screen.mjs` Expected: PASS (23 checks in each engine)
 
 - [ ] **Measure** (by hand; not a replay step).
   1. In `.zu/corpus/kubernetes@v1.37.0` and `.zu/corpus/hugo@v0.166.0`, run `bin/zu diff HEAD~50 -max-parse-errors 1000000 -html <scratch>/<name>.html`. These clones are read-only: never clone, edit or check out in them. `scripts/bench-corpus.sh` deepens them so HEAD~50 is reachable. Check `git status --porcelain` is empty before and after.
@@ -2117,7 +2184,7 @@ index 4dc3201..58a51b7 100644
 - **The Panel's source pane is slow on long files in WebKit.** A step to a declaration in a 2,600–3,300-line file takes 120–162 ms there. The tree's Panel takes as long or longer for the same declarations (145–177 ms), so this is the Panel, as 17's WebKit swap was. 17's follow-up, a Panel keyed per id, would serve both.
 - **Calls to a Move's old name are on no Screen.** A Move's source is in no tree the page draws, so every edge to it is left out. A removed declaration that called it shows no line to it. Neither does an unchanged caller of the old name that the change rewrote to call the new one: in base, `tools/gen.main` called `money.Add`, and that call is on no Screen. The moved declaration's own Screen shows its head callers, and the Panel's diff shows the rewritten call. Counting those base calls on the Move target's note is a follow-up.
 - **A ghost relies on the diff's fold.** `diff.fold` reports a reversal once, in head's direction, and the View keeps no base edge for it. If the diff ever wrote both directions, the Screen would draw the base edge as a removed line and the ghost too. Task 2's ghost tests pin today's fold.
-- **A long walk.** kubernetes HEAD~50 has 164 steps, and each adds a history entry. The changed-packages list (U11) and search jump anywhere, and `n` goes on from there (Deviation 6).
+- **A long walk.** kubernetes HEAD~50 has 164 steps, and each adds a history entry. On a Screen, the changed-packages list (U11) and search re-centre anywhere, and `n` goes on from there (Deviation 6). On the tree, `n` starts at step 1 (Deviation 7).
 - **`screen.mjs` waits fixed times,** as 17's checks do: 300 ms after a page loads and 150 ms after a Screen draws.
 - **The replay depends on 16 and 17.** Task 1's diff of `change.go` and `change_test.go` is against 16's version, and Tasks 2–4 against 17's code. If either changes before it lands, regenerate these diffs from a scratch branch on the new base.
 
@@ -2147,10 +2214,16 @@ index 4dc3201..58a51b7 100644
   - The cap test's title read "lists undefined members" at red; it is now literal.
   - The Measurements now name every worst case over 100 ms.
   - Not changed: a ghost is placed after its row's boxes, so it lands at a line's outer edge (Deviation 5 covers its width).
+- **Revision, 2026-10-20.** A review of 17 and 18 together (check-17-18) replayed 16, 17 and 18 in order and probed the result in a browser. Every finding 18 owns was fixed in the task that owns it, and each new browser check was seen failing on a build without its fix, in all three engines:
+  - **Major:** on a Screen, the changed-packages list did nothing visible. It kept 17's tree pick, which selects a package and keeps the Centre, so U11 ("clicking one centres it") failed where 18 makes the Screen the way through a change, and the long-walk Risk relied on it. The list now re-centres on a Screen (Architecture 4, Task 4's `list` check), and the Risk says what `n` does after it.
+  - **Nit:** on a Change View's Screen, the header lost the change's link to the host. `Header.tsx` now keeps it (Task 4's `host` check, **Overlap**).
+  - **Minor:** a near Centre's Panel shows no code when its file holds no change. That is now stated (Architecture 4); 19 covers it in `zu serve`.
+  - **Nits:** the glossary amendment says the sentence is wrapped in the file; the requirements amendment says "no change".
+  - 17's revision, a checkbox no longer taking keys, is in the base, so `n` and `p` work after "every box" too.
 
 ## Replay record
 
-Replayed with `replay.py` on a fresh `git archive` of `main` at c6f85b7, in a scratch directory, after 16's and 17's replays. `node_modules` was clone-copied from the repository (`cp -cR`), and Playwright's three browsers were already installed. This plan's directory was copied in, as `git archive HEAD` will give it once the plan is committed. Every step's exit matched its expectation:
+Replayed with `replay.py`, as revised on 2026-10-20, on a fresh `git archive` of `main` at 7f56652, in a scratch directory, after 16's and 17's replays (17's as revised). 7f56652 differs from c6f85b7 only by plan documents. `node_modules` was clone-copied from the repository (`cp -cR`), and Playwright's three browsers were already installed. This plan's directory was copied in, as `git archive HEAD` will give it once the plan is committed. Every step's exit matched its expectation:
 
 | Task | Step | Command | Exit |
 |---|---|---|---|
@@ -2171,13 +2244,14 @@ Replayed with `replay.py` on a fresh `git archive` of `main` at c6f85b7, in a sc
 | 5 | green | `cd web/e2e && node screen.mjs` | 0 |
 
 - 16's and 17's replays, before this one, passed every step. Their tree was byte-identical to the scratch branch's base commit in every source file (`diff -rq`, leaving out `node_modules`, `dist`, `bin`, `.zu`, `docx` and test output).
-- After Task 5, the replayed tree was byte-identical to the scratch branch's last commit in the same way (git tree 354b153; 22 files change against the base).
-- `golangci-lint run ./...` on the scratch branch's last commit: no issues. Task 5's `accept.mjs`, `place.mjs`, `serve.mjs` and `screen.mjs` passed 57, 9, 11 and 21 checks in each engine.
+- After Task 5, the replayed tree was byte-identical to the scratch branch's last commit in the same way (git tree 6591f02; 23 files change against the base).
+- `golangci-lint run ./...` in the replayed tree: no issues. Task 5's `accept.mjs`, `place.mjs`, `serve.mjs` and `screen.mjs` passed 57, 9, 11 and 23 checks in each engine.
 - The red reasons were seen as stated:
   - Task 1: the build fails, `v.Near` undefined.
   - Task 2: 13 tests.
   - Task 3: the missing module, `n` mapping to nothing, and leaving Cart: 3 failures.
-  - Task 4: 3 unit tests; `screen.mjs` 14/21 in each engine, with walk, marks, affected, step, near, full and red failing.
+  - Task 4: 3 unit tests; `screen.mjs` 14/23 in each engine, with walk, marks, affected, step, near, full, red, list and host failing.
   - Task 4's browser reasons were read on the scratch branch's red commit, since `replay.py` prints only each step's last line.
+- The approved version of 2026-10-20, before this revision, also replayed clean, 16 and 17 included. Its tree matched its scratch branch (git tree 354b153).
 - The draft before the scrutiny fixes also replayed clean, 16 and 17 included. Its tree matched its scratch branch (git tree 3db1e53).
 - Toolchain: Go 1.24.5, Node 24.17.0, Python 3.11.17, macOS on an Apple M2.
