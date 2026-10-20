@@ -391,17 +391,21 @@ pre {
   background: var(--mark);
 }
 
-/* 19: Go's colours, by the class code.ts paints */
+/* 19: Go's colours, by the class code.ts paints; 20: in diffs too */
+.hunk .kw,
 .source .kw {
   color: var(--syn-kw);
 }
+.hunk .com,
 .source .com {
   color: var(--syn-com);
   font-style: italic;
 }
+.hunk .str,
 .source .str {
   color: var(--syn-str);
 }
+.hunk .num,
 .source .num {
   color: var(--syn-num);
 }
@@ -621,6 +625,23 @@ button.st-removed {
 }
 .hunk .del {
   background: var(--del-bg);
+}
+/* 20: a declaration diff, numbered, scrolls alone */
+.hunk.decl {
+  position: relative;
+  max-height: 60vh;
+  overflow: auto;
+}
+.hunk .ln {
+  display: inline-block;
+  width: 3em;
+  padding-right: 6px;
+  text-align: right;
+  color: var(--dim);
+  user-select: none;
+}
+.decl-at {
+  margin-bottom: 2px;
 }
 
 

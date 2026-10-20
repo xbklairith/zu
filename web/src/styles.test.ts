@@ -84,6 +84,29 @@ describe.each([["light", light], ["dark", dark]])("Go colours, %s", (_, t) => {
   });
 });
 
+// 20: hunks and declaration diffs are coloured too, on their added and
+// removed lines.
+describe.each([["light", light], ["dark", dark]])("Go colours in diffs, %s", (_, t) => {
+  it("keep text at 4.5:1 on added and removed lines", () => {
+    const low: string[] = [];
+    for (const k of ["syn-kw", "syn-com", "syn-str", "syn-num", "fg"]) {
+      for (const bg of ["add-bg", "del-bg"]) {
+        if (contrast(t[k], t[bg]) < 4.5) low.push(`${k} on ${bg} ${contrast(t[k], t[bg]).toFixed(2)}`);
+      }
+    }
+    expect(low).toEqual([]);
+  });
+});
+
+describe("Go colours' rules in diffs (20)", () => {
+  it("colour each class code.ts paints in a hunk", () => {
+    for (const c of ["kw", "com", "str", "num"]) expect(css).toMatch(new RegExp(`\\.hunk \\.${c}[,\\s][^{]*\\{[^}]*color: var\\(--syn-${c}\\)`));
+  });
+  it("scroll a declaration diff alone", () => {
+    expect(css).toMatch(/\.hunk\.decl \{[^}]*max-height: 60vh[^}]*overflow: auto/);
+  });
+});
+
 describe("Go colours' rules (19)", () => {
   it("colour each class code.ts paints", () => {
     for (const c of ["kw", "com", "str", "num"]) expect(css).toMatch(new RegExp(`\\.source \\.${c} \\{[^}]*color: var\\(--syn-${c}\\)`));

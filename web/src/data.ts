@@ -18,7 +18,14 @@ export type ViewEdge = {
   more?: Loc[]; // 19: a call's or an embed's locations after loc
 };
 export type Ref = { commit: string; dirty: boolean };
-export type Hunk = { baseStart: number; baseLines: number; headStart: number; headLines: number; lines: string[] };
+// 20: a Change View colours each line, syntax being the runs of its text
+// after the marker (code.ts paint).
+export type Hunk = {
+  baseStart: number; baseLines: number; headStart: number; headLines: number; lines: string[]; syntax?: number[][];
+};
+// DeclDiff is a changed declaration's own diff (20, export.DeclDiff): its text
+// at base against its text at head, whole. A removed one has no headPath.
+export type DeclDiff = Hunk & { basePath?: string; headPath?: string };
 export type Violation = { rule: "levels" | "cycle"; from: string; to: string };
 // Proposal is one of the Policy's Proposals as internal/export writes it (07):
 // layers inner first, the ids it omits, each ranked package's layer and the
@@ -50,6 +57,9 @@ export type View = {
   // drawn one, their types' methods, and the calls and embeds among them all
   // that edges does not hold. Only the Screen reads it (screen.ts screenView).
   near?: { nodes: ViewNode[]; edges: ViewEdge[] };
+  // 20: Change View only: the own diff of each declaration the change
+  // modified, removed or moved, by id.
+  declDiffs?: Record<string, DeclDiff[]>;
   // 07, never written by zu: the box tree a Proposal draws (proposal.ts). cut.ts
   // index reads parent instead of package ids, and scene.ts labels from label.
   regroup?: { parent: Record<string, string>; label: Record<string, string> };

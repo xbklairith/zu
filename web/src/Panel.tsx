@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Bundle } from "./bundle";
-import { around, behind, centre, inline, litNote, paint, type Read } from "./code";
-import type { Hunk, Loc, SourceFile, View, ViewEdge, ViewNode } from "./data";
+import { around, behind, centre, inline, litNote, numbered, paint, type Read } from "./code";
+import type { DeclDiff, Hunk, Loc, SourceFile, View, ViewEdge, ViewNode } from "./data";
 import { calls, imports, insideDecl, targets, type Row } from "./facts";
 import { isGroup, isStrip, rankNote } from "./group";
 import { diffLink, fileDiffLink, linkFor } from "./links";
@@ -83,7 +83,8 @@ function Where({ view, loc, removed = false }: { view: View; loc: Loc; removed?:
   );
 }
 
-// Hunks renders line diffs as React text children only, like Source.
+// Hunks renders line diffs as React text children only, like Source,
+// coloured (20).
 function Hunks({ view, path, hunks }: { view: View; path: string; hunks: Hunk[] }) {
   const href = fileDiffLink(view.links, path);
   return (
@@ -100,18 +101,99 @@ function Hunks({ view, path, hunks }: { view: View; path: string; hunks: Hunk[] 
         )}
       </h3>
       {hunks.map((h) => (
-        <pre key={`${h.baseStart},${h.headStart}`} className="hunk">
-          <div className="hh">
-            @@ −{h.baseStart},{h.baseLines} +{h.headStart},{h.headLines} @@
-          </div>
-          {h.lines.map((l, i) => (
-            <div key={i} className={l[0] === "+" ? "add" : l[0] === "-" ? "del" : undefined}>
-              {l}
-            </div>
-          ))}
-        </pre>
+        <HunkLines key={`${h.baseStart},${h.headStart}`} hunk={h} />
       ))}
     </section>
+  );
+}
+
+const lineClass = (mark: string) => (mark === "+" ? "add" : mark === "-" ? "del" : undefined);
+
+function HunkLines({ hunk: h }: { hunk: Hunk }) {
+  const segs = useMemo(() => paint(h.lines.map((l) => l.slice(1)), h.syntax ?? []), [h]);
+  return (
+    <pre className="hunk">
+      <div className="hh">
+        @@ −{h.baseStart},{h.baseLines} +{h.headStart},{h.headLines} @@
+      </div>
+      {h.lines.map((l, i) => (
+        <div key={i} className={lineClass(l[0])}>
+          {l[0]}
+          {segs[i].map((s, j) => (
+            <span key={j} className={s.cls}>
+              {s.text}
+            </span>
+          ))}
+        </div>
+      ))}
+    </pre>
+  );
+}
+
+// where is a declaration diff's side: path:first–last.
+const where = (path: string, start: number, n: number) => `${path}:${n > 1 ? `${start}–${start + n - 1}` : start}`;
+
+// DeclDiffs draws a declaration's own diffs (20), first in its Change.
+function DeclDiffs({ diffs }: { diffs: DeclDiff[] }) {
+  return (
+    <section>
+      <h3>Declaration diff</h3>
+      {diffs.map((d) => (
+        <OwnDiff key={`${d.basePath}\n${d.baseStart}\n${d.headPath}\n${d.headStart}`} diff={d} />
+      ))}
+    </section>
+  );
+}
+
+// OwnDiff is one declaration diff, numbered at base and at head and
+// coloured as React text only, scrolled to its first change. Of one longer
+// than CODE_LINES it draws those around that change, as Code does.
+function OwnDiff({ diff: d }: { diff: DeclDiff }) {
+  const pre = useRef<HTMLPreElement>(null);
+  const rows = useMemo(() => numbered(d), [d]);
+  const changed = rows.findIndex((r) => r.mark !== " ") + 1; // counted from 1, as around counts
+  const [from, to] = around(rows.length, changed);
+  const segs = useMemo(
+    () => paint(rows.slice(from, to).map((r) => r.text), (d.syntax ?? []).slice(from, to)),
+    [rows, d.syntax, from, to],
+  );
+  // The diff alone scrolls, to its first change, as Code to its marked line.
+  // Each View brings its diffs as new objects (13), and another diff is
+  // another OwnDiff (DeclDiffs keys them by their sides): scrolled again only
+  // when its change moves, a diff stays where the reader scrolled it through
+  // a redraw.
+  useEffect(() => {
+    const el = pre.current?.children[changed - 1 - from] as HTMLElement | undefined;
+    if (pre.current && el) pre.current.scrollTop = el.offsetTop - pre.current.clientHeight / 2;
+  }, [changed]);
+  const sides = [
+    d.basePath && `base ${where(d.basePath, d.baseStart, d.baseLines)}`,
+    d.headPath && `head ${where(d.headPath, d.headStart, d.headLines)}`,
+  ].filter(Boolean);
+  return (
+    <>
+      <p className="decl-at">
+        <code>{sides.join(" → ")}</code>
+      </p>
+      {to - from < rows.length && <p className="muted window-note">{`Lines ${from + 1}–${to} of ${rows.length}.`}</p>}
+      <pre ref={pre} className="hunk decl">
+        {segs.map((ss, k) => {
+          const r = rows[from + k];
+          return (
+            <div key={from + k} className={lineClass(r.mark)}>
+              <span className="ln">{r.base}</span>
+              <span className="ln">{r.head}</span>
+              {r.mark}
+              {ss.map((s, j) => (
+                <span key={j} className={s.cls}>
+                  {s.text}
+                </span>
+              ))}
+            </div>
+          );
+        })}
+      </pre>
+    </>
   );
 }
 
@@ -120,7 +202,8 @@ function dir(path: string): string {
 }
 
 // Change is what zu diff says about one node: status, Move, hop, and the
-// hunks of its file (a declaration) or of its directory (a package).
+// hunks of its file (a declaration) or of its directory (a package); before
+// them, a declaration's own diff (20).
 function Change({ view, node }: { view: View; node: ViewNode }) {
   if (view.kind !== "change") return null;
   const facts = [
@@ -129,6 +212,7 @@ function Change({ view, node }: { view: View; node: ViewNode }) {
     node.hop !== undefined && (node.hop === 0 ? "changed (hop 0)" : `affected, ${node.hop} hop${node.hop > 1 ? "s" : ""} from a change`),
   ].filter(Boolean);
   const hunks = view.hunks ?? {};
+  const own = view.declDiffs?.[node.id] ?? [];
   const href = diffLink(view.links, node.id); // 14: its first changed line there
   const files =
     node.kind === "package"
@@ -152,6 +236,7 @@ function Change({ view, node }: { view: View; node: ViewNode }) {
           </a>
         </p>
       )}
+      {own.length > 0 && <DeclDiffs diffs={own} />}
       {files.map((p) => (
         <Hunks key={p} view={view} path={p} hunks={hunks[p]} />
       ))}
@@ -182,11 +267,13 @@ function Code({ file, line, lit }: { file: SourceFile; line: number; lit: Loc[] 
   if (held.marked !== marked || held.at !== at) setHeld({ marked, at });
   const [from, to] = around(all.length, at);
   const lines = useMemo(() => paint(all.slice(from, to), file.syntax.slice(from, to)), [all, from, to]);
+  // The code alone scrolls, to its marked line and to the first lit line:
+  // scrolling the panel would move the row the reader points at, and carry
+  // what the panel draws first (20: a declaration diff) out of view.
   useEffect(() => {
-    mark.current?.scrollIntoView({ block: "center" });
+    const el = mark.current;
+    if (pre.current && el) pre.current.scrollTop = el.offsetTop - pre.current.clientHeight / 2;
   }, [file.path, file.text, line]);
-  // The code alone scrolls to the first lit line: scrolling the panel would
-  // move the row the reader points at.
   useEffect(() => {
     const el = pre.current?.children[first - 1 - from] as HTMLElement | undefined;
     if (pre.current && el) pre.current.scrollTop = el.offsetTop - pre.current.clientHeight / 2;

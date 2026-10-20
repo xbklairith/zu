@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import golden from "../../internal/export/testdata/shop.view.golden.json";
-import type { Loc, SourceFile, View, ViewEdge } from "./data";
-import { around, behind, centre, CODE_LINES, inline, litNote, paint, reader } from "./code";
+import type { DeclDiff, Loc, SourceFile, View, ViewEdge } from "./data";
+import { around, behind, centre, CODE_LINES, inline, litNote, numbered, paint, reader } from "./code";
 import { decl, pkgs, view } from "./testkit";
 
 const shop = golden as unknown as View;
@@ -131,5 +131,26 @@ describe("litNote (19)", () => {
   it("says how to light lines, and why a removed call has none", () => {
     expect(litNote(null, "a.go")).toBe("Point at a call or embed to light the lines it is written on.");
     expect(litNote([], "a.go")).toBe("The change removed it: it has no line in head.");
+  });
+});
+
+// 20: store.Repo.Get's own diff in the shop's Change View: one line added.
+const get: DeclDiff = {
+  basePath: "s.go", headPath: "s.go", baseStart: 42, baseLines: 3, headStart: 36, headLines: 3,
+  lines: [" func Get() {", "-\tr.check()", "+\tr.hook()", " }"],
+};
+
+describe("numbered (20)", () => {
+  it("numbers each line at base and at head, as the diff runs", () => {
+    expect(numbered(get)).toEqual([
+      { mark: " ", text: "func Get() {", base: 42, head: 36 },
+      { mark: "-", text: "\tr.check()", base: 43 },
+      { mark: "+", text: "\tr.hook()", head: 37 },
+      { mark: " ", text: "}", base: 44, head: 38 },
+    ]);
+  });
+  it("numbers a removed declaration at base only", () => {
+    const gone: DeclDiff = { basePath: "s.go", baseStart: 18, baseLines: 2, headStart: 0, headLines: 0, lines: ["-type R interface {", "-}"] };
+    expect(numbered(gone).map((r) => [r.base, r.head])).toEqual([[18, undefined], [19, undefined]]);
   });
 });

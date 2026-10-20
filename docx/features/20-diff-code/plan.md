@@ -1166,7 +1166,7 @@ The unit tests check:
 
 **Steps:**
 
-- [ ] **Write the failing tests and browser checks**
+- [x] **Write the failing tests and browser checks**
 
 ```diff
 diff --git a/web/e2e/diffcode.mjs b/web/e2e/diffcode.mjs
@@ -1467,11 +1467,11 @@ index 38903d8..8b1d1bd 100644
      for (const c of ["kw", "com", "str", "num"]) expect(css).toMatch(new RegExp(`\\.source \\.${c} \\{[^}]*color: var\\(--syn-${c}\\)`));
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/code.test.ts src/styles.test.ts` Expected: FAIL (`numbered` is not a function; no `.hunk .kw` or `.hunk.decl` rule. The contrast checks on `--add-bg` and `--del-bg` already pass: the colours are 19's)
+- [x] **Run:** `cd web && npx vitest run src/code.test.ts src/styles.test.ts` Expected: FAIL (`numbered` is not a function; no `.hunk .kw` or `.hunk.decl` rule. The contrast checks on `--add-bg` and `--del-bg` already pass: the colours are 19's)
 
-- [ ] **Run:** `cd web && npx vite build >/dev/null && cd .. && CGO_ENABLED=0 go build -trimpath -o bin/zu ./cmd/zu && cd web/e2e && node diffcode.mjs` Expected: FAIL (0/10 checks in each engine: no panel draws a declaration diff, so each part's wait for one times out after 10 s. `tsc` fails on the red unit tests, so this step builds with `vite build`, which skips it, as 19's Task 3 does)
+- [x] **Run:** `cd web && npx vite build >/dev/null && cd .. && CGO_ENABLED=0 go build -trimpath -o bin/zu ./cmd/zu && cd web/e2e && node diffcode.mjs` Expected: FAIL (0/10 checks in each engine: no panel draws a declaration diff, so each part's wait for one times out after 10 s. `tsc` fails on the red unit tests, so this step builds with `vite build`, which skips it, as 19's Task 3 does)
 
-- [ ] **Draw each declaration diff, numbered and coloured, scrolled to its first change; colour the hunks; and scroll only the code to its line**
+- [x] **Draw each declaration diff, numbered and coloured, scrolled to its first change; colour the hunks; and scroll only the code to its line**
 
 ```diff
 diff --git a/web/src/Panel.tsx b/web/src/Panel.tsx
@@ -1769,11 +1769,11 @@ index 97668d7..2ae8b0e 100644
  /* Feature 05: selection, dimming, toggles and uml-viewer's triangles. The
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node diffcode.mjs` Expected: PASS (10 checks in each engine)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node diffcode.mjs` Expected: PASS (10 checks in each engine)
 
-- [ ] **Commit:** `Draw each changed declaration's own diff, numbered and coloured, in view when its panel opens`
+- [x] **Commit:** `Draw each changed declaration's own diff, numbered and coloured, in view when its panel opens`
 
 ---
 

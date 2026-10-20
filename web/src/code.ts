@@ -2,7 +2,7 @@
 // the page only cuts each line into those runs and draws them as React text,
 // never as markup.
 import { cmp } from "./cut";
-import type { Loc, SourceFile, View } from "./data";
+import type { Hunk, Loc, SourceFile, View } from "./data";
 
 // Seg is a run of one line's text, coloured by cls when zu coloured it.
 export type Seg = { text: string; cls?: string };
@@ -90,6 +90,21 @@ export function litNote(places: Loc[] | null, path: string): string {
     there.length > 0 && `${here.length > 0 ? "in" : "In"} other files: ${list(there)}`,
   ].filter(Boolean);
   return `${out.join("; ")}.`;
+}
+
+// Numbered is a diff line as a declaration diff draws it (20): its marker,
+// its text, and its line at base (not on a "+" line) and at head (not on a
+// "-" line).
+export type Numbered = { mark: string; text: string; base?: number; head?: number };
+
+export function numbered(h: Hunk): Numbered[] {
+  let [b, hd] = [h.baseStart, h.headStart];
+  return h.lines.map((l) => {
+    const n: Numbered = { mark: l[0], text: l.slice(1) };
+    if (n.mark !== "+") n.base = b++;
+    if (n.mark !== "-") n.head = hd++;
+    return n;
+  });
 }
 
 // Read gives a file zu serve sends on demand (19), or null.
