@@ -88,3 +88,21 @@ Applied as the plan's exact text:
 - **decisions.md, UI v1:** the **Screen in a Change View (18)** prose, after 17's text.
 - **decisions.md, 17's Screen text:** "; `n` is kept for 18" and "A Change View has no Screen until 18." deleted; the `offIn`/`offOut` clause replaced.
 - **requirements-draft.md:** no change, as the plan says.
+
+## After scrutiny
+
+**Round 1** (2026-10-21, fix-then-ship):
+- **The cycle fix.** A new cycle violation names Package Tree boxes, not packages, so it was never a walk step, and its ends in the Violations list did nothing on a Screen. `7d1addb` lifts each head import as `policy/cycles.go` does (`breaking`), and walks to the importers on the cycle's arc. On a Screen, a click on an end re-centres on the package at that end of the arc's first import. `screen.mjs` gains `cycle`, making 24 checks per engine.
+- **Docs.** `a48673f` says what `Change`'s `Near` holds, and words step 5 as "the Centre selected, or its package for a near Centre". `097f28c` adds a new cycle to step 6.
+- **The measure.** `d504b88` lets `measure.mjs` take `.`.
+
+**Round 2** (2026-10-21, fix-then-ship):
+- **Unchanged importers on the walk.** A new cycle flags every arc of it, most of them imports the change kept, so round 1's walk took in every importer on them. On kubernetes, a change adding one import walked 292 steps, 291 of them unchanged packages. `c3951c3` walks only to the importers of imports the change added or reversed. It falls back to each arc's first import only when the change made none on any new cycle. A violation's list end now prefers the change's own import. `walk.test.ts` and `screen.mjs`'s `cycle` now model a two-arc cycle with one added import and two kept ones. Both failed before the fix: the walk stepped to checkout, an importer the change kept. The glossary's **Walk**, `decisions.md` and Architecture 3 say what a cycle's importer is. Step 6 asks for a real cycle of two arcs.
+- **The measure hung.** `e5e9569` dropped the Centre's `selected` flag, so `measure.mjs`, which found the Centre by it, waited forever. `3de9da6` finds it by its box's `centre` class. On hugo's last 50 commits at the branch tip, the walk is 126 steps. Times are in ms, Chromium / Firefox / WebKit:
+  - enter: 21 / 49 / 65;
+  - step median: 14 / 29 / 47;
+  - back median: 30 / 45 / 45;
+  - no page errors.
+
+  The plan's criteria hold.
+- Since `d504b88`, "the plan's `measure.mjs .` stops at once" above no longer holds. The Gates' 23/23 was `screen.mjs` at Task 4; it is now 24/24.
