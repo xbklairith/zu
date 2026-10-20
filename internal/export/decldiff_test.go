@@ -203,3 +203,44 @@ func TestDeclDiffPairs(t *testing.T) {
 		t.Errorf("init's declaration diffs =\n%q\nwant\n%q", got, want)
 	}
 }
+
+// A declaration not where the IR says on a side, as when its file changed
+// after the scan, gets no diff rather than a wrong one.
+func TestDeclDiffNotWhereTheIRSays(t *testing.T) {
+	const mod = "module m\n\ngo 1.24\n"
+	f := func(n int) string {
+		return "package a\n\n// F is one.\nfunc F() int { return " + string(rune('0'+n)) + " }\n"
+	}
+	base, baseTree := scanTree(t, writeTree(t, map[string]string{"go.mod": mod, "a/f.go": f(1)}), strings.Repeat("b", 40))
+	headRoot := writeTree(t, map[string]string{"go.mod": mod, "a/f.go": f(2)})
+	head, headTree := scanTree(t, headRoot, strings.Repeat("h", 40))
+	if err := os.WriteFile(filepath.Join(headRoot, "a", "f.go"), []byte(strings.Replace(f(2), "\n\n", "\n\n\n", 1)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	v, err := Change(base, head, diff.Compare(base, head), diff.Summarize(base, head), baseTree, headTree)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d, ok := v.DeclDiffs["m/a.F"]; ok {
+		t.Errorf("F's declaration diffs = %+v, want none", d)
+	}
+}
+
+// A file that does not parse at head declares nothing there: its
+// declarations are removed, each with its text at Base.
+func TestDeclDiffOfAFileThatDoesNotParse(t *testing.T) {
+	const mod = "module m\n\ngo 1.24\n"
+	const g = "package a\n\nfunc G() {}\n"
+	const f = "package a\n\n// F is one.\nfunc F() int { return 1 }\n"
+	base, baseTree := scanTree(t, writeTree(t, map[string]string{"go.mod": mod, "a/f.go": f, "a/g.go": g}), strings.Repeat("b", 40))
+	head, headTree := scanTree(t, writeTree(t, map[string]string{"go.mod": mod, "a/f.go": strings.TrimSuffix(f, "}\n"), "a/g.go": g}), strings.Repeat("h", 40))
+	v, err := Change(base, head, diff.Compare(base, head), diff.Summarize(base, head), baseTree, headTree)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []DeclDiff{{BasePath: "a/f.go", Hunk: Hunk{BaseStart: 3, BaseLines: 2, Lines: []string{"-// F is one.", "-func F() int { return 1 }"}}}}
+	want[0].Syntax = alone(want[0].Lines)
+	if got := v.DeclDiffs["m/a.F"]; !reflect.DeepEqual(got, want) {
+		t.Errorf("F's declaration diffs =\n%+v\nwant\n%+v", got, want)
+	}
+}
