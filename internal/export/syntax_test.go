@@ -38,6 +38,20 @@ func TestSyntax(t *testing.T) {
 			{0, 7, tokComment},
 		}},
 		{"a comment where a semicolon goes", "x++ // c\n", [][]int{{4, 4, tokComment}, {}}},
+		// The scanner drops "\r" from a comment's text and a raw string's
+		// value; the runs end where the source does, and the page cuts lines
+		// at "\n" only, so a CR is its line's last unit.
+		{"a CR is its line's", "// c\r\nfunc\r\n", [][]int{{0, 5, tokComment}, {0, 4, tokKeyword}, {}}},
+		{"a CR inside a raw string or a block comment", "var r = `a\r\nb`\r\n/* x\r\n */ func", [][]int{
+			{0, 3, tokKeyword, 8, 3, tokString},
+			{0, 2, tokString},
+			{0, 5, tokComment},
+			{0, 3, tokComment, 4, 4, tokKeyword},
+		}},
+		{"a byte that is not UTF-8 counts one unit, as the U+FFFD JSON writes for it", "x := \"\xff\" // é\xfe\nfunc", [][]int{
+			{5, 3, tokString, 9, 5, tokComment},
+			{0, 4, tokKeyword},
+		}},
 		{"empty", "", [][]int{{}}},
 	} {
 		if got := Syntax([]byte(c.src)); !reflect.DeepEqual(got, c.want) {
