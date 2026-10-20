@@ -490,6 +490,7 @@ export function App({ view: whole, read }: { view: View; read?: Read }) {
       </main>
       {centre !== null && closed !== centre && (
         <Panel
+          key={centre} // mounted anew for each Centre: WebKit redraws an updated one slowly (17)
           view={screenView(proposed)}
           id={isBox(proposed, centre + PKG) ? centre + PKG : centre}
           edge={null}
