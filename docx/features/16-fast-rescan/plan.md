@@ -1732,7 +1732,7 @@ The tests (`apply_fast_test.go`) check:
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/internal/policy/apply_fast_test.go b/internal/policy/apply_fast_test.go
@@ -1825,9 +1825,9 @@ index 0000000000000000000000000000000000000000..2bb3741aa13769cd5185a0271980120c
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/policy` Expected: FAIL (`p.apply undefined`)
+- [x] **Run:** `go test ./internal/policy` Expected: FAIL (`p.apply undefined`)
 
-- [ ] **Take the short path when nothing is omitted or merged**
+- [x] **Take the short path when nothing is omitted or merged**
 
 ```diff
 diff --git a/internal/policy/apply.go b/internal/policy/apply.go
@@ -1893,9 +1893,9 @@ index 8ace39311eccb2541ce80624391efc6c17a40069..35c12dba0a38765059ce91f520d9a1b3
  	rename := func(id string) string {
 ```
 
-- [ ] **Run:** `go test ./internal/policy ./internal/export ./internal/cli` Expected: PASS
+- [x] **Run:** `go test ./internal/policy ./internal/export ./internal/cli` Expected: PASS
 
-- [ ] **Commit:** `Apply an empty lens without copying the IR`
+- [x] **Commit:** `Apply an empty lens without copying the IR`
 
 ---
 

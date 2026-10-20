@@ -1,6 +1,7 @@
 package policy
 
 import (
+	"cmp"
 	"slices"
 	"strings"
 
@@ -60,6 +61,48 @@ func (p *Policy) foreignIDs(doc *ir.IR) map[string]string {
 // Merged nodes and edges keep every location; an edge that merging turns
 // into a self-loop is dropped. doc is not modified and nothing is invented.
 func (p *Policy) Apply(doc *ir.IR) *ir.IR {
+	if p.Lens() || !canonical(doc) {
+		return p.apply(doc)
+	}
+	// Nothing to omit or merge in an IR in order with no id twice: the
+	// nodes and edges as they are, less self-loops, sharing their location
+	// lists, which nothing writes to (16).
+	out := *doc
+	out.Nodes = slices.Clone(doc.Nodes)
+	out.Edges = slices.DeleteFunc(slices.Clone(doc.Edges), func(e ir.Edge) bool { return e.From == e.To })
+	ir.Sort(&out)
+	return &out
+}
+
+// canonical reports whether doc is as ir.Sort leaves it, every location list
+// included, with no node id and no edge twice.
+func canonical(doc *ir.IR) bool {
+	sorted := func(l []ir.Location) bool {
+		return slices.IsSortedFunc(l, func(a, b ir.Location) int {
+			return cmp.Or(strings.Compare(a.Path, b.Path), cmp.Compare(a.Line, b.Line))
+		})
+	}
+	for i, n := range doc.Nodes {
+		if !sorted(n.Locations) || i > 0 && doc.Nodes[i-1].ID >= n.ID {
+			return false
+		}
+	}
+	for i, e := range doc.Edges {
+		if !sorted(e.Locations) {
+			return false
+		}
+		if i > 0 {
+			d := doc.Edges[i-1]
+			if cmp.Or(strings.Compare(d.From, e.From), strings.Compare(d.To, e.To), strings.Compare(string(d.Kind), string(e.Kind))) >= 0 {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// apply is Apply for any Policy and any IR.
+func (p *Policy) apply(doc *ir.IR) *ir.IR {
 	pkg := packageOf(doc)
 	foreign := p.foreignIDs(doc)
 	rename := func(id string) string {
