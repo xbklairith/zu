@@ -45,6 +45,18 @@ The "+N more" chip that holds the boxes of one sibling set that fell past the vi
 
 A box the reader opened, or a container the view draws with other children than the opening view did (regrown), with what it holds, laid out on its own and set in that container's place in the view as it opened: the view the hash draws without the boxes the reader opened or closed, and without the selection (15). A Region inside a Region is drawn there as the view as it opened drew it (a box the reader opened: closed), and is laid out on its own. ("Base" names the other side of a change, so the view as it opened is never called the base.)
 
+## Screen
+
+A lens beside the Package Tree (17, after codezoom's screens): one node, its Centre, in the middle, what depends on it in the row above and what it depends on in the row below, each box sized by its Weight. Its grain follows the Centre: imports for a package or external, calls and embeds for a type or function, a method drawn as its type. A row draws its 24 heaviest boxes and a "+N more" chip; a box in both rows (a cycle) is drawn in each, marked ↻. While a Screen is drawn, the tree's state stays as the reader left it; the tree comes back centred on its selection.
+
+## Centre
+
+The node a Screen is drawn around: the selected package, type, function or external, or a selected method's type. A click on another box makes that box the Centre. Not called the focus, which is the container the Package Tree is drilled into (`f` in the URL hash).
+
+## Weight
+
+How much a box on a Screen is used by or uses its Centre, which sizes the box against the heaviest in its row: the files that import, for packages; √(call sites and embeds × the declarations at the box's end), for declarations, so breadth counts as well as volume. Only Screen boxes are sized by it.
+
 ## Foreign
 
 An external module drawn as an oval outside the Package Tree. The Policy can collapse

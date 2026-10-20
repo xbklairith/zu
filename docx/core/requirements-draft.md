@@ -223,6 +223,7 @@ Served from the binary on localhost. The UI is where most of the build effort go
 | U6 | Declutter control: hide leaf nodes, weak edges, or everything outside the selection's neighbourhood | Must |
 | U7 | Export the current view as SVG or PNG | Should |
 | U8 | Keyboard navigation: search, jump to node, escape to clear selection | Should |
+| U14 | Screen: centre any package, type, function or external, with what depends on it above and what it depends on below, boxes sized by use; clicking a box re-centres, and the browser's Back returns to the last Screen | Should |
 
 ### Diff view
 

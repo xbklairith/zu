@@ -1,6 +1,6 @@
 # 17 · The Screen — Plan
 
-**Status:** APPROVED 2026-10-19 (lead, after scrutiny-17, one revision and the replay; advisor sign-off); REVISED 2026-10-20 after a review of 17 and 18 (**Notes**), replayed again. Held: it queues behind 16, which is approved and held; zu builds 16 first, and builds either only when the user says go.
+**Status:** Implemented 2026-10-21 (Tasks 1–7 on `build-16-20`; `acceptance.md`; the user's check is owed, so U14 is not yet recorded as met). APPROVED 2026-10-19 (lead, after scrutiny-17, one revision and the replay; advisor sign-off); REVISED 2026-10-20 after a review of 17 and 18 (**Notes**), replayed again. Held: it queues behind 16, which is approved and held; zu builds 16 first, and builds either only when the user says go.
 
 **Base.** Every diff here is against `main` at a18ff85. The diffs come from a scratch branch built on a `git archive` of a18ff85, one commit per red step and one per green step. The plan was replayed on a fresh `git archive` of a18ff85 (**Replay record**). 16 lands first, so this plan must be replayed again on `main` after 16, as 15 was after 14 (**Overlap with 16**).
 
@@ -2464,17 +2464,17 @@ index 5786df4..4fe36b4 100644
 
 **Steps:**
 
-- [ ] **Run:** `make check` Expected: PASS (read the lint output)
+- [x] **Run:** `make check` Expected: PASS (read the lint output)
 
-- [ ] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (57 checks in each engine)
+- [x] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (57 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node place.mjs` Expected: PASS (9 checks in each engine)
+- [x] **Run:** `cd web/e2e && node place.mjs` Expected: PASS (9 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS (11 checks in each engine)
+- [x] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS (11 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node screen.mjs` Expected: PASS (14 checks in each engine)
+- [x] **Run:** `cd web/e2e && node screen.mjs` Expected: PASS (14 checks in each engine)
 
-- [ ] **Measure** (by hand; not a replay step).
+- [x] **Measure** (by hand; not a replay step).
   1. For kubernetes and hugo in `.zu/corpus/` (read-only; never clone), run `bin/zu scan -out <scratch>/ir.json -html <scratch>/<name>.html -include <pkg> <corpus dir>`, with `./pkg/kubelet` and `./hugolib`. `-out` keeps the IR out of the corpus.
   2. Run `node docx/features/17-screen/measure.mjs . <scratch>/kubernetes.html <scratch>/hugo.html`.
   3. Record the table in `acceptance.md`.
@@ -2495,7 +2495,7 @@ index 5786df4..4fe36b4 100644
 
   U14 is recorded as met in `decisions.md` once this passes.
 
-- [ ] **Commit:** `Record the Screen's acceptance`
+- [x] **Commit:** `Record the Screen's acceptance`
 
 ---
 
