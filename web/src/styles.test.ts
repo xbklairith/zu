@@ -70,12 +70,13 @@ describe.each([["light", light], ["dark", dark]])("CRAP fills, %s", (_, t) => {
 });
 
 // 19: the Code panel colours Go (code.ts CLASS); each colour reads as text on
-// the code's background and on the declaration's marked line.
+// the code's background, on the declaration's marked line and on the lines a
+// pointed-at call or embed lights.
 describe.each([["light", light], ["dark", dark]])("Go colours, %s", (_, t) => {
-  it("keep text at 4.5:1 on the code and its marked line", () => {
+  it("keep text at 4.5:1 on the code, its marked line and its lit lines", () => {
     const low: string[] = [];
     for (const k of ["syn-kw", "syn-com", "syn-str", "syn-num", "fg"]) {
-      for (const bg of ["code-bg", "mark"]) {
+      for (const bg of ["code-bg", "mark", "lit"]) {
         if (!t[k] || contrast(t[k], t[bg]) < 4.5) low.push(`${k} on ${bg} ${t[k] ? contrast(t[k], t[bg]).toFixed(2) : "missing"}`);
       }
     }
@@ -86,5 +87,9 @@ describe.each([["light", light], ["dark", dark]])("Go colours, %s", (_, t) => {
 describe("Go colours' rules (19)", () => {
   it("colour each class code.ts paints", () => {
     for (const c of ["kw", "com", "str", "num"]) expect(css).toMatch(new RegExp(`\\.source \\.${c} \\{[^}]*color: var\\(--syn-${c}\\)`));
+  });
+  it("light a line apart from the marked one, and scroll the code alone to it", () => {
+    expect(css).toMatch(/\.source \.lit \{[^}]*background: var\(--lit\)/);
+    expect(css).toMatch(/\.source \{[^}]*position: relative[^}]*overflow: auto/);
   });
 });

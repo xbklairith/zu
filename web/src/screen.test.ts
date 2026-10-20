@@ -4,7 +4,7 @@ import css from "./styles.css?raw";
 import change from "../../internal/export/testdata/shop.change.golden.json";
 import type { View, ViewEdge } from "./data";
 import { ROW_MAX } from "./layout";
-import { centreOf, FONT, GAP_ROW, MEMBER_CAP, placeScreen, ROW_CAP, screenNote, screenOf, screenView, type Drawn, type Row } from "./screen";
+import { centreOf, FONT, GAP_ROW, MEMBER_CAP, placeScreen, placesOf, ROW_CAP, screenNote, screenOf, screenView, type Drawn, type Row } from "./screen";
 import { LABEL_PX } from "./viewport";
 import { decl, edge, exts, pkgs, view } from "./testkit";
 
@@ -321,5 +321,31 @@ describe("the Screen in a Change View (18)", () => {
       "Above: what calls or embeds it. Below: what it calls or embeds. Size: √(uses × declarations). " +
       "Not drawn: 1 call or embed out of it, with unchanged declarations more than one call or embed from the change; " +
       "5 unresolved calls in its package. Affected Set (its package): changed; 4 packages import it, directly or not.");
+  });
+});
+
+describe("placesOf (19)", () => {
+  // m.T, whose method M is in b.go, is called by m.F twice in a.go and
+  // calls m.G from M; m.T embeds m.E.
+  const loc = (path: string, line: number) => ({ path, line });
+  const v = view(
+    [...pkgs(["m"], "m"), decl("m.F", "m", "function"), decl("m.G", "m", "function"), decl("m.T", "m"),
+      decl("m.T.M", "m.T", "function"), decl("m.E", "m")],
+    [
+      { ...edge("m.F", "m.T.M", "calls"), count: 2, loc: loc("a.go", 3), more: [loc("a.go", 7)] },
+      { ...edge("m.T.M", "m.G", "calls"), loc: loc("b.go", 5) },
+      { ...edge("m.T", "m.E", "embeds"), loc: loc("t.go", 2) },
+    ],
+  );
+  it("is where the calls and embeds a Screen box's line stands for are written", () => {
+    expect(placesOf(v, "m.T", "up:m.F")).toEqual([loc("a.go", 3), loc("a.go", 7)]);
+    expect(placesOf(v, "m.T", "up:m.F>")).toEqual([loc("a.go", 3), loc("a.go", 7)]); // its line
+    expect(placesOf(v, "m.T", "down:m.G")).toEqual([loc("b.go", 5)]);
+    expect(placesOf(v, "m.T", ">down:m.E")).toEqual([loc("t.go", 2)]);
+  });
+  it('is null for the Centre, a "+N more" chip, and a Screen of imports', () => {
+    expect(placesOf(v, "m.T", "m.T")).toBeNull();
+    expect(placesOf(v, "m.T", "up:#more")).toBeNull();
+    expect(placesOf(shop, S, `up:${C}`)).toBeNull();
   });
 });

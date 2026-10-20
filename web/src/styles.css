@@ -29,6 +29,7 @@
   --syn-com: #57606a;
   --syn-str: #0a3069;
   --syn-num: #0550ae;
+  --lit: #ddf4ff; /* the lines a pointed-at call or embed is written on (19) */
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color: var(--fg);
   background: var(--bg);
@@ -64,6 +65,7 @@
     --syn-com: #a8b1bb;
     --syn-str: #a5d6ff;
     --syn-num: #79c0ff;
+    --lit: #1f3a5f;
   }
 }
 
@@ -365,12 +367,15 @@ pre {
   padding-left: 16px;
 }
 
+/* 19: the code scrolls on its own, so lighting a line moves no row of the panel */
 .source {
+  position: relative;
+  max-height: 60vh;
   background: var(--code-bg);
   font-size: 12px;
   line-height: 18px;
   padding: 6px 0;
-  overflow-x: auto;
+  overflow: auto;
 }
 
 .source .ln {
@@ -399,6 +404,9 @@ pre {
 }
 .source .num {
   color: var(--syn-num);
+}
+.source .lit {
+  background: var(--lit);
 }
 
 /* Change View (U9): status in the border and label colour, never colour alone:

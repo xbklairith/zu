@@ -2531,7 +2531,7 @@ The unit tests check, on a View where `m.F` calls `m.G` at `a.go:4`, `a.go:9` an
 
 **Steps:**
 
-- [ ] **Write the failing tests and browser checks**
+- [x] **Write the failing tests and browser checks**
 
 ```diff
 diff --git a/web/e2e/code.mjs b/web/e2e/code.mjs
@@ -2889,11 +2889,11 @@ index 6a437e3..38903d8 100644
  });
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/code.test.ts src/screen.test.ts src/styles.test.ts` Expected: FAIL (`centre`, `behind`, `litNote` and `placesOf` are not functions; no `--lit` colour or rule)
+- [x] **Run:** `cd web && npx vitest run src/code.test.ts src/screen.test.ts src/styles.test.ts` Expected: FAIL (`centre`, `behind`, `litNote` and `placesOf` are not functions; no `--lit` colour or rule)
 
-- [ ] **Run:** `cd web && npx vite build >/dev/null && cd .. && CGO_ENABLED=0 go build -trimpath -o bin/zu ./cmd/zu && cd web/e2e && node code.mjs` Expected: FAIL (5/13 checks in each engine, left, kept, saved, long and errors: no line lights and no note shows, the long file's lines drawn do not move, and hovering the row scrolls the panel, whose code is still as long as its file. Built with `vite build`, as in Task 3)
+- [x] **Run:** `cd web && npx vite build >/dev/null && cd .. && CGO_ENABLED=0 go build -trimpath -o bin/zu ./cmd/zu && cd web/e2e && node code.mjs` Expected: FAIL (5/13 checks in each engine, left, kept, saved, long and errors: no line lights and no note shows, the long file's lines drawn do not move, and hovering the row scrolls the panel, whose code is still as long as its file. Built with `vite build`, as in Task 3)
 
-- [ ] **Light the lines behind what the reader points at**
+- [x] **Light the lines behind what the reader points at**
 
 ```diff
 diff --git a/web/src/App.tsx b/web/src/App.tsx
@@ -3343,11 +3343,11 @@ index ff5e9b2..97668d7 100644
     removed is struck through, moved is dashed, affected is an outline. Every
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node code.mjs` Expected: PASS (13 checks in each engine)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node code.mjs` Expected: PASS (13 checks in each engine)
 
-- [ ] **Commit:** `Light the lines behind a call or embed`
+- [x] **Commit:** `Light the lines behind a call or embed`
 
 ---
 

@@ -1,7 +1,8 @@
 // 19: the Code panel's text. zu colours Go in Go (export.Syntax, go/scanner);
 // the page only cuts each line into those runs and draws them as React text,
 // never as markup.
-import type { SourceFile, View } from "./data";
+import { cmp } from "./cut";
+import type { Loc, SourceFile, View } from "./data";
 
 // Seg is a run of one line's text, coloured by cls when zu coloured it.
 export type Seg = { text: string; cls?: string };
@@ -45,11 +46,50 @@ export function around(n: number, at: number, size = CODE_LINES): [number, numbe
   return [from, from + size];
 }
 
+// centre is the line Code draws a file of n lines around (around): at, or
+// the first lit line when the lines drawn around at do not hold it (0 is
+// none lit).
+export function centre(n: number, at: number, first: number): number {
+  const [from, to] = around(n, at);
+  return first === 0 || (first > from && first <= to) ? at : first;
+}
+
 // inline is a file the View carries (zu scan -html, zu serve -include), with
 // its colour, or null.
 export function inline(view: View, path: string): SourceFile | null {
   const text = view.sources[path];
   return text === undefined ? null : { path, text, syntax: view.syntax?.[path] ?? [] };
+}
+
+// behind is where the calls and embeds from an id from accepts to one to
+// accepts are written: each edge's loc and more, by path and line, each once.
+// A call or embed the change removed was written in base, whose lines the
+// code (head's) does not show: it gives none.
+export function behind(view: View, from: (id: string) => boolean, to: (id: string) => boolean): Loc[] {
+  const out = new Map<string, Loc>();
+  for (const e of view.edges) {
+    if (e.kind === "imports" || e.status === "removed" || !from(e.from) || !to(e.to)) continue;
+    for (const l of [e.loc, ...(e.more ?? [])]) out.set(`${l.path}\n${l.line}`, l);
+  }
+  return [...out.values()].sort((a, b) => cmp(a.path, b.path) || a.line - b.line);
+}
+
+const LIT_CAP = 8; // the places litNote lists of each, before "and N more"
+
+// litNote says where the lit lines are, in the shown file (path) and in
+// others; places is null while no call or embed is pointed at.
+export function litNote(places: Loc[] | null, path: string): string {
+  if (places === null) return "Point at a call or embed to light the lines it is written on.";
+  if (places.length === 0) return "The change removed it: it has no line in head.";
+  const list = (xs: string[]) =>
+    xs.length > LIT_CAP ? `${xs.slice(0, LIT_CAP).join(", ")} and ${xs.length - LIT_CAP} more` : xs.join(", ");
+  const here = places.filter((p) => p.path === path).map((p) => String(p.line));
+  const there = places.filter((p) => p.path !== path).map((p) => `${p.path}:${p.line}`);
+  const out = [
+    here.length > 0 && `${here.length === 1 ? "Line" : "Lines"} ${list(here)}`,
+    there.length > 0 && `${here.length > 0 ? "in" : "In"} other files: ${list(there)}`,
+  ].filter(Boolean);
+  return `${out.join("; ")}.`;
 }
 
 // Read gives a file zu serve sends on demand (19), or null.

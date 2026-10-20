@@ -3,9 +3,10 @@
 // below, after codezoom's screens. A pure function of the View and the hash:
 // rows come only from the View's edges. 18: in a Change View, from its edges
 // and near's, each box and line marked by its Change Status.
-import type { NodeKind, View, ViewEdge } from "./data";
+import type { Loc, NodeKind, View, ViewEdge } from "./data";
 import { statusOf } from "./bundle";
 import { nodeMark } from "./change";
+import { behind } from "./code";
 import { cmp, index, packageOf, PKG } from "./cut";
 import { INSET, ROW_MAX, textWidth } from "./layout";
 import { LABEL_PX } from "./viewport";
@@ -218,6 +219,22 @@ export function screenOf(within: View, centre: string, all = false): Screen {
     unresolved, offIn, offOut,
     ...(view.kind === "change" ? { change: changeOf(view, centre, c.kind) } : {}),
   };
+}
+
+// placesOf is where the calls and embeds a Screen box's line stands for are
+// written (19, code.ts behind): drawn is the box's id or its line's ("up:X",
+// "up:X>", ">down:X"). It is null for the Centre, a "+N more" chip and a
+// Screen of imports, which light no line.
+export function placesOf(within: View, centre: string, drawn: string): Loc[] | null {
+  const view = screenView(within);
+  const { node } = index(view);
+  const kind = node.get(centre)?.kind;
+  const box = drawn.replace(/^>|>$/g, "");
+  const [up, id] = box.startsWith("up:") ? [true, box.slice(3)] : box.startsWith("down:") ? [false, box.slice(5)] : [false, ""];
+  if ((kind !== "type" && kind !== "function") || !node.has(id)) return null;
+  const boxOf = (x: string) => typeOf(view, x) ?? x;
+  const [c, far] = [(x: string) => boxOf(x) === centre, (x: string) => boxOf(x) === id];
+  return up ? behind(view, far, c) : behind(view, c, far);
 }
 
 // Drawing a Screen: no ELK. Each row is lines of boxes, heaviest first, each

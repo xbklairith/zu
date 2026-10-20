@@ -2,7 +2,8 @@
 // before React Flow sees them, so nothing waits for a layout. A click on a box
 // re-centres the Screen on it; a click on a row's "+N more" chip draws the
 // rows whole. The page keys this by the Centre and that flag, so each Screen
-// opens at its own first view (centredFit).
+// opens at its own first view (centredFit). 19: pointing at or focusing a
+// box or its line tells the page, which lights the lines behind it.
 import {
   Background,
   ControlButton,
@@ -56,9 +57,10 @@ type Props = {
   onCentre: (id: string) => void;
   onMore: () => void;
   fit?: number; // the first view again each time it changes (the f key)
+  onPoint?: (id: string | null) => void; // 19: the box or line pointed at or focused, by its id
 };
 
-export function ScreenCanvas({ drawing, onCentre, onMore, fit }: Props) {
+export function ScreenCanvas({ drawing, onCentre, onMore, fit, onPoint }: Props) {
   const rf = useReactFlow();
   const box = useRef<HTMLDivElement>(null);
   const [whole, setWhole] = useState(true);
@@ -110,7 +112,9 @@ export function ScreenCanvas({ drawing, onCentre, onMore, fit }: Props) {
         if (!n.classList?.contains("react-flow__node") || (e.key !== "Enter" && e.key !== " ")) return;
         e.preventDefault();
         pick(n.getAttribute("data-id"));
-      }}>
+      }}
+      onFocus={(e) => onPoint?.((e.target as Element).closest?.(".react-flow__node, .react-flow__edge")?.getAttribute("data-id") ?? null)}
+      onBlur={() => onPoint?.(null)}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -122,6 +126,10 @@ export function ScreenCanvas({ drawing, onCentre, onMore, fit }: Props) {
           nodesConnectable={false}
           nodesFocusable
           onNodeClick={(_, n) => pick(n.id)}
+          onNodeMouseEnter={(_, n) => onPoint?.(n.id)}
+          onNodeMouseLeave={() => onPoint?.(null)}
+          onEdgeMouseEnter={(_, e) => onPoint?.(e.id)}
+          onEdgeMouseLeave={() => onPoint?.(null)}
         >
           <Background />
           <Controls showInteractive={false}>

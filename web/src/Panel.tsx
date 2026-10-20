@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Bundle } from "./bundle";
-import { around, inline, paint, type Read } from "./code";
+import { around, behind, centre, inline, litNote, paint, type Read } from "./code";
 import type { Hunk, Loc, SourceFile, View, ViewEdge, ViewNode } from "./data";
-import { calls, imports, targets, type Row } from "./facts";
+import { calls, imports, insideDecl, targets, type Row } from "./facts";
 import { isGroup, isStrip, rankNote } from "./group";
 import { diffLink, fileDiffLink, linkFor } from "./links";
 import { crapFacts, type Risk } from "./metrics";
@@ -22,11 +22,15 @@ type Props = {
   crap?: Risk; // 08: the selected box's CRAP as the scene rolled it up
   ownTier?: number; // 12: the selected box's rank before the row cap merged its row
   read?: Read; // 19: the source the View does not carry, from zu serve
+  lit?: Loc[] | null; // 19: where the Screen line the reader points at is written (screen.ts placesOf)
   onReveal: (id: string) => void;
   onClose: () => void;
 };
 
-function Rows({ title, rows, onReveal }: { title: string; rows: Row[]; onReveal: (id: string) => void }) {
+// 19: onPoint hears the row the reader points at or focuses, and null when they leave it.
+function Rows({ title, rows, onReveal, onPoint }: {
+  title: string; rows: Row[]; onReveal: (id: string) => void; onPoint?: (r: Row | null) => void;
+}) {
   return (
     <section>
       <h3>
@@ -37,8 +41,14 @@ function Rows({ title, rows, onReveal }: { title: string; rows: Row[]; onReveal:
       ) : (
         <ul className="rows">
           {rows.map((r) => (
-            <li key={r.id}>
-              <button type="button" className="link" onClick={() => onReveal(r.id)}>
+            <li key={r.id} onMouseEnter={onPoint && (() => onPoint(r))} onMouseLeave={onPoint && (() => onPoint(null))}>
+              <button
+                type="button"
+                className="link"
+                onClick={() => onReveal(r.id)}
+                onFocus={onPoint && (() => onPoint(r))}
+                onBlur={onPoint && (() => onPoint(null))}
+              >
                 <code>{r.id}</code>
               </button>
               {r.count > 1 && <span className="muted"> ×{r.count}</span>}
@@ -150,29 +160,49 @@ function Change({ view, node }: { view: View; node: ViewNode }) {
 }
 
 // Code renders file text as React text children only, never parsed as
-// markup, coloured as zu coloured it (19, code.ts), the line marked. Of a
-// file longer than CODE_LINES it draws those around the marked line, and
-// says which.
-function Code({ file, line }: { file: SourceFile; line: number }) {
+// markup, coloured as zu coloured it (19, code.ts), the line marked and the
+// lines in lit that are this file's lit. Of a file longer than CODE_LINES it
+// draws those around the marked line, and says which.
+function Code({ file, line, lit }: { file: SourceFile; line: number; lit: Loc[] | null }) {
+  const pre = useRef<HTMLPreElement>(null);
   const mark = useRef<HTMLDivElement>(null);
   // Each View brings its files as new objects (13): cut, paint and scroll
   // only when the text or the marked line changes, so a redraw leaves the
   // code where the reader scrolled it. The colour is the text's
   // (export.Syntax), whose lines are cut as these are.
   const all = useMemo(() => file.text.split("\n"), [file.text]);
-  const [from, to] = around(all.length, line);
+  const on = useMemo(() => new Set(lit?.filter((l) => l.path === file.path).map((l) => l.line)), [lit, file.path]);
+  const first = on.size > 0 ? Math.min(...on) : 0;
+  // The lines drawn move to the first lit line when they do not hold it,
+  // and stay when the light goes out, as the scroll does, until the mark
+  // moves.
+  const marked = `${file.path}\n${line}`;
+  const [held, setHeld] = useState({ marked, at: line });
+  const at = centre(all.length, held.marked === marked ? held.at : line, first);
+  if (held.marked !== marked || held.at !== at) setHeld({ marked, at });
+  const [from, to] = around(all.length, at);
   const lines = useMemo(() => paint(all.slice(from, to), file.syntax.slice(from, to)), [all, from, to]);
   useEffect(() => {
     mark.current?.scrollIntoView({ block: "center" });
   }, [file.path, file.text, line]);
+  // The code alone scrolls to the first lit line: scrolling the panel would
+  // move the row the reader points at.
+  useEffect(() => {
+    const el = pre.current?.children[first - 1 - from] as HTMLElement | undefined;
+    if (pre.current && el) pre.current.scrollTop = el.offsetTop - pre.current.clientHeight / 2;
+  }, [first]);
   return (
     <>
       {to - from < all.length && <p className="muted window-note">{`Lines ${from + 1}–${to} of ${all.length}.`}</p>}
-      <pre className="source">
+      <pre ref={pre} className="source">
         {lines.map((segs, k) => {
           const i = from + k + 1; // its line
           return (
-            <div key={i} ref={i === line ? mark : undefined} className={i === line ? "hit" : undefined}>
+            <div
+              key={i}
+              ref={i === line ? mark : undefined}
+              className={[i === line && "hit", on.has(i) && "lit"].filter(Boolean).join(" ") || undefined}
+            >
               <span className="ln">{i}</span>
               {segs.map((s, j) => (
                 <span key={j} className={s.cls}>
@@ -189,8 +219,9 @@ function Code({ file, line }: { file: SourceFile; line: number }) {
 
 // Source is the code of the file loc is in: the View's, or (19) read from zu
 // serve, the last file read kept while the next comes. It draws nothing while
-// neither has the file.
-function Source({ view, loc, read }: { view: View; loc: Loc; read?: Read }) {
+// neither has the file. Over it, where the lines lit are, or (hint) how to
+// light them.
+function Source({ view, loc, read, lit, hint }: { view: View; loc: Loc; read?: Read; lit: Loc[] | null; hint: boolean }) {
   const own = useMemo(() => inline(view, loc.path), [view, loc.path]);
   const [got, setGot] = useState<SourceFile | null>(null);
   useEffect(() => {
@@ -202,7 +233,17 @@ function Source({ view, loc, read }: { view: View; loc: Loc; read?: Read }) {
     };
   }, [own, read, loc.path]);
   const file = own ?? (got?.path === loc.path ? got : null);
-  return file && <Code file={file} line={loc.line} />;
+  if (!file) return null;
+  return (
+    <>
+      {(hint || lit !== null) && (
+        <p className="muted lit-note" aria-live="polite">
+          {litNote(lit, file.path)}
+        </p>
+      )}
+      <Code file={file} line={loc.line} lit={lit} />
+    </>
+  );
 }
 
 // Members lists the IR edges a bundle carries, each with where it is written.
@@ -284,7 +325,13 @@ function Crap({ view, id, box, onReveal }: { view: View; id: string; box?: Risk;
   );
 }
 
-export function Panel({ view, id, edge, bundles, hidden, crap, ownTier, read, onReveal, onClose }: Props) {
+export function Panel({ view, id, edge, bundles, hidden, crap, ownTier, read, lit, onReveal, onClose }: Props) {
+  // 19: the row the reader points at lights its lines, over the Screen's line.
+  const [over, setOver] = useState<{ id: string; places: Loc[] } | null>(null);
+  const places = over !== null && over.id === id ? over.places : (lit ?? null);
+  // A row followed to another declaration goes without a mouseleave or a
+  // blur: its light goes with the declaration it was in.
+  useEffect(() => setOver(null), [id]);
   const title = edge ? `${edge.from} → ${edge.to}` : (id ?? "");
   const node = id === null ? undefined : view.nodes.find((n) => n.id === (id.endsWith(PKG) ? id.slice(0, -PKG.length) : id));
   let body: React.ReactNode;
@@ -308,14 +355,19 @@ export function Panel({ view, id, edge, bundles, hidden, crap, ownTier, read, on
     );
   } else if (node?.kind === "type" || node?.kind === "function") {
     const c = calls(view, node.id);
+    const inside = insideDecl(view, node.id);
+    const point = (out: boolean) => (r: Row | null) =>
+      setOver(r && { id: id!, places: out ? behind(view, inside, (x) => x === r.id) : behind(view, (x) => x === r.id, inside) });
     body = (
       <>
         <p className="muted">{node.typeKind ? `${node.kind} (${node.typeKind})` : node.kind}</p>
         <Where view={view} loc={node.loc} removed={node.status === "removed"} />
         <Change view={view} node={node} />
-        <Rows title="Calls and embeds out" rows={c.out} onReveal={onReveal} />
-        <Rows title="Called or embedded by" rows={c.in} onReveal={onReveal} />
-        {node.status !== "removed" && <Source view={view} loc={node.loc} read={read} />}
+        <Rows title="Calls and embeds out" rows={c.out} onReveal={onReveal} onPoint={point(true)} />
+        <Rows title="Called or embedded by" rows={c.in} onReveal={onReveal} onPoint={point(false)} />
+        {node.status !== "removed" && (
+          <Source view={view} loc={node.loc} read={read} lit={places} hint={c.out.length + c.in.length > 0} />
+        )}
       </>
     );
   } else if (node?.kind === "external") {

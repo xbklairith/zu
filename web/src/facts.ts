@@ -32,11 +32,15 @@ export function imports(view: View, box: string): { out: Row[]; in: Row[] } {
   return across(view, ["imports"], (id) => pkgs.has(id));
 }
 
+// insideDecl is a declaration and, for a type, its methods.
+export function insideDecl(view: View, decl: string): (id: string) => boolean {
+  const byId = index(view).node;
+  return (id) => id === decl || byId.get(id)?.parent === decl;
+}
+
 // calls lists a declaration's calls and embeds; a type's methods count as the type.
 export function calls(view: View, decl: string): { out: Row[]; in: Row[] } {
-  const byId = index(view).node;
-  const inside = (id: string) => id === decl || byId.get(id)?.parent === decl;
-  return across(view, ["calls", "embeds"], inside);
+  return across(view, ["calls", "embeds"], insideDecl(view, decl));
 }
 
 // targets lists the real nodes behind an aggregate ("outside", "externals"):

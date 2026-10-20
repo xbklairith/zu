@@ -19,7 +19,7 @@ import { PROPOSAL_NOTICE, proposalView } from "./proposal";
 import { reveal } from "./search";
 import { SearchBox } from "./SearchBox";
 import { DRAW_LIMIT, fitDepth, HUBS, opening, openFull, scene, type Scene, type SceneNode } from "./scene";
-import { centreOf, placeScreen, screenNote, screenOf, screenView } from "./screen";
+import { centreOf, placeScreen, placesOf, screenNote, screenOf, screenView } from "./screen";
 import { ScreenCanvas } from "./ScreenCanvas";
 import { centreAt, deeper, drill, nextStage, select, shallower, toggle, up, type ViewState } from "./state";
 import { Toolbar } from "./Toolbar";
@@ -143,6 +143,9 @@ export function App({ view: whole, read }: { view: View; read?: Read }) {
     [proposed, centre, state.more],
   );
   const drawing = useMemo(() => screen && placeScreen(screen), [screen]);
+  // 19: the Screen box or line the reader points at, and where its calls and embeds are written.
+  const [point, setPoint] = useState<{ centre: string; id: string } | null>(null);
+  const lit = centre !== null && point?.centre === centre ? placesOf(proposed, centre, point.id) : null;
   const red = drawing?.edges.some((e) => e.violation) ?? false; // 18: a Screen line the Policy forbids
   const canEnter = centreOf(proposed, state.selected) !== null;
   const lens = () => {
@@ -425,7 +428,13 @@ export function App({ view: whole, read }: { view: View; read?: Read }) {
         )}
         {drawing ? (
           <ReactFlowProvider key={`${centre}\n${state.more}`}>
-            <ScreenCanvas drawing={drawing} onCentre={recentre} onMore={() => update((s) => ({ ...s, more: true }))} fit={fit} />
+            <ScreenCanvas
+              drawing={drawing}
+              onCentre={recentre}
+              onMore={() => update((s) => ({ ...s, more: true }))}
+              fit={fit}
+              onPoint={(id) => setPoint(id === null || centre === null ? null : { centre, id })}
+            />
           </ReactFlowProvider>
         ) : sc.noDetail ? (
           <div className="empty">
@@ -484,6 +493,7 @@ export function App({ view: whole, read }: { view: View; read?: Read }) {
           edge={null}
           bundles={[]}
           read={read}
+          lit={lit}
           onReveal={recentre}
           onClose={() => setClosed(centre)}
         />
