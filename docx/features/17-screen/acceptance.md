@@ -94,3 +94,32 @@ Applied as the plan's exact text:
 - **glossary.md:** **Screen**, **Centre** and **Weight**, after **Region**.
 - **decisions.md, UI v1:** the **Screen (17)** prose, after "…Nothing is animated.".
 - **requirements-draft.md:** the U14 row, after U8.
+
+## After scrutiny
+
+**Round 1** (2026-10-21, fix-then-ship):
+- **The × hid a Centre's Panel for the rest of the session.** A Panel closed on a Screen stayed closed after a re-centre and Back. `88dd92d` clears the closed flag when the Centre changes. `screen.mjs`'s `panel` check now walks back to the closed Centre, and fails without the fix.
+- **The Panel's WebKit swap.** `376a4c8` keys the Screen's Panel by its Centre, so React mounts it anew instead of reconciling its lists. The lead ran an A/B on kubernetes `meta/v1`, alternating twice, timing re-centres with the Panel open in WebKit (ms at +2 frames):
+  - unkeyed: 421 / 90 / 436 and 411 / 52 / 417;
+  - keyed: 75 / 93 / 69 and 84 / 65 / 69.
+
+  The tree's Panel is not keyed. It still takes 411–440 ms in WebKit on the two heaviest moves, and stays the follow-up (plan **Risks**).
+- **`measure.mjs`.** `d504b88` lets it take `.` and makes it listen for page errors. So "the plan's command … stops at once" and "`measure.mjs` does not listen for page errors" above no longer hold.
+- **A search pick of the Centre already drawn capped its rows again.** `49ff51c` makes `centreAt` return the same state; `state.test.ts` pins it.
+- **The Centre's `selected` flag drew nothing.** `e5e9569` drops it. 18's `measure.mjs` found the Centre by it and hung; `3de9da6` fixed that.
+- **Not changed: a Proposal's Screen drops calls into omitted packages without counting them.** The Screen draws over the Proposal's View, and the tree drops those calls the same way. A follow-up.
+
+**Round 2** (2026-10-21, at `cb05693`, fix-then-ship, on docs only):
+- **The fixes, checked.** The reviewer checked each fix by removing it: without `88dd92d` the `panel` check fails in every engine, and without `49ff51c` `state.test.ts` fails. Their own WebKit A/B gave 387–433 ms unkeyed and 52–90 ms keyed on the heavy moves. Keying lost no state, scroll, lit line (19), declaration-diff scroll (20) or history entry.
+- **The measure at the tip, as the plan writes it.** Every criterion holds:
+  - enter: worst 141 ms;
+  - re-centre with the Panel closed: worst 62 ms;
+  - every box: worst 423 ms;
+  - no page errors.
+
+  WebKit re-centres with the Panel open in 61–80 ms.
+- **The fix.** It asked for this section, and for the plan's **Risks**, **Out of scope** and **Notes** to say the Screen's Panel is keyed. Both are done.
+- **Gates since.** `screen.mjs` is 24/24 at the tip, with 18's ten checks. vitest runs 372.
+- **Nits, not changed.**
+  - `down:#more` is untested; `up:#more` takes the same path.
+  - 20's scroll-to-top effect does nothing on the Screen's Panel, which a remount already opens at its top. The tree's Panel still needs it.

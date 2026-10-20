@@ -167,7 +167,7 @@ After 16 lands, replay this plan on `main` and record the result.
 - **Golden walks** (a scripted tour of Screens), after 19, as 18 says.
 - **Agent queries over Screens**, unless decisions.md's line on model features is reopened.
 - **A cap per row in the hash** (`m` draws both rows whole), animation, and dragging boxes.
-- **The Panel's slow swap in WebKit** (**Risks**): it is the tree's Panel too, and a follow-up.
+- **The Panel's slow swap in WebKit** (**Risks**): it is the tree's Panel too, and a follow-up. After scrutiny, `376a4c8` keyed the Screen's Panel; the tree's is still the follow-up.
 
 ## Deviations and decisions for review
 
@@ -2501,7 +2501,7 @@ index 5786df4..4fe36b4 100644
 
 ## Risks
 
-- **The Panel swaps slowly in WebKit.** Moving the Panel off a package with 1,201 importers to one with a short list takes about 400 ms in WebKit. That holds on the Screen (405 and 417 ms on kubernetes) and on the tree (459 and 432 ms). Chromium and Firefox take 13–116 ms. It is the Panel's list reconciliation, not the Screen: with the Panel closed, the same re-centres take 22 and 78 ms. A follow-up could give the Panel a key per id, so React replaces the list instead of reconciling it, for both lenses.
+- **The Panel swaps slowly in WebKit.** Moving the Panel off a package with 1,201 importers to one with a short list takes about 400 ms in WebKit. That holds on the Screen (405 and 417 ms on kubernetes) and on the tree (459 and 432 ms). Chromium and Firefox take 13–116 ms. It is the Panel's list reconciliation, not the Screen: with the Panel closed, the same re-centres take 22 and 78 ms. A follow-up could give the Panel a key per id, so React replaces the list instead of reconciling it, for both lenses. After scrutiny, `376a4c8` did so for the Screen's Panel, keyed by its Centre: WebKit now re-centres with it open in 52–93 ms. The tree's Panel is still the follow-up.
 - **Wide rows at the floor zoom.** A Screen wider than the canvas opens at the floor zoom, centred on the Centre, and the reader pans, with a minimap. Lines are laid out from their middle so the heaviest boxes are in view (Deviation 3). A row's "+N more" chip ends its farthest line and can be off the canvas; the toolbar's "every box" does the same, and it is always in view while a row is capped.
 - **"every box" on a hub draws a tall Screen.** `meta/v1` has 1,217 boxes, drawn in 185–335 ms. Nothing caps it; the reader asked for every box.
 - **Each re-centre adds a history entry.** A long walk lengthens the history the browser's Back has to step through. That is how codezoom reads, and how a browser treats links. Esc or `s` returns to the tree in one step.
@@ -2521,7 +2521,7 @@ index 5786df4..4fe36b4 100644
   - Task 6 is red on assertions, and in the browser in all three engines (`screen.mjs` and `serve.mjs`).
 - **The model never authors the graph.** A Screen's rows come only from the View's edges, which come from the parser. Task 1 counts edges the export already drops, and the IR is untouched (`go test ./...` passes with the IR goldens unchanged).
 - **Follow-ups, not in 17:**
-  - give the Panel a key per id (**Risks**);
+  - give the tree's Panel a key per id (**Risks**; the Screen's was keyed after scrutiny, `376a4c8`);
   - draw a focus ring on focused boxes, on both lenses (**Risks**);
   - 18, the Screen in a Change View;
   - 19, the Code panel, which needs every location of an edge in the View;
