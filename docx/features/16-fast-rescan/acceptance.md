@@ -81,7 +81,7 @@ No run printed a `WARNING` line: each saw one watch rescan per round. Copy 1's `
 | runs 4 and 5: under 2 s only, medians recorded | 404 and 711 ms; at most 817 ms | met |
 | no `WARNING` line | none | met |
 
-**Run 6's miss.** Run 6 started at a load of 3.85, under the rule's 4, so the rule ran it once, and that run is the one gated. Seven of its rescans took 256–451 ms and four took 561, 649, 675 and 1,038 ms. Every rescan did the same work: one file parsed, one package added, which nothing imports. To see whether the miss came from 16's code or from the machine, run 6 was run twice more, outside the rule, with each rescan's log line printed (a copy of `measure.mjs` that also prints `zu serve`'s "watch: scanned in" lines):
+**Run 6's miss.** Run 6 started at a load of 3.85, under the rule's 4, so the rule ran it once, and that run is the one gated. Seven of its rescans took 256–451 ms and four took 561, 649, 675 and 1,038 ms. Every round made the same edit: one new file, in one new package, which nothing imports. That each rescan parsed one file is inferred, not logged: the plan's `measure.mjs` prints durations only. To see whether the miss came from 16's code or from the machine, run 6 was run twice more, outside the rule, with each rescan's log line printed (a copy of `measure.mjs` that also prints `zu serve`'s "watch: scanned in" lines):
 
 | Run 6 again | Load at start | Rescan min / median / max |
 |---|---|---|
@@ -89,6 +89,8 @@ No run printed a `WARNING` line: each saw one watch rescan per round. Copy 1's `
 | 2 | 3.88 | 239 / 264 / 366 |
 
 Every rescan of both logged `1 parsed, 0 parse errors`, with one more package than the last. Their medians match the plan's 260 ms for a new package. My reading is that the first run's four slow rescans were load spikes from other work on the machine, which the 1-minute average at the start did not show. The criterion is still recorded as missed on the gated run.
+
+**The lead's waiver.** The plan's load rule allows no rerun of a run that started under 4, so run 6's miss stands as measured. The lead waives it and accepts 16. Three later runs of the same edit met the 400 ms median: the two above, and scrutiny's at 335 ms (load 4.03 at its start, another review running), whose slowest rescan took 594 ms.
 
 Rescans here ran slower than the plan's figures for a new function (331 ms against 278 and 282) and faster for the hub package (404 against 535); the load was higher here than in the plan's runs.
 
@@ -100,6 +102,6 @@ Rescans here ran slower than the plan's figures for a new function (331 ms again
 
 Applied as the plan's exact text:
 - **decisions.md:** the Serve bullet's rescan sentence, and the **Firefox reload (16)** bullet after **UI v1**.
-- **requirements-draft.md:** the `zu serve -base` (14) line, and the **Rescan in `zu serve` (16)** bullet after it. Its measured figures are the plan's; this run's are above.
+- **requirements-draft.md:** the `zu serve -base` (14) line, and the **Rescan in `zu serve` (16)** bullet after it. They first carried the plan's figures; after scrutiny they quote this run's, the plan's kept as draft figures.
 - **10-serve/rescan-profile.md:** the **Taken by feature 16** paragraph.
 - **glossary.md:** **Part**, after **IR**.
