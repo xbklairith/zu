@@ -106,3 +106,9 @@ Applied as the plan's exact text:
 
   The plan's criteria hold.
 - Since `d504b88`, "the plan's `measure.mjs .` stops at once" above no longer holds. The Gates' 23/23 was `screen.mjs` at Task 4; it is now 24/24.
+
+**Round 3** (2026-10-21, at `848fe00`, **ship**):
+- **Round 2's fix, checked.** The reviewer reran round 2's three real changes with `cycles: true`. Their walks went from 292 to 1 step, 152 to 1, and 15 to 2. Each starts at the change's own importer and holds no step for an import the change kept. The measure, on hugo's last 50 commits, ran 126 steps in all three engines with no page errors. Enter took 28 / 76 / 70 ms. The step medians were 15 / 29 / 44 ms.
+- **Minor 1: `reversed` had no test.** Dropping it from `made` passed every test. Now `walk.test.ts` has the `two` cycle with the change's import reversed rather than added. It passes, and it fails with `reversed` dropped.
+- **Minor 2, a known limit, not changed: the fallback is all or nothing across new cycles.** If any new cycle has an import the change made, a cycle with none gets no step. That happens when the cycle came from a module split in the same change. It still shows in the Violations list, its ends re-centre on a Screen, and its line is red. A fix would decide the fallback per group of connected new arcs.
+- **The nit.** The Gates' "vitest ran 326 tests" was Task 5's run; the tip runs 372. The plan's Status now says that this section, not the plan's code blocks, records the fixes made after the plan.

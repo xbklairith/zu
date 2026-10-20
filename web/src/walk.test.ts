@@ -42,6 +42,14 @@ describe("walkOf (18)", () => {
       ROOT, `${ROOT}.main`, S, `${S}.Order`, `${S}.ReadWriter`, `${S}.Repo`, M, `${M}.Plus`, C, `${C}.Total`,
     ]);
   });
+  it("counts an import the change reversed on a new cycle's arc as one it made", () => {
+    // the root's import of money, reversed rather than added: still no step for checkout's or store's
+    const rev: View = { ...two, edges: two.edges.map((e) => (e.from === ROOT && e.to === M ? { ...e, status: "reversed" as const } : e)) };
+    expect(walkOf(rev)).toEqual([
+      ROOT, `${ROOT}.main`, S, `${S}.Order`, `${S}.ReadWriter`, `${S}.Repo`, M, `${M}.Plus`, C, `${C}.Total`,
+    ]);
+    expect(breaking(rev, { rule: "cycle", from: ROOT, to: IN })).toEqual([[ROOT, M], [ROOT, C]]);
+  });
   it("starts at each new cycle's first importer when the change made no import on any, though a cycle names Package Tree boxes (06)", () => {
     // tools/gen's import of money, kept, lifts to the arc between their modules' roots
     const w = walkOf({ ...v, violations: { new: [{ rule: "cycle", from: `${ROOT}/tools`, to: ROOT }], fixed: [], known: 0 } });
