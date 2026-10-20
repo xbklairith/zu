@@ -22,8 +22,8 @@ func Sort(doc *IR) {
 			doc.Edges[i].Locations = []Location{}
 		}
 	}
-	slices.SortFunc(doc.Nodes, func(a, b Node) int { return cmp.Compare(a.ID, b.ID) })
-	slices.SortFunc(doc.Edges, func(a, b Edge) int {
+	sortOnce(doc.Nodes, func(a, b Node) int { return cmp.Compare(a.ID, b.ID) })
+	sortOnce(doc.Edges, func(a, b Edge) int {
 		return cmp.Or(cmp.Compare(a.From, b.From), cmp.Compare(a.To, b.To), cmp.Compare(a.Kind, b.Kind))
 	})
 	slices.SortFunc(doc.ParseErrors, func(a, b ParseError) int {
@@ -50,9 +50,18 @@ func Sort(doc *IR) {
 }
 
 func sortLocations(l []Location) {
-	slices.SortFunc(l, func(a, b Location) int {
+	sortOnce(l, func(a, b Location) int {
 		return cmp.Or(cmp.Compare(a.Path, b.Path), cmp.Compare(a.Line, b.Line))
 	})
+}
+
+// sortOnce sorts s, and leaves a list already in order untouched: checking
+// is cheaper than sorting, and a scan's Cache shares location lists between
+// the IRs of successive scans (16).
+func sortOnce[E any](s []E, cmp func(a, b E) int) {
+	if !slices.IsSortedFunc(s, cmp) {
+		slices.SortFunc(s, cmp)
+	}
 }
 
 // Encode sorts doc, stamps the schema version, and writes it as two-space

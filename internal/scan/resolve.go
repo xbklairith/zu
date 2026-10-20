@@ -1,7 +1,9 @@
 package scan
 
 import (
+	"maps"
 	"path"
+	"slices"
 	"strings"
 )
 
@@ -15,6 +17,16 @@ type pkgInfo struct {
 	Funcs   map[string]bool
 	Types   map[string]bool
 	Methods map[string]map[string]bool // receiver base type → method names
+}
+
+// surfaceOf is what packages importing p resolve against: its Name, its
+// functions and its types. A Cache reuses an importer's part while this is
+// unchanged (16), so it must mirror what resolution reads of an imported
+// package: every field of a target's Pkg that resolveImport, resolveCall or
+// embeds reads must be here, or a rescan's IR can differ from a cold scan's.
+func surfaceOf(p *pkgInfo) string {
+	return p.Name + "\x00" + strings.Join(slices.Sorted(maps.Keys(p.Funcs)), " ") +
+		"\x00" + strings.Join(slices.Sorted(maps.Keys(p.Types)), " ")
 }
 
 // index maps import paths to scanned packages.

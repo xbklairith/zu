@@ -4,17 +4,29 @@ import (
 	"crypto/sha256"
 	"io/fs"
 	"sync"
+
+	"zu/internal/ir"
 )
 
 // Cache keeps each file's facts between scans, keyed by path and content
 // hash, so a rescan parses only the files whose content changed (10). A
 // file's facts depend on nothing but its path and content, so one Cache
-// serves any Tree. Everything after extraction (modules, the index, the
-// build) still runs over every file, which is what keeps a rescan's IR
-// byte-identical to a cold scan's. Safe for concurrent use.
+// serves any Tree. It also keeps the last scan's assembly by package, so a
+// rescan assembles again only the packages whose files or imported surfaces
+// changed, and every package when the package set or the modules (a path, a
+// directory, or a require's path or line) changed (16). The rest of the IR is
+// the last scan's, which is what a cold scan would build of it, byte for
+// byte. Keep one Cache per sequence of scans of one tree: scanning another
+// tree through it (serve's Base, say) replaces the kept assembly, and each
+// scan after that assembles every package again. Successive IRs share
+// location lists with the kept parts: nothing may append to an IR's
+// Locations in place, or sort them but through ir.Sort, which leaves sorted
+// lists alone. Safe for concurrent use.
 type Cache struct {
 	mu    sync.Mutex
 	files map[string]cached
+	last  *assembly // the last scan's; nil when it assembled the whole tree at once
+	built int       // how many packages the last scan assembled
 }
 
 type cached struct {
@@ -129,4 +141,41 @@ func (c *Cache) keep(files []string) {
 			delete(c.files, p)
 		}
 	}
+}
+
+// assemble assembles facts from the last scan's parts where they hold (16),
+// and reports how many packages it assembled. A nil Cache, or a tree whose
+// node ids could meet, assembles the whole tree.
+func (c *Cache) assemble(w *walkResult, facts []*fileFacts) (*ir.IR, Measures, int) {
+	if c == nil {
+		doc, ms := assemble(w, facts)
+		return doc, ms, packages(doc)
+	}
+	c.mu.Lock()
+	prev := c.last
+	c.mu.Unlock()
+	a, n := assembleParts(prev, w, facts)
+	var doc *ir.IR
+	var ms Measures
+	if a == nil {
+		doc, ms = assemble(w, facts)
+		n = packages(doc)
+	} else {
+		doc, ms = a.ir(w, facts)
+	}
+	c.mu.Lock()
+	c.last, c.built = a, n
+	c.mu.Unlock()
+	return doc, ms, n
+}
+
+// packages counts doc's package nodes.
+func packages(doc *ir.IR) int {
+	n := 0
+	for _, x := range doc.Nodes {
+		if x.Kind == ir.KindPackage {
+			n++
+		}
+	}
+	return n
 }

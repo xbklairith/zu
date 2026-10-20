@@ -620,7 +620,7 @@ The tests (`assembly_test.go`) check, on the shop fixture and on hand-built tree
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/internal/scan/assembly_test.go b/internal/scan/assembly_test.go
@@ -1227,9 +1227,9 @@ index 0000000000000000000000000000000000000000..f8dc8c47bfc3aa7605006a80bfc1a434
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/scan` Expected: FAIL (`ws.Assembled undefined`)
+- [x] **Run:** `go test ./internal/scan` Expected: FAIL (`ws.Assembled undefined`)
 
-- [ ] **Keep the assembly by package, and sort only what is out of order**
+- [x] **Keep the assembly by package, and sort only what is out of order**
 
 ```diff
 diff --git a/internal/ir/encode.go b/internal/ir/encode.go
@@ -1712,11 +1712,11 @@ index 6e4f1082b869fe43d0e1bec45b27a4bf9b880602..9863e9e096f38b09d87d8d5f5df0fa97
  			st.Files++
 ```
 
-- [ ] **Run:** `go test -race ./internal/scan ./internal/ir` Expected: PASS
+- [x] **Run:** `go test -race ./internal/scan ./internal/ir` Expected: PASS
 
-- [ ] **Run:** `go test ./...` Expected: PASS (the shop golden and the disk/commit parity are unchanged)
+- [x] **Run:** `go test ./...` Expected: PASS (the shop golden and the disk/commit parity are unchanged)
 
-- [ ] **Commit:** `Assemble again only the packages whose inputs changed`
+- [x] **Commit:** `Assemble again only the packages whose inputs changed`
 
 ---
 

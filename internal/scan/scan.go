@@ -43,6 +43,7 @@ type Stats struct {
 	UnresolvedCalls int
 	Measures        Measures
 	Parsed          int // files this scan parsed; with a Cache, only the new and changed ones (10)
+	Assembled       int // packages this scan assembled; with a Cache, only those whose inputs changed (16)
 }
 
 // Run scans opts.Tree. The result is unsorted; ir.Encode canonicalises it.
@@ -58,16 +59,11 @@ func Run(ctx context.Context, opts Options) (*ir.IR, Stats, error) {
 		return nil, Stats{}, err
 	}
 	opts.Cache.keep(w.Files)
-	doc, ms := assemble(w, facts)
+	doc, ms, assembled := opts.Cache.assemble(w, facts)
 	doc.Grouping = "tree"
 	doc.PolicyHash = cmp.Or(opts.PolicyHash, DefaultPolicyHash)
 
-	st := Stats{ParseErrors: len(doc.ParseErrors), Measures: ms, Parsed: parsed}
-	for _, n := range doc.Nodes {
-		if n.Kind == ir.KindPackage {
-			st.Packages++
-		}
-	}
+	st := Stats{ParseErrors: len(doc.ParseErrors), Measures: ms, Parsed: parsed, Assembled: assembled, Packages: packages(doc)}
 	for _, f := range facts {
 		if !f.Skip && f.Err == nil {
 			st.Files++

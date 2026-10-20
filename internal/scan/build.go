@@ -36,8 +36,14 @@ type edgeID struct {
 // assemble turns per-file facts into an IR (unsorted; ir.Encode sorts) and
 // the Measures of its function and method nodes.
 func assemble(w *walkResult, facts []*fileFacts) (*ir.IR, Measures) {
+	return assembleWith(buildIndex(w, facts), w, facts)
+}
+
+// assembleWith assembles facts, resolving against ix: every file's facts
+// for the whole IR, or one package's for its part (16).
+func assembleWith(ix *index, w *walkResult, facts []*fileFacts) (*ir.IR, Measures) {
 	b := &builder{
-		ix: buildIndex(w, facts),
+		ix: ix,
 		doc: &ir.IR{
 			UnresolvedCalls:   map[string]int{},
 			UnresolvedImports: map[string]int{},
@@ -82,6 +88,9 @@ func assemble(w *walkResult, facts []*fileFacts) (*ir.IR, Measures) {
 	}
 	for _, p := range b.ix.pkgs {
 		n := b.nodes[p.ID]
+		if n == nil {
+			continue // a package whose files this assembly left out: another part's
+		}
 		n.Hash = b.packageHash(p)
 		n.Main = p.Name == "main"
 	}
@@ -211,7 +220,8 @@ func (b *builder) calls(p *pkgInfo, f *fileFacts, names map[string]target) {
 
 // resolveCall returns the callee id for a certain call, or reports whether
 // an uncertain call counts as unresolved (false: builtin, conversion, or a
-// call outside this repository).
+// call outside this repository). It reads only an imported package's Funcs
+// and Types, which surfaceOf must cover (16).
 func (b *builder) resolveCall(p *pkgInfo, c callSite, names map[string]target) (to string, unresolved bool) {
 	switch c.Kind {
 	case callBare:
@@ -242,6 +252,7 @@ func (b *builder) resolveCall(p *pkgInfo, c callSite, names map[string]target) (
 
 // embeds adds an edge for each embedded type declared in this repository or
 // in a required module; standard-library and predeclared types are omitted.
+// It reads only an imported package's Types, which surfaceOf must cover (16).
 func (b *builder) embeds(p *pkgInfo, f *fileFacts, names map[string]target) {
 	for _, e := range f.Embeds {
 		from := declID(p.ID, "", e.Owner)
