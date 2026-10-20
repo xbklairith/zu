@@ -1139,7 +1139,7 @@ The tests check:
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/web/src/lens.test.ts b/web/src/lens.test.ts
@@ -1292,9 +1292,9 @@ index 77ac244..21667a8 100644
      expect(shallower(DEFAULT_STATE, 1).depth).toBe(1);
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/state.test.ts src/proposal.test.ts src/lens.test.ts` Expected: FAIL (`Failed to resolve import "./lens"`; `centreAt` is not a function; `c` is dropped)
+- [x] **Run:** `cd web && npx vitest run src/state.test.ts src/proposal.test.ts src/lens.test.ts` Expected: FAIL (`Failed to resolve import "./lens"`; `centreAt` is not a function; `c` is dropped)
 
-- [ ] **Keep the Centre in the hash, push only when it changes, and enter and leave the lens**
+- [x] **Keep the Centre in the hash, push only when it changes, and enter and leave the lens**
 
 ```diff
 diff --git a/web/src/lens.ts b/web/src/lens.ts
@@ -1459,9 +1459,9 @@ index aada779..268d15f 100644
  
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Commit:** `Keep the Screen's Centre in the hash, and add a history entry only when it changes`
+- [x] **Commit:** `Keep the Screen's Centre in the hash, and add a history entry only when it changes`
 
 ---
 

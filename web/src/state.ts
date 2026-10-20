@@ -28,11 +28,15 @@ export type ViewState = {
   minPairs: number; // hide bundles with fewer package pairs (A6)
   externals: boolean; // draw external modules
   proposal: string | null; // 07: the Proposal drawn instead of the Package Tree, by name
+  // 17: the Screen's Centre, drawn instead of the tree; the fields above stay
+  // as the tree was left, so leaving the Screen returns to it.
+  centre: string | null;
+  more: boolean; // 17: the Screen draws every box of its rows, none past ROW_CAP folded
 };
 
 export const DEFAULT_STATE: ViewState = {
   focus: "", depth: null, toggled: [], selected: null, hops: null,
-  stage: "full", edges: "auto", minPairs: 1, externals: true, proposal: null,
+  stage: "full", edges: "auto", minPairs: 1, externals: true, proposal: null, centre: null, more: false,
 };
 
 export const LIMITS = { depth: 32, hops: 9, minPairs: 999 };
@@ -51,14 +55,17 @@ export function encodeHash(s: ViewState): string {
   if (s.minPairs !== 1) p.set("w", String(s.minPairs));
   if (!s.externals) p.set("e", "0");
   if (s.proposal !== null) p.set("p", s.proposal);
+  if (s.centre !== null) p.set("c", s.centre);
+  if (s.more) p.set("m", "1");
   const q = p.toString();
   return q ? "#" + q : "";
 }
 
 // Known says which ids a hash may name: a focus, a toggle (a box with child
-// boxes), a selection and (07) a Proposal.
+// boxes), a selection, (07) a Proposal and (17) a Centre.
 export type Known = {
   box(id: string): boolean; folder(id: string): boolean; node(id: string): boolean; proposal?(name: string): boolean;
+  centre?(id: string): boolean;
 };
 
 // decodeHash reads a hash from anywhere (a shared link is untrusted input):
@@ -75,6 +82,8 @@ export function decodeHash(hash: string, known: Known): ViewState {
   const selected = p.get("s");
   const stage = p.get("x");
   const proposal = p.get("p");
+  const centre = p.get("c");
+  const screen = centre !== null && (known.centre?.(centre) ?? false);
   return {
     focus: known.box(focus) ? focus : "",
     depth: int("d", LIMITS.depth),
@@ -86,21 +95,30 @@ export function decodeHash(hash: string, known: Known): ViewState {
     minPairs: int("w", LIMITS.minPairs) ?? 1,
     externals: p.get("e") !== "0",
     proposal: proposal !== null && known.proposal?.(proposal) ? proposal : null,
+    centre: screen ? centre : null,
+    more: screen && p.get("m") === "1",
   };
 }
 
 // The address bar: the parts of location and history the hash needs.
 export type Address = { pathname: string; search: string; hash: string };
-export type Replacer = { replaceState(data: null, unused: string, url: string): void };
+export type Replacer = {
+  replaceState(data: null, unused: string, url: string): void;
+  pushState?(data: null, unused: string, url: string): void;
+};
 
 // storeHash writes s into the address bar without adding a history entry
-// (Deviation 5). It skips a write that changes nothing, and returns false when
-// the browser refuses replaceState (some do on file://): the view still works.
-export function storeHash(page: Address, history: Replacer, s: ViewState): boolean {
+// (Deviation 5), except (17) when s has another Centre than was, the state
+// the address bar holds: entering or leaving the Screen, or re-centring it,
+// adds one, so the browser's Back returns to the last Screen. It skips a
+// write that changes nothing, and returns false when the browser refuses the
+// write (some do on file://): the view still works.
+export function storeHash(page: Address, history: Replacer, s: ViewState, was?: ViewState): boolean {
   const hash = encodeHash(s);
   if (hash === (page.hash === "#" ? "" : page.hash)) return true;
+  const write = was !== undefined && was.centre !== s.centre && history.pushState ? history.pushState : history.replaceState;
   try {
-    history.replaceState(null, "", page.pathname + page.search + hash);
+    write.call(history, null, "", page.pathname + page.search + hash);
     return true;
   } catch {
     return false;
@@ -125,6 +143,9 @@ export const toggle = (s: ViewState, box: string): ViewState => ({
   ...s,
   toggled: s.toggled.includes(box) ? s.toggled.filter((t) => t !== box) : [...s.toggled, box].sort(),
 });
+
+// centreAt draws the Screen of a Centre (17), its rows capped again.
+export const centreAt = (s: ViewState, centre: string): ViewState => ({ ...s, centre, more: false });
 
 export const select = (s: ViewState, id: string | null): ViewState =>
   ({ ...s, selected: id, hops: id === null ? null : s.hops });

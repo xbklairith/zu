@@ -12,6 +12,7 @@ import { boxStats, statsLine } from "./tree";
 import { shorten } from "./labels";
 import { withinHops } from "./select";
 import { badgesOf, BUDGET, capRows, factsOf, fold, foldInto, holdsProgram, isFold, isGroup, isStrip, knownGroup, MAX_ROWS, strip, stripText } from "./group";
+import { centreOf } from "./screen";
 import { toggle, type Known, type Stage, type ViewState } from "./state";
 
 export type Shape = "container" | "box" | "oval" | "decl" | "outside" | "chip";
@@ -627,15 +628,16 @@ export function fitDepth(requested: Sized & { depth: number }, at: (depth: numbe
 }
 
 // knownIds says which ids a URL hash may name: boxes as a focus, boxes with
-// children as toggles, anything scene() can anchor as a selection, and a
+// children as toggles, anything scene() can anchor as a selection, a
 // Proposal outside a Change View: the Change View's violations are zu diff's,
-// under zu.policy.yaml, so it never draws a Proposal's.
+// under zu.policy.yaml, so it never draws a Proposal's; and (17) a Centre.
 export const knownIds = (view: View): Known => ({
   box: (id) => id === "" || isBox(view, id),
   folder: (id) => knownGroup(view, id) || (!id.endsWith(PKG) && childrenOf(view, id).length > 0)
     || (id.endsWith(ROOT_CLOSED) && id.slice(0, -ROOT_CLOSED.length) === rootModule(view)),
   node: (id) => isBox(view, id) || index(view).node.has(id) || id === OUTSIDE || id === EXTERNALS || knownGroup(view, id),
   proposal: (name) => view.kind !== "change" && (view.policy?.proposals?.some((p) => p.name === name) ?? false),
+  centre: (id) => centreOf(view, id) === id, // 17: never in a Change View, never a method
 });
 
 // openFull says a Change View focus (from a link) lies outside the changed

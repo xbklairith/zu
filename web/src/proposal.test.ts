@@ -96,6 +96,14 @@ describe("a Proposal in the URL hash (07)", () => {
     expect(revalidate(s, lost)).toEqual({ ...DEFAULT_STATE, focus: "m/app" });
   });
 
+  it("keeps a Centre the newer View has and drops one it lost (17)", () => {
+    const s = { ...DEFAULT_STATE, centre: "m/app/api", more: true };
+    expect(readHash("#c=m%2Fapp%2Fapi&m=1", v)).toEqual(s);
+    expect(revalidate(s, v)).toBe(s);
+    expect(revalidate(s, { ...v, nodes: v.nodes.filter((n) => n.id !== "m/app/api") })).toEqual(DEFAULT_STATE);
+    expect(readHash("#c=m%2Fapp%2Fapi", { ...v, kind: "change", changed: [] })).toEqual(DEFAULT_STATE); // 18
+  });
+
   it("is never read in a Change View, so a pasted link cannot draw one there", () => {
     const change: View = { ...v, kind: "change", changed: ["m/app/api"] };
     expect(knownIds(change).proposal?.("Flip")).toBe(false);
