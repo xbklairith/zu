@@ -280,7 +280,8 @@ function Code({ file, line, lit }: { file: SourceFile; line: number; lit: Place[
   // Each View brings its files as new objects (13): cut, paint and scroll
   // only when the text or the marked line changes, so a redraw leaves the
   // code where the reader scrolled it. The colour is the text's
-  // (export.Syntax), whose lines are cut as these are.
+  // (export.Syntax), whose lines are cut as these are: it is keyed by the
+  // text, as each View's syntax is a new array for the same text.
   const all = useMemo(() => file.text.split("\n"), [file.text]);
   const on = useMemo(() => new Set(lit?.filter((l) => !l.base && l.path === file.path).map((l) => l.line)), [lit, file.path]);
   const first = on.size > 0 ? Math.min(...on) : 0;
@@ -303,7 +304,7 @@ function Code({ file, line, lit }: { file: SourceFile; line: number; lit: Place[
   useEffect(() => {
     const el = pre.current?.children[first - 1 - from] as HTMLElement | undefined;
     if (pre.current && el) pre.current.scrollTop = el.offsetTop - pre.current.clientHeight / 2;
-  }, [first]);
+  }, [first, from]);
   return (
     <>
       {to - from < all.length && <p className="muted window-note">{`Lines ${from + 1}–${to} of ${all.length}.`}</p>}
