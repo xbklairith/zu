@@ -706,7 +706,7 @@ The hash now accepts a Change View's `c=`: 17's test that it refused one (`propo
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/web/src/proposal.test.ts b/web/src/proposal.test.ts
@@ -896,9 +896,9 @@ index 21667a8..dad2f77 100644
    it("adds a history entry only when the Centre changes, so Back walks the Screens (17)", () => {
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/screen.test.ts src/proposal.test.ts src/state.test.ts` Expected: FAIL (13 tests: `centreOf` in a Change View is null; `screenView` is not a function; no box has a mark, status, ghost or violation; no Centre has a change; and the hash drops a Change View's `c=`)
+- [x] **Run:** `cd web && npx vitest run src/screen.test.ts src/proposal.test.ts src/state.test.ts` Expected: FAIL (13 tests: `centreOf` in a Change View is null; `screenView` is not a function; no box has a mark, status, ghost or violation; no Centre has a change; and the hash drops a Change View's `c=`)
 
-- [ ] **Mark the Screen's boxes and lines, draw ghosts and violations, and give the Centre its members and Affected Set**
+- [x] **Mark the Screen's boxes and lines, draw ghosts and violations, and give the Centre its members and Affected Set**
 
 ```diff
 diff --git a/web/src/scene.ts b/web/src/scene.ts
@@ -1242,9 +1242,9 @@ index 4d44d61..e4ba497 100644
 +}
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Commit:** `Draw a Change View's Screen: marks, ghosts, the Centre's members and its Affected Set`
+- [x] **Commit:** `Draw a Change View's Screen: marks, ghosts, the Centre's members and its Affected Set`
 
 ---
 

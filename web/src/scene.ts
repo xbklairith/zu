@@ -637,7 +637,7 @@ export const knownIds = (view: View): Known => ({
     || (id.endsWith(ROOT_CLOSED) && id.slice(0, -ROOT_CLOSED.length) === rootModule(view)),
   node: (id) => isBox(view, id) || index(view).node.has(id) || id === OUTSIDE || id === EXTERNALS || knownGroup(view, id),
   proposal: (name) => view.kind !== "change" && (view.policy?.proposals?.some((p) => p.name === name) ?? false),
-  centre: (id) => centreOf(view, id) === id, // 17: never in a Change View, never a method
+  centre: (id) => centreOf(view, id) === id, // 17: never a method; 18: a Change View's near declarations too
 });
 
 // openFull says a Change View focus (from a link) lies outside the changed

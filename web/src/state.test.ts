@@ -48,7 +48,7 @@ describe("URL hash", () => {
     expect(decodeHash("#c=m%2Fb", known)).toEqual({ ...DEFAULT_STATE, centre: "m/b" });
     expect(decodeHash("#m=1", known)).toEqual(DEFAULT_STATE);
     expect(decodeHash("#c=m%2Fa.T&m=1", known)).toEqual(DEFAULT_STATE); // not a Centre
-    const { centre: _, ...older } = known; // a Known without centre (a Change View) names none
+    const { centre: _, ...older } = known; // a Known without centre names none
     expect(decodeHash("#c=m%2Fb", older)).toEqual(DEFAULT_STATE);
   });
   it("adds a history entry only when the Centre changes, so Back walks the Screens (17)", () => {

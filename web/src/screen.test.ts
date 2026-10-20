@@ -4,12 +4,14 @@ import css from "./styles.css?raw";
 import change from "../../internal/export/testdata/shop.change.golden.json";
 import type { View, ViewEdge } from "./data";
 import { ROW_MAX } from "./layout";
-import { centreOf, FONT, GAP_ROW, placeScreen, ROW_CAP, screenNote, screenOf, type Drawn } from "./screen";
+import { centreOf, FONT, GAP_ROW, MEMBER_CAP, placeScreen, ROW_CAP, screenNote, screenOf, screenView, type Drawn, type Row } from "./screen";
 import { LABEL_PX } from "./viewport";
 import { decl, edge, exts, pkgs, view } from "./testkit";
 
 const shop = golden as unknown as View;
 const S = "example.com/shop/internal/store";
+const C = "example.com/shop/internal/checkout";
+const M = "example.com/shop/internal/money";
 const weighed = (from: string, to: string, count: number, kind: ViewEdge["kind"] = "imports"): ViewEdge =>
   ({ ...edge(from, to, kind), count });
 const ids = (r: { boxes: { id: string }[] }) => r.boxes.map((b) => b.id);
@@ -29,8 +31,13 @@ describe("centreOf", () => {
       expect(centreOf(v, id), String(id)).toBeNull();
     }
   });
-  it("centres nothing in a Change View (18 draws the Screen there)", () => {
-    expect(centreOf(change as unknown as View, S)).toBeNull();
+  it("centres a Change View's nodes, removed and near ones too (18), never a Move's source", () => {
+    const v = change as unknown as View;
+    expect(centreOf(v, S)).toBe(S);
+    expect(centreOf(v, `${S}.ReadWriter`)).toBe(`${S}.ReadWriter`); // removed
+    expect(centreOf(v, `${C}.Cart`)).toBe(`${C}.Cart`); // near: unchanged, one embed from Order
+    expect(centreOf(v, `${S}.Repo.Reset`)).toBe(`${S}.Repo`); // a near method names its type
+    expect(centreOf(v, `${M}.Add`)).toBeNull(); // moved to money.Plus: in no tree the page draws
   });
 });
 
@@ -187,5 +194,123 @@ describe("screenNote (17)", () => {
     const p = placeScreen(screenOf(view(pkgs(["m/a", "m/b", "m/c"], "m"), [edge("m/a", "m/b"), edge("m/b", "m/a"), edge("m/c", "m/a")]), "m/a"));
     expect(p.nodes.filter((n) => n.row !== "centre").map((n) => [n.id, n.facts]))
       .toEqual([["up:m/b", "↻ 1 file"], ["up:m/c", "1 file"], ["down:m/b", "↻ 1 file"]]);
+  });
+});
+
+describe("the Screen in a Change View (18)", () => {
+  const v = change as unknown as View;
+  const rows = (r: Row) => r.boxes.map((b) => [b.id, b.mark, b.status ?? "", b.ghost]);
+  const T = "example.com/shop/tools/gen";
+
+  it("reads the View with its near neighbours, merged once", () => {
+    const sv = screenView(v);
+    expect(sv).toBe(screenView(v));
+    expect(sv.nodes).toHaveLength(v.nodes.length + v.near!.nodes.length);
+    expect(sv.edges).toHaveLength(v.edges.length + v.near!.edges.length);
+    expect(screenView(shop)).toBe(shop);
+  });
+  it("marks each box by its Change Status and each line by its edges'", () => {
+    // money's importers: shop's import is added, checkout's unchanged; tools/gen is Affected (hop 1)
+    const s = screenOf(v, M);
+    expect(rows(s.above)).toEqual([
+      ["example.com/shop", "st-modified", "added", false],
+      [C, "st-modified", "", false],
+      [T, "affected", "", false],
+      [S, "", "reversed", true], // the ghost: store imported money in base
+    ]);
+    expect(rows(s.below)).toEqual([[S, "st-modified", "reversed", false]]);
+  });
+  it("draws a reversed import's far end in its new row and its ghost, small, in the old one", () => {
+    const s = screenOf(v, S);
+    expect(rows(s.above)).toEqual([[C, "st-modified", "", false], [M, "st-modified", "reversed", false]]);
+    expect(rows(s.below)).toEqual([["github.com/lib/pq", "", "", false], [M, "", "reversed", true]]);
+    expect(s.below.boxes[1]).toMatchObject({ size: "small", both: false });
+  });
+  it("draws a ghost past a capped row's boxes", () => {
+    const many = Array.from({ length: 30 }, (_, i) => `m/p${String(i).padStart(2, "0")}`);
+    const m = { ...view(pkgs(["m/core", "m/x", ...many], "m"), [...many.map((p) => edge(p, "m/core")), { ...edge("m/core", "m/x"), status: "reversed" }]), kind: "change" as const };
+    const up = screenOf(m, "m/core").above;
+    expect(up.more).toBe(30 - ROW_CAP);
+    expect(up.boxes).toHaveLength(ROW_CAP + 1);
+    expect(up.boxes[ROW_CAP]).toMatchObject({ id: "m/x", ghost: true });
+  });
+  it("draws a removed declaration's Screen from base's edges, and near neighbours unmarked", () => {
+    expect(rows(screenOf(v, `${S}.ReadWriter`).below)).toEqual([[`${S}.Reader`, "", "removed", false]]);
+    expect(rows(screenOf(v, `${S}.Order`).above)).toEqual([[`${C}.Cart`, "", "", false]]);
+    // Repo.Reset, a near method, calls store.Open, which is two calls from the change
+    expect(screenOf(v, `${S}.Repo`)).toMatchObject({ offIn: 0, offOut: 1, unresolved: 5 });
+  });
+  it("draws a violating import's line red, as the tree does (06), never its ghost's", () => {
+    // checkout imports store against the Policy, and money's import of store, reversed, does too
+    const red = (e: ViewEdge): ViewEdge =>
+      e.kind === "imports" && e.to === S && (e.from === C || e.from === M) ? { ...e, violation: "levels" } : e;
+    const bad = { ...v, edges: v.edges.map(red) };
+    const reds = (r: Row) => r.boxes.filter((b) => b.violation).map((b) => b.id);
+    expect(reds(screenOf(bad, C).below)).toEqual([S]);
+    expect(reds(screenOf(bad, S).above)).toEqual([C, M]);
+    expect(reds(screenOf(bad, S).below)).toEqual([]); // money's ghost: base's import, the other way round
+    expect(placeScreen(screenOf(bad, C)).edges.filter((e) => e.violation).map((e) => e.id)).toEqual([`>down:${S}`]);
+    expect(reds(screenOf({ ...shop, edges: shop.edges.map(red) }, S).above)).toEqual([C]); // a Project View too
+    expect(reds(screenOf(v, S).above)).toEqual([]);
+  });
+  it("marks a line ± when its edges' statuses differ", () => {
+    const m = view([...pkgs(["m/a"], "m", { detail: true }), decl("m/a.F", "m/a", "function"), decl("m/a.T", "m/a"),
+      decl("m/a.T.x", "m/a.T", "function"), decl("m/a.T.y", "m/a.T", "function")], [
+      { ...edge("m/a.T.x", "m/a.F", "calls"), status: "added" }, edge("m/a.T.y", "m/a.F", "calls"),
+    ]);
+    expect(screenOf({ ...m, kind: "change" }, "m/a.F").above.boxes.map((b) => b.status)).toEqual(["mixed"]);
+  });
+  it("gives the Centre its mark, its changed members and its place in the Affected Set (ADR 0009)", () => {
+    expect(screenOf(v, S).change).toEqual({
+      mark: "st-modified", hop: 0, reach: 4, more: 0,
+      members: [
+        { id: `${S}.Order`, label: "Order", sign: "~" }, { id: `${S}.ReadWriter`, label: "ReadWriter", sign: "−" },
+        { id: `${S}.Repo.Get`, label: "Repo.Get", sign: "~" }, { id: `${S}.Repo.check`, label: "Repo.check", sign: "~" },
+      ],
+    });
+    expect(screenOf(v, M).change).toMatchObject({ hop: 0, reach: 3, members: [{ label: "Plus", sign: "→" }] });
+    // a type is named in its package's list, so its own list drops its name
+    expect(screenOf(v, `${S}.Repo`).change).toMatchObject({
+      mark: "has-change", hop: 0, reach: 4, members: [{ label: "Get", sign: "~" }, { label: "check", sign: "~" }],
+    });
+    expect(screenOf(v, T).change).toMatchObject({ mark: "affected", hop: 1, members: [] });
+    expect(screenOf(v, "github.com/lib/pq").change).toEqual({ mark: "", members: [], more: 0, reach: 0 });
+    expect(screenOf(shop, S).change).toBeUndefined();
+  });
+  it("lists MEMBER_CAP members and counts the rest", () => {
+    const fs = Array.from({ length: MEMBER_CAP + 2 }, (_, i) => ({ ...decl(`m/a.F${i}`, "m/a", "function"), status: "added" }));
+    const m = { ...view([...pkgs(["m/a"], "m", { detail: true, hop: 0 }), ...fs]), kind: "change" as const };
+    expect(screenOf(m, "m/a").change).toMatchObject({ more: 2 });
+    expect(screenOf(m, "m/a").change!.members).toHaveLength(MEMBER_CAP);
+  });
+  it("draws the Centre's members, each box's mark, each line's status, and a ghost", () => {
+    const p = placeScreen(screenOf(v, S));
+    const c = p.nodes[0];
+    expect(c).toMatchObject({ row: "centre", mark: "st-modified", members: ["~ Order", "− ReadWriter", "~ Repo.Get", "~ Repo.check"] });
+    expect(c.h).toBeGreaterThan(placeScreen(screenOf(shop, S)).nodes[0].h);
+    expect(p.nodes.find((n) => n.id === `up:${M}`)).toMatchObject({ mark: "st-modified", ghost: false, members: [] });
+    expect(p.nodes.find((n) => n.id === `down:${M}`)).toMatchObject({ mark: "", ghost: true, facts: "⇄ in base" });
+    expect(p.edges).toEqual([
+      { id: `up:${C}>`, from: `up:${C}`, to: S },
+      { id: `up:${M}>`, from: `up:${M}`, to: S, status: "reversed" },
+      { id: ">down:github.com/lib/pq", from: S, to: "down:github.com/lib/pq" },
+      { id: `>down:${M}`, from: S, to: `down:${M}`, status: "reversed", ghost: true },
+    ]);
+    const fs = Array.from({ length: MEMBER_CAP + 2 }, (_, i) => ({ ...decl(`m/a.F${i}`, "m/a", "function"), status: "added" }));
+    const m = { ...view([...pkgs(["m/a"], "m", { detail: true, hop: 0 }), ...fs]), kind: "change" as const };
+    expect(placeScreen(screenOf(m, "m/a")).nodes[0].members.at(-1)).toBe("+2 more");
+  });
+  it("says where the Centre sits in the Affected Set, and what lies further from the change", () => {
+    const pkg = "Above: what imports it. Below: what it imports. Size: files that import.";
+    expect(screenNote(screenOf(v, S))).toBe(`${pkg} Affected Set: changed; 4 packages import it, directly or not.`);
+    expect(screenNote(screenOf(v, T))).toBe(`${pkg} Affected Set: 1 import from a changed package.`);
+    expect(screenNote(screenOf({ ...view(pkgs(["m/a"], "m")), kind: "change" }, "m/a"))).toBe(`${pkg} Affected Set: not in it.`);
+    const gone = { ...view([...pkgs(["m/a"], "m", { status: "removed" }), decl("m/a.F", "m/a", "function")]), kind: "change" as const };
+    expect(screenNote(screenOf(gone, "m/a"))).toBe(`${pkg} Affected Set: removed, so not in it (the Affected Set is head's).`);
+    expect(screenNote(screenOf(v, "github.com/lib/pq"))).toBe(pkg);
+    expect(screenNote(screenOf(v, `${S}.Repo`))).toBe(
+      "Above: what calls or embeds it. Below: what it calls or embeds. Size: √(uses × declarations). " +
+      "Not drawn: 1 call or embed out of it, with unchanged declarations more than one call or embed from the change; " +
+      "5 unresolved calls in its package. Affected Set (its package): changed; 4 packages import it, directly or not.");
   });
 });

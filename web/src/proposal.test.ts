@@ -101,7 +101,8 @@ describe("a Proposal in the URL hash (07)", () => {
     expect(readHash("#c=m%2Fapp%2Fapi&m=1", v)).toEqual(s);
     expect(revalidate(s, v)).toBe(s);
     expect(revalidate(s, { ...v, nodes: v.nodes.filter((n) => n.id !== "m/app/api") })).toEqual(DEFAULT_STATE);
-    expect(readHash("#c=m%2Fapp%2Fapi", { ...v, kind: "change", changed: [] })).toEqual(DEFAULT_STATE); // 18
+    // 18: a Change View has Screens too
+    expect(readHash("#c=m%2Fapp%2Fapi", { ...v, kind: "change", changed: [] })).toEqual({ ...DEFAULT_STATE, centre: "m/app/api" });
   });
 
   it("is never read in a Change View, so a pasted link cannot draw one there", () => {
