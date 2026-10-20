@@ -94,6 +94,10 @@ describe("transitions", () => {
     const s = { ...DEFAULT_STATE, focus: "m/a", selected: "m/a", centre: "m/a", more: true };
     expect(centreAt(s, "m/b")).toEqual({ ...s, centre: "m/b", more: false });
   });
+  it("the Centre picked again keeps its rows as drawn (17)", () => {
+    const s = { ...DEFAULT_STATE, selected: "m/a", centre: "m/a", more: true };
+    expect(centreAt(s, "m/a")).toBe(s);
+  });
   it("clearing the selection clears hops; depth steps stay within 1..32; the cycle wraps to full", () => {
     expect(select({ ...DEFAULT_STATE, selected: "x", hops: 2 }, null)).toMatchObject({ selected: null, hops: null });
     expect(shallower(DEFAULT_STATE, 1).depth).toBe(1);

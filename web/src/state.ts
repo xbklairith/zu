@@ -144,8 +144,10 @@ export const toggle = (s: ViewState, box: string): ViewState => ({
   toggled: s.toggled.includes(box) ? s.toggled.filter((t) => t !== box) : [...s.toggled, box].sort(),
 });
 
-// centreAt draws the Screen of a Centre (17), its rows capped again.
-export const centreAt = (s: ViewState, centre: string): ViewState => ({ ...s, centre, more: false });
+// centreAt draws the Screen of a Centre (17), its rows capped again; the
+// Centre already drawn stays as it is.
+export const centreAt = (s: ViewState, centre: string): ViewState =>
+  centre === s.centre ? s : { ...s, centre, more: false };
 
 export const select = (s: ViewState, id: string | null): ViewState =>
   ({ ...s, selected: id, hops: id === null ? null : s.hops });
