@@ -103,7 +103,7 @@ Applied as the plan's exact text:
   - unkeyed: 421 / 90 / 436 and 411 / 52 / 417;
   - keyed: 75 / 93 / 69 and 84 / 65 / 69.
 
-  The tree's Panel is not keyed. It still takes 411–440 ms in WebKit on the two heaviest moves, and stays the follow-up (plan **Risks**).
+  This is a rerun after the commit; `376a4c8`'s message quotes an earlier one (375–402 ms unkeyed, 34–59 ms keyed). So the Screen's 394–418 ms in **The Panel's WebKit swap** above no longer holds. The tree's Panel is not keyed. It still takes 411–440 ms in WebKit on the two heaviest moves, and stays the follow-up (plan **Risks**).
 - **`measure.mjs`.** `d504b88` lets it take `.` and makes it listen for page errors. So "the plan's command … stops at once" and "`measure.mjs` does not listen for page errors" above no longer hold.
 - **A search pick of the Centre already drawn capped its rows again.** `49ff51c` makes `centreAt` return the same state; `state.test.ts` pins it.
 - **The Centre's `selected` flag drew nothing.** `e5e9569` drops it. 18's `measure.mjs` found the Centre by it and hung; `3de9da6` fixed that.
