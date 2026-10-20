@@ -1,6 +1,6 @@
 # 19 · The Code panel — Plan
 
-**Status:** APPROVED 2026-10-20 (lead, after scrutiny-19, its fixes and the replay; advisor sign-off). Held: it queues behind 16, 17 and 18, which are approved and held. zu builds them in order 16, 17, 18, 19, and builds any only when the user says go.
+**Status:** APPROVED 2026-10-20 (lead, after scrutiny-19, its fixes and the replay; advisor sign-off); REVISED 2026-10-20 after a review of 16 to 19 together, and again after that revision's scrutiny (**Notes**), replayed again. Held: it queues behind 16, 17 and 18, which are approved and held. zu builds them in order 16, 17, 18, 19, and builds any only when the user says go.
 
 **Base.** Every diff here is against `main` with 16's, 17's and 18's plans applied, in that order, 17's and 18's as revised on 2026-10-20. `main` then differs from a18ff85 only by plan documents. The diffs come from a scratch branch. Its first commit is a `git archive` of a18ff85 with 16's, 17's and 18's tasks applied (18's revised scratch head). After it come one commit per red step and one per green step. The plan was replayed on a fresh `git archive` of `main`, after 16's, 17's and 18's replays (**Replay record**). Once those three land, replay this plan again on `main` (**Overlap with 16, 17 and 18**).
 
@@ -76,19 +76,21 @@ A reader runs `zu serve` on their checkout, opens the page and selects `store.Re
 - **A budget.** A View with every declaration of a large tree is slow to send, parse and index: kubernetes, at 107,196 declarations, would weigh about 61 MB, by an estimate from its IR. So `zu serve` details every package only while the scan, as the Policy draws it (its Omit applied), holds at most `detailBudget` = 20,000 declarations. Past it the page draws packages only, as before, and `zu serve` says so once on stderr: "zu serve: 107196 declarations, more than 20000: the page draws packages only; -include picks the packages to draw". The page's own message for a package without detail is unchanged ("Declarations not included. Re-run with -include {pkg}").
 - **`-include` is unchanged:** the page draws the matching packages' declarations with their source inlined, byte for byte what `zu scan -html` writes (10's invariant test still holds).
 - **`-base`** (14) is unchanged: the Change View inlines what `zu diff` inlines.
-- **`GET /source?path=`** answers the JSON of an `export.SourceFile` (`path`, `text`, `syntax`) for the file at `path` in the tree as it is now. It answers only for files the last scan declares a package, type or function in (externals excluded; the Policy's Omit does not narrow it, though the page never asks for an omitted package's file), a set rebuilt on every scan, page load and watch alike, and read without a lock. The path must also be local (`filepath.IsLocal`), and it is read through `scan.DirTree`, which refuses links that leave the tree. A path outside the set is 404; a read error is 500 with its message. The route keeps the View's rules: the Host check (10), and no answer to another site's page (`crossSite`), before any read. It is `no-store`. With `-base` it answers too, from the working tree, for the head IR's files.
+- **`GET /source?path=`** answers the JSON of an `export.SourceFile` (`path`, `text`, `syntax`) for the file at `path` in the tree as it is now. It answers only for files the page's View declares a package, type or function in (externals excluded; the Policy's Omit does not narrow it, though the page never asks for an omitted package's file). The set is rebuilt by each page load's scan and each watch rescan the page draws, and read without a lock. A rescan the watch keeps from the page, while a file does not parse (13), leaves it, so the code of the drawing kept is still sent. A page load while the drawing is kept adds its own View's files to the set and drops none, so every page, the ones that draw the kept View and the one just loaded, can read the code it draws. The path must also be local (`filepath.IsLocal`), and it is read through `scan.DirTree`, which refuses links that leave the tree. A path outside the set is 404; a read error is 500 with its message. The route keeps the View's rules: the Host check (10), and no answer to another site's page (`crossSite`), before any read. It is `no-store`. With `-base` it answers too, from the working tree, for the head IR's files.
+- **A save the View does not show.** A save can change a file's text and not the View: a literal, a comment, a condition. The watch's `Hub` (13) now counts each rescan that publishes no View: the View is the same, the rescan failed, or a file no longer parses. `Hub.Keep(notice)` replaces `Notify` and counts. `/events` sends the count as `source`, at once and whenever it changes, after `view` and `notice`. A published View does not count: the page reads its files again for each newer View it fetches, drawn or not, since a page load can draw a View before the watch publishes it. Outside git the watch's first poll rescans every file (13) and counts, so a page served outside git reads its files once more at that poll.
 
 **4. The Code panel (`web/src/code.ts`, `Panel.tsx`, `data.ts`, `main.tsx`, `App.tsx`).**
 - **`paint(lines, runs)`** cuts each line into segments, `{text, cls?}`, `cls` one of `kw`, `com`, `str`, `num`. A run behind an earlier one, of a class the page does not know, or empty is skipped; one past its line is cut to it. No text is lost: the segments join back to the line.
 - **`Code`** replaces 05's `Source` component. It cuts the file into lines as `Syntax` does and draws each as React text in spans with those classes, the declaration's line marked (`hit`) and scrolled into view as before. It never sets markup. A View brings its files as new objects (13), so `Code` cuts, paints and scrolls only when the file's text or the marked line changes: a watch redraw leaves the code, and the panel, where the reader scrolled them.
 - **A long file is drawn in part.** Past `CODE_LINES` = 5,000 lines, `Code` draws the 5,000 around the marked line (`around`, held inside the file), and a note over them says which: "Lines 1011–6010 of 6010.". A shorter file is drawn whole, as before. Drawn whole, k8s.io/api's 73,169-line `core/v1/generated.pb.go` took 1.1 s to 2.6 s to show (**Measurements**).
-- **Where the text comes from.** `inline(view, path)` is the file the View carries, with its colour. Otherwise the page asks `zu serve`: `fetchSource(path)` (`data.ts`) GETs `source?path=` from the page's own origin (the CSP allows only that) and returns `null` on a 404, an error or no answer, so the panel draws no code, as for a file a page does not carry. `Live` (`main.tsx`) makes a `reader` per View it draws, which reads each file once; a newer View from the watch reads it again. `App` passes the reader to both Panels. A static page has none.
+- **Where the text comes from.** `inline(view, path)` is the file the View carries, with its colour. Otherwise the page asks `zu serve`: `fetchSource(path)` (`data.ts`) GETs `source?path=` from the page's own origin (the CSP allows only that) and returns `null` on a 404, an error or no answer, so the panel draws no code, as for a file a page does not carry. `Live` (`main.tsx`) makes a `reader` per View it draws, which reads each file once; a newer View from the watch reads it again. So does a newer generation whose View is the one drawn, as when a page load drew it first and a save since changed a file alone; each `source` count after the first (`follow`, `live.ts`); and the first after the stream dropped or the page was hidden. After a drop the page can read its files twice, once for the count and once for the View it fetches. The page load's reads are as new as the first count, so a page that just loaded reads nothing twice. `App` passes the reader to both Panels. A static page has none.
 - **While it comes,** the panel keeps the last file it read for the same path, so moving between declarations of one file, or a watch redraw, does not blank the code.
 - A removed declaration still shows no code: its text is base's (20).
 
 **5. The lines behind a call or embed (`code.ts`, `facts.ts`, `screen.ts`, `Panel.tsx`, `ScreenCanvas.tsx`, `App.tsx`).**
 - **`behind(view, from, to)`** is where the calls and embeds from an id `from` accepts to an id `to` accepts are written: each edge's `loc` and `more`, by path and line, each once. Imports give none. An edge the change removed gives none either: its lines are base's, which head's code does not show (20).
-- **In a Panel:** pointing at, or focusing, a row of "Calls and embeds out" lights `behind(declaration and its methods, that row's id)`; a row of "Called or embedded by", the other way. `facts.ts` `insideDecl` is the declaration-and-its-methods test that `calls` already used, now exported.
+- **In a Panel:** pointing at, or focusing, a row of "Calls and embeds out" lights `behind(declaration and its methods, that row's id)`; a row of "Called or embedded by", the other way. `facts.ts` `insideDecl` is the declaration-and-its-methods test that `calls` already used, now exported. A row followed to another declaration unmounts without a `mouseleave` or a `blur`, so the light goes out when the Panel's declaration changes.
+- **In a Change View** the tree's Panel lists only the Change View's own edges, which join the declarations it draws; 18 adds the unchanged neighbours (`near`) to the Screen's View alone. A modified function's calls to unchanged declarations are listed, and lit, on its Screen.
 - **On the Screen:** pointing at, or focusing, a box or its line lights `placesOf(view, centre, id)` in the Screen's Panel. A box is matched as the Screen groups it: a method as its type. The Centre, a "+N more" chip and a Screen of imports light nothing.
 - **The code** lights the lines in its own file (`lit`) and scrolls itself, not the panel, to the first. `.source` now has a height of its own (60vh) and scrolls inside, so lighting a line never moves the row the reader points at. When the first lit line is past the lines a long file draws, they move to it (`centre`), and stay when the light goes out, as the scroll does, until the mark moves.
 - **The note over the code** (`litNote`, `aria-live`) says where the lit lines are:
@@ -108,7 +110,7 @@ A reader runs `zu serve` on their checkout, opens the page and selects `store.Re
   - `web/src/data.ts`, `App.tsx`, `screen.ts` and `screen.test.ts`, `ScreenCanvas.tsx` and `styles.css`;
   - `web/e2e/package.json`, where 17 added `accept-screen`.
 - **18:** `view.go` (`Near`), `shop.change.golden.json` (`near`), `data.ts`, `App.tsx`, `screen.ts`, `screen.test.ts`, `ScreenCanvas.tsx` and `styles.css`.
-- **Files none of them touches:** `internal/cli/html.go`, `serve.go`, `serve_test.go` and `watch_test.go`; `internal/export/include.go`, `syntax.go` and `syntax_test.go` (new); `internal/serve/serve.go` and `serve_test.go`; `web/src/Panel.tsx`, `facts.ts`, `main.tsx`, `data.test.ts` and `styles.test.ts`; `web/src/code.ts` and `code.test.ts` (new); `web/e2e/code.mjs` (new).
+- **Files none of them touches:** `internal/cli/html.go`, `serve.go`, `serve_test.go`, `watch.go` and `watch_test.go`; `internal/export/include.go`, `syntax.go` and `syntax_test.go` (new); `internal/serve/serve.go`, `serve_test.go`, `live.go` and `live_test.go`; `web/src/Panel.tsx`, `facts.ts`, `main.tsx`, `live.ts`, `live.test.ts`, `data.test.ts` and `styles.test.ts`; `web/src/code.ts` and `code.test.ts` (new); `web/e2e/code.mjs` (new).
 
 ## Out of scope
 
@@ -126,10 +128,10 @@ A reader runs `zu serve` on their checkout, opens the page and selects `store.Re
 4. **Imports keep one location.** `more` is for calls and embeds, the edges whose lines a Code panel shows. An import's lines are its file's import block; the panel of a package shows no code.
 5. **Lit lines are head's.** A call the change removed lights nothing, and the note says why. Its base lines are 20's.
 6. **The code scrolls on its own.** 05's source pane grew the panel, which scrolled as a whole. Scrolling the panel to a lit line would move the row under the pointer, which would light another row. `.source` is now at most 60% of the window high and scrolls inside.
-7. **`/source` reads the file as it is now.** Between a save and the next scan the file can be newer than the View, so its lines can be off by what the save moved. The watch rescans within its poll (1 s by default) and the page reads the file again with the new View. Without a watch (`-poll 0`), a reload does.
+7. **`/source` reads the file as it is now.** Between a save and the next scan the file can be newer than the View, so its lines can be off by what the save moved. The watch rescans within its poll (1 s by default), and the page reads the file again after every rescan: when it fetches the View the rescan published, whether or not it differs from the one drawn, or on the `source` count when the rescan published none. While a file does not parse, the watch keeps the drawing (13) and the code shows the file as saved. Without a watch (`-poll 0`), a reload reads it again.
 8. **`/source` also answers with `-base`.** The Change View inlines only meaningfully changed files, so the code of an unchanged declaration on a Screen (18's `near`) now comes from the working tree. The static `zu diff -html` page still has none for it.
 9. **Every inlined source carries its colour.** That adds about 28% of the source's bytes to an HTML Export that inlines source (642 KB of Go: 180 KB of runs, in 8 ms). A page that inlines nothing is unchanged.
-10. **Two red steps fail to build.** Task 1's tests name `Syntax`, `Edge.More` and `View.Syntax`, and Task 2's name `export.Every`, `export.SourceFile`, `serve.Views.Source` and `detailBudget`, none of which exists yet.
+10. **Two red steps fail to build.** Task 1's tests name `Syntax`, `Edge.More` and `View.Syntax`, and Task 2's name `export.Every`, `export.SourceFile`, `serve.Views.Source`, `Hub.Keep` and `detailBudget`, none of which exists yet.
 11. **The note's hint is new UI text.** It shows only where pointing does something: on a declaration with calls or embeds.
 12. **A long file is drawn in part.** The round's frame shows the declaration's file. Past 5,000 lines the panel draws the 5,000 around the declaration, or around the first lit line, and says which. The browser's find-in-page then reaches only those. Every file zu scans in cobra and hugo is drawn whole, and all but 35 of kubernetes' 9,962 non-test Go files outside vendor: 30 generated, and 5 hand-written, the longest `pkg/apis/core/validation/validation.go` (10,121 lines) and `k8s.io/api/core/v1/types.go` (8,967). Drawn whole, the longest file of a tree under the budget took up to 2.6 s to show (**Measurements**).
 
@@ -187,6 +189,8 @@ Drawn whole, they failed the 500 ms criterion. The scratch branch's commit befor
 - **From `goto` to the first box** on hugo was 841–845 ms before 19 and 836–840 ms after, in every engine; on the kubernetes modules 3.3–4.0 s, most of it the rescan.
 - **`/source`** answered in 2–7 ms for files up to 609 KB, and in 26 ms for api's 2.6 MB.
 - **No page errors** in any engine.
+
+The revision of 2026-10-20 (**Notes**) was not measured again. It changes `/events`, the watch's keep paths, when the page reads a file again, and when a lit row goes out, none of which these times cover.
 
 Pass criteria, set before the runs:
 - the page draws within 3 s of `goto` on hugo, in every engine: 836–840 ms;
@@ -700,10 +704,12 @@ index f427c3b..846ec9b 100644
 - `TestServeDetailBudgetCountsWhatThePolicyDraws` sets `detailBudget` to 1 on a module of two packages, one omitted by its Policy: the View details the other's declaration, and stderr says nothing.
 - `TestServeBaseSendsSourceOnDemand`: with `-base main`, `/source` sends a file of the working tree, and after an edit, the new text.
 - `TestServeWatchKeepsTheViewWhileAFileDoesNotParse` (13) now expects the package with detail and its declaration: zu serve without `-include` draws them.
+- `TestServeWatchSaysWhenAFileChangesUnderTheView` serves the same module with `-poll 100ms`. Its stream starts with `view 1` and an empty notice, then `source 0` and `source 1`, or `source 1` alone: outside git the watch's first poll rescans every file, and the test waits for its count. A literal added to `F` gives `source 2` and no View, and `/source` sends the new text. `a/a.go` saved broken gives its notice and `source 3`, and `/source` still sends it. A new `c/c.go` then gives `source 4`; after a page load (`view.json`), whose View declares nothing in `a/a.go`, `/source` sends both files.
+- `TestEventsStreamTheLatestGeneration` (13) now expects `source 0` on connect, and a `source` count after each `Keep`, none after `Publish`. 13's `await` skips counts as it skips an empty notice, and `TestServeWatchKeepsTheViewWhenARescanFails` skips them too.
 
 **Files:**
-- Tests: `internal/export/project_test.go`, `internal/serve/serve_test.go`, `internal/cli/serve_test.go`, `internal/cli/change_test.go`, `internal/cli/watch_test.go`
-- Code: `internal/export/include.go`, `internal/export/project.go`, `internal/export/view.go`, `internal/serve/serve.go`, `internal/cli/serve.go`, `internal/cli/html.go`, `internal/cli/change.go`
+- Tests: `internal/export/project_test.go`, `internal/serve/serve_test.go`, `internal/serve/live_test.go`, `internal/cli/serve_test.go`, `internal/cli/change_test.go`, `internal/cli/watch_test.go`
+- Code: `internal/export/include.go`, `internal/export/project.go`, `internal/export/view.go`, `internal/serve/serve.go`, `internal/serve/live.go`, `internal/cli/serve.go`, `internal/cli/watch.go`, `internal/cli/html.go`, `internal/cli/change.go`
 
 **Steps:**
 
@@ -853,10 +859,50 @@ index 46858e8..2badcf7 100644
  func TestServeRescansOnlyWhatChanged(t *testing.T) {
  	dir := repo(t, small)
 diff --git a/internal/cli/watch_test.go b/internal/cli/watch_test.go
-index c262cf7..ff2d19a 100644
+index c262cf7..2fec1c8 100644
 --- a/internal/cli/watch_test.go
 +++ b/internal/cli/watch_test.go
-@@ -158,7 +158,9 @@ func TestServeWatchKeepsTheViewWhileAFileDoesNotParse(t *testing.T) {
+@@ -44,20 +44,28 @@ func stream(t *testing.T, url string) <-chan string {
+ 	return out
+ }
+ 
+-// await returns the next event that is not an empty notice.
++// next returns the next event.
++func next(t *testing.T, events <-chan string) string {
++	t.Helper()
++	select {
++	case e, ok := <-events:
++		if !ok {
++			t.Fatal("the stream ended")
++		}
++		return e
++	case <-time.After(10 * time.Second):
++		t.Fatal("no event")
++	}
++	return ""
++}
++
++// await returns the next event that is neither an empty notice nor (19) a
++// count of rescans that published no View.
+ func await(t *testing.T, events <-chan string) string {
+ 	t.Helper()
+ 	for {
+-		select {
+-		case e, ok := <-events:
+-			if !ok {
+-				t.Fatal("the stream ended")
+-			}
+-			if e != "notice " {
+-				return e
+-			}
+-		case <-time.After(10 * time.Second):
+-			t.Fatal("no event")
++		if e := next(t, events); e != "notice " && !strings.HasPrefix(e, "source ") {
++			return e
+ 		}
+ 	}
+ }
+@@ -158,7 +166,9 @@ func TestServeWatchKeepsTheViewWhileAFileDoesNotParse(t *testing.T) {
  	if e := await(t, events); e != "view 2" {
  		t.Fatalf("fixed: %q", e)
  	}
@@ -867,6 +913,75 @@ index c262cf7..ff2d19a 100644
  		t.Errorf("the fixed View lacks a.F: %.300s", v)
  	}
  	if !strings.Contains(stderr.String(), "a/a.go:3:") || !strings.Contains(stderr.String(), "the page keeps its drawing") {
+@@ -196,13 +206,62 @@ func TestServeWatchKeepsTheViewWhenARescanFails(t *testing.T) {
+ 		t.Fatalf("a bad Policy: %q; %s", e, stderr.String())
+ 	}
+ 	writeFile(t, dir, "zu.policy.yaml", "levels: []\n")
+-	select { // the notice clears; the View may be unchanged
+-	case e := <-events:
+-		if e != "notice " && e != "view 2" {
+-			t.Fatalf("a good Policy again: %q", e)
++	e := next(t, events)
++	for strings.HasPrefix(e, "source ") {
++		e = next(t, events)
++	}
++	if e != "notice " && e != "view 2" { // the notice clears; the View may be unchanged
++		t.Fatalf("a good Policy again: %q", e)
++	}
++}
++
++// 19: a save the View does not show, here a literal, publishes no View. The
++// stream counts the rescan instead, so the page reads its files again, and
++// /source sends the file as saved. While a file does not parse, /source
++// still sends it: the drawing the page keeps declares something in it. A
++// page load then adds the files its own View declares something in.
++func TestServeWatchSaysWhenAFileChangesUnderTheView(t *testing.T) {
++	dir := repo(t, small)
++	url, _ := startServe(t, dir, "-poll", "100ms")
++	events := stream(t, url)
++	for _, want := range []string{"view 1", "notice "} {
++		if e := next(t, events); e != want {
++			t.Fatalf("on connect: %q, want %q", e, want)
++		}
++	}
++	// Outside git the watch's first poll rescans every file and publishes no
++	// View: the counts below start from its count.
++	for e := next(t, events); e != "source 1"; e = next(t, events) {
++		if e != "source 0" {
++			t.Fatalf("before the first poll: %q, want source 0 or 1", e)
++		}
++	}
++	writeFile(t, dir, "a/a.go", "package a\n\nfunc F() { G(); _ = 1 }\n\nfunc G() {}\n")
++	if e := next(t, events); e != "source 2" {
++		t.Fatalf("a literal: %q, want source 2", e)
++	}
++	if f := fetch(t, url+"source?path=a/a.go"); !strings.Contains(f, "_ = 1") {
++		t.Errorf("source after a literal: %s", f)
++	}
++	writeFile(t, dir, "a/a.go", "package a\n\nfunc F( {\n")
++	if e := next(t, events); !strings.HasPrefix(e, "notice a/a.go:") {
++		t.Fatalf("a broken file: %q", e)
++	}
++	if e := next(t, events); e != "source 3" {
++		t.Fatalf("a broken file: %q, want source 3", e)
++	}
++	if f := fetch(t, url+"source?path=a/a.go"); !strings.Contains(f, "func F( {") {
++		t.Errorf("source while a/a.go does not parse: %s", f)
++	}
++	writeFile(t, dir, "c/c.go", "package c\n\nfunc C() {}\n")
++	if e := next(t, events); e != "source 4" {
++		t.Fatalf("a new file while a/a.go does not parse: %q, want source 4", e)
++	}
++	fetch(t, url+"view.json") // a page load: its View declares C, and nothing in a/a.go
++	for _, p := range []string{"a/a.go", "c/c.go"} {
++		if code := statusOf(t, url+"source?path="+p); code != http.StatusOK {
++			t.Errorf("source of %s after a page load while a/a.go does not parse: %d", p, code)
+ 		}
+-	case <-time.After(10 * time.Second):
+-		t.Fatal("the notice stayed")
+ 	}
+ }
+ 
 diff --git a/internal/export/project_test.go b/internal/export/project_test.go
 index 8ecc01e..eb6abeb 100644
 --- a/internal/export/project_test.go
@@ -903,6 +1018,40 @@ index 8ecc01e..eb6abeb 100644
  func TestProjectRejectsAnIncludeThatMatchesNothing(t *testing.T) {
  	doc := shopIR(t)
  	p, _ := ParsePattern("./nosuch/...", RootModule(doc))
+diff --git a/internal/serve/live_test.go b/internal/serve/live_test.go
+index 1b35f22..f400c46 100644
+--- a/internal/serve/live_test.go
++++ b/internal/serve/live_test.go
+@@ -74,7 +74,8 @@ func expect(t *testing.T, got <-chan string, want string) {
+ }
+ 
+ // GET /events streams the latest View's generation, at once and on each
+-// change, and the notice, one line; closing the Hub ends the stream.
++// change, the notice, one line, and (19) how many rescans published no View;
++// closing the Hub ends the stream.
+ func TestEventsStreamTheLatestGeneration(t *testing.T) {
+ 	hub := NewHub([]byte(`{"v":1}`))
+ 	srv, builds := liveServer(t, hub)
+@@ -86,11 +87,17 @@ func TestEventsStreamTheLatestGeneration(t *testing.T) {
+ 	got := events(t, resp.Body)
+ 	expect(t, got, "view 1")
+ 	expect(t, got, "notice ")
+-	hub.Notify("a.go:3:1: expected '}'\nfound EOF")
++	expect(t, got, "source 0")
++	hub.Keep("a.go:3:1: expected '}'\nfound EOF")
+ 	expect(t, got, "notice a.go:3:1: expected '}' found EOF")
++	expect(t, got, "source 1")
++	hub.Keep("") // a View the same as the last
++	expect(t, got, "notice ")
++	expect(t, got, "source 2")
+ 	hub.Publish([]byte(`{"v":2}`))
+ 	expect(t, got, "view 2")
+-	expect(t, got, "notice ")
++	hub.Keep("")
++	expect(t, got, "source 3") // Publish counts no rescan: the page reads its files again for a new View anyway
+ 	hub.Close()
+ 	if e, ok := <-got; ok {
+ 		t.Errorf("after Close: %q, want the stream to end", e)
 diff --git a/internal/serve/serve_test.go b/internal/serve/serve_test.go
 index 6c61bf3..b9cffe7 100644
 --- a/internal/serve/serve_test.go
@@ -982,7 +1131,7 @@ index 6c61bf3..b9cffe7 100644
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/export ./internal/serve ./internal/cli` Expected: FAIL (the builds fail: `undefined: Every`, `unknown field Source in struct literal of type Views`, `undefined: export.SourceFile`, `undefined: detailBudget`)
+- [ ] **Run:** `go test ./internal/export ./internal/serve ./internal/cli` Expected: FAIL (the builds fail: `undefined: Every`, `hub.Keep undefined (type *Hub has no field or method Keep)`, `unknown field Source in struct literal of type Views`, `undefined: export.SourceFile`, `undefined: detailBudget`)
 
 - [ ] **Detail every package within the budget, and serve `/source`**
 
@@ -1041,10 +1190,10 @@ index 26d173b..e4e581f 100644
  		return nil, err
  	}
 diff --git a/internal/cli/serve.go b/internal/cli/serve.go
-index d5f117d..0f226cf 100644
+index d5f117d..fcef406 100644
 --- a/internal/cli/serve.go
 +++ b/internal/cli/serve.go
-@@ -2,13 +2,16 @@ package cli
+@@ -2,13 +2,17 @@ package cli
  
  import (
  	"context"
@@ -1054,6 +1203,7 @@ index d5f117d..0f226cf 100644
  	"fmt"
  	"io"
 +	"io/fs"
++	"maps"
  	"net/http"
  	"os"
  	"path/filepath"
@@ -1061,7 +1211,7 @@ index d5f117d..0f226cf 100644
  	"sync"
  	"sync/atomic"
  	"time"
-@@ -26,14 +29,15 @@ import (
+@@ -26,14 +30,15 @@ import (
  // (10): the Project View of the working tree, on a loopback address, until
  // interrupted, or with -base (14) the Change View zu diff ref -worktree
  // -html writes. Every load of the page rescans the tree, parsing only the
@@ -1080,7 +1230,7 @@ index d5f117d..0f226cf 100644
  	fs.StringVar(&o.linkTmpl, "link-template", "", "source link `url` with {commit} {path} {line}; overrides origin detection")
  	fs.StringVar(&o.cover, "coverprofile", "", "colour packages by CRAP from `file`, written by go test -coverprofile over this tree; read once, at start")
  	poll := fs.Duration("poll", time.Second, "look for changes every `interval` and redraw the open page; 0: never")
-@@ -96,7 +100,7 @@ func runServe(args []string, stdout, stderr io.Writer) int {
+@@ -96,7 +101,7 @@ func runServe(args []string, stdout, stderr io.Writer) int {
  		hub = serve.NewHub(first)
  		s.hub = hub
  	}
@@ -1089,7 +1239,7 @@ index d5f117d..0f226cf 100644
  	if hub != nil {
  		srv.RegisterOnShutdown(hub.Close) // open streams end, so Shutdown need not wait them out
  		wctx, stopWatch := context.WithCancel(ctx)
-@@ -132,6 +136,11 @@ func newServer(h http.Handler) *http.Server {
+@@ -132,6 +137,11 @@ func newServer(h http.Handler) *http.Server {
  	return &http.Server{Handler: h, ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second}
  }
  
@@ -1101,14 +1251,17 @@ index d5f117d..0f226cf 100644
  // session is one zu serve: its options, and the Cache its rescans share.
  type session struct {
  	mu     sync.Mutex // one rescan at a time
-@@ -160,6 +169,68 @@ type session struct {
+@@ -160,6 +170,71 @@ type session struct {
  	// last began a poll. When they differ, a page load may have listed a
  	// file the watch's listing lacks.
  	scans, polledAt atomic.Int64
 +
-+	// files is what /source sends (19): the files the last scan declares a
-+	// package, type or function in. overBudget, guarded by mu, is set once
-+	// zu serve has said the tree is past detailBudget.
++	// files is what /source sends (19): the files the last page load's
++	// scan, or the watch's last rescan the page draws, declares a package,
++	// type or function in. A rescan the watch keeps from the page changes
++	// nothing: the page still draws what is declared there. overBudget,
++	// guarded by mu, is set once zu serve has said the tree is past
++	// detailBudget.
 +	files      atomic.Pointer[map[string]bool]
 +	overBudget bool
 +}
@@ -1170,15 +1323,60 @@ index d5f117d..0f226cf 100644
  }
  
  // view rescans the working tree under its Policy, as zu scan does, and
-@@ -228,6 +299,8 @@ func (s *session) build(ctx context.Context, src *source, trust bool, what strin
- 		return nil, nil, err
+@@ -191,6 +266,13 @@ func (s *session) view(ctx context.Context) ([]byte, uint64, error) {
+ 		s.begun, s.git, s.seen, s.first = true, src.listing != nil, src.listing, src.tree
+ 		s.errs, s.commit = errPaths(doc), doc.Ref.Commit
  	}
- 	ir.Sort(doc) // as ir.Encode does before zu scan -html builds its View
++	files := declared(doc)
++	// While a file does not parse the watch keeps its drawing (changed),
++	// whose files pages still read: a page load adds its own to them.
++	if old := s.files.Load(); old != nil && newParseErrors(s.errs, doc) != "" && doc.Ref.Commit == s.commit {
++		maps.Copy(files, *old)
++	}
++	s.files.Store(&files)
+ 	var gen uint64
+ 	if s.hub != nil {
+ 		_, gen, _ = s.hub.Latest()
+diff --git a/internal/cli/watch.go b/internal/cli/watch.go
+index b7c06a2..70f615f 100644
+--- a/internal/cli/watch.go
++++ b/internal/cli/watch.go
+@@ -87,8 +87,10 @@ func (s *session) list(ctx context.Context) (*watch.Listing, error) {
+ // changed rescans after the watch saw a change and pushes the View, unless
+ // the rescan failed or, at the same commit, a file that parsed in the
+ // pushed View no longer does: then the page keeps its drawing and shows
+-// why. If a page load scanned since the watch began its poll, it lists the
+-// tree again first: the page may already draw a file l lacks.
++// why. A rescan that pushes no View, kept or the same, tells the page to
++// read its files again (19). If a page load scanned since the watch began
++// its poll, it lists the tree again first: the page may already draw a file
++// l lacks.
+ func (s *session) changed(ctx context.Context, l *watch.Listing) {
+ 	s.mu.Lock()
+ 	defer s.mu.Unlock()
+@@ -122,17 +124,19 @@ func (s *session) changed(ctx context.Context, l *watch.Listing) {
+ 		return
+ 	case err != nil:
+ 		fmt.Fprintf(s.stderr, "zu serve: watch: rescan failed: %v; the page keeps its drawing\n", err)
+-		s.hub.Notify("rescan failed: " + err.Error())
++		s.hub.Keep("rescan failed: " + err.Error())
+ 		return
+ 	}
+ 	if broken := newParseErrors(s.errs, doc); broken != "" && doc.Ref.Commit == s.commit {
+ 		fmt.Fprintf(s.stderr, "zu serve: watch: %s; the page keeps its drawing\n", broken)
+-		s.hub.Notify(broken)
++		s.hub.Keep(broken)
+ 		return
+ 	}
+ 	s.errs, s.commit = errPaths(doc), doc.Ref.Commit
 +	files := declared(doc)
 +	s.files.Store(&files)
- 	v, err := s.viewOf(ctx, src, doc, pol, stats.Measures)
- 	if err != nil {
- 		return nil, nil, err
+ 	if last, _, _ := s.hub.Latest(); bytes.Equal(last, data) {
+-		s.hub.Notify("")
++		s.hub.Keep("")
+ 		return
+ 	}
+ 	s.hub.Publish(data)
 diff --git a/internal/export/include.go b/internal/export/include.go
 index a6a5ceb..b2a657e 100644
 --- a/internal/export/include.go
@@ -1259,6 +1457,82 @@ index 1385067..f1b8d8c 100644
  // Honesty is what the view is not showing, always displayed in the header.
  type Honesty struct {
  	ParseErrors       []ir.ParseError `json:"parseErrors"`
+diff --git a/internal/serve/live.go b/internal/serve/live.go
+index 5776b3e..06e3a9c 100644
+--- a/internal/serve/live.go
++++ b/internal/serve/live.go
+@@ -8,13 +8,15 @@ import (
+ )
+ 
+ // Hub holds what zu serve's watch last built (13): the latest View, its
+-// generation, and a notice for the page, and wakes every open stream when
+-// one changes. Safe for concurrent use.
++// generation, a notice for the page, and (19) how many rescans published no
++// View, and wakes every open stream when one changes. Safe for concurrent
++// use.
+ type Hub struct {
+ 	mu     sync.Mutex
+ 	view   []byte
+ 	gen    uint64
+ 	notice string
++	source uint64 // rescans that published no View
+ 	subs   map[chan struct{}]bool
+ 	closed bool
+ }
+@@ -30,9 +32,12 @@ func (h *Hub) Publish(view []byte) {
+ 	h.set(func() { h.view, h.gen, h.notice = view, h.gen+1, "" })
+ }
+ 
+-// Notify sets the notice the page shows over its drawing; "" clears it.
+-func (h *Hub) Notify(text string) {
+-	h.set(func() { h.notice = text })
++// Keep says the watch rescanned and publishes no View (19): the View is the
++// same, the rescan failed, or a file no longer parses. The page shows text
++// over its drawing ("" clears it) and reads the files it shows again: a save
++// can change a file's text and not the View.
++func (h *Hub) Keep(text string) {
++	h.set(func() { h.notice, h.source = text, h.source+1 })
+ }
+ 
+ // Latest returns the latest View, its generation and the notice.
+@@ -89,8 +94,9 @@ func (h *Hub) subscribe() (<-chan struct{}, func()) {
+ }
+ 
+ // stream is GET /events: Server-Sent Events, "view" with the latest
+-// generation and "notice" with the notice, each sent at once and again
+-// whenever it changes.
++// generation, "notice" with the notice and (19) "source" with the count of
++// rescans that published no View, each sent at once and again whenever it
++// changes.
+ func (h *Hub) stream(w http.ResponseWriter, r *http.Request) {
+ 	fl, ok := w.(http.Flusher)
+ 	if !ok {
+@@ -105,9 +111,12 @@ func (h *Hub) stream(w http.ResponseWriter, r *http.Request) {
+ 	wake, stop := h.subscribe()
+ 	defer stop()
+ 	var sentGen uint64
+-	sentNotice := "\x00" // never a notice, so the first is sent
++	sentNotice := "\x00"     // never a notice, so the first is sent
++	sentSource := ^uint64(0) // never a count, so the first is sent
+ 	for {
+-		_, gen, notice := h.Latest()
++		h.mu.Lock()
++		gen, notice, source := h.gen, h.notice, h.source
++		h.mu.Unlock()
+ 		if gen != sentGen {
+ 			fmt.Fprintf(w, "event: view\ndata: %d\n\n", gen)
+ 			sentGen = gen
+@@ -116,6 +125,10 @@ func (h *Hub) stream(w http.ResponseWriter, r *http.Request) {
+ 			fmt.Fprintf(w, "event: notice\ndata: %s\n\n", strings.Join(strings.Fields(notice), " "))
+ 			sentNotice = notice
+ 		}
++		if source != sentSource {
++			fmt.Fprintf(w, "event: source\ndata: %d\n\n", source)
++			sentSource = source
++		}
+ 		fl.Flush()
+ 		select {
+ 		case <-r.Context().Done():
 diff --git a/internal/serve/serve.go b/internal/serve/serve.go
 index 4704b8e..844f62e 100644
 --- a/internal/serve/serve.go
@@ -1345,17 +1619,19 @@ The unit tests check:
 - `inline` is the View's file with its syntax, or null;
 - `reader` reads each file once (the same promise twice), and a new reader reads it again;
 - `fetchSource` asks `source?path=internal%2Fstore%2Fstore.go` with `no-store`, returns the file, and is null on a 404, a 500, and a failed fetch;
+- `follow` calls `reread` for each `source` count after the first, but not for a count it has seen, and once for the first count after the stream dropped and after the page was hidden; and once for a newer generation whose View is the one drawn;
 - each Go colour reads at 4.5:1 on `--code-bg` and `--mark`, light and dark, and the CSS colours each class `paint` names.
 
 `web/e2e/code.mjs` (new, `npm run accept-code`) runs in Chromium, Firefox and WebKit:
 - **coloured:** on the shop's static page, `store.Repo.Get`'s panel marks line 43, `func (r *Repo) Get(`, whose first token is `func` in `kw`; the code has keywords, comments and strings coloured;
-- **served:** `zu serve` on a copy of the shop, without `-include`, draws `store.Repo.Get`, and its panel shows the same coloured line. `checkout.Total`, a package `-include` would have left out, shows line 22, `func Total(`. The page asked `/source` for `store.go`, again after the redraw **kept** makes, and for `checkout.go`.
+- **served:** `zu serve` on a copy of the shop, without `-include`, draws `store.Repo.Get`, and its panel shows the same coloured line. `checkout.Total`, a package `-include` would have left out, shows line 22, `func Total(`. The page asked `/source` for `store.go`, again after the redraw **kept** makes, and for `checkout.go`. The checks before it outlast the watch's first poll, so no count from that poll reads `store.go` a third time.
 - **kept:** the code and the panel, scrolled to the top, stay there when a file saved elsewhere in the package redraws the page;
+- **saved:** a comment saved at the end of line 46 of the served `store.go`, in `Repo.Get`, shows in its panel's code, and the page fetched no new View;
 - **long:** a 6,010-line file written into the served copy: its last function's panel draws 5,000 lines, from line 1011, marks line 6009, and the note over them reads "Lines 1011–6010 of 6010.".
 
 **Files:**
-- Tests: `web/src/code.test.ts` (new), `web/src/data.test.ts`, `web/src/styles.test.ts`, `web/e2e/code.mjs` (new), `web/e2e/package.json`
-- Code: `web/src/code.ts` (new), `web/src/data.ts`, `web/src/Panel.tsx`, `web/src/main.tsx`, `web/src/App.tsx`, `web/src/styles.css`
+- Tests: `web/src/code.test.ts` (new), `web/src/data.test.ts`, `web/src/styles.test.ts`, `web/src/live.test.ts`, `web/e2e/code.mjs` (new), `web/e2e/package.json`
+- Code: `web/src/code.ts` (new), `web/src/data.ts`, `web/src/Panel.tsx`, `web/src/live.ts`, `web/src/main.tsx`, `web/src/App.tsx`, `web/src/styles.css`
 
 **Steps:**
 
@@ -1364,14 +1640,15 @@ The unit tests check:
 ```diff
 diff --git a/web/e2e/code.mjs b/web/e2e/code.mjs
 new file mode 100644
-index 0000000..d81ea2d
+index 0000000..17dae7d
 --- /dev/null
 +++ b/web/e2e/code.mjs
-@@ -0,0 +1,157 @@
+@@ -0,0 +1,177 @@
 +// Browser acceptance for the Code panel (19): Go coloured, and zu serve
 +// without -include drawing every package, sending its source on demand,
-+// keeping the code where the reader left it across a watch redraw, and
-+// drawing a long file's lines around the marked one.
++// keeping the code where the reader left it across a watch redraw, showing
++// a save the View does not show, and drawing a long file's lines around the
++// marked one.
 +// Not part of make check: it needs browsers and a bin/zu built with the UI.
 +// Run from web/e2e after `make build`: npm run accept-code.
 +// ZU_E2E_CHANNEL=chrome uses an installed Chrome instead of Playwright's Chromium.
@@ -1401,7 +1678,10 @@ index 0000000..d81ea2d
 +  return "file://" + f;
 +})();
 +
-+// served: zu serve on a copy of the shop, without -include.
++// served: zu serve on a copy of the shop, without -include. Outside git its
++// watch rescans every file at its first poll, and a page drawn before then
++// reads its files once more: the parts before serve() outlast that poll, so
++// serve()'s page asks for store.go twice, not three times.
 +const shop = join(dir, "shop");
 +cpSync(join(here, "../../internal/scan/testdata/shop"), shop, { recursive: true });
 +let log = "";
@@ -1473,6 +1753,21 @@ index 0000000..d81ea2d
 +  return { got, errors };
 +}
 +
++// saved: a save the View does not show, here a comment, publishes no View;
++// the page reads the file again, and its code shows the save.
++async function saved(b) {
++  const { p, errors } = await open(b, `${served}#f=${enc(S)}&s=${enc(`${S}.Repo.Get`)}`);
++  await code(p);
++  const latest = [];
++  p.on("request", (r) => r.url().includes("view.json?latest") && latest.push(r.url()));
++  const name = b.browserType().name(); // the engines share the copy
++  const f = join(shop, "internal", "store", "store.go");
++  writeFileSync(f, readFileSync(f, "utf8").replace(/\to := r\.cache\[id\].*\n/, `\to := r.cache[id] // saved by ${name}\n`));
++  const shown = await p.locator("aside.panel pre.source", { hasText: `saved by ${name}` }).waitFor({ timeout: 15000 }).then(() => true, () => false);
++  await p.close();
++  return { got: { saved: [shown, latest.length] }, errors };
++}
++
 +// longGo is a file longer than the panel draws (Code, CODE_LINES 5000), of
 +// 6010 lines: Long's body runs from line 3 to 6006, longB is on line 6009.
 +const longGo = (n) => `package store\n\nfunc Long${n}() {\n\tlongA${n}()\n${"\n".repeat(6000)}\tlongB${n}()\n}\n\nfunc longA${n}() {}\nfunc longB${n}() {}\n`;
@@ -1507,6 +1802,7 @@ index 0000000..d81ea2d
 +  coloured: [true, ["func", "kw"], [true, true, true]],
 +  served: [true, ["func", "kw"], true, ["?path=internal%2Fstore%2Fstore.go", "?path=internal%2Fstore%2Fstore.go", "?path=internal%2Fcheckout%2Fcheckout.go"]],
 +  kept: [true, [0, 0]],
++  saved: [true, 0],
 +  long: [5000, "1011", true, "Lines 1011–6010 of 6010."],
 +  errors: [],
 +};
@@ -1516,7 +1812,7 @@ index 0000000..d81ea2d
 +for (const [name, type, opts] of engines) {
 +  const b = await type.launch(opts);
 +  const got = await (async () => {
-+    const parts = [await tree(b), await serve(b), await long(b)];
++    const parts = [await tree(b), await serve(b), await saved(b), await long(b)];
 +    return { ...Object.assign({}, ...parts.map((x) => x.got)), errors: parts.flatMap((x) => x.errors) };
 +  })().catch((e) => ({ errors: [String(e.message ?? e).split("\n")[0]] })).finally(() => b.close().catch(() => {}));
 +  const bad = Object.keys(want).filter((k) => JSON.stringify(got[k]) !== JSON.stringify(want[k]));
@@ -1650,6 +1946,64 @@ index 1021780..2edd665 100644
 +    expect(await fetchSource(P, async () => Promise.reject(new TypeError("Failed to fetch")))).toBeNull();
 +  });
 +});
+diff --git a/web/src/live.test.ts b/web/src/live.test.ts
+index e0250ae..6e7ec9d 100644
+--- a/web/src/live.test.ts
++++ b/web/src/live.test.ts
+@@ -58,9 +58,10 @@ function run(answers: [number, string][], first = { text: view("a"), gen: 0 }) {
+   const l = latest(answers);
+   const shown: string[] = [];
+   const said: string[] = [];
++  const reads = { n: 0 };
+   const doc = page();
+-  const stop = follow(open, l.load, first, (v) => shown.push(v.tool), (t) => void said.push(t), doc);
+-  return { s: streams[0], streams, doc, l, shown, said, stop };
++  const stop = follow(open, l.load, first, (v) => shown.push(v.tool), (t) => void said.push(t), doc, () => void reads.n++);
++  return { s: streams[0], streams, doc, l, shown, said, reads, stop };
+ }
+ 
+ describe("follow", () => {
+@@ -153,6 +154,40 @@ describe("follow", () => {
+     await tick();
+     expect([r.l.asked, r.shown]).toEqual([[3], ["b"]]);
+   });
++  // 19: a save can change a file the page shows and not the View.
++  it("reads the files again for each rescan that publishes no View", () => {
++    const r = run([]);
++    r.s.send("open");
++    r.s.send("source", "4"); // the page load read them: as new as this
++    r.s.send("source", "5");
++    r.s.send("source", "5");
++    r.s.send("source", "6");
++    expect(r.reads.n).toBe(2);
++  });
++  // A page load can draw a View the watch has not published yet. A save the
++  // View does not show, before the watch's next poll, then publishes that
++  // View, and no count moves.
++  it("reads the files again for a newer generation whose View is the one drawn", async () => {
++    const r = run([[2, view("a")]]);
++    r.s.send("view", "2");
++    await tick();
++    expect([r.l.asked, r.shown, r.reads.n]).toEqual([[2], [], 1]);
++  });
++  it("reads the files again once after the stream dropped, and once after the page was hidden", () => {
++    const r = run([]);
++    r.s.send("source", "2");
++    r.s.readyState = 0;
++    r.s.send("error");
++    r.s.readyState = 1;
++    r.s.send("open");
++    r.s.send("source", "2"); // the count it read at, or a restarted zu serve's
++    r.s.send("source", "2");
++    r.doc.set(true);
++    r.doc.set(false);
++    r.streams[1].send("open");
++    r.streams[1].send("source", "2");
++    expect(r.reads.n).toBe(2);
++  });
+   it("opens no second stream for a page shown twice", () => {
+     const r = run([]);
+     r.doc.set(false);
 diff --git a/web/src/styles.test.ts b/web/src/styles.test.ts
 index 0ad650c..6a437e3 100644
 --- a/web/src/styles.test.ts
@@ -1680,9 +2034,9 @@ index 0ad650c..6a437e3 100644
 +});
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/code.test.ts src/data.test.ts src/styles.test.ts` Expected: FAIL (`./code` does not exist; `fetchSource` is not a function; no `--syn-*` colour or rule)
+- [ ] **Run:** `cd web && npx vitest run src/code.test.ts src/data.test.ts src/styles.test.ts src/live.test.ts` Expected: FAIL (`./code` does not exist; `fetchSource` is not a function; no `--syn-*` colour or rule; `follow` never calls `reread`)
 
-- [ ] **Run:** `cd web && npx vite build >/dev/null && cd .. && CGO_ENABLED=0 go build -trimpath -o bin/zu ./cmd/zu && cd web/e2e && node code.mjs` Expected: FAIL (0/5 checks in each engine: in `zu serve` the panel reads no `/source`, so the wait for its code times out after 30 s and the run stops. `tsc` fails on the red unit tests, so this step builds with `vite build`, which skips it)
+- [ ] **Run:** `cd web && npx vite build >/dev/null && cd .. && CGO_ENABLED=0 go build -trimpath -o bin/zu ./cmd/zu && cd web/e2e && node code.mjs` Expected: FAIL (0/6 checks in each engine: in `zu serve` the panel reads no `/source`, so the wait for its code times out after 30 s and the run stops. `tsc` fails on the red unit tests, so this step builds with `vite build`, which skips it)
 
 - [ ] **Colour the code, and read it from zu serve**
 
@@ -1944,8 +2298,107 @@ index 846ec9b..3198a26 100644
 +    return null;
 +  }
 +}
+diff --git a/web/src/live.ts b/web/src/live.ts
+index fc42c7a..81b4981 100644
+--- a/web/src/live.ts
++++ b/web/src/live.ts
+@@ -1,12 +1,13 @@
+ // The page's side of zu serve's watch (13): /events says a newer View exists,
+-// or a notice for the reader; the page fetches view.json?latest and draws it
+-// in place, keeping its view state. Every View it draws came from zu.
++// or a notice for the reader, or (19) that a rescan published no View; the
++// page fetches view.json?latest and draws it in place, keeping its view
++// state. Every View it draws came from zu.
+ import { parseView, type View } from "./data";
+ 
+ // Stream is what follow needs of an EventSource.
+ export type Stream = {
+   readonly readyState: number; // 0 reconnecting, 1 open, 2 closed for good
+-  addEventListener(type: "open" | "error" | "view" | "notice", fn: (e: { data?: unknown }) => void): void;
++  addEventListener(type: "open" | "error" | "view" | "notice" | "source", fn: (e: { data?: unknown }) => void): void;
+   close(): void;
+ };
+ 
+@@ -29,8 +30,12 @@ const CLOSED = 2;
+ // cannot read keeps the drawing and is said instead. While doc is hidden
+ // the stream is closed, so hidden tabs hold none of the browser's few
+ // connections to zu serve; shown again, a new stream fetches the latest
+-// View once, and its text decides whether to draw. It returns a function
+-// that stops.
++// View once, and its text decides whether to draw. 19: each rescan that
++// publishes no View calls reread, as a save can change a file the page
++// shows and not the View; so does the first count after the stream dropped
++// or the page was hidden, and a newer View whose text is the one drawn: a
++// page load drew it before the watch published it, and a save since may
++// have changed a file alone. It returns a function that stops.
+ export function follow(
+   open: () => Stream,
+   load: () => Promise<Response>,
+@@ -38,6 +43,7 @@ export function follow(
+   show: (v: View) => void,
+   say: (text: string) => void,
+   doc: Visibility,
++  reread: () => void,
+ ): () => void {
+   let text = first.text;
+   // The page load rescans, so its View is at least as new as first.gen's: a
+@@ -48,6 +54,11 @@ export function follow(
+   let lost = false; // the stream dropped; it reconnects on its own
+   let src: Stream | null = null; // null while the page is hidden
+   let paused = false; // the page was hidden since the stream last opened
++  // The count of rescans that published no View the page's files are as new
++  // as: "" until the first, which the page load's reads are as new as; null
++  // after the stream dropped or the page was hidden, when what changed is
++  // unknown.
++  let readAt: string | null = "";
+   const pull = async () => {
+     busy = true;
+     try {
+@@ -59,6 +70,8 @@ export function follow(
+         if (body !== text) {
+           show(parseView(body));
+           text = body;
++        } else {
++          reread();
+         }
+       }
+     } catch (e) {
+@@ -75,12 +88,20 @@ export function follow(
+       if (!busy && wanted > drawn) void pull();
+     });
+     s.addEventListener("notice", (e) => say(String(e.data ?? "")));
++    s.addEventListener("source", (e) => {
++      const n = String(e.data ?? "");
++      if (readAt === null || (readAt !== "" && n !== readAt)) reread();
++      readAt = n;
++    });
+     // zu serve sends its generation and notice on each connect. One that
+     // restarted counts from 1 again, so after a drop the drawn generation
+     // means nothing: the next one fetches, and its text decides whether to
+     // draw.
+     s.addEventListener("open", () => {
+-      if (lost) drawn = 0;
++      if (lost) {
++        drawn = 0;
++        readAt = null;
++      }
+       lost = false;
+       say("");
+     });
+@@ -106,7 +127,10 @@ export function follow(
+     if (src) return;
+     // What changed while hidden is unknown, and zu serve may have restarted
+     // and counted from 1 again: fetch the latest View once.
+-    if (paused) drawn = 0;
++    if (paused) {
++      drawn = 0;
++      readAt = null;
++    }
+     paused = false;
+     src = connect();
+   };
 diff --git a/web/src/main.tsx b/web/src/main.tsx
-index 5277896..7d9a9ce 100644
+index 5277896..8fb67aa 100644
 --- a/web/src/main.tsx
 +++ b/web/src/main.tsx
 @@ -1,7 +1,8 @@
@@ -1959,21 +2412,31 @@ index 5277896..7d9a9ce 100644
  import { follow } from "./live";
  import "./styles.css";
  
-@@ -19,10 +20,12 @@ async function loadView(): Promise<Loaded | { view: View } | null> {
+@@ -19,10 +20,14 @@ async function loadView(): Promise<Loaded | { view: View } | null> {
  // Live is a page zu serve sent (13): it draws each newer View zu serve's watch
  // builds, in place, and says what zu serve says over the drawing. Without a
  // watch (-poll 0) /events answers 404 and the page stays as it loaded. A
 -// hidden page closes its stream and catches up when shown.
 +// hidden page closes its stream and catches up when shown. 19: it reads the
-+// source the View does not carry from zu serve, each file once per View.
++// source the View does not carry from zu serve, each file once per View and
++// again after each rescan that publishes no View.
  function Live({ first }: { first: Loaded }) {
    const [view, setView] = useState(first.view);
    const [notice, setNotice] = useState("");
-+  const read = useMemo(() => reader((path) => fetchSource(path)), [view]);
++  const [reads, setReads] = useState(0);
++  const read = useMemo(() => reader((path) => fetchSource(path)), [view, reads]);
    useEffect(
      () =>
        follow(
-@@ -42,7 +45,7 @@ function Live({ first }: { first: Loaded }) {
+@@ -32,6 +37,7 @@ function Live({ first }: { first: Loaded }) {
+         setView,
+         setNotice,
+         document,
++        () => setReads((n) => n + 1),
+       ),
+     [first],
+   );
+@@ -42,7 +48,7 @@ function Live({ first }: { first: Loaded }) {
            {notice}
          </div>
        )}
@@ -2036,7 +2499,7 @@ index 58a51b7..ff5e9b2 100644
 
 - [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node code.mjs` Expected: PASS (5 checks in each engine)
+- [ ] **Run:** `make build >/dev/null && cd web/e2e && node code.mjs` Expected: PASS (6 checks in each engine)
 
 - [ ] **Commit:** `Colour the Code panel and read its source from zu serve`
 
@@ -2056,6 +2519,7 @@ The unit tests check, on a View where `m.F` calls `m.G` at `a.go:4`, `a.go:9` an
 - **pointed:** pointing at the row `store.Repo.check` lights line 48, the note reads "Line 48.", and the panel did not scroll;
 - **left:** moving the pointer off the row lights nothing;
 - **focused:** focusing the row's link lights line 48;
+- **back:** Enter follows the focused row to `Repo.check`; back at `Repo.Get` by the hash, with nothing pointed at, no line is lit and the hint shows;
 - **other:** on `store.register`'s panel, pointing at the caller `store.init` lights nothing, and the note reads "In other files: internal/store/db_linux.go:7.";
 - **screen:** on `store.Repo`'s Screen, the panel marks line 31, `type Repo struct`; pointing at the box `store.Open` lights line 58 (Reset calls Open there) with the note "Line 58."; moving off lights nothing; focusing the box lights 58 again, and so does pointing at the box's line;
 - **served** also checks that pointing at `Repo.check` in `zu serve` lights line 48;
@@ -2071,23 +2535,25 @@ The unit tests check, on a View where `m.F` calls `m.G` at `a.go:4`, `a.go:9` an
 
 ```diff
 diff --git a/web/e2e/code.mjs b/web/e2e/code.mjs
-index d81ea2d..66f5146 100644
+index 17dae7d..9a7fe8c 100644
 --- a/web/e2e/code.mjs
 +++ b/web/e2e/code.mjs
-@@ -1,7 +1,8 @@
+@@ -1,8 +1,9 @@
 -// Browser acceptance for the Code panel (19): Go coloured, and zu serve
 -// without -include drawing every package, sending its source on demand,
--// keeping the code where the reader left it across a watch redraw, and
--// drawing a long file's lines around the marked one.
+-// keeping the code where the reader left it across a watch redraw, showing
+-// a save the View does not show, and drawing a long file's lines around the
+-// marked one.
 +// Browser acceptance for the Code panel (19): Go coloured, the lines behind
 +// a pointed-at call or embed lit, in the tree's panel and the Screen's, and
 +// zu serve without -include drawing every package, sending its source on
 +// demand, keeping the code where the reader left it across a watch redraw,
-+// and drawing a long file's lines around the marked one, or the lit one.
++// showing a save the View does not show, and drawing a long file's lines
++// around the marked one, or the lit one.
  // Not part of make check: it needs browsers and a bin/zu built with the UI.
  // Run from web/e2e after `make build`: npm run accept-code.
  // ZU_E2E_CHANNEL=chrome uses an installed Chrome instead of Playwright's Chromium.
-@@ -57,22 +58,70 @@ async function open(b, url) {
+@@ -61,22 +62,79 @@ async function open(b, url) {
    return { p, errors, asked };
  }
  // code is what the panel's code shows: its marked line, the first token of
@@ -2127,6 +2593,15 @@ index d81ea2d..66f5146 100644
 +  await row(p, "Calls and embeds out", "Repo.check").locator("button").focus();
 +  await settle(p);
 +  got.focused = (await code(p)).lit;
++  // Enter follows the row, which goes without a blur; back at Get, nothing
++  // is pointed at, so nothing is lit.
++  await p.keyboard.press("Enter");
++  await p.locator("aside.panel pre.source .hit", { hasText: /^51func/ }).waitFor({ timeout: 30000 });
++  await p.evaluate((h) => (location.hash = h), `#f=${enc(S)}&s=${enc(`${S}.Repo.Get`)}`);
++  await p.locator("aside.panel pre.source .hit", { hasText: /^43func/ }).waitFor({ timeout: 30000 });
++  await settle(p);
++  const back = await code(p);
++  got.back = [back.lit, back.note];
 +  // A caller in another file: listed, nothing lit here.
 +  await p.goto(`${page}#f=${enc(S)}&s=${enc(`${S}.register`)}`);
 +  await code(p);
@@ -2161,7 +2636,7 @@ index d81ea2d..66f5146 100644
    await p.close();
    return { got, errors };
  }
-@@ -94,30 +143,37 @@ async function serve(b) {
+@@ -98,11 +156,14 @@ async function serve(b) {
    const name = b.browserType().name(); // the engines share the copy
    writeFileSync(join(shop, "internal", "store", `kept${name}.go`), `package store\n\nfunc Kept${name}() {}\n`);
    await p.locator(`.react-flow__node[data-id="${S}.Kept${name}"]`).waitFor({ timeout: 15000 });
@@ -2177,6 +2652,8 @@ index d81ea2d..66f5146 100644
 +  got.served = [first.hit.startsWith("43func (r *Repo) Get("), first.first, pointed.lit, total.hit.startsWith("22func Total("), asked];
    await p.close();
    return { got, errors };
+ }
+@@ -123,20 +184,24 @@ async function saved(b) {
  }
  
  // longGo is a file longer than the panel draws (Code, CODE_LINES 5000), of
@@ -2204,7 +2681,7 @@ index d81ea2d..66f5146 100644
  async function long(b) {
    const { p, errors } = await open(b, `${served}#f=${enc(S)}`);
    const got = {};
-@@ -129,15 +185,31 @@ async function long(b) {
+@@ -148,16 +213,33 @@ async function long(b) {
    await p.locator("aside.panel pre.source .hit").waitFor({ timeout: 30000 });
    const end = await drawn(p);
    got.long = [end.n, end.first, end.hit.startsWith(`6009func longB${name}()`), end.note];
@@ -2229,21 +2706,23 @@ index d81ea2d..66f5146 100644
 +  pointed: [["48"], "Line 48.", true],
 +  left: [],
 +  focused: ["48"],
++  back: [[], HINT],
 +  other: [[], "In other files: internal/store/db_linux.go:7."],
 +  screen: [true, ["58"], "Line 58.", [], ["58"], ["58"]],
 +  served: [true, ["func", "kw"], ["48"], true, ["?path=internal%2Fstore%2Fstore.go", "?path=internal%2Fstore%2Fstore.go", "?path=internal%2Fcheckout%2Fcheckout.go"]],
    kept: [true, [0, 0]],
+   saved: [true, 0],
    long: [5000, "1011", true, "Lines 1011–6010 of 6010."],
 +  moved: ["Lines 1–5000 of 6010.", ["6005"], "Lines 1011–6010 of 6010.", [], "Lines 1011–6010 of 6010."],
    errors: [],
  };
  const channel = process.env.ZU_E2E_CHANNEL;
-@@ -146,7 +218,7 @@ let failed = 0;
+@@ -166,7 +248,7 @@ let failed = 0;
  for (const [name, type, opts] of engines) {
    const b = await type.launch(opts);
    const got = await (async () => {
--    const parts = [await tree(b), await serve(b), await long(b)];
-+    const parts = [await tree(b), await screen(b), await serve(b), await long(b)];
+-    const parts = [await tree(b), await serve(b), await saved(b), await long(b)];
++    const parts = [await tree(b), await screen(b), await serve(b), await saved(b), await long(b)];
      return { ...Object.assign({}, ...parts.map((x) => x.got)), errors: parts.flatMap((x) => x.errors) };
    })().catch((e) => ({ errors: [String(e.message ?? e).split("\n")[0]] })).finally(() => b.close().catch(() => {}));
    const bad = Object.keys(want).filter((k) => JSON.stringify(got[k]) !== JSON.stringify(want[k]));
@@ -2410,9 +2889,9 @@ index 6a437e3..38903d8 100644
  });
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/code.test.ts src/screen.test.ts src/styles.test.ts` Expected: FAIL (`behind`, `litNote` and `placesOf` are not functions; no `--lit` colour or rule)
+- [ ] **Run:** `cd web && npx vitest run src/code.test.ts src/screen.test.ts src/styles.test.ts` Expected: FAIL (`centre`, `behind`, `litNote` and `placesOf` are not functions; no `--lit` colour or rule)
 
-- [ ] **Run:** `cd web && npx vite build >/dev/null && cd .. && CGO_ENABLED=0 go build -trimpath -o bin/zu ./cmd/zu && cd web/e2e && node code.mjs` Expected: FAIL (4/11 checks in each engine, left, kept, long and errors: no line lights and no note shows, the long file's lines drawn do not move, and hovering the row scrolls the panel, whose code is still as long as its file. Built with `vite build`, as in Task 3)
+- [ ] **Run:** `cd web && npx vite build >/dev/null && cd .. && CGO_ENABLED=0 go build -trimpath -o bin/zu ./cmd/zu && cd web/e2e && node code.mjs` Expected: FAIL (5/13 checks in each engine, left, kept, saved, long and errors: no line lights and no note shows, the long file's lines drawn do not move, and hovering the row scrolls the panel, whose code is still as long as its file. Built with `vite build`, as in Task 3)
 
 - [ ] **Light the lines behind what the reader points at**
 
@@ -2464,7 +2943,7 @@ index dadcd39..0d41efc 100644
            onClose={() => setClosed(centre)}
          />
 diff --git a/web/src/Panel.tsx b/web/src/Panel.tsx
-index f4b4824..306e52c 100644
+index f4b4824..0b4a9fa 100644
 --- a/web/src/Panel.tsx
 +++ b/web/src/Panel.tsx
 @@ -1,8 +1,8 @@
@@ -2600,7 +3079,7 @@ index f4b4824..306e52c 100644
  }
  
  // Members lists the IR edges a bundle carries, each with where it is written.
-@@ -284,7 +325,10 @@ function Crap({ view, id, box, onReveal }: { view: View; id: string; box?: Risk;
+@@ -284,7 +325,13 @@ function Crap({ view, id, box, onReveal }: { view: View; id: string; box?: Risk;
    );
  }
  
@@ -2609,10 +3088,13 @@ index f4b4824..306e52c 100644
 +  // 19: the row the reader points at lights its lines, over the Screen's line.
 +  const [over, setOver] = useState<{ id: string; places: Loc[] } | null>(null);
 +  const places = over !== null && over.id === id ? over.places : (lit ?? null);
++  // A row followed to another declaration goes without a mouseleave or a
++  // blur: its light goes with the declaration it was in.
++  useEffect(() => setOver(null), [id]);
    const title = edge ? `${edge.from} → ${edge.to}` : (id ?? "");
    const node = id === null ? undefined : view.nodes.find((n) => n.id === (id.endsWith(PKG) ? id.slice(0, -PKG.length) : id));
    let body: React.ReactNode;
-@@ -308,14 +352,19 @@ export function Panel({ view, id, edge, bundles, hidden, crap, ownTier, read, on
+@@ -308,14 +355,19 @@ export function Panel({ view, id, edge, bundles, hidden, crap, ownTier, read, on
      );
    } else if (node?.kind === "type" || node?.kind === "function") {
      const c = calls(view, node.id);
@@ -2863,7 +3345,7 @@ index ff5e9b2..97668d7 100644
 
 - [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node code.mjs` Expected: PASS (11 checks in each engine)
+- [ ] **Run:** `make build >/dev/null && cd web/e2e && node code.mjs` Expected: PASS (13 checks in each engine)
 
 - [ ] **Commit:** `Light the lines behind a call or embed`
 
@@ -2886,7 +3368,7 @@ index ff5e9b2..97668d7 100644
 
 - [ ] **Run:** `cd web/e2e && node screen.mjs` Expected: PASS (23 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node code.mjs` Expected: PASS (11 checks in each engine)
+- [ ] **Run:** `cd web/e2e && node code.mjs` Expected: PASS (13 checks in each engine)
 
 - [ ] **Measure** (by hand; not a replay step).
   1. Copy the Test Corpus's hugo, cobra and kubernetes clones out of `.zu/corpus/` (`cp -cR`). Of kubernetes, time its staging modules `k8s.io/api` and `client-go` too: they are under the budget and hold its longest files. The corpus is read-only: never clone, edit or check out in it.
@@ -2903,7 +3385,7 @@ index ff5e9b2..97668d7 100644
   1. Select a function. Its file shows, coloured, the function's line marked and in view. In a file past 5,000 lines, the note over the code says which lines are drawn.
   2. Point at a row of its calls: the lines light, and the note says where. Point at a caller in another file: the note lists it.
   3. Press `s`. On the Screen, point at a box below the Centre: the Centre's lines that call it light.
-  4. Save a change to the file. The page redraws, and the code shows the change.
+  4. Save a change to the file. The page redraws, and the code shows the change. Save a change to a comment or a literal only: the page does not redraw, and the code shows it.
   5. Run `zu serve -include ./some/pkg`: the page is the one `zu scan -html -include ./some/pkg` writes.
 
 - [ ] **Commit:** `Record the Code panel's acceptance`
@@ -2915,7 +3397,8 @@ index ff5e9b2..97668d7 100644
 - **The View grows with every package's declarations.** Without `-include`, `zu serve` now sends every declaration while the scan, as the Policy draws it, holds at most 20,000, and the page parses and indexes all of them on each load and each watch redraw. hugo's View grows from 0.29 MB to 2.87 MB, k8s.io/api's from 0.03 MB to 6.50 MB, and client-go's, just under the budget, from 0.49 MB to 9.10 MB (**Measurements**). None slowed the first box, but each watch redraw parses the whole View again. The budget is one number, `detailBudget`, set from the corpus. Past it, the page draws packages only, as before 19, and `-include` picks what to draw.
 - **A long file is drawn in part** (Deviation 12). Find-in-page reaches only the 5,000 lines drawn. They move to the first lit line when it is past them; another lit line far from it can stay undrawn, and the note names every place. Up to 5,000 lines the code is still a `div` per line with a `span` per coloured token; 18's Risks found the source pane slow on long files in WebKit. Drawn whole, a 4,937-line file shows in WebKit in 222 ms, and drawn in part, a 73,169-line file in 251 ms (**Measurements**), within the 500 ms set for them.
 - **A timed unit test.** `TestSyntaxIsLinearInLineLength` fails past 1 s. It takes 10 ms here, and counting columns from each line's start took 54 s on a line a quarter longer, so a loaded machine has a wide margin. `TestMatchIsPolynomialInStars` (`internal/policy`) is the precedent.
-- **The file and the View can disagree for one poll** (Deviation 7). Lit lines and the marked line come from the View, the text from the file now. After a save that moves lines, they can be off until the watch rescans (1 s by default) and the page reads the file again.
+- **The file and the View can disagree for one poll** (Deviation 7). Lit lines and the marked line come from the View, the text from the file now. After a save that moves lines, they can be off until the watch rescans (1 s by default) and the page reads the file again, which it does after every rescan. While a file does not parse, they stay off until it parses again.
+- **Each `source` count renders the page again.** A count sets `Live`'s state, and `App` renders whole, as for a new View (13). Only the file shown is read again. It was not measured: counts come at most once per poll, after a save.
 - **`/source` reads files from the reader's disk.** It answers only for files the last scan declares a package, type or function in, local paths only, read through `scan.DirTree`, which refuses links that leave the tree. The Host check and the cross-site check come first, as for `/view.json`. A file the scan lists that a save then replaces by a link out of the tree is refused by `DirTree` when read.
 - **`code.mjs` waits fixed times,** as 17's and 18's checks do: 300 ms after a pointer move or a focus.
 - **The replay depends on 16, 17 and 18.** Task 2's diff of `change.go` and `change_test.go` is against 16's version, and every web diff against 17's and 18's. If any of them changes before it lands, regenerate these diffs from a scratch branch on the new base.
@@ -2929,17 +3412,27 @@ index ff5e9b2..97668d7 100644
   - Task 4 is red on missing functions and on assertions, and in the browser in all three engines.
 - **The model never authors the graph.** `more` holds only the IR's own locations for an edge. Colour comes from `go/scanner`'s tokens, the lit lines from the View's edges. Nothing is inferred. The IR is untouched: `go test ./...` passes with the IR goldens unchanged, and only the two View goldens change, by `syntax` alone: the shop writes no call or embed twice, so no edge there gains `more` (Task 1's own test covers it).
 - **Output stays byte-identical.** `more` is in the IR's order, which is sorted; `syntax` is a function of each file's bytes; `View.Syntax` is a map, which `encoding/json` writes by sorted key.
+- **Revision, 2026-10-20.** A review of 16 to 19 together (check-16-19) replayed the four plans in order and probed the result in a browser. Every finding 19 owns was fixed in the task that owns it, and each new browser check was seen failing on a build without its fix, in all three engines:
+  - **Major:** a save the View does not show (a literal, a comment, a condition) left the panel's old text until a reload: the page read a file again only for a new View, and the watch publishes none when the View is the same. The Hub now counts such rescans and `/events` sends the count, so the page reads its files again (Architecture 3 and 4, Deviation 7, the Risk; Task 2's watch test, Task 3's `saved` check). A key on the IR hash was rejected: it covers a declaration's code only, as `hashDecl` drops its comments.
+  - **Minor:** while a file did not parse, `/source` answered 404 for it, though the drawing kept shows its declarations: the set was rebuilt before the watch decided to keep. It is now left alone by a rescan the watch keeps (Architecture 3; Task 2's watch test).
+  - **Minor:** a row followed to another declaration, by Enter or a click, kept its light, which came back with the declaration ("Line 48." with nothing pointed at). The Panel now clears it when its declaration changes (Architecture 5; Task 4's `back` check). Keying the Panel per id was not taken: it would drop the code `Source` keeps while the next file comes.
+  - **Minor:** in a Change View, the tree's Panel of a modified function lists no calls to unchanged declarations, which its Screen lists and lights. That is 18's split (`near` for Screens), now stated (Architecture 5); 20's Deviation 10 is the same for a removed declaration.
+- **Revision 2, 2026-10-20.** A fresh-agent scrutiny of the revision (scrutiny-19r) confirmed every red step and every fix, and found three faults, fixed in the tasks that own them; each fix's new test was seen failing without it:
+  - **Major:** a page load can draw a View the watch has not published. A save the View does not show, before the watch's next poll, then published that View: no count moved, and the page, finding the View it drew, read nothing again, so the code showed the old text. The page now reads its files again for every newer View it fetches (Architecture 3 and 4, Deviation 7; Task 3's `follow` test). Counting every rescan, a published one too, would also do; it changes the Hub's count for every page, for one case.
+  - **Minor:** a page load while a file did not parse replaced `/source`'s set with its own View's, which declares nothing in that file: another tab drawing the kept View then got a 404 for it. A page load while the drawing is kept now adds to the set (Architecture 3; Task 2's watch test, which also checks a file added meanwhile).
+  - **Minor:** the watch test's counts leaned on timing: outside git the watch's first poll counts on its own. The test now waits for that count (Task 2), and `code.mjs` says why its page reads `store.go` twice, not three times (Task 3).
 - **Follow-ups, not in 19:**
   - 20, Diff Code (**Goal**);
   - colouring identifiers by role;
   - 17's Panel keyed per id, now for the Code panel too;
   - drawing more of a long file as the reader scrolls to an edge of the lines drawn (Deviation 12);
   - a row's light that leaving another row clears: pointing at one row and leaving it clears the light a focused row holds. The Screen does the same since 17 (scrutiny, nit 8);
-  - a focus ring on both lenses (17's).
+  - a focus ring on both lenses (17's);
+  - a page loaded while a file does not parse keeps that drawing after the file parses again (13, before 19): the watch's kept View is the same as the fixed one, so it publishes nothing. The page load does not tell the Hub what it drew.
 
 ## Replay record
 
-Replayed with `replay.py` on a fresh `git archive` of `main` at 7f56652, in a scratch directory, after 16's, 17's and 18's replays (17's and 18's as revised on 2026-10-20). `node_modules` was clone-copied from the repository (`cp -cR`), and Playwright's three browsers were already installed. This plan's directory was copied in, as `git archive HEAD` will give it once the plan is committed. Every step's exit matched its expectation:
+Replayed with `replay.py` on a fresh `git archive` of `main` at 792229f, in a scratch directory, after 16's, 17's and 18's replays (16's text and 17's and 18's code as revised on 2026-10-20). `node_modules` was clone-copied from the repository (`cp -cR`), and Playwright's three browsers were already installed. This plan's directory was copied in, as `git archive HEAD` will give it once the plan is committed. Every step's exit matched its expectation:
 
 | Task | Step | Command | Exit |
 |---|---|---|---|
@@ -2948,7 +3441,7 @@ Replayed with `replay.py` on a fresh `git archive` of `main` at 7f56652, in a sc
 | 1 | green | `go test ./... && cd web && npx vitest run && npm run typecheck` | 0 |
 | 2 | red | `go test ./internal/export ./internal/serve ./internal/cli` | 1 |
 | 2 | green | `go test ./... && cd web && npx vitest run && npm run typecheck` | 0 |
-| 3 | red | `cd web && npx vitest run src/code.test.ts src/data.test.ts src/styles.test.ts` | 1 |
+| 3 | red | `cd web && npx vitest run src/code.test.ts src/data.test.ts src/styles.test.ts src/live.test.ts` | 1 |
 | 3 | red | `cd web && npx vite build >/dev/null && cd .. && CGO_ENABLED=0 go build -trimpath -o bin/zu ./cmd/zu && cd web/e2e && node code.mjs` | 1 |
 | 3 | green | `cd web && npx vitest run && npm run typecheck` | 0 |
 | 3 | green | `make build >/dev/null && cd web/e2e && node code.mjs` | 0 |
@@ -2964,13 +3457,15 @@ Replayed with `replay.py` on a fresh `git archive` of `main` at 7f56652, in a sc
 | 5 | green | `cd web/e2e && node code.mjs` | 0 |
 
 - 16's, 17's and 18's replays, before this one, passed every step. Their tree was byte-identical to the scratch branch's base commit in every source file (`diff -rq`, leaving out `node_modules`, `dist`, `bin`, `.zu`, `docx` and test output).
-- After Task 5, the replayed tree was byte-identical to the scratch branch's last commit in the same way, the two View goldens that `-update` wrote included (git tree 755b68f; 31 files change against the base).
-- `golangci-lint run ./...` in the replayed tree: no issues. Task 5's `accept.mjs`, `place.mjs`, `serve.mjs`, `screen.mjs` and `code.mjs` passed 57, 9, 11, 23 and 11 checks in each engine.
+- After Task 5, the replayed tree was byte-identical to the scratch branch's last commit in the same way, the two View goldens that `-update` wrote included (git tree d29568b; 36 files change against the base).
+- `golangci-lint run ./...` in the replayed tree: no issues. Task 5's `accept.mjs`, `place.mjs`, `serve.mjs`, `screen.mjs` and `code.mjs` passed 57, 9, 11, 23 and 13 checks in each engine.
 - The red reasons were seen as stated:
   - Task 1: the build fails, `Edge.More`, `View.Syntax`, `Syntax` and its token classes undefined (the new syntax tests, `/*/` and the long line among them, cannot run before it builds).
-  - Task 2: the builds fail, `Every`, `export.SourceFile` and `detailBudget` undefined, and `Views` has no field `Source`.
-  - Task 3: the missing module `./code`, then 5 tests (`fetchSource` is not a function; no `--syn-*` colour or rule); `code.mjs` 0/5 in each engine, because in `zu serve` the wait for the panel's code times out after 30 s.
-  - Task 4: 13 tests (`centre`, `behind`, `litNote` and `placesOf` are not functions; no `--lit` colour or rule); `code.mjs` 4/11 in each engine, with coloured, pointed, focused, other, screen, served and moved failing.
+  - Task 2: the builds fail, `Every`, `Hub.Keep`, `export.SourceFile` and `detailBudget` undefined, and `Views` has no field `Source`.
+  - Task 3: the missing module `./code`, then 8 tests (`fetchSource` is not a function; no `--syn-*` colour or rule; `follow` calls no `reread`); `code.mjs` 0/6 in each engine, because in `zu serve` the wait for the panel's code times out after 30 s.
+  - Task 4: 13 tests (`centre`, `behind`, `litNote` and `placesOf` are not functions; no `--lit` colour or rule); `code.mjs` 5/13 in each engine, with left, kept, saved, long and errors passing.
   - Task 3's and Task 4's browser reasons were read on the scratch branch's red commits, since `replay.py` prints only each step's last line.
-- The plan replayed differed from this one only in prose written during and after the replay: its Status line, Deviation 12, Task 3's browser reason, the Measurements' code criterion and the ADR 0006 amendment. No code block changed.
+- Each fix of the revision fails without it: built from the scratch branch with the fix left out, `TestServeWatchSaysWhenAFileChangesUnderTheView` gets a 404 for a file that fails to parse (F2), `code.mjs`'s `saved` is `[false, 0]` (F1) and its `back` is `[["48"],"Line 48."]` (F3), in each engine.
+- Each fix of revision 2 fails without it, on the scratch branch: without `pull`'s `reread`, `follow`'s test of a newer generation whose View is the one drawn reads 0 times, not 1; without `view()`'s change, the watch test gets a 404 for `a/a.go` after the page load, and with the set left alone instead of added to, a 404 for `c/c.go`.
+- The plan replayed differed from this one only in this record, written after the replay. No code block changed.
 - Toolchain: Go 1.24.5, Node 24.17.0, Python 3.11.17, macOS on an Apple M2.
