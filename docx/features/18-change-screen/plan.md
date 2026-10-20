@@ -2171,7 +2171,7 @@ index 4dc3201..58a51b7 100644
   2. Walk on with `n` and ▸ through a few steps, then back with `p`, ◂ and the browser's Back.
   3. On a Screen whose package import was reversed, the far end is in one row and its dotted ghost in the other.
   4. Click an unchanged box, then press `n`. The walk goes on from that box's package.
-  5. Press Esc. The tree is drawn with the Centre's package selected.
+  5. Press Esc. The tree is drawn with the Centre selected, or its package for a near Centre.
   6. On a change with a new violation, the walk's first step is its importer, with the violating line red.
 
 - [x] **Commit:** `Record the Screen in a Change View's acceptance`

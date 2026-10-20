@@ -11,7 +11,8 @@ import (
 // changed packages, and the source and line hunks of the files they are in.
 // sum must be diff.Summarize(base, head) and delta diff.Compare(base, head).
 // Unchanged declarations only count toward their package's decls, except a
-// type kept as the parent of a changed method.
+// type kept as the parent of a changed method; those one call or embed from
+// a drawn one, which the Screen draws, are in Near (18).
 func Change(base, head *ir.IR, delta diff.Delta, sum *diff.Summary, baseTree, headTree scan.Tree) (*View, error) {
 	status := map[string]string{}
 	for _, c := range delta.Nodes {
