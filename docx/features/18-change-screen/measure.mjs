@@ -23,7 +23,7 @@ const { chromium, firefox, webkit } = require("playwright-core");
 // timed acts in the page and returns [ms, the new Centre] once the walk reads
 // want and the Centre's box is another than it was, and two frames later.
 const timed = (p, act, want) => p.evaluate(async ([act, want]) => {
-  const centre = () => document.querySelector(".screen .react-flow__node.selected")?.getAttribute("data-id") ?? null;
+  const centre = () => document.querySelector(".screen .screen-box.centre")?.closest(".react-flow__node")?.getAttribute("data-id") ?? null;
   const was = centre();
   const done = () => document.querySelector(".walk .at")?.textContent === want && centre() !== null && centre() !== was;
   const t0 = performance.now();
