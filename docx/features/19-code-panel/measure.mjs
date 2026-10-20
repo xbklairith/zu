@@ -14,10 +14,10 @@
 import { spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 const [root, ...trees] = process.argv.slice(2);
-const require = createRequire(root + "/web/e2e/package.json");
+const require = createRequire(resolve(root, "web/e2e/package.json"));
 const { chromium, firefox, webkit } = require("playwright-core");
 const RUNS = 3;
 

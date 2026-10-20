@@ -13,10 +13,11 @@
 //   tree Panel:   on the tree, the Panel moving to those steps' Centres (a
 //                 hash change), to compare with a step.
 import { createRequire } from "node:module";
+import { resolve } from "node:path";
 
 const STEPS = 12;
 const [root, ...pages] = process.argv.slice(2);
-const require = createRequire(root + "/web/e2e/package.json");
+const require = createRequire(resolve(root, "web/e2e/package.json"));
 const { chromium, firefox, webkit } = require("playwright-core");
 
 // timed acts in the page and returns [ms, the new Centre] once the walk reads

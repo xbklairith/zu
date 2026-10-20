@@ -10,12 +10,14 @@
 //   no Panel:    the same three after closing the Screen's Panel;
 //   every box:   the "every box" checkbox;
 //   tree Panel:  on the tree, the Panel moving off the Centre to those three
-//                (a hash change), to compare with re-centre.
+//                (a hash change), to compare with re-centre;
+//   page errors: any the page threw.
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import { resolve } from "node:path";
 
 const [root, ...pages] = process.argv.slice(2);
-const require = createRequire(root + "/web/e2e/package.json");
+const require = createRequire(resolve(root, "web/e2e/package.json"));
 const { chromium, firefox, webkit } = require("playwright-core");
 
 const viewOf = (f) => JSON.parse(/<script id="zu-data" type="application\/json">(.*?)<\/script>/s.exec(readFileSync(f, "utf8"))[1]);
@@ -50,6 +52,8 @@ for (const f of pages) {
   for (const [name, type] of [["chromium", chromium], ["firefox", firefox], ["webkit", webkit]]) {
     const b = await type.launch();
     const p = await b.newPage({ viewport: { width: 1400, height: 900 } });
+    const errors = [];
+    p.on("pageerror", (e) => errors.push(e.message.slice(0, 80)));
     await p.goto("file://" + f + "#s=" + enc(c));
     await p.locator(".react-flow__node").first().waitFor({ timeout: 120000 });
     await p.waitForTimeout(2000);
@@ -94,6 +98,7 @@ for (const f of pages) {
       await p.waitForTimeout(2000);
     }
     r["tree Panel"] = tree.join(" ");
+    r["page errors"] = errors.length ? errors.join(" | ") : "none";
     console.log(`  ${name}: ${Object.entries(r).map(([k, x]) => `${k} ${x}`).join("; ")}`);
     await b.close();
   }
