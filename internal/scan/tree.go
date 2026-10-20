@@ -196,26 +196,37 @@ func (d *dirTree) ReadFile(rel string) ([]byte, error) {
 }
 
 // readMax reads rel, at most limit bytes when limit >= 0. rel must be a
-// regular file or a symlink that linkedFileInside accepts, under no
+// regular file or a symlink that ResolveLinks resolves to one, under no
 // directory link: the Policy and the Baseline are read by name, not from
 // Files, and zu serve reads source files by path (19), so a planted link
-// must not reach outside the root.
+// must not reach outside the root. A link is opened at the path it resolves
+// to, which holds no link, as CommitTree reads it: os.Root follows at most
+// eight links, ResolveLinks 40.
 func (d *dirTree) readMax(rel string, limit int64) ([]byte, error) {
 	if d.viaLink(path.Dir(rel), nil) {
 		return nil, &fs.PathError{Op: "read", Path: rel, Err: fs.ErrNotExist}
 	}
 	p := filepath.Join(d.root, filepath.FromSlash(rel))
 	info, err := os.Lstat(p)
+	if errors.Is(err, syscall.ENOTDIR) { // a directory on the way became a file after viaLink
+		return nil, &fs.PathError{Op: "read", Path: rel, Err: fs.ErrNotExist}
+	}
 	if err != nil {
 		return nil, err
 	}
+	at := rel
 	switch {
 	case info.Mode().IsRegular():
-	case info.Mode()&fs.ModeSymlink != 0 && d.linkedFileInside(p):
+	case info.Mode()&fs.ModeSymlink != 0:
+		final, ok := ResolveLinks(d.rel(p), d.lookup)
+		if !ok {
+			return nil, &fs.PathError{Op: "read", Path: rel, Err: fs.ErrNotExist}
+		}
+		at = final
 	default:
 		return nil, &fs.PathError{Op: "read", Path: rel, Err: fs.ErrNotExist}
 	}
-	f, err := d.open(rel)
+	f, err := d.open(at)
 	if err != nil {
 		return nil, err
 	}
@@ -230,22 +241,34 @@ func (d *dirTree) readMax(rel string, limit int64) ([]byte, error) {
 // open opens rel, a path readMax has checked, through an os.Root of the
 // tree: whatever is on disk by the time it opens, it follows no link out of
 // the root, so a directory swapped for a link after the checks does not take
-// the read outside (19). Such an escape, or a directory gone from under rel,
-// is fs.ErrNotExist, as the checks would have said.
+// the read outside (19). Such an escape, a directory gone from under rel, or
+// what opens and is no regular file is fs.ErrNotExist, as the checks would
+// have said.
 func (d *dirTree) open(rel string) (*os.File, error) {
 	r, err := os.OpenRoot(d.root)
 	if err != nil {
 		return nil, err
 	}
 	defer r.Close()
+	gone := &fs.PathError{Op: "read", Path: rel, Err: fs.ErrNotExist}
 	f, err := r.Open(filepath.FromSlash(rel))
 	var pe *fs.PathError
 	// os.Root does not export its escape error, so it is known by its text.
 	if errors.As(err, &pe) && (pe.Err.Error() == "path escapes from parent" ||
 		errors.Is(pe.Err, syscall.ENOTDIR) || errors.Is(pe.Err, syscall.ELOOP)) {
-		return nil, &fs.PathError{Op: "read", Path: rel, Err: fs.ErrNotExist}
+		return nil, gone
 	}
-	return f, err
+	if err != nil {
+		return nil, err
+	}
+	if info, err := f.Stat(); err != nil || !info.Mode().IsRegular() {
+		f.Close()
+		if err != nil {
+			return nil, err
+		}
+		return nil, gone
+	}
+	return f, nil
 }
 
 // MaxSmallFile caps the files zu reads whole by name, the Policy and the

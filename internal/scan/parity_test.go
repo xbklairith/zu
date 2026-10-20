@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -82,6 +83,13 @@ func parityRepo(t *testing.T) (root, commit string) {
 	link("links/dangling.go", "nope.go")
 	link("links/abs.go", filepath.Join(root, "main.go")) // absolute, back into the checkout
 	link("links/loop.go", "loop.go")
+	// Nine links to one file: past os.Root's eight, within ResolveLinks' 40.
+	link("long/long.go", "hops/h1")
+	for i := 1; i < 8; i++ {
+		link("long/hops/h"+strconv.Itoa(i), "h"+strconv.Itoa(i+1))
+	}
+	link("long/hops/h8", "long")
+	put("long/hops/long", "package long\n\nfunc Long() {}\n")
 	put(".gitignore", "/ignored/\n")
 
 	git := func(args ...string) string {

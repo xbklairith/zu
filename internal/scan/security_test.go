@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -173,8 +174,22 @@ func TestOpenStaysInTheRoot(t *testing.T) {
 	if b, err := os.ReadFile(filepath.Join(root, "r", "a.go")); err != nil || !strings.Contains(string(b), "SECRET") {
 		t.Fatalf("the relative link does not reach outside: %q, %v", b, err)
 	}
+	// c0 reaches e/e.go through nine links, past os.Root's eight: readMax
+	// opens a link where it resolves, so only a race brings open one.
+	for i := range 9 {
+		to := "c" + strconv.Itoa(i+1)
+		if i == 8 {
+			to = filepath.Join("e", "e.go")
+		}
+		if err := os.Symlink(to, filepath.Join(root, "c"+strconv.Itoa(i))); err != nil {
+			t.Fatal(err)
+		}
+	}
 	d := dirOf(t, root).(*dirTree)
-	for _, rel := range []string{"a/a.go", "r/a.go"} {
+	// e/e.go/x, under a file, is how a directory swapped for a file meets
+	// os.Root: not a directory. e is how a file swapped for a directory
+	// meets it: it opens, and is no file to read.
+	for _, rel := range []string{"a/a.go", "r/a.go", "c0", "e/e.go/x", "e"} {
 		if f, err := d.open(rel); !errors.Is(err, fs.ErrNotExist) {
 			if f != nil {
 				f.Close()
