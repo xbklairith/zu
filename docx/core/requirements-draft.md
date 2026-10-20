@@ -264,7 +264,17 @@ Targets, to be validated against a real repo before they are commitments:
 - Cold scan of a 100k-LOC repo: under 30 seconds.
 - Incremental re-scan after one file changes: under 2 seconds. (Measured by feature 10 on a full kubernetes v1.37.0 worktree: 1.74–1.93 s, request to response.)
 - Change to redraw in `zu serve` (13): on kubernetes v1.37.0 at the default 1 s poll, the watch's rescan stays under 2 s (measured 0.89–1.67 s at acceptance) and save → drawn has a median of at most 2 s (measured 1.75 s). The worst case is reported, not gated (measured 2.24–2.77 s). The plan's draft figures (0.86–0.96 s, 1.66–1.69 s) came from a script that skipped rescans of 1 s or more.
-- Change to redraw in `zu serve -base` (14): on kubernetes v1.37.0 with `-base` at `HEAD~50` (52 packages changed) and the default 1 s poll, start stays at most 10 s (measured 6.0–6.8 s at acceptance), the watch's rescan under 2 s: **not met on a cold tree**. The first run over a freshly copied tree went over twice out of two (2.30 s and 2.68 s, with a median save → drawn of 2.95 s, at a load average of 4.9–5.7). Later runs over the same tree stayed at most 1.95 s. Rescan-profile fix 1 is the planned remedy, and save → drawn has a median of at most 3 s (measured 2.06–2.24 s uncommitted; 2.64–2.86 s committed and pushed, git's diff and the host links included). The worst case is reported, not gated (measured up to 3.45 s). The plan's draft figures were lower (rescan 1.17–1.45 s, median 2.02–2.45 s) on a less loaded machine.
+- Change to redraw in `zu serve -base` (14): on kubernetes v1.37.0 with `-base` at `HEAD~50` (52 packages changed) and the default 1 s poll, start stays at most 10 s (measured 6.0–6.8 s at acceptance), the watch's rescan under 2 s: not met on a cold tree at 14 (2.30 s and 2.68 s over a freshly copied tree, at a load average of 4.9–5.7), met by 16 (624–839 ms in two runs over a freshly copied tree, committed and pushed), and save → drawn has a median of at most 3 s (measured 2.06–2.24 s uncommitted; 2.64–2.86 s committed and pushed, git's diff and the host links included). The worst case is reported, not gated (measured up to 3.45 s). The plan's draft figures were lower (rescan 1.17–1.45 s, median 2.02–2.45 s) on a less loaded machine.
+- Rescan in `zu serve` (16): on kubernetes v1.37.0 with git's index fresh, after an edit to a package with few importers, or a new package:
+  - the watch's rescan has a median of at most 400 ms (measured 278 and 282 ms after a new function, 260 ms after a new package);
+  - with `-base` at `HEAD~50`, a median of at most 1 s (measured 559 and 657 ms uncommitted and 733 and 778 ms committed and pushed after a new function, 689 and 747 ms after a new package);
+  - every rescan stays under 2 s, the first over a freshly copied tree included (measured at most 1,062 ms).
+
+  A function added to a package with 347 importers is gated on 2 s only: medians of 535 ms, and 863 ms with `-base`; at most 1,127 ms.
+
+  **Not gated:** an edit to the modules (a new `go.mod`, a module path, a require's path or line) still assembles the whole tree. Under `-base` that measured 1.2–2.3 s, once over 2 s in 44 rescans.
+
+  The rescan's IR stays byte-identical to a cold scan's, checked on copies of kubernetes, hugo and cobra (`TestCorpusRescansMatchColdScans`). A freshly *copied* tree's first `git status` is not covered: until git's index is refreshed, `git status` alone takes 3–5 s (16, Out of scope).
 - First paint of a 500-node graph: under 3 seconds.
 - Interaction stays responsive at 2,000 nodes with collapsing on.
 

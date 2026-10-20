@@ -1,6 +1,6 @@
 # 16 · Fast rescan — Plan
 
-**Status:** APPROVED 2026-09-25 (lead, after scrutiny-16, two revisions and the replay; advisor sign-off); text REVISED 2026-10-20 after a review of 16 to 19 (**Notes**), no code block changed. Ruling on plan16's last question: an edit to the modules stays ungated in 16. It is rare in a review session, its cost is the pre-Task 7 new-package rows, and rebuilding only the parts a changed require reaches is a named follow-up. The cold-tree amendment to requirements l.267 is measured under 14's condition: first runs, committed and pushed, over fresh copies with git's index refreshed (624–839 ms). Held: zu builds it only when the user says go.
+**Status:** Implemented 2026-10-21 (Tasks 1–7 on `build-16-20`; `acceptance.md`; run 6 of the Measure missed its median by 12 ms, recorded there). APPROVED 2026-09-25 (lead, after scrutiny-16, two revisions and the replay; advisor sign-off); text REVISED 2026-10-20 after a review of 16 to 19 (**Notes**), no code block changed. Ruling on plan16's last question: an edit to the modules stays ungated in 16. It is rare in a review session, its cost is the pre-Task 7 new-package rows, and rebuilding only the parts a changed require reaches is a named follow-up. The cold-tree amendment to requirements l.267 is measured under 14's condition: first runs, committed and pushed, over fresh copies with git's index refreshed (624–839 ms). Held: zu builds it only when the user says go.
 
 **Base.** Every diff here is against `main` at de2c117. The diffs come from a scratch branch built on a `git archive` of de2c117, one commit per task. The plan was replayed on a fresh `git archive` of de2c117 (**Replay record**).
 
@@ -2892,24 +2892,24 @@ index 37f65162b2c0b76d02189745a34b78488556b8b7..e16ab4d1d5e3071070b24f96192159e8
 
 **Steps:**
 
-- [ ] **Run:** `make check` Expected: PASS (read the lint output: RTK's wrapper exits 0 with issues)
+- [x] **Run:** `make check` Expected: PASS (read the lint output: RTK's wrapper exits 0 with issues)
 
-- [ ] **Run:** `go test -race -count=1 ./internal/scan ./internal/policy ./internal/diff ./internal/ir ./internal/export ./internal/cli ./internal/watch` Expected: PASS
+- [x] **Run:** `go test -race -count=1 ./internal/scan ./internal/policy ./internal/diff ./internal/ir ./internal/export ./internal/cli ./internal/watch` Expected: PASS
 
-- [ ] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (57 checks in each engine)
+- [x] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (57 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS (10 checks in each engine)
+- [x] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS (10 checks in each engine)
 
-- [ ] **Run:** `node docx/features/16-fast-rescan/measure.mjs --selftest` Expected: PASS
+- [x] **Run:** `node docx/features/16-fast-rescan/measure.mjs --selftest` Expected: PASS
 
-- [ ] **Corpus parity** (by hand; not a replay step). Make `cp -cRp` copies of the three corpus trees in a scratch directory (never the corpus itself), and delete them after. Run:
+- [x] **Corpus parity** (by hand; not a replay step). Make `cp -cRp` copies of the three corpus trees in a scratch directory (never the corpus itself), and delete them after. Run:
   - `ZU_CORPUS=<kubernetes copy> go test ./internal/scan -run TestCorpusRescansMatchColdScans -count=1 -v -timeout 20m`
   - the same with `ZU_CORPUS=<hugo copy> ZU_CORPUS_PKG=common/hugio`
   - the same with `ZU_CORPUS=<cobra copy> ZU_CORPUS_PKG=doc`
 
   Expected: PASS, with fourteen steps each, and each copy's `git status` clean afterwards. Record each step's assembled count in `acceptance.md`. "new package" should assemble 2 packages and "package deleted" 1: the new package, and the edited package that imports it.
 
-- [ ] **Measure** (by hand; not a replay step). After `make build`, work on `cp -cRp` copies of `.zu/corpus/kubernetes@v1.37.0` in a scratch directory (never the corpus itself), and delete them after. Run `git status` once in the first copy so its index is fresh (**Out of scope**). Leave the second copy untouched, for the first run after a fresh copy.
+- [x] **Measure** (by hand; not a replay step). After `make build`, work on `cp -cRp` copies of `.zu/corpus/kubernetes@v1.37.0` in a scratch directory (never the corpus itself), and delete them after. Run `git status` once in the first copy so its index is fresh (**Out of scope**). Leave the second copy untouched, for the first run after a fresh copy.
 
   **Load rule** (decided before measuring): record the load average before each run. If the 1-minute load is above 4 at the start, wait for it to fall or run again, up to twice. Keep every run in `acceptance.md`, and say which one is gated.
 
@@ -2929,9 +2929,9 @@ index 37f65162b2c0b76d02189745a34b78488556b8b7..e16ab4d1d5e3071070b24f96192159e8
 
   Record each run's load average and its worst case in `acceptance.md`.
 
-- [ ] **Firefox** (by hand): run `accept.mjs` 5 times. Record every "page crashed" line. Expected: none from the twelve guarded reloads; a crash on one of the three unguarded ones is rerun, and recorded.
+- [x] **Firefox** (by hand): run `accept.mjs` 5 times. Record every "page crashed" line. Expected: none from the twelve guarded reloads; a crash on one of the three unguarded ones is rerun, and recorded.
 
-- [ ] **Commit:** `Record fast rescan's acceptance`
+- [x] **Commit:** `Record fast rescan's acceptance`
 
 ---
 
