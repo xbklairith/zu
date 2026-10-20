@@ -91,7 +91,7 @@ Base's removed calls and embeds count as hops too, so a removed declaration's ca
 
 **3. The walk (`web/src/walk.ts`).**
 - **`walkOf(view)`** is the walk's Centres, in the decided reading order:
-  1. each new violation's importer (`violations.new`, in the order the export writes it);
+  1. each new violation's importer (`violations.new`, in the order the export writes it): that of each import the change made that breaks it, a Levels violation's own. A new cycle flags each of its arcs (06), most of them imports the change kept, so of its arcs only the imports the change added or reversed count; when it made none on any new cycle, each arc's first import does (scrutiny, round 2);
   2. then the changed packages bottom-up (`view.changed`, the Structural Summary's order).
 
   Each package is followed by its changed declarations' Centres, by id. A changed method's Centre is its type, so Repo.Get and Repo.check are one step, Repo. Each Centre is visited once. A Project View's walk is empty. On the shop Change View it is the ten steps store, store.Order, store.ReadWriter, store.Repo, money, money.Plus, checkout, checkout.Total, shop, shop.main.
@@ -218,7 +218,7 @@ These follow 17's amendments, which land first.
 
 > ## Walk
 >
-> The way through a Change View one Screen at a time (18), in the decided reading order: each new violation's importer, then the changed packages bottom-up, each followed by the Centres of its changed declarations (a changed method's Centre is its type). `n` takes the next step and `p` the previous one, on the tree or a Screen; from the tree, `n` starts at the first. A Centre off the walk steps on from its package's place. Each step is a browser history entry.
+> The way through a Change View one Screen at a time (18), in the decided reading order: each new violation's importer, then the changed packages bottom-up, each followed by the Centres of its changed declarations (a changed method's Centre is its type). A new violation's importer is that of each import the change made that breaks it: a new cycle flags each of its arcs (06), and the walk visits the importers of the imports the change added or reversed on them, or of each arc's first import when it made none on any. `n` takes the next step and `p` the previous one, on the tree or a Screen; from the tree, `n` starts at the first. A Centre off the walk steps on from its package's place. Each step is a browser history entry.
 >
 > ## Ghost
 >
@@ -234,7 +234,7 @@ These follow 17's amendments, which land first.
 
 **`docx/core/decisions.md`, line 41 (UI v1).** Append to the end of the bullet, after 17's **Screen (17)** text:
 
-> **Screen in a Change View (18):** a Change View opens on the tree, and `n` starts the Walk: each new violation's importer, then the changed packages bottom-up, each followed by the Centres of its changed declarations; `p` steps back, and a walk toolbar shows ◂ "3 of 10" ▸. A Screen there reads the View with `near`: the unchanged declarations of head one call or embed from a drawn one (removed calls count, from base), their types, and every method of a type on the page, with the calls and embeds among them all; the tree never reads it. Each box carries its Change Status mark (a type with a changed method: has-change), each line its edges' status and sign (+ − ⇄ ±), and unchanged boxes are plain. A reversed import's far end is drawn in its row and as a Ghost in the other, small, dotted, uncapped. The Centre lists its changed members by id, signed + ~ − →, eight and then "+N more". The header adds where the Centre's package sits in the Affected Set (ADR 0009): changed, with how many packages import it, directly or not; N imports from a changed package; not in it; or removed. A line holding an import the Policy forbids is red on every Screen, as on the tree, and the walk's first steps are the new violations' importers. Leaving a near Centre selects its package and opens the full graph when the changed subgraph leaves that package out. On a Screen the changed-packages list re-centres, as search does, and the header keeps the change's link to the host.
+> **Screen in a Change View (18):** a Change View opens on the tree, and `n` starts the Walk: each new violation's importer, then the changed packages bottom-up, each followed by the Centres of its changed declarations; `p` steps back, and a walk toolbar shows ◂ "3 of 10" ▸. Of a new cycle, whose every arc is flagged, the walk visits the importers of the imports the change added or reversed, or of each arc's first import when it made none on any. A Screen there reads the View with `near`: the unchanged declarations of head one call or embed from a drawn one (removed calls count, from base), their types, and every method of a type on the page, with the calls and embeds among them all; the tree never reads it. Each box carries its Change Status mark (a type with a changed method: has-change), each line its edges' status and sign (+ − ⇄ ±), and unchanged boxes are plain. A reversed import's far end is drawn in its row and as a Ghost in the other, small, dotted, uncapped. The Centre lists its changed members by id, signed + ~ − →, eight and then "+N more". The header adds where the Centre's package sits in the Affected Set (ADR 0009): changed, with how many packages import it, directly or not; N imports from a changed package; not in it; or removed. A line holding an import the Policy forbids is red on every Screen, as on the tree, and the walk's first steps are the new violations' importers. Leaving a near Centre selects its package and opens the full graph when the changed subgraph leaves that package out. On a Screen the changed-packages list re-centres, as search does, and the header keeps the change's link to the host.
 
 **`docx/core/decisions.md`, 17's Screen (17) text.** 18 makes three of its phrases untrue:
 - delete "; `n` is kept for 18" from "the tree's `d`, `+` and `-` do nothing on it; `n` is kept for 18." (`n` and `p` are the walk's keys now);
@@ -2172,7 +2172,7 @@ index 4dc3201..58a51b7 100644
   3. On a Screen whose package import was reversed, the far end is in one row and its dotted ghost in the other.
   4. Click an unchanged box, then press `n`. The walk goes on from that box's package.
   5. Press Esc. The tree is drawn with the Centre selected, or its package for a near Centre.
-  6. On a change with a new violation, the walk's first step is its importer, with the violating line red. Under a Policy with `cycles: true` too: a new cycle's ends in the Violations list re-centre the Screen on the packages of its first import.
+  6. On a change with a new violation, the walk's first step is its importer, with the violating line red. Under a Policy with `cycles: true` too: a new cycle's ends in the Violations list re-centre the Screen on the packages of its first import, the change's own first. Try it on a real cycle of two arcs or more: the walk's first step is the importer of the import the change made, and no importer of an import it kept on the arc back is a step.
 
 - [x] **Commit:** `Record the Screen in a Change View's acceptance`
 

@@ -12,6 +12,16 @@ const C = "example.com/shop/internal/checkout";
 const M = "example.com/shop/internal/money";
 const ROOT = "example.com/shop";
 const GEN = "example.com/shop/tools/gen";
+const IN = "example.com/shop/internal";
+// two: a new cycle between the root and internal, as cycles.go flags it,
+// every arc of it: the root's import of money, which the change added, and
+// on the arc back two imports it kept.
+const imp = (from: string, to: string) => ({ from, to, kind: "imports" as const, count: 1, loc: { path: "x.go", line: 1 }, violation: "cycle" as const });
+const two: View = {
+  ...v,
+  edges: [...v.edges, imp(C, ROOT), imp(S, ROOT)],
+  violations: { new: [{ rule: "cycle", from: ROOT, to: IN }, { rule: "cycle", from: IN, to: ROOT }], fixed: [], known: 0 },
+};
 
 describe("walkOf (18)", () => {
   it("walks the changed packages bottom-up, each followed by the Centres of its changed declarations", () => {
@@ -26,8 +36,14 @@ describe("walkOf (18)", () => {
       C, `${C}.Total`, S, `${S}.Order`, `${S}.ReadWriter`, `${S}.Repo`, M, `${M}.Plus`, ROOT, `${ROOT}.main`,
     ]);
   });
-  it("starts at a new cycle's importers, though the cycle names Package Tree boxes (06)", () => {
-    // tools/gen's import of money lifts to the arc between their modules' roots
+  it("starts at the importers of the imports the change made on a new cycle's arcs, not at every importer on them", () => {
+    // checkout's and store's imports of the root, kept, are no steps of their own
+    expect(walkOf(two)).toEqual([
+      ROOT, `${ROOT}.main`, S, `${S}.Order`, `${S}.ReadWriter`, `${S}.Repo`, M, `${M}.Plus`, C, `${C}.Total`,
+    ]);
+  });
+  it("starts at each new cycle's first importer when the change made no import on any, though a cycle names Package Tree boxes (06)", () => {
+    // tools/gen's import of money, kept, lifts to the arc between their modules' roots
     const w = walkOf({ ...v, violations: { new: [{ rule: "cycle", from: `${ROOT}/tools`, to: ROOT }], fixed: [], known: 0 } });
     expect(w).toEqual([
       GEN, S, `${S}.Order`, `${S}.ReadWriter`, `${S}.Repo`, M, `${M}.Plus`, C, `${C}.Total`, ROOT, `${ROOT}.main`,
@@ -42,11 +58,12 @@ describe("breaking (18)", () => {
   it("is a Levels violation's own import", () => {
     expect(breaking(v, { rule: "levels", from: C, to: S })).toEqual([[C, S]]);
   });
-  it("is every head import a cycle's arc lifts, by module and by box, as policy/cycles.go lifts it", () => {
+  it("is every head import a cycle's arc lifts, by module and by box, as policy/cycles.go lifts it, the change's own first", () => {
     expect(breaking(v, { rule: "cycle", from: `${ROOT}/tools`, to: ROOT })).toEqual([[GEN, M]]);
-    // the root package stands for its own leaf beside internal
-    expect(breaking(v, { rule: "cycle", from: ROOT, to: `${ROOT}/internal` })).toEqual([[ROOT, C], [ROOT, M]]);
-    expect(breaking(v, { rule: "cycle", from: `${ROOT}/internal`, to: ROOT })).toEqual([]);
+    // the root package stands for its own leaf beside internal; its import of money is the change's
+    expect(breaking(v, { rule: "cycle", from: ROOT, to: IN })).toEqual([[ROOT, M], [ROOT, C]]);
+    expect(breaking(v, { rule: "cycle", from: IN, to: ROOT })).toEqual([]);
+    expect(breaking(two, { rule: "cycle", from: IN, to: ROOT })).toEqual([[C, ROOT], [S, ROOT]]);
   });
 });
 

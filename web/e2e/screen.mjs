@@ -36,7 +36,8 @@ const S = "example.com/shop/internal/store";
 const C = "example.com/shop/internal/checkout";
 const M = "example.com/shop/internal/money";
 const A = "example.com/shop/internal/audit";
-const GEN = "example.com/shop/tools/gen";
+const ROOT = "example.com/shop";
+const IN = "example.com/shop/internal";
 const enc = encodeURIComponent;
 // far: shop.change with internal/audit, which money imports unchanged, so
 // it is in no Affected Set and the changed subgraph leaves it out; money.Plus
@@ -56,13 +57,18 @@ const far = (() => {
   return page("far", v);
 })();
 
-// cycle: shop.change and a new cycle, which names Package Tree boxes (06):
-// the modules' roots, as tools/gen's import of money lifts.
+// cycle: shop.change and a new cycle, which names Package Tree boxes (06),
+// both its arcs, as cycles.go flags them: the root's imports of internal,
+// money's the change's own, and checkout's and store's of the root, kept.
 const cycle = (() => {
   const v = golden("shop.change");
   v.policy = { hash: "sha256:cycle", levels: [] };
-  for (const e of v.edges) if (e.kind === "imports" && e.from === GEN && e.to === M) e.violation = "cycle";
-  v.violations = { new: [{ rule: "cycle", from: "example.com/shop/tools", to: "example.com/shop" }], fixed: [], known: 0 };
+  v.edges.push(
+    { from: C, to: ROOT, kind: "imports", count: 1, loc: { path: "internal/checkout/checkout.go", line: 3 } },
+    { from: S, to: ROOT, kind: "imports", count: 1, loc: { path: "internal/store/store.go", line: 3 } },
+  );
+  for (const e of v.edges) if (e.kind === "imports" && (e.from === ROOT || e.to === ROOT)) e.violation = "cycle";
+  v.violations = { new: [{ rule: "cycle", from: ROOT, to: IN }, { rule: "cycle", from: IN, to: ROOT }], fixed: [], known: 0 };
   return page("cycle", v);
 })();
 
@@ -253,16 +259,19 @@ async function changeView(b) {
   // The Screen's header keeps the change's link to the host.
   got.host = await r.p.evaluate(() => document.querySelector("header.header a[target=_blank]")?.getAttribute("href") ?? null);
   await r.p.close();
-  // The walk starts at a new cycle's importer; on a Screen, each end in the
-  // Violations list re-centres on its package in the cycle's first import.
+  // The walk starts at the importer of the import the change made on a new
+  // cycle, and steps on to the changed packages, not to the arc back's
+  // importers; on a Screen, an end in the Violations list re-centres on its
+  // package in its arc's first import, the change's own first.
   const y = await open(b, cycle, "");
   const settled = async () => (await y.p.waitForTimeout(500), centre(y.p));
-  await y.p.keyboard.press("n");
-  got.cycle = [await settled()];
-  await y.p.keyboard.press("n");
-  got.cycle.push(await settled());
-  for (const end of ["example.com/shop/tools", "example.com/shop"]) {
-    await y.p.click(`section.violations button[title="${end}"]`);
+  got.cycle = [];
+  for (let i = 0; i < 3; i++) {
+    await y.p.keyboard.press("n");
+    got.cycle.push(await settled());
+  }
+  for (const n of [1, 2]) {
+    await y.p.click(`section.violations li:nth-child(${n}) button[title="${IN}"]`);
     got.cycle.push(await settled());
   }
   await y.p.close();
@@ -276,7 +285,7 @@ const want = {
   walk: [true, true, "10 steps", "1 of 10"], marks: [true, true, true, "⇄", true, true, ["~ Order", "− ReadWriter", "~ Repo.Get", "~ Repo.check"]],
   affected: true, step: [true, "2 of 10", true, true], near: ["– of 10", true], leave: [null, C, true], full: [A, 0, true],
   red: [true, 1, "violates zu.policy.yaml (levels or cycle)"], list: [C, "7 of 10"], host: "https://github.com/o/r/compare/b...h",
-  cycle: [GEN, S, GEN, M],
+  cycle: [ROOT, `${ROOT}.main`, S, M, C],
 };
 const channel = process.env.ZU_E2E_CHANNEL;
 const engines = [["chromium", chromium, channel ? { channel } : {}], ["firefox", firefox, {}], ["webkit", webkit, {}]];

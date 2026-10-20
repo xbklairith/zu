@@ -59,7 +59,7 @@ How much a box on a Screen is used by or uses its Centre, which sizes the box ag
 
 ## Walk
 
-The way through a Change View one Screen at a time (18), in the decided reading order: each new violation's importer, then the changed packages bottom-up, each followed by the Centres of its changed declarations (a changed method's Centre is its type). `n` takes the next step and `p` the previous one, on the tree or a Screen; from the tree, `n` starts at the first. A Centre off the walk steps on from its package's place. Each step is a browser history entry.
+The way through a Change View one Screen at a time (18), in the decided reading order: each new violation's importer, then the changed packages bottom-up, each followed by the Centres of its changed declarations (a changed method's Centre is its type). A new violation's importer is that of each import the change made that breaks it: a new cycle flags each of its arcs (06), and the walk visits the importers of the imports the change added or reversed on them, or of each arc's first import when it made none on any. `n` takes the next step and `p` the previous one, on the tree or a Screen; from the tree, `n` starts at the first. A Centre off the walk steps on from its package's place. Each step is a browser history entry.
 
 ## Ghost
 

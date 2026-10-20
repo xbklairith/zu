@@ -1,6 +1,7 @@
 // 18: the walk through a change, n and p, in the decided reading order
-// (decisions.md, Change reading order): each new violation's importers, then
-// the changed packages bottom-up (view.changed, the Structural Summary's
+// (decisions.md, Change reading order): the importers of the imports the
+// change made that break each new violation, then the changed packages
+// bottom-up (view.changed, the Structural Summary's
 // order), each followed by the Centres of its changed declarations, by id.
 // Each step re-centres the Screen; the hash keeps only the Centre.
 import type { View, Violation } from "./data";
@@ -9,6 +10,11 @@ import { centreOf, screenView } from "./screen";
 import { centreAt, type ViewState } from "./state";
 
 const walks = new WeakMap<View, string[]>();
+const arcs = new WeakMap<View, Map<string, Import[]>>();
+
+// Import is a head import on a violation's arc, and whether the change made
+// it: added, or reversed (head's direction is new).
+type Import = { from: string; to: string; made: boolean };
 
 // walkOf is the walk's Centres, each once: empty in a Project View.
 export function walkOf(view: View): string[] {
@@ -29,7 +35,12 @@ export function walkOf(view: View): string[] {
       seen.add(id);
     }
   };
-  for (const x of view.violations?.new ?? []) for (const [from] of breaking(view, x)) visit(from);
+  // A new cycle flags each arc of it (06), most of them imports the change
+  // kept: the walk visits the importers of those it made, and of each arc's
+  // first only when it made none on any.
+  const news = view.violations?.new ?? [];
+  const own = news.some((x) => x.rule === "cycle" && made(view, x).length > 0);
+  for (const x of news) for (const [from] of x.rule === "cycle" && !own ? breaking(view, x).slice(0, 1) : made(view, x)) visit(from);
   for (const pkg of view.changed ?? []) visit(pkg);
   walks.set(view, out);
   return out;
@@ -45,27 +56,49 @@ function boxes(id: string, module: string): string[] {
   return chain;
 }
 
-// breaking is the head imports that break x, as [importer, imported]
-// packages, sorted: a Levels violation's own; a cycle names Package Tree
-// boxes (06), so each import whose arc policy/cycles.go's lift makes x's.
-export function breaking(view: View, x: Violation): [string, string][] {
-  if (x.rule !== "cycle") return [[x.from, x.to]];
+// lifted is each head import by its arc ("from\nto"), as policy/cycles.go's
+// lift makes it, the change's own first, then by its ends: each import
+// lifted once per View.
+function lifted(view: View): Map<string, Import[]> {
+  const hit = arcs.get(view);
+  if (hit) return hit;
   const nodes = index(view).node;
   const module = (id: string) => {
     const n = nodes.get(id);
     return n?.kind === "package" ? n.module : undefined;
   };
-  const out: [string, string][] = [];
+  const out = new Map<string, Import[]>();
   for (const e of view.edges) {
     const [mf, mt] = [module(e.from), module(e.to)];
     if (e.kind !== "imports" || e.status === "removed" || e.from === e.to || !mf || !mt) continue;
     const [cf, ct] = [boxes(e.from, mf), boxes(e.to, mt)];
     let k = 0;
     while (k < cf.length && k < ct.length && cf[k] === ct[k]) k++;
-    const arc = mf !== mt ? [mf, mt] : [cf[Math.min(k, cf.length - 1)], ct[Math.min(k, ct.length - 1)]];
-    if (arc[0] === x.from && arc[1] === x.to) out.push([e.from, e.to]);
+    const arc = mf !== mt ? `${mf}\n${mt}` : `${cf[Math.min(k, cf.length - 1)]}\n${ct[Math.min(k, ct.length - 1)]}`;
+    const on = out.get(arc) ?? [];
+    on.push({ from: e.from, to: e.to, made: e.status === "added" || e.status === "reversed" });
+    out.set(arc, on);
   }
-  return out.sort((a, b) => cmp(a[0], b[0]) || cmp(a[1], b[1]));
+  for (const on of out.values()) on.sort((a, b) => Number(b.made) - Number(a.made) || cmp(a.from, b.from) || cmp(a.to, b.to));
+  arcs.set(view, out);
+  return out;
+}
+
+// breaking is the head imports that break x, as [importer, imported]
+// packages: a Levels violation's own; a cycle names Package Tree boxes (06),
+// so each import whose arc policy/cycles.go's lift makes x's, those the
+// change made first, then by their ends.
+export function breaking(view: View, x: Violation): [string, string][] {
+  if (x.rule !== "cycle") return [[x.from, x.to]];
+  return (lifted(view).get(`${x.from}\n${x.to}`) ?? []).map((i) => [i.from, i.to]);
+}
+
+// made is the imports the change made that break x: a new Levels
+// violation's own import, which is always one (both sides are judged under
+// head's Policy, ADR 0004); of a cycle's arc, those it added or reversed.
+function made(view: View, x: Violation): [string, string][] {
+  if (x.rule !== "cycle") return [[x.from, x.to]];
+  return (lifted(view).get(`${x.from}\n${x.to}`) ?? []).filter((i) => i.made).map((i) => [i.from, i.to]);
 }
 
 // placeOf is a Centre's place on the walk: its index; for a Centre off the
