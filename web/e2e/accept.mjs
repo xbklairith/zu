@@ -153,6 +153,14 @@ const base = "file://" + dir + "/";
 const vp = (p) => p.locator(".react-flow__viewport").getAttribute("style");
 const settle = (p) => p.waitForTimeout(900);
 const drawn = (p) => p.locator(".react-flow__node").first().waitFor({ timeout: 30000 });
+// Firefox (Playwright's 155.0) crashes the page on a reload while the page's
+// 1.5 MB blob worker (ELK) is still loading: 177 of 300 reloads of a page with
+// no zu code but such a worker crashed, none of 150 once the worker had
+// answered (16). A reload waits for the worker's first answer (a drawing, or
+// a status other than "Laying out…"), or for a state that lays nothing out
+// and so starts no worker ("Declarations not included").
+const loaded = (p) => p.waitForFunction(() => document.querySelector(".react-flow__node, main .empty:not(#zu-status)") ||
+  /^(?!Laying out)./.test(document.getElementById("zu-status")?.textContent ?? ""), null, { timeout: 30000 });
 const hash = (p) => p.evaluate(() => decodeURIComponent(location.hash));
 async function run(b) {
   const out = {};
@@ -233,6 +241,7 @@ async function run(b) {
   // in a minimap. A reload shows the page as
   // it opens.
   await p.goto(base + "big.html#d=1");
+  await loaded(p);
   await p.reload();
   await drawn(p);
   await settle(p);
@@ -340,6 +349,7 @@ async function run(b) {
   p = await b.newPage();
   const at = async (h) => {
     await p.goto(base + "policy.html" + h);
+    await loaded(p);
     await p.reload();
     await drawn(p);
     await settle(p);
@@ -403,6 +413,7 @@ async function run(b) {
   out.crap = [];
   for (const d of [1, 2]) {
     await p.goto(base + `crap.html#d=${d}`);
+    await loaded(p);
     await p.reload();
     await drawn(p);
     await settle(p);
@@ -426,11 +437,13 @@ async function run(b) {
     getComputedStyle(document.querySelector(`.react-flow__node[data-id="${id}"] .node`)).backgroundColor)).size);
   out.crapLegend = await p.locator(".legend").innerText().then((t) => t.split("\n").filter((l) => /CRAP|≤|>/.test(l)));
   await p.goto(base + "crap.html#d=3&s=m%2Finternal%2Fcli");
+  await loaded(p);
   await p.reload();
   await drawn(p);
   await settle(p);
   out.crapPanel = await p.locator(".crap-facts").innerText().then((t) => t.split("\n").filter(Boolean)).catch(() => null);
   await p.goto(base + "crap.html#f=m%2Finternal%2Fcli&s=m%2Finternal%2Fcli.Run");
+  await loaded(p);
   await p.reload();
   await drawn(p);
   await settle(p);
@@ -446,6 +459,7 @@ async function run(b) {
   out.crapChange = await p.locator(`.react-flow__node[data-id="${store}"] .node`).getAttribute("class")
     .then((c) => ["crap-red", "st-modified"].map((k) => c.split(" ").includes(k)));
   await p.goto(base + "crap-change.html#d=2&s=example.com%2Fshop%2Finternal");
+  await loaded(p);
   await p.reload();
   await drawn(p);
   await settle(p);
@@ -488,6 +502,7 @@ async function run(b) {
   await settle(p);
   out.foldOpen = [(await hash(p)).includes("t=m#more"), await p.locator(".node.chip.group .label").first().textContent().then((t) => /^fold \d+$/.test(t))];
   await p.goto(base + "grouped.html");
+  await loaded(p);
   await p.reload();
   await drawn(p);
   await settle(p);
@@ -499,6 +514,7 @@ async function run(b) {
   await settle(p);
   out.stripOpen = [await hash(p), await p.locator(".react-flow__node[data-id='m/testdata'] .node.demoted").count()];
   await p.goto(base + "chain.html");
+  await loaded(p);
   await p.reload();
   await drawn(p);
   await settle(p);
@@ -511,6 +527,7 @@ async function run(b) {
   await settle(p);
   const shopOpen = await p.locator(".react-flow__node-container[data-id='example.com/shop']").count();
   await p.goto(base + "with.html#f=example.com/shop/internal");
+  await loaded(p);
   await p.reload();
   await drawn(p);
   await settle(p);
@@ -522,6 +539,7 @@ async function run(b) {
   // still opens it in place (N10).
   const kOpen = () => p.locator(".react-flow__node-container[data-id='k']").count();
   await p.goto(base + "rooted.html");
+  await loaded(p);
   await p.reload();
   await drawn(p);
   await settle(p);
@@ -534,6 +552,7 @@ async function run(b) {
   await settle(p);
   const closedAfter = [await kOpen(), await p.locator(".react-flow__node[data-id='k']").count(), await p.evaluate(() => location.hash)];
   await p.goto(base + "rooted.html#t=k");
+  await loaded(p);
   await p.reload();
   await drawn(p);
   await settle(p);
@@ -564,6 +583,7 @@ async function run(b) {
   const get = await hrefs();
   out.diffTitle = await p.locator(".panel a.diff-link", { hasText: "Diff on the host" }).getAttribute("title"); // 14b
   await p.goto(base + linked + "ReadWriter");
+  await loaded(p);
   await p.reload();
   await drawn(p);
   await settle(p);

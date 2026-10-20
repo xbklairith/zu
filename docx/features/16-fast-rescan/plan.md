@@ -2424,9 +2424,9 @@ A reload after a click or a key press already follows a drawing, but not always 
 
 **Steps:**
 
-- [ ] **Reproduce** (by hand; not a replay step): `node docx/features/16-fast-rescan/firefox-reload.mjs 100`. Expected: `big-now` crashes on a share of its reloads (12 of 40 here); `big-after` and `small-now` never do.
+- [x] **Reproduce** (by hand; not a replay step): `node docx/features/16-fast-rescan/firefox-reload.mjs 100`. Expected: `big-now` crashes on a share of its reloads (12 of 40 here); `big-after` and `small-now` never do.
 
-- [ ] **Wait for the worker before a reload**
+- [x] **Wait for the worker before a reload**
 
 ```diff
 diff --git a/web/e2e/accept.mjs b/web/e2e/accept.mjs
@@ -2544,9 +2544,9 @@ index 21548176e91178e344c0d9bc8a13add35188b4da..4698eeebf1c5ea087a7785c9e636ca49
    await settle(p);
 ```
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node accept.mjs` Expected: PASS (57 checks in each engine)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node accept.mjs` Expected: PASS (57 checks in each engine)
 
-- [ ] **Commit:** `Reload a page in the browser checks only after its layout worker answered`
+- [x] **Commit:** `Reload a page in the browser checks only after its layout worker answered`
 
 ---
 
