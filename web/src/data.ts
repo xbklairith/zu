@@ -9,6 +9,8 @@ export type ViewNode = {
   main?: boolean; // 12: package main, a program's entry
   genDecls?: number; // 12: packages: declarations in generated files
   demoted?: "name" | "generated"; // 12: set aside in the first view (policy.Demoted)
+  offIn?: number; // 17: declarations: call sites and embeds into it from declarations not on this page
+  offOut?: number; // 17: and out of it to them
 };
 export type ViewEdge = {
   from: string; to: string; kind: "imports" | "calls" | "embeds"; count: number; loc: Loc; status?: string;

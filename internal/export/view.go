@@ -55,6 +55,8 @@ type Node struct {
 	Hop        *int        `json:"hop,omitempty"`        // Change View: distance in the Affected Set
 	Rank       *int        `json:"rank,omitempty"`       // packages: the Policy Level, 0 = innermost
 	Demoted    string      `json:"demoted,omitempty"`    // packages (12): why the first view sets it aside, "name" or "generated"
+	OffIn      int         `json:"offIn,omitempty"`      // declarations (17): call sites and embeds into it from declarations not on this page
+	OffOut     int         `json:"offOut,omitempty"`     // declarations (17): and out of it to them
 }
 
 // Edge is an IR edge with its location count instead of every location.

@@ -85,6 +85,43 @@ func TestProjectIncludeAddsDeclarationsAndTheirFiles(t *testing.T) {
 	}
 }
 
+// 17: a Screen centred on a declaration draws only the calls and embeds the
+// page holds; the rest, to or from a package without -include, are counted
+// on the declaration so the Screen can say what it leaves out.
+func TestProjectCountsCallsOffThePage(t *testing.T) {
+	doc := shopIR(t)
+	p, _ := ParsePattern("./internal/store", RootModule(doc))
+	v, err := Project(doc, []Pattern{p}, fakeRead(map[string]bool{}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for id, want := range map[string][2]int{
+		"example.com/shop/internal/store.Open":       {1, 0}, // checkout.Place calls it
+		"example.com/shop/internal/store.Order":      {1, 0}, // checkout.Cart embeds it
+		"example.com/shop/internal/store.Repo.check": {0, 1}, // it calls money.Add
+		"example.com/shop/internal/store.Repo":       {0, 0}, // it embeds lib/pq, which is drawn
+		"example.com/shop/internal/store.Repo.Reset": {0, 0}, // it calls store.Open, on the page
+	} {
+		if n := find(t, v, id); n.OffIn != want[0] || n.OffOut != want[1] {
+			t.Errorf("%s: off in, out = %d, %d; want %d, %d", id, n.OffIn, n.OffOut, want[0], want[1])
+		}
+	}
+	// Only declarations count: every package and external is on every page.
+	// With checkout's declarations, store.Repo, off the page, embeds lib/pq.
+	for _, include := range []string{"./internal/store", "./internal/checkout"} {
+		p, _ := ParsePattern(include, RootModule(doc))
+		v, err := Project(doc, []Pattern{p}, fakeRead(map[string]bool{}))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, n := range v.Nodes {
+			if n.Kind != "type" && n.Kind != "function" && (n.OffIn != 0 || n.OffOut != 0) {
+				t.Errorf("%s: %s %s counts calls off the page", include, n.Kind, n.ID)
+			}
+		}
+	}
+}
+
 func TestProjectRejectsAnIncludeThatMatchesNothing(t *testing.T) {
 	doc := shopIR(t)
 	p, _ := ParsePattern("./nosuch/...", RootModule(doc))

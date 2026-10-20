@@ -40,7 +40,7 @@ func Project(doc *ir.IR, include []Pattern, read ReadFunc) (*View, error) {
 	}
 
 	v := newView("project", doc)
-	modules, files, in := map[string]bool{}, map[string]bool{}, map[string]bool{}
+	modules, files, in, decl := map[string]bool{}, map[string]bool{}, map[string]bool{}, map[string]bool{}
 	for i := range doc.Nodes {
 		n := &doc.Nodes[i]
 		vn := toNode(n)
@@ -55,6 +55,7 @@ func Project(doc *ir.IR, include []Pattern, read ReadFunc) (*View, error) {
 			for _, l := range n.Locations {
 				files[l.Path] = true
 			}
+			decl[n.ID] = true
 		}
 		v.Nodes = append(v.Nodes, vn)
 		in[n.ID] = true
@@ -62,11 +63,24 @@ func Project(doc *ir.IR, include []Pattern, read ReadFunc) (*View, error) {
 	for m := range modules {
 		v.Modules = append(v.Modules, m)
 	}
+	// 17: a call or embed with one end off the page is counted on the other,
+	// when that end is a declaration: an external that a type off the page
+	// embeds counts nothing, as its Screen draws imports.
+	offIn, offOut := map[string]int{}, map[string]int{}
 	for i := range doc.Edges {
 		e := &doc.Edges[i]
-		if e.Kind == ir.EdgeImports || in[e.From] && in[e.To] {
+		switch {
+		case e.Kind == ir.EdgeImports || in[e.From] && in[e.To]:
 			v.Edges = append(v.Edges, toEdge(e))
+		case decl[e.From]:
+			offOut[e.From] += len(e.Locations)
+		case decl[e.To]:
+			offIn[e.To] += len(e.Locations)
 		}
+	}
+	for i := range v.Nodes {
+		n := &v.Nodes[i]
+		n.OffIn, n.OffOut = offIn[n.ID], offOut[n.ID]
 	}
 	if err := addSources(v, files, read); err != nil {
 		return nil, err

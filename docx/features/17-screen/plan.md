@@ -267,7 +267,7 @@ It also checks that only types and functions carry a count, on store's page and 
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 diff --git a/internal/export/project_test.go b/internal/export/project_test.go
@@ -320,9 +320,9 @@ index cf66df7..2f0eef8 100644
  	p, _ := ParsePattern("./nosuch/...", RootModule(doc))
 ```
 
-- [ ] **Run:** `go test ./internal/export -run TestProjectCountsCallsOffThePage` Expected: FAIL (`n.OffIn` and `n.OffOut` are undefined: the build fails)
+- [x] **Run:** `go test ./internal/export -run TestProjectCountsCallsOffThePage` Expected: FAIL (`n.OffIn` and `n.OffOut` are undefined: the build fails)
 
-- [ ] **Count calls and embeds off the page; carry the counts to the page's types**
+- [x] **Count calls and embeds off the page; carry the counts to the page's types**
 
 The golden's three new lines are what `go test ./internal/export -run TestProjectGolden -update` writes. Review the diff.
 
@@ -437,9 +437,9 @@ index 5a39529..83d65c8 100644
    from: string; to: string; kind: "imports" | "calls" | "embeds"; count: number; loc: Loc; status?: string;
 ```
 
-- [ ] **Run:** `go test ./... && cd web && npm run typecheck` Expected: PASS
+- [x] **Run:** `go test ./... && cd web && npm run typecheck` Expected: PASS
 
-- [ ] **Commit:** `Count the calls and embeds a Project View leaves off the page`
+- [x] **Commit:** `Count the calls and embeds a Project View leaves off the page`
 
 ---
 

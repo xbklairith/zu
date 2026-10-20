@@ -64,7 +64,8 @@
       "loc": {
         "path": "internal/store/store.go",
         "line": 40
-      }
+      },
+      "offIn": 1
     },
     {
       "id": "example.com/shop/internal/store.Order",
@@ -75,7 +76,8 @@
       "loc": {
         "path": "internal/store/store.go",
         "line": 25
-      }
+      },
+      "offIn": 1
     },
     {
       "id": "example.com/shop/internal/store.Page",
@@ -159,7 +161,8 @@
       "loc": {
         "path": "internal/store/store.go",
         "line": 51
-      }
+      },
+      "offOut": 1
     },
     {
       "id": "example.com/shop/internal/store.Status",
