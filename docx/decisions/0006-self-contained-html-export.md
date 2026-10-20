@@ -47,3 +47,7 @@ the unit that is shared, attached to CI, and opened by reviewers.
 - The IR, UI and source must all be safe to inline: source is escaped, never rendered
   as markup, and the page makes no network requests.
 - `serve` becomes an optional convenience, not a dependency of Mode A or Mode B.
+
+## Amendment (19, 2026-10-20): zu serve reads source on demand
+
+`zu serve` runs on the reader's own checkout, so its page need not carry source ahead. Without `-include` it now draws every package's declarations (up to 20,000 as the Policy draws them; past that, packages only) and inlines no source. The Code panel reads the file it shows from `GET /source?path=`, which answers only for files the last scan declares a package, type or function in, read from the scanned tree with links that leave it refused, to this machine's own page only, as `/view.json` is. With `-include`, `zu serve` still sends the page `zu scan -html` writes, its View byte for byte. The HTML files are unchanged in scope: they inline only the source this ADR names, now with its colour (`View.syntax`), and make no network request.

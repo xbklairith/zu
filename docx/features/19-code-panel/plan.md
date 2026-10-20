@@ -1,6 +1,6 @@
 # 19 · The Code panel — Plan
 
-**Status:** APPROVED 2026-10-20 (lead, after scrutiny-19, its fixes and the replay; advisor sign-off); REVISED 2026-10-20 after a review of 16 to 19 together, and again after that revision's scrutiny (**Notes**), replayed again. Held: it queues behind 16, 17 and 18, which are approved and held. zu builds them in order 16, 17, 18, 19, and builds any only when the user says go.
+**Status:** Implemented 2026-10-21 (Tasks 1–5 on `build-16-20`; `acceptance.md`; the user's check is owed). APPROVED 2026-10-20 (lead, after scrutiny-19, its fixes and the replay; advisor sign-off); REVISED 2026-10-20 after a review of 16 to 19 together, and again after that revision's scrutiny (**Notes**), replayed again. Held: it queues behind 16, 17 and 18, which are approved and held. zu builds them in order 16, 17, 18, 19, and builds any only when the user says go.
 
 **Base.** Every diff here is against `main` with 16's, 17's and 18's plans applied, in that order, 17's and 18's as revised on 2026-10-20. `main` then differs from a18ff85 only by plan documents. The diffs come from a scratch branch. Its first commit is a `git archive` of a18ff85 with 16's, 17's and 18's tasks applied (18's revised scratch head). After it come one commit per red step and one per green step. The plan was replayed on a fresh `git archive` of `main`, after 16's, 17's and 18's replays (**Replay record**). Once those three land, replay this plan again on `main` (**Overlap with 16, 17 and 18**).
 
@@ -3358,19 +3358,19 @@ index ff5e9b2..97668d7 100644
 
 **Steps:**
 
-- [ ] **Run:** `make check` Expected: PASS (read the lint output)
+- [x] **Run:** `make check` Expected: PASS (read the lint output)
 
-- [ ] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (57 checks in each engine)
+- [x] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (57 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node place.mjs` Expected: PASS (9 checks in each engine)
+- [x] **Run:** `cd web/e2e && node place.mjs` Expected: PASS (9 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS (11 checks in each engine)
+- [x] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS (11 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node screen.mjs` Expected: PASS (23 checks in each engine)
+- [x] **Run:** `cd web/e2e && node screen.mjs` Expected: PASS (23 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node code.mjs` Expected: PASS (13 checks in each engine)
+- [x] **Run:** `cd web/e2e && node code.mjs` Expected: PASS (13 checks in each engine)
 
-- [ ] **Measure** (by hand; not a replay step).
+- [x] **Measure** (by hand; not a replay step).
   1. Copy the Test Corpus's hugo, cobra and kubernetes clones out of `.zu/corpus/` (`cp -cR`). Of kubernetes, time its staging modules `k8s.io/api` and `client-go` too: they are under the budget and hold its longest files. The corpus is read-only: never clone, edit or check out in it.
   2. Run `node docx/features/19-code-panel/measure.mjs . <copies>…`.
   3. Record the table in `acceptance.md`.
@@ -3388,7 +3388,7 @@ index ff5e9b2..97668d7 100644
   4. Save a change to the file. The page redraws, and the code shows the change. Save a change to a comment or a literal only: the page does not redraw, and the code shows it.
   5. Run `zu serve -include ./some/pkg`: the page is the one `zu scan -html -include ./some/pkg` writes.
 
-- [ ] **Commit:** `Record the Code panel's acceptance`
+- [x] **Commit:** `Record the Code panel's acceptance`
 
 ---
 

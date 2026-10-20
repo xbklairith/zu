@@ -65,6 +65,10 @@ The way through a Change View one Screen at a time (18), in the decided reading 
 
 On a Screen in a Change View (18), where a reversed import's far end was in base: the box drawn dotted and plain in the row opposite its real one, its line dotted and unsigned, its facts "⇄ in base". The diff reports a reversed import once, in head's direction, so the ghost is how the Screen shows the old direction.
 
+## Code Panel
+
+The part of a declaration's panel that shows its file (19): Go coloured by zu, the declaration's line marked. Of a file past 5,000 lines it shows the 5,000 around that line. Pointing at a call or embed, in the panel's lists or on the Screen, lights the lines it is written on, and a note says where they are, including places in other files. In an HTML Export the file is inlined; in `zu serve` without `-include` it is read on demand.
+
 ## Foreign
 
 An external module drawn as an oval outside the Package Tree. The Policy can collapse
@@ -155,6 +159,7 @@ A single self-contained HTML file holding a Project View or Change View together
 the UI, the IR and only the source worth reading: meaningfully changed files in a
 Change View, explicitly included packages in a Project View. Opens in any browser with
 no zu install, server or network. Carries the same sensitivity as the source it holds.
+Inlined source carries its colour (19).
 
 ## Meaningful Change
 
