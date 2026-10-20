@@ -131,7 +131,13 @@ func statusOf(t *testing.T, url string) int {
 // from /source, which sends one only if the last scan declares something in
 // it, from the tree as it is now.
 func TestServeDrawsEveryDeclarationAndSendsItsSourceOnDemand(t *testing.T) {
+	needGit(t)
 	dir := repo(t, small)
+	// A checkout, so each scan reads the files git lists (ListTree), as in
+	// most trees zu serve is run on.
+	git(t, dir, "init", "-q")
+	git(t, dir, "add", "-A")
+	git(t, dir, "commit", "-q", "-m", "base")
 	url, _ := startServe(t, dir, "-poll", "0")
 	v := fetch(t, url+"view.json")
 	for _, want := range []string{`"id":"example.com/m/a.F"`, `"detail":true`, `"sources":{}`} {
@@ -162,9 +168,8 @@ func TestServeDrawsEveryDeclarationAndSendsItsSourceOnDemand(t *testing.T) {
 	if code := statusOf(t, url+"source?path=b/b.go"); code != http.StatusOK {
 		t.Errorf("b/b.go after: %d", code)
 	}
-	// a becomes a link out of the tree while the last scan declares a/a.go:
-	// neither /source nor the rescan reads through it (ListTree's case, where
-	// git still lists the file, is scan's TestDirectoryLinksAreNotFollowed).
+	// a becomes a link out of the tree while the last scan declares a/a.go
+	// and git still lists it: neither /source nor the rescan reads through it.
 	outside := t.TempDir()
 	writeFile(t, outside, "a.go", "package a // SECRET\n")
 	if err := os.Rename(filepath.Join(dir, "a"), filepath.Join(t.TempDir(), "a")); err != nil {

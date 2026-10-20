@@ -28,7 +28,7 @@ type Tree interface {
 	// ReadFile returns the content of a path from Files, or of a file zu
 	// looks up by name such as the Policy. A symlink is followed only to a
 	// regular file inside the tree, as Files would list it; anything else
-	// (a link leaving the tree, a path through a directory link, a
+	// (a link leaving the tree, a path through a directory link on disk, a
 	// directory, a device) is fs.ErrNotExist.
 	ReadFile(rel string) ([]byte, error)
 }
@@ -86,8 +86,8 @@ type listTree struct {
 // ListTree is the directory at root, restricted to files: slash paths
 // relative to root, in any order. Of those, Files keeps what DirTree would:
 // regular files and in-tree file symlinks outside pruned directories and
-// directory links. Listed paths missing from disk are skipped. Files lists once: a later call returns
-// the first listing and Stamps (16).
+// directory links. Listed paths missing from disk are skipped. Files lists
+// once: a later call returns the first listing and Stamps (16).
 func ListTree(root string, files []string) (Tree, error) {
 	d, err := openDir(root)
 	if err != nil {
@@ -241,7 +241,8 @@ func (d *dirTree) open(rel string) (*os.File, error) {
 	f, err := r.Open(filepath.FromSlash(rel))
 	var pe *fs.PathError
 	// os.Root does not export its escape error, so it is known by its text.
-	if errors.As(err, &pe) && (pe.Err.Error() == "path escapes from parent" || errors.Is(pe.Err, syscall.ENOTDIR) || errors.Is(pe.Err, syscall.ELOOP)) {
+	if errors.As(err, &pe) && (pe.Err.Error() == "path escapes from parent" ||
+		errors.Is(pe.Err, syscall.ENOTDIR) || errors.Is(pe.Err, syscall.ELOOP)) {
 		return nil, &fs.PathError{Op: "read", Path: rel, Err: fs.ErrNotExist}
 	}
 	return f, err
