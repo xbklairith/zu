@@ -584,7 +584,7 @@ The tests (`screen.test.ts`) use the shop View golden, the shop Change View gold
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/web/src/screen.test.ts b/web/src/screen.test.ts
@@ -691,9 +691,9 @@ index 0000000..a5c90c0
 +});
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/screen.test.ts` Expected: FAIL (`Failed to resolve import "./screen"`)
+- [x] **Run:** `cd web && npx vitest run src/screen.test.ts` Expected: FAIL (`Failed to resolve import "./screen"`)
 
-- [ ] **Add `centreOf` and `screenOf`**
+- [x] **Add `centreOf` and `screenOf`**
 
 ```diff
 diff --git a/web/src/screen.ts b/web/src/screen.ts
@@ -822,9 +822,9 @@ index 0000000..e14d0e4
 +}
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Commit:** `Build a Screen's rows from the View: the Centre, what depends on it, what it depends on`
+- [x] **Commit:** `Build a Screen's rows from the View: the Centre, what depends on it, what it depends on`
 
 ---
 
