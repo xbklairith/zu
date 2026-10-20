@@ -98,3 +98,7 @@ Scrutiny round 1 (2026-10-21) returned fix-then-ship. Its findings and what chan
 - **Not changed:** each pointer move re-renders every row the panel draws: 37–54 ms on `TestAllocator`'s 12,000 rows, by the reviewer's run. The reviewer judged it needs no change.
 
 The Measure above ran on Task 4's build. These fixes add one scroll per selection and draw no other row.
+
+Scrutiny round 2 (2026-10-21, at `be124f3`) returned **ship**. It verified each fix above by mutation: without the panel reset, `again` reads 930 / 934 / 945, and with the old key, `served shifted` scrolls to 846. A frame probe shows the new panel at the top in its first painted frame, in every engine. Two nits are left as follow-ups, unchanged:
+- **The `OwnDiff` key trades one rare case for two.** Two changed texts of one declaration in one file share both paths. When the first goes back to its Base text in `zu serve`, the second takes the first's index and its scroll. And when an earlier build variant's diff goes, a later variant's diff remounts at its first change. Keying by the files and the diff's ordinal among diffs with the same files would fix the second case. The first needs the export to number each text.
+- **`litNote` and `litRows` disagree for build variants.** `litNote` counts only the node's own file as drawn. So a call lit in another variant's drawn diff is described as "in other files".
