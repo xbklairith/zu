@@ -1,4 +1,5 @@
-// Browser acceptance for zu serve (10 Task 6), its watch (13) and -base (14). Not part
+// Browser acceptance for zu serve (10 Task 6), its watch (13), -base (14) and
+// a Screen whose Centre the watch deletes (17). Not part
 // of make check: it needs browsers and a bin/zu built with the UI. Run from
 // web/e2e after `make build`: npm run accept-serve
 import { execFileSync, spawn } from "node:child_process";
@@ -112,6 +113,17 @@ async function run(name, b) {
   out.broken = [said.includes(`live${name}.go`), await has(p, live), (await frame()) === frame0];
   writeFileSync(file, `package store\n\nfunc Live${name}() {}\n\nfunc Again${name}() {}\n`);
   out.fixed = [await node(`example.com/shop/internal/store.Again${name}`), await notice.count()];
+  // 17: a Screen whose Centre a save deletes draws the tree again, with no page error.
+  const gone = `example.com/shop/internal/store.Gone${name}`;
+  const goneFile = join(dir, "internal", "store", `gone${name}.go`);
+  writeFileSync(goneFile, `package store\n\nfunc Gone${name}() {}\n`);
+  const appeared = await node(gone);
+  await p.evaluate((h) => (location.hash = h), `#s=${encodeURIComponent(gone)}&c=${encodeURIComponent(gone)}`);
+  const screen = await p.locator(`.screen .react-flow__node[data-id="${gone}"]`).waitFor({ timeout: 15000 }).then(() => true, () => false);
+  rmSync(goneFile);
+  const tree = await p.locator(".screen").waitFor({ state: "detached", timeout: 15000 })
+    .then(() => p.locator(".react-flow__node").first().waitFor({ timeout: 15000 })).then(() => true, () => false);
+  out.lost = [appeared && screen, tree, !(await hash()).includes("c=")];
   await p.close();
   // 13: a hidden page holds no stream, so a seventh page still loads,
   // though a browser opens at most six connections to one host.
@@ -163,6 +175,7 @@ const want = {
   live: [true, true, true],
   broken: [true, 1, true],
   fixed: [true, 0],
+  lost: [true, true, true],
   tabs: true,
   change: [true, true, true, true],
   errors: [],

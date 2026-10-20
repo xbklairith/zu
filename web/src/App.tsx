@@ -2,13 +2,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { Canvas } from "./Canvas";
 import { changedSubgraph, nodeMark } from "./change";
-import { home, upTo } from "./cut";
+import { home, isBox, upTo } from "./cut";
 import type { View } from "./data";
 import { isGroup } from "./group";
 import { pageEngine } from "./engine";
 import { Header } from "./Header";
 import { redLegend, violationsNote } from "./headline";
 import { keyAction } from "./keys";
+import { drawnCentre, enter, leave } from "./lens";
 import { elkGraph, headers, Superseded, type Placed } from "./layout";
 import { show } from "./place";
 import { Panel } from "./Panel";
@@ -17,7 +18,9 @@ import { PROPOSAL_NOTICE, proposalView } from "./proposal";
 import { reveal } from "./search";
 import { SearchBox } from "./SearchBox";
 import { DRAW_LIMIT, fitDepth, HUBS, opening, openFull, scene, type Scene, type SceneNode } from "./scene";
-import { deeper, drill, nextStage, select, shallower, toggle, up, type ViewState } from "./state";
+import { centreOf, placeScreen, screenNote, screenOf } from "./screen";
+import { ScreenCanvas } from "./ScreenCanvas";
+import { centreAt, deeper, drill, nextStage, select, shallower, toggle, up, type ViewState } from "./state";
 import { Toolbar } from "./Toolbar";
 import { useViewState } from "./useViewState";
 
@@ -126,6 +129,23 @@ export function App({ view: whole }: { view: View }) {
     () => (change || state.proposal === null ? whole : proposalView(whole, state.proposal)),
     [whole, change, state.proposal],
   );
+  // 17: the Screen of the Centre, drawn instead of the tree: never in a Change
+  // View (knownIds), and in a Proposal over the Proposal's View.
+  const centre = drawnCentre(proposed, state);
+  const onScreen = centre !== null;
+  const screen = useMemo(
+    () => (centre === null ? null : screenOf(proposed, centre, state.more)),
+    [proposed, centre, state.more],
+  );
+  const drawing = useMemo(() => screen && placeScreen(screen), [screen]);
+  const canEnter = centreOf(proposed, state.selected) !== null;
+  const lens = () => update((s) => (s.centre === null ? enter(proposed, s) : leave(proposed, s)));
+  const recentre = (id: string) => {
+    const c = centreOf(proposed, id);
+    if (c !== null) update((s) => centreAt(s, c));
+  };
+  // The Panel shows the Centre until the reader closes it, then the next one.
+  const [closed, setClosed] = useState<string | null>(null);
   // The Change View opens on the changed subgraph (Q4); U10 toggles to all of
   // it. A link whose focus lies outside the subgraph opens all of it, at that
   // focus: from the start, and on a later hashchange.
@@ -146,7 +166,7 @@ export function App({ view: whole }: { view: View }) {
   const sceneOf = useMemo(() => {
     const at = new Map<string, Scene>();
     const made = (s: ViewState, base: Scene | null): Scene => {
-      const k = JSON.stringify(s);
+      const k = JSON.stringify({ ...s, centre: null, more: false }); // 17: the Screen draws no tree
       const hit = at.get(k);
       if (hit) return hit;
       if (at.size >= SCENES) at.clear();
@@ -206,7 +226,7 @@ export function App({ view: whole }: { view: View }) {
   const [placed, setPlaced] = useState<Drawing | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   useEffect(() => {
-    if (ask) return;
+    if (ask || onScreen) return; // 17: the Screen needs no layout
     const made = { whole, view, sc };
     performance.mark("zu-layout-start");
     if (frames.current.size > FRAMES) frames.current.clear();
@@ -222,7 +242,7 @@ export function App({ view: whole }: { view: View }) {
         if (!(e instanceof Superseded)) setFailed(e.message);
       },
     );
-  }, [engine, graph, heads, ask]);
+  }, [engine, graph, heads, ask, onScreen]);
 
   const go = (box: string) => {
     update((s) => drill(s, box));
@@ -237,14 +257,26 @@ export function App({ view: whole }: { view: View }) {
     update((s) => ({ ...drill(s, ""), selected: id }));
     setCenter((c) => ({ id, seq: (c?.seq ?? 0) + 1 }));
   };
+  // 17: the tree comes back centred on its selection, however the Screen was
+  // left (s, Esc, Back): its pan and zoom are not kept while a Screen is drawn.
+  const wasScreen = useRef(onScreen);
+  useEffect(() => {
+    if (wasScreen.current && !onScreen && state.selected !== null) {
+      const id = state.selected;
+      setCenter((c) => ({ id, seq: (c?.seq ?? 0) + 1 }));
+    }
+    wasScreen.current = onScreen;
+  }, [onScreen, state.selected]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const a = keyAction(e.key, {
         searchOpen,
         selected: state.selected !== null,
         atRoot: upTo(view, state.focus) === null,
-        typing: e.target instanceof HTMLInputElement,
+        // A checkbox (every box, externals) keeps the focus after a click but takes no keys.
+        typing: e.target instanceof HTMLInputElement && e.target.type !== "checkbox",
         mod: e.metaKey || e.ctrlKey || e.altKey,
+        screen: onScreen,
       });
       if (a === "search") {
         e.preventDefault();
@@ -256,10 +288,11 @@ export function App({ view: whole }: { view: View }) {
       else if (a === "declutter") update((s) => ({ ...s, stage: nextStage(s.stage) }));
       else if (a === "deeper") update((s) => deeper(s, sc.depth));
       else if (a === "shallower") update((s) => shallower(s, sc.depth));
+      else if (a === "lens") lens();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [view, state, sc.depth, update, searchOpen]);
+  }, [view, proposed, state, sc.depth, update, searchOpen]);
 
   const open = (n: SceneNode) => {
     if (n.shape === "box" || n.shape === "container") go(n.id);
@@ -297,15 +330,36 @@ export function App({ view: whole }: { view: View }) {
         onFocus={go}
         full={change ? full : undefined}
         onToggle={flip}
+        screen={screen ? screenNote(screen) : undefined}
       />
       <div className="bar">
-        <Toolbar
-          state={state}
-          depth={sc.depth}
-          update={update}
-          proposals={change ? [] : (whole.policy?.proposals ?? []).map((p) => p.name)}
-        />
-        <SearchBox view={proposed} input={searchBox} onOpen={setSearchOpen} onPick={jump} />
+        {!change && (
+          <div className="toolbar" role="toolbar" aria-label="Lens">
+            <button
+              type="button"
+              aria-pressed={onScreen}
+              disabled={!onScreen && !canEnter}
+              title={onScreen ? "Back to the tree (s)" : canEnter ? "Draw the selection's Screen (s)" : "Select a package or declaration to draw its Screen (s)"}
+              onClick={lens}
+            >
+              Screen
+            </button>
+            {screen && (state.more || screen.above.more > 0 || screen.below.more > 0) && (
+              <label>
+                <input type="checkbox" checked={state.more} onChange={(e) => update((s) => ({ ...s, more: e.target.checked }))} /> every box
+              </label>
+            )}
+          </div>
+        )}
+        {!onScreen && (
+          <Toolbar
+            state={state}
+            depth={sc.depth}
+            update={update}
+            proposals={change ? [] : (whole.policy?.proposals ?? []).map((p) => p.name)}
+          />
+        )}
+        <SearchBox view={proposed} input={searchBox} onOpen={setSearchOpen} onPick={onScreen ? recentre : jump} />
       </div>
       {change && <ChangedList view={whole} onPick={pick} />}
       <main className="canvas">
@@ -314,7 +368,7 @@ export function App({ view: whole }: { view: View }) {
             {PROPOSAL_NOTICE}: {state.proposal}
           </div>
         )}
-        {!sc.noDetail && (
+        {!sc.noDetail && !onScreen && (
           <Legend
             change={change}
             policy={rules}
@@ -325,7 +379,7 @@ export function App({ view: whole }: { view: View }) {
             hubs={sc.nodes.some((n) => n.hub)}
           />
         )}
-        {sc !== requested && (
+        {sc !== requested && !onScreen && (
           <div className="notice" id="zu-notice" role="status">
             Collapsed to depth {sc.depth}: depth {requested.depth} has{" "}
             {requested.lines && requested.edges.length > DRAW_LIMIT.edges
@@ -339,7 +393,11 @@ export function App({ view: whole }: { view: View }) {
             </button>
           </div>
         )}
-        {sc.noDetail ? (
+        {drawing ? (
+          <ReactFlowProvider key={`${centre}\n${state.more}`}>
+            <ScreenCanvas drawing={drawing} onCentre={recentre} onMore={() => update((s) => ({ ...s, more: true }))} fit={fit} />
+          </ReactFlowProvider>
+        ) : sc.noDetail ? (
           <div className="empty">
             Declarations not included. Re-run with <code>-include {pkg}</code>
           </div>
@@ -389,7 +447,17 @@ export function App({ view: whole }: { view: View }) {
           </div>
         )}
       </main>
-      {(state.selected !== null || edge !== null) && (
+      {centre !== null && closed !== centre && (
+        <Panel
+          view={proposed}
+          id={isBox(proposed, centre + PKG) ? centre + PKG : centre}
+          edge={null}
+          bundles={[]}
+          onReveal={recentre}
+          onClose={() => setClosed(centre)}
+        />
+      )}
+      {!onScreen && (state.selected !== null || edge !== null) && (
         <Panel
           view={proposed}
           id={state.selected}

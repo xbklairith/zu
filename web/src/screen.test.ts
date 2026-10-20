@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import golden from "../../internal/export/testdata/shop.view.golden.json";
+import css from "./styles.css?raw";
 import change from "../../internal/export/testdata/shop.change.golden.json";
 import type { View, ViewEdge } from "./data";
 import { ROW_MAX } from "./layout";
-import { centreOf, GAP_ROW, placeScreen, ROW_CAP, screenOf, type Drawn } from "./screen";
+import { centreOf, FONT, GAP_ROW, placeScreen, ROW_CAP, screenNote, screenOf, type Drawn } from "./screen";
+import { LABEL_PX } from "./viewport";
 import { decl, edge, exts, pkgs, view } from "./testkit";
 
 const shop = golden as unknown as View;
@@ -156,5 +158,34 @@ describe("placeScreen", () => {
     expect(up).toHaveLength(ROW_CAP + 1);
     expect(up[ROW_CAP]).toMatchObject({ id: "up:#more", ref: null, label: `+${60 - ROW_CAP} more` });
     expect(p.edges.some((e) => e.from === "up:#more")).toBe(false);
+  });
+});
+
+describe("the Screen's styles (17)", () => {
+  it("draws each size's label at the px placeScreen sized it for", () => {
+    const px = (size: string) => new RegExp(`\\.node\\.screen-box\\.${size} \\.label[^{]*\\{[^}]*font-size: (\\d+)px`).exec(css)?.[1];
+    expect([px("medium"), px("large"), px("centre")].map(Number)).toEqual([FONT.medium, FONT.large, FONT.centre]);
+    expect(FONT.small).toBe(LABEL_PX); // .node's own size, so the floor zoom keeps every label readable
+  });
+});
+
+describe("screenNote (17)", () => {
+  it("says what the rows and sizes are, and what the Screen leaves out", () => {
+    expect(screenNote(screenOf(shop, S))).toBe("Above: what imports it. Below: what it imports. Size: files that import.");
+    expect(screenNote(screenOf(shop, `${S}.Repo`))).toBe(
+      "Above: what calls or embeds it. Below: what it calls or embeds. Size: √(uses × declarations). " +
+      "Not drawn: 1 call or embed out of it, with declarations in packages not included (re-run with -include); " +
+      "4 unresolved calls in its package.");
+    expect(screenNote({ ...screenOf(shop, `${S}.Repo`), offIn: 2, unresolved: 0 })).toBe(
+      "Above: what calls or embeds it. Below: what it calls or embeds. Size: √(uses × declarations). " +
+      "Not drawn: 2 calls and embeds into it and 1 call or embed out of it, with declarations in packages not included (re-run with -include).");
+    expect(screenNote(screenOf(shop, `${S}.Status`))).toBe(
+      "Above: what calls or embeds it. Below: what it calls or embeds. Size: √(uses × declarations). " +
+      "Not drawn: 4 unresolved calls in its package.");
+  });
+  it("marks a box drawn in both rows ↻", () => {
+    const p = placeScreen(screenOf(view(pkgs(["m/a", "m/b", "m/c"], "m"), [edge("m/a", "m/b"), edge("m/b", "m/a"), edge("m/c", "m/a")]), "m/a"));
+    expect(p.nodes.filter((n) => n.row !== "centre").map((n) => [n.id, n.facts]))
+      .toEqual([["up:m/b", "↻ 1 file"], ["up:m/c", "1 file"], ["down:m/b", "↻ 1 file"]]);
   });
 });

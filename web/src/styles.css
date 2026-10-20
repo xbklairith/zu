@@ -236,6 +236,47 @@ pre {
   color: var(--dim);
 }
 
+/* 17: the Screen. A box's label is drawn at its Weight's size (screen.ts
+   FONT), its package or module and what its Weight is made of under it; an
+   external is an oval, as in the tree; "+N more" is dashed. */
+.node.screen-box {
+  background: var(--box);
+  border: 1px solid var(--box-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.node.screen-box.medium .label {
+  font-size: 13px;
+}
+
+.node.screen-box.large .label,
+.node.screen-box.centre .label {
+  font-size: 15px;
+}
+
+.node.screen-box.centre {
+  cursor: default;
+}
+
+.node.screen-box.k-external {
+  background: var(--bg);
+  border-radius: 999px;
+  text-align: center;
+}
+
+.node.screen-box.k-more {
+  background: var(--bg);
+  border-style: dashed;
+}
+
+.node.screen-box .sub,
+.node.screen-box .facts {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 .node.selected {
   outline: 2px solid var(--accent);
 }

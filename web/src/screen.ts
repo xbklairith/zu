@@ -128,7 +128,7 @@ const GAP_LINE = 12; // between the lines of a row
 const GAP_BOX = 16; // between the boxes of a line
 // The label px, as in styles.css: small is .node's own size, so the floor zoom
 // (viewport.ts FLOOR) draws no Screen label under READABLE_PX.
-const FONT: Record<Size | "centre", number> = { small: 12, medium: 13, large: 15, centre: 15 };
+export const FONT: Record<Size | "centre", number> = { small: 12, medium: 13, large: 15, centre: 15 };
 const MIN_W: Record<Size | "centre", number> = { small: 72, medium: 90, large: 120, centre: 160 };
 const SMALL_PX = 11; // .screen-box .sub and .facts
 const LINE = 14; // a .sub or .facts line
@@ -198,7 +198,7 @@ export function placeScreen(s: Screen): ScreenDrawing {
   const edges: ScreenDrawing["edges"] = [];
   for (const [row, r, prefix] of [["above", s.above, "up:"], ["below", s.below, "down:"]] as const) {
     const drawn = r.boxes.map((b) =>
-      sized({ id: prefix + b.id, ref: b.id, row, kind: b.kind, label: b.label, sub: b.sub, facts: factsOf(s.grain, b), size: b.size, both: b.both }));
+      sized({ id: prefix + b.id, ref: b.id, row, kind: b.kind, label: b.label, sub: b.sub, facts: (b.both ? "↻ " : "") + factsOf(s.grain, b), size: b.size, both: b.both }));
     if (r.more > 0) drawn.push(sized({ id: prefix + "#more", ref: null, row, kind: "more", label: `+${r.more} more`, sub: "", facts: "", size: "small", both: false }));
     let edge = row === "above" ? -GAP_ROW : centre.h + GAP_ROW; // the line's side nearest the Centre
     for (const line of lines(drawn).map(outward)) {
@@ -217,4 +217,20 @@ export function placeScreen(s: Screen): ScreenDrawing {
     }
   }
   return { nodes, edges };
+}
+
+// screenNote says what a Screen's rows and sizes are, and what it leaves out
+// (silence is how a diagram lies): calls and embeds, into it and out of it,
+// with declarations the page does not hold, and its package's Unresolved
+// Calls (ADR 0002).
+export function screenNote(s: Screen): string {
+  if (s.grain === "package") return "Above: what imports it. Below: what it imports. Size: files that import.";
+  const uses = (n: number, way: string) => n > 0 && `${plural(n, "call or embed", "calls and embeds")} ${way}`;
+  const off = [uses(s.offIn, "into it"), uses(s.offOut, "out of it")].filter(Boolean);
+  const out = [
+    off.length > 0 && `${off.join(" and ")}, with declarations in packages not included (re-run with -include)`,
+    s.unresolved > 0 && `${plural(s.unresolved, "unresolved call", "unresolved calls")} in its package`,
+  ].filter(Boolean);
+  return "Above: what calls or embeds it. Below: what it calls or embeds. Size: √(uses × declarations)."
+    + (out.length ? ` Not drawn: ${out.join("; ")}.` : "");
 }

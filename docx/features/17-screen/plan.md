@@ -1500,7 +1500,7 @@ The browser check, `screen.mjs`, runs in Chromium, Firefox and WebKit, on three 
 
 **Steps:**
 
-- [ ] **Write the failing tests and browser check**
+- [x] **Write the failing tests and browser check**
 
 ```diff
 diff --git a/web/e2e/package.json b/web/e2e/package.json
@@ -1827,13 +1827,13 @@ index a4ebd79..3006283 100644
 +});
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/keys.test.ts src/screen.test.ts` Expected: FAIL (5 tests: `s` maps to nothing and `d` still declutters on the Screen; `FONT` is undefined; `screenNote` is not a function; no box is marked ↻)
+- [x] **Run:** `cd web && npx vitest run src/keys.test.ts src/screen.test.ts` Expected: FAIL (5 tests: `s` maps to nothing and `d` still declutters on the Screen; `FONT` is undefined; `screenNote` is not a function; no box is marked ↻)
 
-- [ ] **Run:** `cd web && npx vite build >/dev/null && cd e2e && node screen.mjs` Expected: FAIL (the page has no Lens toolbar: the first wait, for the Screen button, times out, so 0/14 checks pass in each engine)
+- [x] **Run:** `cd web && npx vite build >/dev/null && cd e2e && node screen.mjs` Expected: FAIL (the page has no Lens toolbar: the first wait, for the Screen button, times out, so 0/14 checks pass in each engine)
 
-- [ ] **Run:** `cd web && npx vite build >/dev/null && cd .. && go build -o bin/zu ./cmd/zu && cd web/e2e && node serve.mjs` Expected: FAIL (lost: no Screen is drawn; 10/11 checks pass in each engine)
+- [x] **Run:** `cd web && npx vite build >/dev/null && cd .. && go build -o bin/zu ./cmd/zu && cd web/e2e && node serve.mjs` Expected: FAIL (lost: no Screen is drawn; 10/11 checks pass in each engine)
 
-- [ ] **Draw the Screen**
+- [x] **Draw the Screen**
 
 ```diff
 diff --git a/web/src/App.tsx b/web/src/App.tsx
@@ -2447,13 +2447,13 @@ index 5786df4..4fe36b4 100644
      if (read.current === view) return;
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node screen.mjs` Expected: PASS (14 checks in each engine)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node screen.mjs` Expected: PASS (14 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS (11 checks in each engine)
+- [x] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS (11 checks in each engine)
 
-- [ ] **Commit:** `Draw the Screen: s centres the selection, a click re-centres, Back returns`
+- [x] **Commit:** `Draw the Screen: s centres the selection, a click re-centres, Back returns`
 
 ---
 

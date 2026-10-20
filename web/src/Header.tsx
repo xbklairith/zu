@@ -17,9 +17,10 @@ type Props = {
   against?: number; // 11: dependencies against the rows (rank.ts); undefined draws no count
   full?: boolean; // Change View only: showing the full project, not the changed subgraph
   onToggle?: () => void;
+  screen?: string; // 17: the Screen is drawn: its note replaces the tree's crumbs and counts
 };
 
-export function Header({ view, focus, home = "", boxes, folded = 0, depth, onFocus, auto, from, hidden = 0, against, full, onToggle }: Props) {
+export function Header({ view, focus, home = "", boxes, folded = 0, depth, onFocus, auto, from, hidden = 0, against, full, onToggle, screen }: Props) {
   const compare = view.links?.compare?.startsWith("https://") ? view.links.compare : null;
   const [showErrors, setShowErrors] = useState(false);
   const errors = view.honesty.parseErrors;
@@ -45,42 +46,50 @@ export function Header({ view, focus, home = "", boxes, folded = 0, depth, onFoc
           ))}
         </ul>
       )}
-      <nav className="crumbs" aria-label="Focus">
-        {breadcrumb(view, focus, home).map((c, i, all) => (
-          <span key={c.id}>
-            {i > 0 && <span className="sep"> / </span>}
-            {i === all.length - 1 ? (
-              <strong>{c.label}</strong>
-            ) : (
-              <button type="button" className="link" onClick={() => onFocus(c.id)}>
-                {c.label}
-              </button>
+      {screen !== undefined ? (
+        <p className="note" id="zu-screen">
+          {screen}
+        </p>
+      ) : (
+        <>
+          <nav className="crumbs" aria-label="Focus">
+            {breadcrumb(view, focus, home).map((c, i, all) => (
+              <span key={c.id}>
+                {i > 0 && <span className="sep"> / </span>}
+                {i === all.length - 1 ? (
+                  <strong>{c.label}</strong>
+                ) : (
+                  <button type="button" className="link" onClick={() => onFocus(c.id)}>
+                    {c.label}
+                  </button>
+                )}
+              </span>
+            ))}
+          </nav>
+          <p className="note">
+            {depthNote(boxes, depth, auto, from, folded)}
+            {hidden > 0 && <span id="zu-edges"> {edgesNote(hidden)}</span>}
+            {against !== undefined && against > 0 && <span id="zu-against"> {againstNote(against)}</span>}
+            {full !== undefined && (
+              <>
+                {" "}
+                {full ? "Showing every package." : "Showing the changed packages and their direct importers."}{" "}
+                <button type="button" className="link" onClick={onToggle}>
+                  {full ? "Show changed subgraph" : "Show full project"}
+                </button>
+              </>
             )}
-          </span>
-        ))}
-      </nav>
-      <p className="note">
-        {depthNote(boxes, depth, auto, from, folded)}
-        {hidden > 0 && <span id="zu-edges"> {edgesNote(hidden)}</span>}
-        {against !== undefined && against > 0 && <span id="zu-against"> {againstNote(against)}</span>}
-        {full !== undefined && (
-          <>
-            {" "}
-            {full ? "Showing every package." : "Showing the changed packages and their direct importers."}{" "}
-            <button type="button" className="link" onClick={onToggle}>
-              {full ? "Show changed subgraph" : "Show full project"}
-            </button>
-          </>
-        )}
-        {compare && (
-          <>
-            {" · "}
-            <a href={compare} target="_blank" rel="noopener noreferrer">
-              {compareLabel(view.links, view.base?.commit, view.head.commit)}
-            </a>
-          </>
-        )}
-      </p>
+            {compare && (
+              <>
+                {" · "}
+                <a href={compare} target="_blank" rel="noopener noreferrer">
+                  {compareLabel(view.links, view.base?.commit, view.head.commit)}
+                </a>
+              </>
+            )}
+          </p>
+        </>
+      )}
     </header>
   );
 }

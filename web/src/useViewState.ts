@@ -2,6 +2,8 @@
 // start, written after every change, and read again when the reader edits or
 // pastes a link (hashchange), or when zu serve's watch sends a new View (13),
 // which drops what the View no longer has, such as a deleted selection.
+// 17: a change of the Screen's Centre adds a history entry (storeHash); the
+// browser's Back and Forward to it fire hashchange.
 import { useEffect, useRef, useState } from "react";
 import type { View } from "./data";
 import { readHash, revalidate } from "./proposal";
@@ -10,8 +12,8 @@ import { storeHash, type ViewState } from "./state";
 export function useViewState(view: View): [ViewState, (next: (s: ViewState) => ViewState) => void] {
   const [state, setState] = useState(() => readHash(window.location.hash, view));
   useEffect(() => {
-    storeHash(window.location, window.history, state);
-  }, [state]);
+    storeHash(window.location, window.history, state, readHash(window.location.hash, view));
+  }, [state, view]);
   const read = useRef(view);
   useEffect(() => {
     if (read.current === view) return;
