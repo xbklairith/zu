@@ -16,6 +16,17 @@ describe("search", () => {
     expect(search(v, "Get").map((h) => [h.id, h.name])).toEqual([["m/store.Repo.Get", "Repo.Get"]]);
     expect(search(v, "  ")).toEqual([]);
   });
+  it("ranks word starts between prefixes and substrings (17)", () => {
+    const w = view([
+      ...pkgs(["m/a"], "m", { detail: true }),
+      decl("m/a.ReadWriter", "m/a"), decl("m/a.HTTPServer", "m/a"), decl("m/a.rwLock", "m/a"),
+      decl("m/a.newWaveSpawner", "m/a", "function"),
+    ]);
+    expect(search(w, "RW").map((h) => h.name)).toEqual(["rwLock", "ReadWriter"]); // a prefix first
+    expect(search(w, "wsp").map((h) => h.name)).toEqual(["newWaveSpawner"]); // from any word, in any case
+    expect(search(w, "HSe").map((h) => h.name)).toEqual(["HTTPServer"]); // capitals before a word are one word
+    expect(search(w, "ns")).toEqual([]); // the words are consecutive: New, Spawner skips Wave
+  });
   it("reveal draws and selects the target, a method as a row of its type", () => {
     for (const id of ["m/store/sql", "m/store.Repo", "m/store.Repo.Get", "x.io/e3"]) {
       expect(scene(v, reveal(v, id)).selected, id).not.toBeNull();

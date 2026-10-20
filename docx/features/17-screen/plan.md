@@ -459,7 +459,7 @@ The code tries each query position at each word once. Without that, 2,000 contri
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 diff --git a/web/src/search.test.ts b/web/src/search.test.ts
@@ -486,9 +486,9 @@ index 4d5aa01..15291e2 100644
        expect(scene(v, reveal(v, id)).selected, id).not.toBeNull();
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/search.test.ts` Expected: FAIL (1 test: `RW` finds only `rwLock`)
+- [x] **Run:** `cd web && npx vitest run src/search.test.ts` Expected: FAIL (1 test: `RW` finds only `rwLock`)
 
-- [ ] **Rank word starts between name prefixes and id substrings**
+- [x] **Rank word starts between name prefixes and id substrings**
 
 ```diff
 diff --git a/web/src/search.ts b/web/src/search.ts
@@ -549,9 +549,9 @@ index fb5a2d5..3193e76 100644
    scored.sort(([ra, a], [rb, b]) => ra - rb || a.id.length - b.id.length || cmp(a.id, b.id));
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Commit:** `Match a name's word starts in search`
+- [x] **Commit:** `Match a name's word starts in search`
 
 ---
 

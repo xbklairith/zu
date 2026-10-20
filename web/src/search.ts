@@ -15,16 +15,48 @@ function name(view: View, id: string): string {
   return id.slice((packageOf(view, id) ?? "").length + 1);
 }
 
-// search ranks exact names, then name prefixes, then any id substring
-// (case-insensitive), shorter ids first, then by id.
+// words splits a name where a reader sees words start (17): at a separator,
+// at a capital after a small letter, before the capital that starts a word
+// ("HTTPServer" is HTTP, Server), and at digits. Kept per View: search runs
+// on every key.
+const wordsOf = new WeakMap<View, Map<string, string[]>>();
+function words(view: View, id: string, nm: string): string[] {
+  if (!wordsOf.has(view)) wordsOf.set(view, new Map());
+  const at = wordsOf.get(view)!;
+  let ws = at.get(id);
+  if (!ws) at.set(id, (ws = (nm.match(/[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+/g) ?? []).map((w) => w.toLowerCase())));
+  return ws;
+}
+
+// wordStart says q is made of the starts of consecutive words of a name,
+// from any word: "wsp" finds newWaveSpawner, "HSe" HTTPServer. Each query
+// position is tried at each word once, so no name takes more than q × words.
+function wordStart(q: string, ws: string[]): boolean {
+  const failed = new Set<number>();
+  const from = (i: number, j: number): boolean => {
+    if (i === q.length) return true;
+    if (j === ws.length || failed.has(i * ws.length + j)) return false;
+    for (let k = Math.min(q.length - i, ws[j].length); k > 0; k--) {
+      if (ws[j].startsWith(q.slice(i, i + k)) && from(i + k, j + 1)) return true;
+    }
+    failed.add(i * ws.length + j);
+    return false;
+  };
+  return ws.some((_, j) => from(0, j));
+}
+
+// search ranks exact names, then name prefixes, then word starts (17), then
+// any id substring (case-insensitive), shorter ids first, then by id.
 export function search(view: View, query: string, limit = 20): Hit[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
+  const plain = /^[a-z0-9]+$/.test(q); // word starts are letters and digits
   const scored: [number, Hit][] = [];
   for (const n of view.nodes) {
     const nm = name(view, n.id);
     const low = nm.toLowerCase();
-    const rank = low === q || low.endsWith("." + q) ? 0 : low.startsWith(q) ? 1 : n.id.toLowerCase().includes(q) ? 2 : -1;
+    const rank = low === q || low.endsWith("." + q) ? 0 : low.startsWith(q) ? 1
+      : plain && wordStart(q, words(view, n.id, nm)) ? 2 : n.id.toLowerCase().includes(q) ? 3 : -1;
     if (rank >= 0) scored.push([rank, { id: n.id, kind: n.kind, name: nm }]);
   }
   scored.sort(([ra, a], [rb, b]) => ra - rb || a.id.length - b.id.length || cmp(a.id, b.id));
