@@ -1,6 +1,6 @@
 # 20 · Diff Code — Plan
 
-**Status:** APPROVED 2026-10-20 (lead, after scrutiny-20, its fixes and the replay; advisor sign-off). Held: it queues behind 16, 17, 18 and 19, which are approved and held. zu builds them in order 16, 17, 18, 19, 20, and builds any only when the user says go.
+**Status:** Implemented 2026-10-21 (Tasks 1–5 on `build-16-20`; `acceptance.md`; the user's check is owed). APPROVED 2026-10-20 (lead, after scrutiny-20, its fixes and the replay; advisor sign-off). Held: it queues behind 16, 17, 18 and 19, which are approved and held. zu builds them in order 16, 17, 18, 19, 20, and builds any only when the user says go.
 
 **Base.** Every diff here is against `main` with 16's, 17's, 18's and 19's plans applied, in that order, 19's as revised twice on 2026-10-20. `main` then differs from a18ff85 only by plan documents. The diffs come from a scratch branch. Its first commit is a `git archive` of a18ff85 with 16's to 19's tasks applied (19's revised scratch head). After it come one commit per red step and one per green step. The plan was replayed on a fresh `git archive` of `main`, after 16's to 19's replays (**Replay record**). Once those four land, replay this plan again on `main` (**Overlap with 16 to 19**).
 
@@ -2382,21 +2382,21 @@ index 2ae8b0e..7419165 100644
 
 **Steps:**
 
-- [ ] **Run:** `make check` Expected: PASS (read the lint output)
+- [x] **Run:** `make check` Expected: PASS (read the lint output)
 
-- [ ] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (57 checks in each engine)
+- [x] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (57 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node place.mjs` Expected: PASS (9 checks in each engine)
+- [x] **Run:** `cd web/e2e && node place.mjs` Expected: PASS (9 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS (11 checks in each engine)
+- [x] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS (11 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node screen.mjs` Expected: PASS (23 checks in each engine)
+- [x] **Run:** `cd web/e2e && node screen.mjs` Expected: PASS (23 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node code.mjs` Expected: PASS (13 checks in each engine)
+- [x] **Run:** `cd web/e2e && node code.mjs` Expected: PASS (13 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node diffcode.mjs` Expected: PASS (14 checks in each engine)
+- [x] **Run:** `cd web/e2e && node diffcode.mjs` Expected: PASS (14 checks in each engine)
 
-- [ ] **Measure** (by hand; not a replay step).
+- [x] **Measure** (by hand; not a replay step).
   1. Copy the Test Corpus's hugo, cobra and kubernetes clones out of `.zu/corpus/` (`cp -cR`), with their history. The corpus is read-only: never clone, edit or check out in it.
   2. Build `bin/zu` at this plan's base, and at its last task, into two checkouts.
   3. In each, run `node docx/features/20-diff-code/measure.mjs <checkout> <out> <copy>:<base>…` on the same changes: hugo `HEAD~10` and `HEAD~100`, cobra `HEAD~60`, kubernetes `HEAD~40` and `HEAD~400`.
@@ -2416,7 +2416,7 @@ index 2ae8b0e..7419165 100644
   4. Select a function that moved. Its diff is its old text against its new.
   5. In `zu serve` without `-base` (a Project View), select a declaration with many rows. Its panel opens at its top, its rows first, and its code box shows its line.
 
-- [ ] **Commit:** `Record Diff Code's acceptance`
+- [x] **Commit:** `Record Diff Code's acceptance`
 
 ---
 

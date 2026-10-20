@@ -69,6 +69,10 @@ On a Screen in a Change View (18), where a reversed import's far end was in base
 
 The part of a declaration's panel that shows its file (19): Go coloured by zu, the declaration's line marked. Of a file past 5,000 lines it shows the 5,000 around that line. Pointing at a call or embed, in the panel's lists or on the Screen, lights the lines it is written on, and a note says where they are, including places in other files. In an HTML Export the file is inlined; in `zu serve` without `-include` it is read on demand.
 
+## Declaration Diff
+
+In a Change View, a changed declaration's own diff (20): its whole text at Base, from its doc comment to its last line, against its whole text at head, numbered on both sides and coloured. A removed declaration shows its text at Base, and a Move its source's text against its own. An added declaration has none: its Code Panel shows its text.
+
 ## Foreign
 
 An external module drawn as an oval outside the Package Tree. The Policy can collapse
@@ -160,6 +164,7 @@ the UI, the IR and only the source worth reading: meaningfully changed files in 
 Change View, explicitly included packages in a Project View. Opens in any browser with
 no zu install, server or network. Carries the same sensitivity as the source it holds.
 Inlined source carries its colour (19).
+A Change View also inlines the Base text of each changed declaration (20).
 
 ## Meaningful Change
 
@@ -172,6 +177,7 @@ nor pull source into an HTML Export.
 The intermediate representation `zu scan` writes: every package, type and function of
 a repository at one ref, the dependencies between them, and a source location for each.
 The only thing any view reads. Same inputs, byte-identical IR.
+Its lines are each file's own: a `//line` directive does not move them (20).
 
 ## Part
 
