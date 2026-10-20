@@ -259,7 +259,7 @@ The green step adds one case it found: a comment where the scanner inserts a sem
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/internal/export/project_test.go b/internal/export/project_test.go
@@ -407,9 +407,9 @@ index 0000000..dd3a1d0
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/export -run 'TestProjectKeepsEveryLocation|TestProjectColoursEachSource|TestSyntax'` Expected: FAIL (the build fails: `imp.More undefined (type Edge has no field or method More)`, `v.Syntax undefined (type *View has no field or method Syntax)`)
+- [x] **Run:** `go test ./internal/export -run 'TestProjectKeepsEveryLocation|TestProjectColoursEachSource|TestSyntax'` Expected: FAIL (the build fails: `imp.More undefined (type Edge has no field or method More)`, `v.Syntax undefined (type *View has no field or method Syntax)`)
 
-- [ ] **Keep `more`, and colour each inlined source**
+- [x] **Keep `more`, and colour each inlined source**
 
 ```diff
 diff --git a/internal/export/project.go b/internal/export/project.go
@@ -678,11 +678,11 @@ index f427c3b..846ec9b 100644
    hunks?: Record<string, Hunk[]>;
 ```
 
-- [ ] **Run:** `go test ./internal/export -update` Expected: PASS (it rewrites the two View goldens: each gains `syntax`, 347 and 505 lines; review the diff, which adds no other key)
+- [x] **Run:** `go test ./internal/export -update` Expected: PASS (it rewrites the two View goldens: each gains `syntax`, 347 and 505 lines; review the diff, which adds no other key)
 
-- [ ] **Run:** `go test ./... && cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `go test ./... && cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Commit:** `Keep every line of a call or embed, and colour inlined Go`
+- [x] **Commit:** `Keep every line of a call or embed, and colour inlined Go`
 
 ---
 

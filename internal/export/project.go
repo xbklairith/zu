@@ -89,7 +89,8 @@ func Project(doc *ir.IR, include []Pattern, read ReadFunc) (*View, error) {
 	return v, nil
 }
 
-// addSources inlines each file, refusing any path that could leave the repository.
+// addSources inlines each file with its Syntax (19), refusing any path that
+// could leave the repository.
 func addSources(v *View, files map[string]bool, read ReadFunc) error {
 	paths := make([]string, 0, len(files))
 	for p := range files {
@@ -105,6 +106,10 @@ func addSources(v *View, files map[string]bool, read ReadFunc) error {
 			return fmt.Errorf("read source %s: %w", p, err)
 		}
 		v.Sources[p] = string(b)
+		if v.Syntax == nil {
+			v.Syntax = map[string][][]int{}
+		}
+		v.Syntax[p] = Syntax(b)
 	}
 	return nil
 }

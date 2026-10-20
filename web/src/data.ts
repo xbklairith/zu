@@ -15,6 +15,7 @@ export type ViewNode = {
 export type ViewEdge = {
   from: string; to: string; kind: "imports" | "calls" | "embeds"; count: number; loc: Loc; status?: string;
   violation?: Violation["rule"]; // 06: the Policy rule this import breaks
+  more?: Loc[]; // 19: a call's or an embed's locations after loc
 };
 export type Ref = { commit: string; dirty: boolean };
 export type Hunk = { baseStart: number; baseLines: number; headStart: number; headLines: number; lines: string[] };
@@ -35,6 +36,9 @@ export type Metrics = {
 export type View = {
   schema: string; kind: "project" | "change"; tool: string; head: Ref; base?: Ref; changed?: string[];
   modules: string[]; nodes: ViewNode[]; edges: ViewEdge[]; sources: Record<string, string>;
+  // 19: each source's colour, export.Syntax: per line, runs [column, length, class]
+  // flat, in UTF-16 units (code.ts paint).
+  syntax?: Record<string, number[][]>;
   // 14: base, files and nodes only in a Change View (export.DiffLinks).
   links?: { blob: string; compare?: string; mr?: string; base?: string; files?: Record<string, string>; nodes?: Record<string, string> };
   hunks?: Record<string, Hunk[]>;

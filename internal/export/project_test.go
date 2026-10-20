@@ -3,6 +3,7 @@ package export
 import (
 	"encoding/json"
 	"os"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -118,6 +119,60 @@ func TestProjectCountsCallsOffThePage(t *testing.T) {
 			if n.Kind != "type" && n.Kind != "function" && (n.OffIn != 0 || n.OffOut != 0) {
 				t.Errorf("%s: %s %s counts calls off the page", include, n.Kind, n.ID)
 			}
+		}
+	}
+}
+
+// 19: the Code panel lights every line behind a call or an embed, so the
+// View keeps each one: loc is the first, more the rest, each with its path
+// (a declaration in several files, as build variants are, calls from each).
+// An import keeps its first only: no Code panel shows a package's files.
+func TestProjectKeepsEveryLocationOfACallOrEmbed(t *testing.T) {
+	at := func(path string, line int) ir.Location { return ir.Location{Path: path, Line: line} }
+	doc := &ir.IR{
+		Nodes: []ir.Node{
+			{ID: "m", Kind: ir.KindPackage, Module: "m", Locations: []ir.Location{at("a.go", 1)}},
+			{ID: "m/q", Kind: ir.KindPackage, Module: "m", Locations: []ir.Location{at("q/q.go", 1)}},
+			{ID: "m.F", Kind: ir.KindFunction, Parent: "m", Locations: []ir.Location{at("a.go", 3), at("b.go", 3)}},
+			{ID: "m.G", Kind: ir.KindFunction, Parent: "m", Locations: []ir.Location{at("a.go", 9)}},
+		},
+		Edges: []ir.Edge{
+			{From: "m", To: "m/q", Kind: ir.EdgeImports, Locations: []ir.Location{at("a.go", 2), at("b.go", 2)}},
+			{From: "m.F", To: "m.G", Kind: ir.EdgeCalls, Locations: []ir.Location{at("a.go", 4), at("a.go", 5), at("b.go", 4)}},
+		},
+	}
+	p, _ := ParsePattern("m", "m")
+	v, err := Project(doc, []Pattern{p}, fakeRead(map[string]bool{}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(v.Edges) != 2 {
+		t.Fatalf("edges = %+v", v.Edges)
+	}
+	imp, call := v.Edges[0], v.Edges[1]
+	if imp.Count != 2 || imp.Loc != at("a.go", 2) || imp.More != nil {
+		t.Errorf("import = %+v, want count 2 at a.go:2 and no more", imp)
+	}
+	if call.Count != 3 || call.Loc != at("a.go", 4) || !slices.Equal(call.More, []ir.Location{at("a.go", 5), at("b.go", 4)}) {
+		t.Errorf("call = %+v, want count 3 at a.go:4, more a.go:5 and b.go:4", call)
+	}
+}
+
+// 19: each source the View inlines carries its Syntax runs, so the page
+// colours it without a lexer of its own.
+func TestProjectColoursEachSource(t *testing.T) {
+	doc := shopIR(t)
+	p, _ := ParsePattern("./internal/store", RootModule(doc))
+	v, err := Project(doc, []Pattern{p}, fakeRead(map[string]bool{}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(v.Syntax) != len(v.Sources) {
+		t.Fatalf("%d sources, %d coloured", len(v.Sources), len(v.Syntax))
+	}
+	for path, text := range v.Sources {
+		if got, want := v.Syntax[path], Syntax([]byte(text)); !reflect.DeepEqual(got, want) {
+			t.Errorf("%s: syntax %v, want %v", path, got, want)
 		}
 	}
 }

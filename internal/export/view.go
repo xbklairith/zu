@@ -23,11 +23,13 @@ type View struct {
 	Nodes   []Node            `json:"nodes"`
 	Edges   []Edge            `json:"edges"`
 	Sources map[string]string `json:"sources"`
-	Links   *Links            `json:"links,omitempty"`
-	Honesty Honesty           `json:"honesty"`
-	Changed []string          `json:"changed,omitempty"` // Change View: changed packages, bottom-up
-	Hunks   map[string][]Hunk `json:"hunks,omitempty"`   // Change View: line diffs of changed files
-	Policy  *PolicyInfo       `json:"policy,omitempty"`  // only when the Policy has rules, an order or Proposals
+	// Syntax is each source's colour for the Code panel (19): Syntax(text).
+	Syntax  map[string][][]int `json:"syntax,omitempty"`
+	Links   *Links             `json:"links,omitempty"`
+	Honesty Honesty            `json:"honesty"`
+	Changed []string           `json:"changed,omitempty"` // Change View: changed packages, bottom-up
+	Hunks   map[string][]Hunk  `json:"hunks,omitempty"`   // Change View: line diffs of changed files
+	Policy  *PolicyInfo        `json:"policy,omitempty"`  // only when the Policy has rules, an order or Proposals
 	// Violations is the Change View's new, fixed and known violations (07),
 	// from the whole Summary zu diff printed.
 	Violations *diff.ViolationDelta `json:"violations,omitempty"`
@@ -71,14 +73,18 @@ type Node struct {
 	OffOut     int         `json:"offOut,omitempty"`     // declarations (17): and out of it to them
 }
 
-// Edge is an IR edge with its location count instead of every location.
+// Edge is an IR edge with its location count and first location; a call
+// or embed keeps the rest too (19), for the Code panel to light.
 type Edge struct {
-	From   string      `json:"from"`
-	To     string      `json:"to"`
-	Kind   string      `json:"kind"`
-	Count  int         `json:"count"`
-	Loc    ir.Location `json:"loc"`
-	Status string      `json:"status,omitempty"`
+	From  string      `json:"from"`
+	To    string      `json:"to"`
+	Kind  string      `json:"kind"`
+	Count int         `json:"count"`
+	Loc   ir.Location `json:"loc"`
+	// More is a call's or an embed's locations after Loc, in the IR's order:
+	// each its own path, as a declaration in several files calls from each.
+	More   []ir.Location `json:"more,omitempty"`
+	Status string        `json:"status,omitempty"`
 	// Violation is the rule this import breaks ("levels" or "cycle").
 	Violation string `json:"violation,omitempty"`
 }
@@ -127,7 +133,11 @@ func toNode(n *ir.Node) Node {
 }
 
 func toEdge(e *ir.Edge) Edge {
-	return Edge{From: e.From, To: e.To, Kind: string(e.Kind), Count: len(e.Locations), Loc: first(e.Locations)}
+	ve := Edge{From: e.From, To: e.To, Kind: string(e.Kind), Count: len(e.Locations), Loc: first(e.Locations)}
+	if e.Kind != ir.EdgeImports && len(e.Locations) > 1 {
+		ve.More = slices.Clone(e.Locations[1:])
+	}
+	return ve
 }
 
 // sortView puts every list in canonical order so the same input renders the
