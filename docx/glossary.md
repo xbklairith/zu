@@ -173,10 +173,9 @@ The intermediate representation `zu scan` writes: every package, type and functi
 a repository at one ref, the dependencies between them, and a source location for each.
 The only thing any view reads. Same inputs, byte-identical IR.
 
-
 ## Part
 
-One package's share of the IR, as `scan.Cache` keeps it between scans (16): the package node, its declarations, the edges out of them, its unresolved calls and imports, and the externals its imports reach. A rescan builds a package's part again when the package is new, when its files changed, or when a path it imports gained or lost a package, or that package's name, functions or types changed. It reuses the part otherwise. It builds every part again when the modules changed (a module's path or directory, or a require's path or line; not a version). The IR joined from parts is byte-identical to a cold scan's.
+One package's share of the IR, as `scan.Cache` keeps it between scans (16): the package node, its declarations, the edges out of them, its unresolved calls and imports, and the externals its imports reach. A rescan builds a package's part again when the package is new, when its files changed, or when a path it imports gained or lost a package, or that package's name, functions or types changed. It reuses the part otherwise. It builds every part again when the modules changed (a module's path or directory, or a require's path or line; not a version). When two of the IR's ids could meet (through a dot in a directory name, or a required module's path that is also a package's), it assembles the whole tree, as a cold scan does. The IR joined from parts is byte-identical to a cold scan's.
 
 ## Certain Call
 
