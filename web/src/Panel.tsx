@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Bundle } from "./bundle";
-import type { Hunk, Loc, View, ViewEdge, ViewNode } from "./data";
+import { around, inline, paint, type Read } from "./code";
+import type { Hunk, Loc, SourceFile, View, ViewEdge, ViewNode } from "./data";
 import { calls, imports, targets, type Row } from "./facts";
 import { isGroup, isStrip, rankNote } from "./group";
 import { diffLink, fileDiffLink, linkFor } from "./links";
@@ -20,6 +21,7 @@ type Props = {
   hidden?: ViewEdge[]; // 07: violating imports inside the selected box, drawn as no line
   crap?: Risk; // 08: the selected box's CRAP as the scene rolled it up
   ownTier?: number; // 12: the selected box's rank before the row cap merged its row
+  read?: Read; // 19: the source the View does not carry, from zu serve
   onReveal: (id: string) => void;
   onClose: () => void;
 };
@@ -147,22 +149,60 @@ function Change({ view, node }: { view: View; node: ViewNode }) {
   );
 }
 
-// Source renders file text as React text children only: never parsed as markup.
-function Source({ text, line }: { text: string; line: number }) {
+// Code renders file text as React text children only, never parsed as
+// markup, coloured as zu coloured it (19, code.ts), the line marked. Of a
+// file longer than CODE_LINES it draws those around the marked line, and
+// says which.
+function Code({ file, line }: { file: SourceFile; line: number }) {
   const mark = useRef<HTMLDivElement>(null);
+  // Each View brings its files as new objects (13): cut, paint and scroll
+  // only when the text or the marked line changes, so a redraw leaves the
+  // code where the reader scrolled it. The colour is the text's
+  // (export.Syntax), whose lines are cut as these are.
+  const all = useMemo(() => file.text.split("\n"), [file.text]);
+  const [from, to] = around(all.length, line);
+  const lines = useMemo(() => paint(all.slice(from, to), file.syntax.slice(from, to)), [all, from, to]);
   useEffect(() => {
     mark.current?.scrollIntoView({ block: "center" });
-  }, [text, line]);
+  }, [file.path, file.text, line]);
   return (
-    <pre className="source">
-      {text.split("\n").map((l, i) => (
-        <div key={i} ref={i + 1 === line ? mark : undefined} className={i + 1 === line ? "hit" : undefined}>
-          <span className="ln">{i + 1}</span>
-          {l}
-        </div>
-      ))}
-    </pre>
+    <>
+      {to - from < all.length && <p className="muted window-note">{`Lines ${from + 1}–${to} of ${all.length}.`}</p>}
+      <pre className="source">
+        {lines.map((segs, k) => {
+          const i = from + k + 1; // its line
+          return (
+            <div key={i} ref={i === line ? mark : undefined} className={i === line ? "hit" : undefined}>
+              <span className="ln">{i}</span>
+              {segs.map((s, j) => (
+                <span key={j} className={s.cls}>
+                  {s.text}
+                </span>
+              ))}
+            </div>
+          );
+        })}
+      </pre>
+    </>
   );
+}
+
+// Source is the code of the file loc is in: the View's, or (19) read from zu
+// serve, the last file read kept while the next comes. It draws nothing while
+// neither has the file.
+function Source({ view, loc, read }: { view: View; loc: Loc; read?: Read }) {
+  const own = useMemo(() => inline(view, loc.path), [view, loc.path]);
+  const [got, setGot] = useState<SourceFile | null>(null);
+  useEffect(() => {
+    if (own || !read) return;
+    let on = true;
+    read(loc.path).then((f) => on && setGot(f));
+    return () => {
+      on = false;
+    };
+  }, [own, read, loc.path]);
+  const file = own ?? (got?.path === loc.path ? got : null);
+  return file && <Code file={file} line={loc.line} />;
 }
 
 // Members lists the IR edges a bundle carries, each with where it is written.
@@ -244,7 +284,7 @@ function Crap({ view, id, box, onReveal }: { view: View; id: string; box?: Risk;
   );
 }
 
-export function Panel({ view, id, edge, bundles, hidden, crap, ownTier, onReveal, onClose }: Props) {
+export function Panel({ view, id, edge, bundles, hidden, crap, ownTier, read, onReveal, onClose }: Props) {
   const title = edge ? `${edge.from} → ${edge.to}` : (id ?? "");
   const node = id === null ? undefined : view.nodes.find((n) => n.id === (id.endsWith(PKG) ? id.slice(0, -PKG.length) : id));
   let body: React.ReactNode;
@@ -268,7 +308,6 @@ export function Panel({ view, id, edge, bundles, hidden, crap, ownTier, onReveal
     );
   } else if (node?.kind === "type" || node?.kind === "function") {
     const c = calls(view, node.id);
-    const text = view.sources[node.loc.path];
     body = (
       <>
         <p className="muted">{node.typeKind ? `${node.kind} (${node.typeKind})` : node.kind}</p>
@@ -276,7 +315,7 @@ export function Panel({ view, id, edge, bundles, hidden, crap, ownTier, onReveal
         <Change view={view} node={node} />
         <Rows title="Calls and embeds out" rows={c.out} onReveal={onReveal} />
         <Rows title="Called or embedded by" rows={c.in} onReveal={onReveal} />
-        {text !== undefined && node.status !== "removed" && <Source text={text} line={node.loc.line} />}
+        {node.status !== "removed" && <Source view={view} loc={node.loc} read={read} />}
       </>
     );
   } else if (node?.kind === "external") {

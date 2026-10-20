@@ -23,6 +23,12 @@
   --crap-green: #c8f8c4;
   --crap-yellow: #f0e49c;
   --crap-red: #ffdcdc;
+  /* Go's colours in the Code panel (19): text at 4.5:1 on --code-bg and
+     --mark (styles.test.ts) */
+  --syn-kw: #6f42c1;
+  --syn-com: #57606a;
+  --syn-str: #0a3069;
+  --syn-num: #0550ae;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color: var(--fg);
   background: var(--bg);
@@ -54,6 +60,10 @@
     --crap-green: #173b2c;
     --crap-yellow: #3e3814;
     --crap-red: #3b1d11;
+    --syn-kw: #d2a8ff;
+    --syn-com: #a8b1bb;
+    --syn-str: #a5d6ff;
+    --syn-num: #79c0ff;
   }
 }
 
@@ -374,6 +384,21 @@ pre {
 
 .source .hit {
   background: var(--mark);
+}
+
+/* 19: Go's colours, by the class code.ts paints */
+.source .kw {
+  color: var(--syn-kw);
+}
+.source .com {
+  color: var(--syn-com);
+  font-style: italic;
+}
+.source .str {
+  color: var(--syn-str);
+}
+.source .num {
+  color: var(--syn-num);
 }
 
 /* Change View (U9): status in the border and label colour, never colour alone:

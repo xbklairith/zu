@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import golden from "../../internal/export/testdata/shop.view.golden.json";
-import { fetchView, parseView, readEmbedded, type View } from "./data";
+import { fetchSource, fetchView, parseView, readEmbedded, type View } from "./data";
 
 describe("parseView", () => {
   it("refuses a schema it does not know", () => {
@@ -49,5 +49,22 @@ describe("fetchView", () => {
   });
   it("refuses a schema it does not know", async () => {
     await expect(fetchView(answer(200, '{"schema":"2"}'))).rejects.toThrow(/schema 2/);
+  });
+});
+
+describe("fetchSource (19)", () => {
+  const P = "internal/store/store.go";
+  const file = { path: P, text: "package store\n", syntax: [[0, 7, 1], []] };
+  const answer = (status: number, body: string) => async (url: RequestInfo | URL, init?: RequestInit) => {
+    expect([url, init?.cache]).toEqual(["source?path=internal%2Fstore%2Fstore.go", "no-store"]);
+    return new Response(body, { status });
+  };
+  it("reads a file zu serve sends on demand, with its colour", async () => {
+    expect(await fetchSource(P, answer(200, JSON.stringify(file)))).toEqual(file);
+  });
+  it("is null for a file zu serve does not send or cannot read, and when zu serve is gone", async () => {
+    expect(await fetchSource(P, answer(404, "404 page not found\n"))).toBeNull();
+    expect(await fetchSource(P, answer(500, "zu serve: read failed\n"))).toBeNull();
+    expect(await fetchSource(P, async () => Promise.reject(new TypeError("Failed to fetch")))).toBeNull();
   });
 });

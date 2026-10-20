@@ -93,3 +93,19 @@ export async function fetchView(get: typeof fetch = fetch): Promise<Loaded> {
 
 // Loaded is a View zu serve sent, with its text and generation (0 without a watch).
 export type Loaded = { view: View; text: string; gen: number };
+
+// SourceFile is a file zu serve sends on demand (19), as export.SourceFile:
+// its text and colour.
+export type SourceFile = { path: string; text: string; syntax: number[][] };
+
+// fetchSource asks zu serve for a file the View declares something in (19).
+// It is null when zu serve sends no such file, cannot read it, or is gone:
+// the panel then draws no code, as for a file the page does not carry.
+export async function fetchSource(path: string, get: typeof fetch = fetch): Promise<SourceFile | null> {
+  try {
+    const r = await get(`source?path=${encodeURIComponent(path)}`, { cache: "no-store" });
+    return r.ok ? ((await r.json()) as SourceFile) : null;
+  } catch {
+    return null;
+  }
+}

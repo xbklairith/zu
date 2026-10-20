@@ -1,7 +1,8 @@
-import { StrictMode, useEffect, useState } from "react";
+import { StrictMode, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
-import { fetchView, parseView, readEmbedded, type Loaded, type View } from "./data";
+import { reader } from "./code";
+import { fetchSource, fetchView, parseView, readEmbedded, type Loaded, type View } from "./data";
 import { follow } from "./live";
 import "./styles.css";
 
@@ -19,10 +20,14 @@ async function loadView(): Promise<Loaded | { view: View } | null> {
 // Live is a page zu serve sent (13): it draws each newer View zu serve's watch
 // builds, in place, and says what zu serve says over the drawing. Without a
 // watch (-poll 0) /events answers 404 and the page stays as it loaded. A
-// hidden page closes its stream and catches up when shown.
+// hidden page closes its stream and catches up when shown. 19: it reads the
+// source the View does not carry from zu serve, each file once per View and
+// again after each rescan that publishes no View.
 function Live({ first }: { first: Loaded }) {
   const [view, setView] = useState(first.view);
   const [notice, setNotice] = useState("");
+  const [reads, setReads] = useState(0);
+  const read = useMemo(() => reader((path) => fetchSource(path)), [view, reads]);
   useEffect(
     () =>
       follow(
@@ -32,6 +37,7 @@ function Live({ first }: { first: Loaded }) {
         setView,
         setNotice,
         document,
+        () => setReads((n) => n + 1),
       ),
     [first],
   );
@@ -42,7 +48,7 @@ function Live({ first }: { first: Loaded }) {
           {notice}
         </div>
       )}
-      <App view={view} />
+      <App view={view} read={read} />
     </>
   );
 }

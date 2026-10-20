@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { Canvas } from "./Canvas";
 import { changedSubgraph, nodeMark } from "./change";
+import type { Read } from "./code";
 import { home, index, isBox, upTo } from "./cut";
 import type { View } from "./data";
 import { isGroup } from "./group";
@@ -123,7 +124,8 @@ function ChangedList({ view, onPick }: { view: View; onPick: (id: string) => voi
 // Drawing is a finished layout and what it was made for.
 type Drawing = { whole: View; view: View; sc: Scene; graph: string; base: string; at: Map<string, Placed> };
 
-export function App({ view: whole }: { view: View }) {
+// read gives the source the View does not carry, from zu serve (19).
+export function App({ view: whole, read }: { view: View; read?: Read }) {
   const change = whole.kind === "change";
   const [state, update] = useViewState(whole);
   // 07: a chosen Proposal replaces the Package Tree everywhere a tree is read.
@@ -481,6 +483,7 @@ export function App({ view: whole }: { view: View }) {
           id={isBox(proposed, centre + PKG) ? centre + PKG : centre}
           edge={null}
           bundles={[]}
+          read={read}
           onReveal={recentre}
           onClose={() => setClosed(centre)}
         />
@@ -494,6 +497,7 @@ export function App({ view: whole }: { view: View }) {
           hidden={sc.nodes.find((n) => n.id === sc.selected)?.hidden}
           crap={sc.nodes.find((n) => n.id === sc.selected)?.crap?.risk}
           ownTier={sc.nodes.find((n) => n.id === sc.selected)?.ownTier}
+          read={read}
           onReveal={jump}
           onClose={() => choose(null)}
         />

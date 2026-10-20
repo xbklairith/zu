@@ -7,7 +7,8 @@
     "accept": "node accept.mjs",
     "accept-serve": "node serve.mjs",
     "accept-place": "node place.mjs",
-    "accept-screen": "node screen.mjs"
+    "accept-screen": "node screen.mjs",
+    "accept-code": "node code.mjs"
   },
   "devDependencies": {
     "playwright-core": "1.63.0"

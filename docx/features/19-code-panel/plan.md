@@ -1635,7 +1635,7 @@ The unit tests check:
 
 **Steps:**
 
-- [ ] **Write the failing tests and browser checks**
+- [x] **Write the failing tests and browser checks**
 
 ```diff
 diff --git a/web/e2e/code.mjs b/web/e2e/code.mjs
@@ -2034,11 +2034,11 @@ index 0ad650c..6a437e3 100644
 +});
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/code.test.ts src/data.test.ts src/styles.test.ts src/live.test.ts` Expected: FAIL (`./code` does not exist; `fetchSource` is not a function; no `--syn-*` colour or rule; `follow` never calls `reread`)
+- [x] **Run:** `cd web && npx vitest run src/code.test.ts src/data.test.ts src/styles.test.ts src/live.test.ts` Expected: FAIL (`./code` does not exist; `fetchSource` is not a function; no `--syn-*` colour or rule; `follow` never calls `reread`)
 
-- [ ] **Run:** `cd web && npx vite build >/dev/null && cd .. && CGO_ENABLED=0 go build -trimpath -o bin/zu ./cmd/zu && cd web/e2e && node code.mjs` Expected: FAIL (0/6 checks in each engine: in `zu serve` the panel reads no `/source`, so the wait for its code times out after 30 s and the run stops. `tsc` fails on the red unit tests, so this step builds with `vite build`, which skips it)
+- [x] **Run:** `cd web && npx vite build >/dev/null && cd .. && CGO_ENABLED=0 go build -trimpath -o bin/zu ./cmd/zu && cd web/e2e && node code.mjs` Expected: FAIL (0/6 checks in each engine: in `zu serve` the panel reads no `/source`, so the wait for its code times out after 30 s and the run stops. `tsc` fails on the red unit tests, so this step builds with `vite build`, which skips it)
 
-- [ ] **Colour the code, and read it from zu serve**
+- [x] **Colour the code, and read it from zu serve**
 
 ```diff
 diff --git a/web/src/App.tsx b/web/src/App.tsx
@@ -2497,11 +2497,11 @@ index 58a51b7..ff5e9b2 100644
     status colour is at least 4.5:1 as text on --box, --bg and --code-bg, in
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node code.mjs` Expected: PASS (6 checks in each engine)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node code.mjs` Expected: PASS (6 checks in each engine)
 
-- [ ] **Commit:** `Colour the Code panel and read its source from zu serve`
+- [x] **Commit:** `Colour the Code panel and read its source from zu serve`
 
 ---
 

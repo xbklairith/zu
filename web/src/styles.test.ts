@@ -68,3 +68,23 @@ describe.each([["light", light], ["dark", dark]])("CRAP fills, %s", (_, t) => {
     expect(near).toEqual([]);
   });
 });
+
+// 19: the Code panel colours Go (code.ts CLASS); each colour reads as text on
+// the code's background and on the declaration's marked line.
+describe.each([["light", light], ["dark", dark]])("Go colours, %s", (_, t) => {
+  it("keep text at 4.5:1 on the code and its marked line", () => {
+    const low: string[] = [];
+    for (const k of ["syn-kw", "syn-com", "syn-str", "syn-num", "fg"]) {
+      for (const bg of ["code-bg", "mark"]) {
+        if (!t[k] || contrast(t[k], t[bg]) < 4.5) low.push(`${k} on ${bg} ${t[k] ? contrast(t[k], t[bg]).toFixed(2) : "missing"}`);
+      }
+    }
+    expect(low).toEqual([]);
+  });
+});
+
+describe("Go colours' rules (19)", () => {
+  it("colour each class code.ts paints", () => {
+    for (const c of ["kw", "com", "str", "num"]) expect(css).toMatch(new RegExp(`\\.source \\.${c} \\{[^}]*color: var\\(--syn-${c}\\)`));
+  });
+});

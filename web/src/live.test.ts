@@ -58,9 +58,10 @@ function run(answers: [number, string][], first = { text: view("a"), gen: 0 }) {
   const l = latest(answers);
   const shown: string[] = [];
   const said: string[] = [];
+  const reads = { n: 0 };
   const doc = page();
-  const stop = follow(open, l.load, first, (v) => shown.push(v.tool), (t) => void said.push(t), doc);
-  return { s: streams[0], streams, doc, l, shown, said, stop };
+  const stop = follow(open, l.load, first, (v) => shown.push(v.tool), (t) => void said.push(t), doc, () => void reads.n++);
+  return { s: streams[0], streams, doc, l, shown, said, reads, stop };
 }
 
 describe("follow", () => {
@@ -152,6 +153,40 @@ describe("follow", () => {
     r.streams[1].send("view", "3"); // the generation it drew, or a restarted zu serve's
     await tick();
     expect([r.l.asked, r.shown]).toEqual([[3], ["b"]]);
+  });
+  // 19: a save can change a file the page shows and not the View.
+  it("reads the files again for each rescan that publishes no View", () => {
+    const r = run([]);
+    r.s.send("open");
+    r.s.send("source", "4"); // the page load read them: as new as this
+    r.s.send("source", "5");
+    r.s.send("source", "5");
+    r.s.send("source", "6");
+    expect(r.reads.n).toBe(2);
+  });
+  // A page load can draw a View the watch has not published yet. A save the
+  // View does not show, before the watch's next poll, then publishes that
+  // View, and no count moves.
+  it("reads the files again for a newer generation whose View is the one drawn", async () => {
+    const r = run([[2, view("a")]]);
+    r.s.send("view", "2");
+    await tick();
+    expect([r.l.asked, r.shown, r.reads.n]).toEqual([[2], [], 1]);
+  });
+  it("reads the files again once after the stream dropped, and once after the page was hidden", () => {
+    const r = run([]);
+    r.s.send("source", "2");
+    r.s.readyState = 0;
+    r.s.send("error");
+    r.s.readyState = 1;
+    r.s.send("open");
+    r.s.send("source", "2"); // the count it read at, or a restarted zu serve's
+    r.s.send("source", "2");
+    r.doc.set(true);
+    r.doc.set(false);
+    r.streams[1].send("open");
+    r.streams[1].send("source", "2");
+    expect(r.reads.n).toBe(2);
   });
   it("opens no second stream for a page shown twice", () => {
     const r = run([]);
