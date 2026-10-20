@@ -99,3 +99,23 @@ Applied as the plan's exact text, with one change:
 - **requirements-draft.md:** no change, as the plan says.
 
 **The change.** The plan said that with `-include`, zu serve sends the page `zu scan -html` writes "byte for byte". In both ADR 0006 and decisions.md that now reads "its View byte for byte". The View is byte-identical (step 5), but the page is not: since 10, a served page carries LivePage's two changes and fetches its View.
+
+## After scrutiny
+
+**Round 1** (2026-10-21, fix-then-ship):
+- **A directory link out of the tree was followed.** `/source`, and the scan under it, read a file through a directory that had become a link: git still lists what the directory held. This broke ADR 0006's "links that leave it refused". `4b4eb6d` checks each directory on the way down (`viaLink`) in `readMax` and in `ListTree`'s listing. On kubernetes (31,300 files), `ListTree.Files` takes 32 ms, up from 26–28 ms.
+- **Nits.**
+  - `ab872a0` pins `Syntax`'s runs over a CR and over a byte that is not UTF-8.
+  - `e7ec73d` scrolls the code to its lit line when its window moves. It says why the `lines` memo leaves out `file.syntax`: each View's `syntax` is a new array for the same text.
+  - `d504b88` lets `measure.mjs` take `.`.
+  - "Byte for byte" stays, as recorded above.
+
+**Round 2** (2026-10-21, fix-then-ship):
+- **The link check came before the open.** So a directory renamed to a link out of the tree between the two was followed. In the reviewer's race, a goroutine swapped `a` between its directory and a link out of the tree, while eight clients asked `/source` for `a/a.go`. 1,141 of 324,235 answers carried the outside file. `cd4cfc0` opens through the tree's `os.Root` and keeps `viaLink`, which also refuses an in-tree directory link, as `os.Root` alone would not. An escape, a mid-swap `not a directory` and a link loop answer 404, not 500. `TestOpenStaysInTheRoot` refuses an absolute and a relative link out of the tree, and opens an in-tree file link.
+  - The reviewer's race, rerun at `d7e9a2a`: 0 of 313,239 answers came from outside, and none was a 500.
+  - A cold `zu scan` of kubernetes, old and new builds alternated three times: 5.06 / 4.52 / 4.85 s before, 4.43 / 3.83 / 5.63 s after, with byte-identical IR. That is noise.
+- **Nits** (`d7e9a2a`):
+  - The serve test's tree is now a git checkout, so its rescan goes through `ListTree`. It fails with `ListTree`'s link check off.
+  - `CommitTree` reads through an in-tree directory link, so the `Tree` doc says "a path through a directory link on disk". Nothing reaches that path: `ls-tree` lists a link as a link. `ResolveLinks` is unchanged, because refusing such paths there would break disk/commit parity.
+  - `tree.go`'s `ListTree` comment is reflowed.
+  - `e7ec73d` has no test. The reviewer asked for none: it changes only a scroll when the mark moves under a held light.
