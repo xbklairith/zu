@@ -431,7 +431,7 @@ index 70badf8..d409f05 100644
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/internal/export/decldiff_test.go b/internal/export/decldiff_test.go
@@ -669,9 +669,9 @@ index 5e18701..440a145 100644
  }
 ```
 
-- [ ] **Run:** `go test ./internal/export` Expected: FAIL (the build fails: `undefined: declSpan`, `undefined: declSpans`, `v.DeclDiffs undefined (type *View has no field or method DeclDiffs)`, `undefined: DeclDiff`, `h.Syntax undefined (type Hunk has no field or method Syntax)`)
+- [x] **Run:** `go test ./internal/export` Expected: FAIL (the build fails: `undefined: declSpan`, `undefined: declSpans`, `v.DeclDiffs undefined (type *View has no field or method DeclDiffs)`, `undefined: DeclDiff`, `h.Syntax undefined (type Hunk has no field or method Syntax)`)
 
-- [ ] **Diff each changed declaration whole, and colour every hunk**
+- [x] **Diff each changed declaration whole, and colour every hunk**
 
 ```diff
 diff --git a/internal/export/change.go b/internal/export/change.go
@@ -1136,11 +1136,11 @@ index f1b8d8c..06108a6 100644
  // Near is what a Change View's Screen draws beside Nodes and Edges (18): the
 ```
 
-- [ ] **Run:** `go test ./internal/export -run TestChangeGolden -update` Expected: PASS (it rewrites the Change View golden, which gains `declDiffs` for the seven declarations and `syntax` on each hunk, 512 lines; review the diff, which adds no other key)
+- [x] **Run:** `go test ./internal/export -run TestChangeGolden -update` Expected: PASS (it rewrites the Change View golden, which gains `declDiffs` for the seven declarations and `syntax` on each hunk, 512 lines; review the diff, which adds no other key)
 
-- [ ] **Run:** `go test ./... && cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `go test ./... && cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Commit:** `Diff each changed declaration whole, and colour every hunk`
+- [x] **Commit:** `Diff each changed declaration whole, and colour every hunk`
 
 ---
 

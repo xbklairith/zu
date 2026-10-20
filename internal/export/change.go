@@ -1,12 +1,6 @@
 package export
 
 import (
-	"errors"
-	"fmt"
-	"io/fs"
-	"path/filepath"
-	"slices"
-
 	"zu/internal/diff"
 	"zu/internal/ir"
 	"zu/internal/scan"
@@ -232,65 +226,52 @@ func Change(base, head *ir.IR, delta diff.Delta, sum *diff.Summary, baseTree, he
 	for _, p := range baseFiles {
 		files[p] = true
 	}
-	hunks, err := hunksOf(files, baseTree, headTree)
+	// 20: each tree's files are read once, for the hunks and the
+	// declaration diffs; head's inlined ones are read already.
+	bs, hs := newSide("base", baseTree), newSide("head", headTree)
+	for p, text := range v.Sources {
+		hs.keep(p, []byte(text), v.Syntax[p])
+	}
+	hunks, err := hunksOf(files, bs, hs)
 	if err != nil {
 		return nil, err
 	}
 	if len(hunks) > 0 {
 		v.Hunks = hunks
 	}
+	dd, err := declDiffs(v, baseByID, headByID, bs, hs)
+	if err != nil {
+		return nil, err
+	}
+	if len(dd) > 0 {
+		v.DeclDiffs = dd
+	}
 	sortView(v)
 	return v, nil
 }
 
-// hunksOf diffs each file between the two trees. A file absent on one side
-// is diffed against empty content; a file whose lines are equal is left out.
-func hunksOf(files map[string]bool, baseTree, headTree scan.Tree) (map[string][]Hunk, error) {
+// hunksOf diffs each file between the two sides, coloured (20). A file
+// absent on one side is diffed against empty content; a file whose lines are
+// equal is left out.
+func hunksOf(files map[string]bool, bs, hs *side) (map[string][]Hunk, error) {
 	out := map[string][]Hunk{}
-	if len(files) == 0 {
-		return out, nil
-	}
-	read := func(t scan.Tree) (func(string) ([]byte, error), error) {
-		list, _, err := t.Files()
+	for p := range files {
+		b, err := bs.file(p)
 		if err != nil {
 			return nil, err
 		}
-		return func(p string) ([]byte, error) {
-			if _, ok := slices.BinarySearch(list, p); !ok {
-				return nil, nil
-			}
-			// A listed file deleted since (a checkout mid-rescan) reads as
-			// empty too: the listing is the scan's, kept (16).
-			b, err := t.ReadFile(p)
-			if errors.Is(err, fs.ErrNotExist) {
-				return nil, nil
-			}
-			return b, err
-		}, nil
-	}
-	readBase, err := read(baseTree)
-	if err != nil {
-		return nil, fmt.Errorf("list base files: %w", err)
-	}
-	readHead, err := read(headTree)
-	if err != nil {
-		return nil, fmt.Errorf("list head files: %w", err)
-	}
-	for p := range files {
-		if !filepath.IsLocal(filepath.FromSlash(p)) {
-			return nil, fmt.Errorf("source path %q is outside the repository", p)
-		}
-		b, err := readBase(p)
+		h, err := hs.file(p)
 		if err != nil {
-			return nil, fmt.Errorf("read base %s: %w", p, err)
+			return nil, err
 		}
-		h, err := readHead(p)
-		if err != nil {
-			return nil, fmt.Errorf("read head %s: %w", p, err)
+		hunks := Hunks(b.text, h.text)
+		if len(hunks) == 0 {
+			continue
 		}
-		if hs := Hunks(b, h); len(hs) > 0 {
-			out[p] = hs
+		for i := range hunks {
+			colour(&hunks[i], b.colour(), h.colour())
 		}
+		out[p] = hunks
 	}
 	return out, nil
 }

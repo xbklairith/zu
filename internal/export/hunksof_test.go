@@ -33,11 +33,15 @@ func TestHunksOfAFileDeletedAfterTheListing(t *testing.T) {
 	if err := os.Remove(filepath.Join(dir, "a.go")); err != nil {
 		t.Fatal(err)
 	}
-	got, err := hunksOf(map[string]bool{"a.go": true}, base, head)
+	got, err := hunksOf(map[string]bool{"a.go": true}, newSide("base", base), newSide("head", head))
 	if err != nil {
 		t.Fatalf("hunksOf: %v", err)
 	}
-	if want := Hunks(src, nil); !reflect.DeepEqual(got["a.go"], want) {
+	want := Hunks(src, nil)
+	for i := range want {
+		colour(&want[i], Syntax(src), Syntax(nil))
+	}
+	if !reflect.DeepEqual(got["a.go"], want) {
 		t.Errorf("hunks of a.go = %+v, want %+v", got["a.go"], want)
 	}
 }

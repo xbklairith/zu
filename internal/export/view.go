@@ -37,6 +37,9 @@ type View struct {
 	Metrics *Metrics `json:"metrics,omitempty"`
 	// Near is a Change View's unchanged neighbours, for the Screen (18).
 	Near *Near `json:"near,omitempty"`
+	// DeclDiffs is a Change View's diff of each declaration the change
+	// modified, removed or moved, by its id (20).
+	DeclDiffs map[string][]DeclDiff `json:"declDiffs,omitempty"`
 }
 
 // Near is what a Change View's Screen draws beside Nodes and Edges (18): the

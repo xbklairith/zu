@@ -8,12 +8,15 @@ const contextLines = 3
 // Hunk is one region of a unified line diff. Each line carries its marker:
 // " " unchanged, "-" only in base, "+" only in head. A side with no lines
 // starts at the line before the hunk, as in unified diff (0 for an empty file).
+// A Change View colours each line (20): Syntax holds the runs of the line's
+// text after its marker, as export.Syntax gives them in its side's file.
 type Hunk struct {
 	BaseStart int      `json:"baseStart"`
 	BaseLines int      `json:"baseLines"`
 	HeadStart int      `json:"headStart"`
 	HeadLines int      `json:"headLines"`
 	Lines     []string `json:"lines"`
+	Syntax    [][]int  `json:"syntax,omitempty"`
 }
 
 // Hunks diffs base against head line by line (Myers) and groups the changes
