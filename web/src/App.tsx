@@ -4,7 +4,7 @@ import { Canvas } from "./Canvas";
 import { changedSubgraph, nodeMark } from "./change";
 import type { Read } from "./code";
 import { home, index, isBox, upTo } from "./cut";
-import type { View } from "./data";
+import type { View, Violation } from "./data";
 import { isGroup } from "./group";
 import { pageEngine } from "./engine";
 import { Header } from "./Header";
@@ -24,7 +24,7 @@ import { ScreenCanvas } from "./ScreenCanvas";
 import { centreAt, deeper, drill, nextStage, select, shallower, toggle, up, type ViewState } from "./state";
 import { Toolbar } from "./Toolbar";
 import { useViewState } from "./useViewState";
-import { step, walkAt } from "./walk";
+import { breaking, step, walkAt } from "./walk";
 
 const PKG = "#pkg";
 const FRAMES = 64; // 15: the most layouts the page keeps (place.ts)
@@ -69,7 +69,9 @@ function Legend({ change, policy, ranks, crap, proposal, onDemand, hubs, screen 
 
 // Violations is 07's section of the Change View, first as in zu diff
 // (decisions.md, "new violations first"): each new one links to its importer.
-function Violations({ d, onPick }: { d: NonNullable<View["violations"]>; onPick: (id: string) => void }) {
+// On the Screen, ends gives the packages a violation's ends stand for (18).
+type Ends = (x: Violation) => [string, string];
+function Violations({ d, onPick, ends }: { d: NonNullable<View["violations"]>; onPick: (id: string) => void; ends?: Ends }) {
   const note = violationsNote(d);
   return (
     <section className="violations" aria-label="Violations">
@@ -79,11 +81,11 @@ function Violations({ d, onPick }: { d: NonNullable<View["violations"]>; onPick:
           {d.new.map((x) => (
             <li key={`${x.rule}\n${x.from}\n${x.to}`}>
               <span className="muted">{x.rule} </span>
-              <button type="button" className="link" title={x.from} onClick={() => onPick(x.from)}>
+              <button type="button" className="link" title={x.from} onClick={() => onPick(ends?.(x)[0] ?? x.from)}>
                 {x.from}
               </button>
               {" → "}
-              <button type="button" className="link" title={x.to} onClick={() => onPick(x.to)}>
+              <button type="button" className="link" title={x.to} onClick={() => onPick(ends?.(x)[1] ?? x.to)}>
                 {x.to}
               </button>
             </li>
@@ -97,12 +99,12 @@ function Violations({ d, onPick }: { d: NonNullable<View["violations"]>; onPick:
 
 // ChangedList is U11: the changed packages in the Structural Summary's
 // bottom-up order, exactly as zu diff wrote them, after the violations (07).
-function ChangedList({ view, onPick }: { view: View; onPick: (id: string) => void }) {
+function ChangedList({ view, onPick, ends }: { view: View; onPick: (id: string) => void; ends?: Ends }) {
   const byId = new Map(view.nodes.map((n) => [n.id, n]));
   const ids = view.changed ?? [];
   return (
     <nav className="changed" aria-label="Changed packages">
-      {view.violations && <Violations d={view.violations} onPick={onPick} />}
+      {view.violations && <Violations d={view.violations} onPick={onPick} ends={ends} />}
       <h2>Changed packages ({ids.length})</h2>
       <ol>
         {ids.map((id) => {
@@ -160,6 +162,9 @@ export function App({ view: whole, read }: { view: View; read?: Read }) {
     const c = centreOf(proposed, id);
     if (c !== null) update((s) => centreAt(s, c));
   };
+  // 18: on the Screen a violation's ends are the packages of its first
+  // import: a cycle names Package Tree boxes, which are no Centres.
+  const screenEnds = (x: Violation): [string, string] => breaking(whole, x)[0] ?? [x.from, x.to];
   // The Panel shows the Centre until the reader closes it, and again once the
   // Centre changes.
   const [closed, setClosed] = useState<string | null>(null);
@@ -393,7 +398,7 @@ export function App({ view: whole, read }: { view: View; read?: Read }) {
         )}
         <SearchBox view={proposed} input={searchBox} onOpen={setSearchOpen} onPick={onScreen ? recentre : jump} />
       </div>
-      {change && <ChangedList view={whole} onPick={onScreen ? recentre : pick} />}
+      {change && <ChangedList view={whole} onPick={onScreen ? recentre : pick} ends={onScreen ? screenEnds : undefined} />}
       <main className="canvas">
         {proposed !== whole && (
           <div className="proposal-banner" role="status">

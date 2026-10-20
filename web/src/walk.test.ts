@@ -3,7 +3,7 @@ import golden from "../../internal/export/testdata/shop.view.golden.json";
 import change from "../../internal/export/testdata/shop.change.golden.json";
 import type { View } from "./data";
 import { DEFAULT_STATE } from "./state";
-import { step, walkAt, walkOf } from "./walk";
+import { breaking, step, walkAt, walkOf } from "./walk";
 
 const shop = golden as unknown as View;
 const v = change as unknown as View;
@@ -11,6 +11,7 @@ const S = "example.com/shop/internal/store";
 const C = "example.com/shop/internal/checkout";
 const M = "example.com/shop/internal/money";
 const ROOT = "example.com/shop";
+const GEN = "example.com/shop/tools/gen";
 
 describe("walkOf (18)", () => {
   it("walks the changed packages bottom-up, each followed by the Centres of its changed declarations", () => {
@@ -25,8 +26,27 @@ describe("walkOf (18)", () => {
       C, `${C}.Total`, S, `${S}.Order`, `${S}.ReadWriter`, `${S}.Repo`, M, `${M}.Plus`, ROOT, `${ROOT}.main`,
     ]);
   });
+  it("starts at a new cycle's importers, though the cycle names Package Tree boxes (06)", () => {
+    // tools/gen's import of money lifts to the arc between their modules' roots
+    const w = walkOf({ ...v, violations: { new: [{ rule: "cycle", from: `${ROOT}/tools`, to: ROOT }], fixed: [], known: 0 } });
+    expect(w).toEqual([
+      GEN, S, `${S}.Order`, `${S}.ReadWriter`, `${S}.Repo`, M, `${M}.Plus`, C, `${C}.Total`, ROOT, `${ROOT}.main`,
+    ]);
+  });
   it("is empty in a Project View", () => {
     expect(walkOf(shop)).toEqual([]);
+  });
+});
+
+describe("breaking (18)", () => {
+  it("is a Levels violation's own import", () => {
+    expect(breaking(v, { rule: "levels", from: C, to: S })).toEqual([[C, S]]);
+  });
+  it("is every head import a cycle's arc lifts, by module and by box, as policy/cycles.go lifts it", () => {
+    expect(breaking(v, { rule: "cycle", from: `${ROOT}/tools`, to: ROOT })).toEqual([[GEN, M]]);
+    // the root package stands for its own leaf beside internal
+    expect(breaking(v, { rule: "cycle", from: ROOT, to: `${ROOT}/internal` })).toEqual([[ROOT, C], [ROOT, M]]);
+    expect(breaking(v, { rule: "cycle", from: `${ROOT}/internal`, to: ROOT })).toEqual([]);
   });
 });
 

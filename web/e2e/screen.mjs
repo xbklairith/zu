@@ -36,6 +36,7 @@ const S = "example.com/shop/internal/store";
 const C = "example.com/shop/internal/checkout";
 const M = "example.com/shop/internal/money";
 const A = "example.com/shop/internal/audit";
+const GEN = "example.com/shop/tools/gen";
 const enc = encodeURIComponent;
 // far: shop.change with internal/audit, which money imports unchanged, so
 // it is in no Affected Set and the changed subgraph leaves it out; money.Plus
@@ -53,6 +54,16 @@ const far = (() => {
   v.violations = { new: [{ rule: "levels", from: C, to: S }], fixed: [], known: 0 };
   v.links = { blob: "https://github.com/o/r/blob/h/{path}#L{line}", compare: "https://github.com/o/r/compare/b...h" };
   return page("far", v);
+})();
+
+// cycle: shop.change and a new cycle, which names Package Tree boxes (06):
+// the modules' roots, as tools/gen's import of money lifts.
+const cycle = (() => {
+  const v = golden("shop.change");
+  v.policy = { hash: "sha256:cycle", levels: [] };
+  for (const e of v.edges) if (e.kind === "imports" && e.from === GEN && e.to === M) e.violation = "cycle";
+  v.violations = { new: [{ rule: "cycle", from: "example.com/shop/tools", to: "example.com/shop" }], fixed: [], known: 0 };
+  return page("cycle", v);
 })();
 
 async function open(b, file, hash) {
@@ -242,7 +253,20 @@ async function changeView(b) {
   // The Screen's header keeps the change's link to the host.
   got.host = await r.p.evaluate(() => document.querySelector("header.header a[target=_blank]")?.getAttribute("href") ?? null);
   await r.p.close();
-  return { got, errors: [...errors, ...f.errors, ...r.errors] };
+  // The walk starts at a new cycle's importer; on a Screen, each end in the
+  // Violations list re-centres on its package in the cycle's first import.
+  const y = await open(b, cycle, "");
+  const settled = async () => (await y.p.waitForTimeout(500), centre(y.p));
+  await y.p.keyboard.press("n");
+  got.cycle = [await settled()];
+  await y.p.keyboard.press("n");
+  got.cycle.push(await settled());
+  for (const end of ["example.com/shop/tools", "example.com/shop"]) {
+    await y.p.click(`section.violations button[title="${end}"]`);
+    got.cycle.push(await settled());
+  }
+  await y.p.close();
+  return { got, errors: [...errors, ...f.errors, ...r.errors, ...y.errors] };
 }
 
 const CSS_ESCAPE = (s) => s.replace(/["\\]/g, "\\$&");
@@ -252,6 +276,7 @@ const want = {
   walk: [true, true, "10 steps", "1 of 10"], marks: [true, true, true, "⇄", true, true, ["~ Order", "− ReadWriter", "~ Repo.Get", "~ Repo.check"]],
   affected: true, step: [true, "2 of 10", true, true], near: ["– of 10", true], leave: [null, C, true], full: [A, 0, true],
   red: [true, 1, "violates zu.policy.yaml (levels or cycle)"], list: [C, "7 of 10"], host: "https://github.com/o/r/compare/b...h",
+  cycle: [GEN, S, GEN, M],
 };
 const channel = process.env.ZU_E2E_CHANNEL;
 const engines = [["chromium", chromium, channel ? { channel } : {}], ["firefox", firefox, {}], ["webkit", webkit, {}]];
