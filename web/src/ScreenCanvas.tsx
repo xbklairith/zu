@@ -88,7 +88,6 @@ export function ScreenCanvas({ drawing, onCentre, onMore, fit, onPoint }: Props)
     width: d.w,
     height: d.h,
     style: { width: d.w, height: d.h },
-    selected: d.row === "centre",
     draggable: false,
     connectable: false,
     data: { d },
