@@ -130,3 +130,31 @@ func TestNodeShapeFollowsHash(t *testing.T) {
 		t.Errorf("a node without a shape must omit the key, got\n%s", out)
 	}
 }
+
+func TestInOrder(t *testing.T) {
+	n := func(ids ...string) []Node {
+		var out []Node
+		for _, id := range ids {
+			out = append(out, Node{ID: id})
+		}
+		return out
+	}
+	e := func(from, to string, k EdgeKind) Edge { return Edge{From: from, To: to, Kind: k} }
+	for _, c := range []struct {
+		name string
+		doc  IR
+		want bool
+	}{
+		{"empty", IR{}, true},
+		{"sorted", IR{Nodes: n("a", "a.F", "b"), Edges: []Edge{e("a", "b", EdgeCalls), e("a", "b", EdgeImports), e("a.F", "a", EdgeCalls)}}, true},
+		{"nodes out of order", IR{Nodes: n("b", "a")}, false},
+		{"an id twice", IR{Nodes: n("a", "a")}, false},
+		{"edges out of order by kind", IR{Edges: []Edge{e("a", "b", EdgeImports), e("a", "b", EdgeCalls)}}, false},
+		{"edges out of order by to", IR{Edges: []Edge{e("a", "c", EdgeCalls), e("a", "b", EdgeCalls)}}, false},
+		{"an edge twice", IR{Edges: []Edge{e("a", "b", EdgeCalls), e("a", "b", EdgeCalls)}}, false},
+	} {
+		if got := InOrder(&c.doc); got != c.want {
+			t.Errorf("%s: InOrder = %v, want %v", c.name, got, c.want)
+		}
+	}
+}

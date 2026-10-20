@@ -1914,7 +1914,7 @@ The tests check:
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/internal/diff/merge_test.go b/internal/diff/merge_test.go
@@ -2041,9 +2041,9 @@ index 8989265e4cd7280c256d0e5534ac6c53689ad5c8..33e6b42dbb8f1d1f1a820a5abcdc951b
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/ir ./internal/diff` Expected: FAIL (`undefined: InOrder`, `undefined: compareByKey`)
+- [x] **Run:** `go test ./internal/ir ./internal/diff` Expected: FAIL (`undefined: InOrder`, `undefined: compareByKey`)
 
-- [ ] **Merge two IRs in order; match others by key**
+- [x] **Merge two IRs in order; match others by key**
 
 ```diff
 diff --git a/internal/diff/diff.go b/internal/diff/diff.go
@@ -2331,9 +2331,9 @@ index 35c12dba0a38765059ce91f520d9a1b3319bc0d1..5a6a13e591d76e286fe6b9a5ecb7c166
  // apply is Apply for any Policy and any IR.
 ```
 
-- [ ] **Run:** `go test ./internal/ir ./internal/diff ./internal/policy ./internal/cli` Expected: PASS (the diff goldens are unchanged)
+- [x] **Run:** `go test ./internal/ir ./internal/diff ./internal/policy ./internal/cli` Expected: PASS (the diff goldens are unchanged)
 
-- [ ] **Commit:** `Compare two sorted IRs in one pass`
+- [x] **Commit:** `Compare two sorted IRs in one pass`
 
 ---
 

@@ -82,23 +82,9 @@ func canonical(doc *ir.IR) bool {
 			return cmp.Or(strings.Compare(a.Path, b.Path), cmp.Compare(a.Line, b.Line))
 		})
 	}
-	for i, n := range doc.Nodes {
-		if !sorted(n.Locations) || i > 0 && doc.Nodes[i-1].ID >= n.ID {
-			return false
-		}
-	}
-	for i, e := range doc.Edges {
-		if !sorted(e.Locations) {
-			return false
-		}
-		if i > 0 {
-			d := doc.Edges[i-1]
-			if cmp.Or(strings.Compare(d.From, e.From), strings.Compare(d.To, e.To), strings.Compare(string(d.Kind), string(e.Kind))) >= 0 {
-				return false
-			}
-		}
-	}
-	return true
+	return ir.InOrder(doc) &&
+		!slices.ContainsFunc(doc.Nodes, func(n ir.Node) bool { return !sorted(n.Locations) }) &&
+		!slices.ContainsFunc(doc.Edges, func(e ir.Edge) bool { return !sorted(e.Locations) })
 }
 
 // apply is Apply for any Policy and any IR.

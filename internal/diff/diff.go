@@ -57,25 +57,33 @@ type Delta struct {
 // node only in head is added, only in base removed, and in both with a
 // different hash modified (external nodes have no hash, so they are never
 // modified). Edges are matched by (from, to, kind); locations are ignored.
+// Two IRs in ir.Sort's order are walked side by side, with no map of either
+// (16); others are matched through maps, to the same Delta.
 func Compare(base, head *ir.IR) Delta {
+	if ir.InOrder(base) && ir.InOrder(head) {
+		return compare(base, head, mergeNodes, mergeEdges)
+	}
+	return compareByKey(base, head)
+}
+
+func compareByKey(base, head *ir.IR) Delta { return compare(base, head, nodesByKey, edgesByKey) }
+
+// A nodeDiff finds the nodes whose hash changed, and those only in base and
+// only in head; an edgeDiff, the edges only in base and only in head.
+type (
+	nodeDiff func(base, head *ir.IR) (modified []NodeChange, removed, added []ir.Node)
+	edgeDiff func(base, head *ir.IR) (removed, added []edgeKey)
+)
+
+type edgeKey struct {
+	kind     ir.EdgeKind
+	from, to string
+}
+
+func compare(base, head *ir.IR, nodes nodeDiff, edges edgeDiff) Delta {
 	var d Delta
-	baseNodes := byID(base)
-	headNodes := byID(head)
-	var removed, added []ir.Node
-	for id, b := range baseNodes {
-		h, ok := headNodes[id]
-		switch {
-		case !ok:
-			removed = append(removed, b)
-		case h.Hash != b.Hash:
-			d.Nodes = append(d.Nodes, NodeChange{ID: id, Kind: h.Kind, Status: Modified})
-		}
-	}
-	for id, h := range headNodes {
-		if _, ok := baseNodes[id]; !ok {
-			added = append(added, h)
-		}
-	}
+	modified, removed, added := nodes(base, head)
+	d.Nodes = modified
 	pkgs := map[string]bool{} // package ids on either side
 	for _, n := range append(slices.Clip(base.Nodes), head.Nodes...) {
 		if n.Kind == ir.KindPackage {
@@ -99,8 +107,49 @@ func Compare(base, head *ir.IR) Delta {
 	}
 	slices.SortFunc(d.Nodes, func(a, b NodeChange) int { return strings.Compare(a.ID, b.ID) })
 
-	d.Edges = edges(base, head)
+	d.Edges = fold(edges(base, head))
 	return d
+}
+
+func nodesByKey(base, head *ir.IR) (modified []NodeChange, removed, added []ir.Node) {
+	baseNodes := byID(base)
+	headNodes := byID(head)
+	for id, b := range baseNodes {
+		h, ok := headNodes[id]
+		switch {
+		case !ok:
+			removed = append(removed, b)
+		case h.Hash != b.Hash:
+			modified = append(modified, NodeChange{ID: id, Kind: h.Kind, Status: Modified})
+		}
+	}
+	for id, h := range headNodes {
+		if _, ok := baseNodes[id]; !ok {
+			added = append(added, h)
+		}
+	}
+	return modified, removed, added
+}
+
+// mergeNodes is nodesByKey for two IRs whose nodes are in order by id.
+func mergeNodes(base, head *ir.IR) (modified []NodeChange, removed, added []ir.Node) {
+	b, h := base.Nodes, head.Nodes
+	for len(b) > 0 || len(h) > 0 {
+		switch {
+		case len(h) == 0 || len(b) > 0 && b[0].ID < h[0].ID:
+			removed = append(removed, b[0])
+			b = b[1:]
+		case len(b) == 0 || h[0].ID < b[0].ID:
+			added = append(added, h[0])
+			h = h[1:]
+		default:
+			if h[0].Hash != b[0].Hash {
+				modified = append(modified, NodeChange{ID: h[0].ID, Kind: h[0].Kind, Status: Modified})
+			}
+			b, h = b[1:], h[1:]
+		}
+	}
+	return modified, removed, added
 }
 
 func byID(d *ir.IR) map[string]ir.Node {
@@ -161,39 +210,78 @@ func splitDecl(id string, pkgs map[string]bool) (pkg, name string) {
 	return "", id
 }
 
-// edges compares edge sets and folds a removed a→b import with an added b→a
-// import into one reversed change.
-func edges(base, head *ir.IR) []EdgeChange {
-	type key struct {
-		kind     ir.EdgeKind
-		from, to string
-	}
-	set := func(d *ir.IR) map[key]bool {
-		s := make(map[key]bool, len(d.Edges))
+func edgesByKey(base, head *ir.IR) (removed, added []edgeKey) {
+	set := func(d *ir.IR) map[edgeKey]bool {
+		s := make(map[edgeKey]bool, len(d.Edges))
 		for _, e := range d.Edges {
-			s[key{e.Kind, e.From, e.To}] = true
+			s[edgeKey{e.Kind, e.From, e.To}] = true
 		}
 		return s
 	}
 	bs, hs := set(base), set(head)
-	var out []EdgeChange
 	for k := range hs {
-		if bs[k] {
-			continue
+		if !bs[k] {
+			added = append(added, k)
 		}
-		back := key{k.kind, k.to, k.from}
-		if k.kind == ir.EdgeImports && bs[back] && !hs[back] {
-			out = append(out, EdgeChange{From: k.from, To: k.to, Kind: k.kind, Status: Reversed})
-			continue
-		}
-		out = append(out, EdgeChange{From: k.from, To: k.to, Kind: k.kind, Status: Added})
 	}
 	for k := range bs {
-		if hs[k] {
-			continue
+		if !hs[k] {
+			removed = append(removed, k)
 		}
-		back := key{k.kind, k.to, k.from}
-		if k.kind == ir.EdgeImports && hs[back] && !bs[back] {
+	}
+	return removed, added
+}
+
+// mergeEdges is edgesByKey for two IRs whose edges are in ir.Sort's order.
+func mergeEdges(base, head *ir.IR) (removed, added []edgeKey) {
+	b, h := base.Edges, head.Edges
+	key := func(e ir.Edge) edgeKey { return edgeKey{e.Kind, e.From, e.To} }
+	for len(b) > 0 || len(h) > 0 {
+		c := 0
+		switch {
+		case len(h) == 0:
+			c = -1
+		case len(b) == 0:
+			c = 1
+		default:
+			c = cmp.Or(strings.Compare(b[0].From, h[0].From), strings.Compare(b[0].To, h[0].To),
+				strings.Compare(string(b[0].Kind), string(h[0].Kind)))
+		}
+		switch {
+		case c < 0:
+			removed = append(removed, key(b[0]))
+			b = b[1:]
+		case c > 0:
+			added = append(added, key(h[0]))
+			h = h[1:]
+		default:
+			b, h = b[1:], h[1:]
+		}
+	}
+	return removed, added
+}
+
+// fold turns the edges only in base and only in head into changes, folding
+// a removed a→b import with an added b→a import into one reversed change.
+func fold(removed, added []edgeKey) []EdgeChange {
+	set := func(ks []edgeKey) map[edgeKey]bool {
+		s := make(map[edgeKey]bool, len(ks))
+		for _, k := range ks {
+			s[k] = true
+		}
+		return s
+	}
+	gone, came := set(removed), set(added)
+	var out []EdgeChange
+	for _, k := range added {
+		status := Added
+		if k.kind == ir.EdgeImports && gone[edgeKey{k.kind, k.to, k.from}] {
+			status = Reversed
+		}
+		out = append(out, EdgeChange{From: k.from, To: k.to, Kind: k.kind, Status: status})
+	}
+	for _, k := range removed {
+		if k.kind == ir.EdgeImports && came[edgeKey{k.kind, k.to, k.from}] {
 			continue // reported as reversed
 		}
 		out = append(out, EdgeChange{From: k.from, To: k.to, Kind: k.kind, Status: Removed})

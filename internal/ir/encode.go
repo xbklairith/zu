@@ -23,9 +23,7 @@ func Sort(doc *IR) {
 		}
 	}
 	sortOnce(doc.Nodes, func(a, b Node) int { return cmp.Compare(a.ID, b.ID) })
-	sortOnce(doc.Edges, func(a, b Edge) int {
-		return cmp.Or(cmp.Compare(a.From, b.From), cmp.Compare(a.To, b.To), cmp.Compare(a.Kind, b.Kind))
-	})
+	sortOnce(doc.Edges, edgeOrder)
 	slices.SortFunc(doc.ParseErrors, func(a, b ParseError) int {
 		return cmp.Or(cmp.Compare(a.Path, b.Path), cmp.Compare(a.Message, b.Message))
 	})
@@ -47,6 +45,26 @@ func Sort(doc *IR) {
 	if doc.Unsupported == nil {
 		doc.Unsupported = map[string]int{}
 	}
+}
+
+func edgeOrder(a, b Edge) int {
+	return cmp.Or(cmp.Compare(a.From, b.From), cmp.Compare(a.To, b.To), cmp.Compare(a.Kind, b.Kind))
+}
+
+// InOrder reports whether doc's nodes and edges are in Sort's order with no
+// node id and no edge twice: two such IRs can be merged in one pass (16).
+func InOrder(doc *IR) bool {
+	for i := 1; i < len(doc.Nodes); i++ {
+		if doc.Nodes[i-1].ID >= doc.Nodes[i].ID {
+			return false
+		}
+	}
+	for i := 1; i < len(doc.Edges); i++ {
+		if edgeOrder(doc.Edges[i-1], doc.Edges[i]) >= 0 {
+			return false
+		}
+	}
+	return true
 }
 
 func sortLocations(l []Location) {
