@@ -136,23 +136,90 @@ func Change(base, head *ir.IR, delta diff.Delta, sum *diff.Summary, baseTree, he
 	for _, e := range delta.Edges {
 		edgeStatus[edgeKey{string(e.Kind), e.From, e.To}] = e.Status
 	}
-	// Imports join packages and externals, which are all drawn; calls and
-	// embeds are kept only between drawn declarations.
-	keep := func(e *ir.Edge) bool { return in[e.From] && in[e.To] }
+	statusOf := func(e *ir.Edge) diff.Status { return edgeStatus[edgeKey{string(e.Kind), e.From, e.To}] }
+	removed := func(e *ir.Edge) bool { return statusOf(e) == diff.Removed }
+
+	// 18: the Screen's unchanged neighbours (decisions.md: one hop of
+	// unchanged neighbours): each declaration of head one call or embed from
+	// a drawn one, with its type, and every method of a type on the page, so
+	// a type's Screen counts all its methods' calls. A Move's source is in no
+	// tree the page draws, so an edge to it is left out.
+	decl := map[string]bool{} // the declarations on the page
+	for _, n := range v.Nodes {
+		decl[n.ID] = n.Kind == string(ir.KindType) || n.Kind == string(ir.KindFunction)
+	}
+	near := map[string]*ir.Node{}
+	on := func(id string) bool { return in[id] || near[id] != nil }
+	pull := func(id string) {
+		for n := headByID[id]; n != nil && isDecl(n) && !on(n.ID); n = headByID[n.Parent] {
+			near[n.ID] = n
+		}
+	}
+	calls := func(e *ir.Edge) bool { return e.Kind != ir.EdgeImports }
 	for i := range head.Edges {
-		if e := &head.Edges[i]; keep(e) {
-			ve := toEdge(e)
-			ve.Status = string(edgeStatus[edgeKey{string(e.Kind), e.From, e.To}])
-			v.Edges = append(v.Edges, ve)
+		if e := &head.Edges[i]; calls(e) && decl[e.From] != decl[e.To] {
+			pull(e.From)
+			pull(e.To)
 		}
 	}
 	for i := range base.Edges {
-		e := &base.Edges[i]
-		if edgeStatus[edgeKey{string(e.Kind), e.From, e.To}] == diff.Removed && keep(e) {
-			ve := toEdge(e)
-			ve.Status = string(diff.Removed)
-			v.Edges = append(v.Edges, ve)
+		if e := &base.Edges[i]; calls(e) && removed(e) && decl[e.From] != decl[e.To] {
+			pull(e.From)
+			pull(e.To)
 		}
+	}
+	for i := range head.Nodes {
+		if n, p := &head.Nodes[i], headByID[head.Nodes[i].Parent]; isDecl(n) && p != nil && p.Kind == ir.KindType && on(p.ID) {
+			pull(n.ID)
+		}
+	}
+	for id := range near {
+		decl[id] = true
+	}
+
+	// Imports join packages and externals, which are all drawn; calls and
+	// embeds are kept only between drawn declarations, and (18) in Near
+	// between declarations on the page. A call or embed with one end off the
+	// page is counted on the other, as in a Project View (17).
+	var nearEdges []Edge
+	offIn, offOut := map[string]int{}, map[string]int{}
+	put := func(e *ir.Edge, status diff.Status) {
+		ve := toEdge(e)
+		ve.Status = string(status)
+		if in[e.From] && in[e.To] {
+			v.Edges = append(v.Edges, ve)
+		} else {
+			nearEdges = append(nearEdges, ve)
+		}
+	}
+	for i := range head.Edges {
+		e := &head.Edges[i]
+		switch {
+		case on(e.From) && on(e.To):
+			put(e, statusOf(e))
+		case decl[e.From]:
+			offOut[e.From] += len(e.Locations)
+		case decl[e.To]:
+			offIn[e.To] += len(e.Locations)
+		}
+	}
+	for i := range base.Edges {
+		if e := &base.Edges[i]; removed(e) && on(e.From) && on(e.To) {
+			put(e, diff.Removed)
+		}
+	}
+	if len(near) > 0 {
+		v.Near = &Near{Nodes: []Node{}, Edges: []Edge{}}
+		for _, n := range near {
+			vn := toNode(n)
+			vn.OffIn, vn.OffOut = offIn[n.ID], offOut[n.ID]
+			v.Near.Nodes = append(v.Near.Nodes, vn)
+		}
+		v.Near.Edges = append(v.Near.Edges, nearEdges...)
+	}
+	for i := range v.Nodes {
+		n := &v.Nodes[i]
+		n.OffIn, n.OffOut = offIn[n.ID], offOut[n.ID]
 	}
 
 	files := map[string]bool{}

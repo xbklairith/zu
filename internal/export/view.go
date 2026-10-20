@@ -33,6 +33,18 @@ type View struct {
 	Violations *diff.ViolationDelta `json:"violations,omitempty"`
 	// Metrics is the CRAP overlay (08), only when zu was given a coverprofile.
 	Metrics *Metrics `json:"metrics,omitempty"`
+	// Near is a Change View's unchanged neighbours, for the Screen (18).
+	Near *Near `json:"near,omitempty"`
+}
+
+// Near is what a Change View's Screen draws beside Nodes and Edges (18): the
+// unchanged declarations one call or embed from a drawn one, their types and
+// every method of a type on the page, with the calls and embeds among them
+// all that Edges does not hold. The tree never reads it, so it draws only
+// what changed.
+type Near struct {
+	Nodes []Node `json:"nodes"`
+	Edges []Edge `json:"edges"`
 }
 
 // Node is an IR node reduced to what a view draws.
@@ -121,11 +133,17 @@ func toEdge(e *ir.Edge) Edge {
 // sortView puts every list in canonical order so the same input renders the
 // same bytes.
 func sortView(v *View) {
-	slices.Sort(v.Modules)
-	slices.SortFunc(v.Nodes, func(a, b Node) int { return cmp.Compare(a.ID, b.ID) })
-	slices.SortFunc(v.Edges, func(a, b Edge) int {
+	byID := func(a, b Node) int { return cmp.Compare(a.ID, b.ID) }
+	byEnds := func(a, b Edge) int {
 		return cmp.Or(cmp.Compare(a.From, b.From), cmp.Compare(a.To, b.To), cmp.Compare(a.Kind, b.Kind))
-	})
+	}
+	slices.Sort(v.Modules)
+	slices.SortFunc(v.Nodes, byID)
+	slices.SortFunc(v.Edges, byEnds)
+	if v.Near != nil {
+		slices.SortFunc(v.Near.Nodes, byID)
+		slices.SortFunc(v.Near.Edges, byEnds)
+	}
 	slices.SortFunc(v.Honesty.ParseErrors, func(a, b ir.ParseError) int {
 		return cmp.Or(cmp.Compare(a.Path, b.Path), cmp.Compare(a.Message, b.Message))
 	})

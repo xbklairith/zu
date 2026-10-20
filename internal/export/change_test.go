@@ -229,3 +229,127 @@ func TestChangeHunksOfModifiedMethod(t *testing.T) {
 		t.Errorf("no hunk adds r.hook() in %s: %+v", get.Loc.Path, v.Hunks[get.Loc.Path])
 	}
 }
+
+// changeWith builds the Change View of the shop fixture against a copy with
+// each {file, old, new} edit made.
+func changeWith(t *testing.T, edits ...[3]string) *View {
+	t.Helper()
+	base, baseTree := scanTree(t, shopCopy(t), strings.Repeat("b", 40))
+	h := shopCopy(t)
+	for _, e := range edits {
+		edit(t, h, e[0], e[1], e[2])
+	}
+	head, headTree := scanTree(t, h, strings.Repeat("h", 40))
+	v, err := Change(base, head, diff.Compare(base, head), diff.Summarize(base, head), baseTree, headTree)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return v
+}
+
+// TestChangeNear pins 18's unchanged neighbours: the declarations one call or
+// embed from a drawn one, and every method of a type on the page, with the
+// calls and embeds among them and the off-page counts. Nodes and Edges stay
+// as the tree draws them.
+func TestChangeNear(t *testing.T) {
+	const s = "example.com/shop/internal/"
+	type off struct{ in, out int }
+	for _, c := range []struct {
+		name  string
+		v     func(t *testing.T) *View
+		nodes []string
+		edges []string // kind from to status
+		offs  map[string]off
+	}{
+		{
+			// Cart embeds the modified Order; the removed ReadWriter embedded
+			// Reader; Reset is a method of Repo, drawn for its changed methods.
+			name: "shop", v: func(t *testing.T) *View { v, _ := changeView(t); return v },
+			nodes: []string{s + "checkout.Cart", s + "store.Reader", s + "store.Repo.Reset"},
+			edges: []string{
+				"embeds " + s + "checkout.Cart " + s + "store.Order ",
+				"embeds " + s + "store.ReadWriter " + s + "store.Reader removed",
+			},
+			offs: map[string]off{s + "store.Repo.Reset": {0, 1}},
+		},
+		{
+			// Open's callers, Reset's type and that type's other methods.
+			name: "a changed function", v: func(t *testing.T) *View {
+				return changeWith(t, [3]string{"internal/store/store.go", "return &Repo{cache: map[int]Order{}}", "return &Repo{cache: map[int]Order{}, hook: func() {}}"})
+			},
+			nodes: []string{s + "checkout.Place", s + "store.Repo", s + "store.Repo.Get", s + "store.Repo.Reset", s + "store.Repo.check"},
+			edges: []string{
+				"calls " + s + "checkout.Place " + s + "store.Open ",
+				"embeds " + s + "store.Repo github.com/lib/pq ",
+				"calls " + s + "store.Repo.Get " + s + "store.Repo.check ",
+				"calls " + s + "store.Repo.Reset " + s + "store.Open ",
+			},
+			offs: map[string]off{s + "checkout.Place": {0, 1}, s + "store.Repo.check": {0, 1}},
+		},
+		{
+			// check's caller and callee, and its type's other method.
+			name: "a changed method", v: func(t *testing.T) *View {
+				return changeWith(t, [3]string{"internal/store/store.go", "money.Add(o.Total, money.Zero)", "money.Add(money.Zero, o.Total)"})
+			},
+			nodes: []string{s + "money.Add", s + "store.Repo.Get", s + "store.Repo.Reset"},
+			edges: []string{
+				"calls " + s + "store.Repo.Get " + s + "store.Repo.check ",
+				"calls " + s + "store.Repo.check " + s + "money.Add ",
+			},
+			offs: map[string]off{s + "money.Add": {1, 0}, s + "store.Repo.Reset": {0, 1}},
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			v := c.v(t)
+			if v.Near == nil {
+				t.Fatal("no near")
+			}
+			var nodes, edges []string
+			for _, n := range v.Near.Nodes {
+				nodes = append(nodes, n.ID)
+				if n.Status != "" || n.MovedFrom != "" {
+					t.Errorf("near %s has a status: %+v", n.ID, n)
+				}
+				if nodeByID(v, n.ID) != nil {
+					t.Errorf("near %s is also in Nodes", n.ID)
+				}
+				if got := (off{n.OffIn, n.OffOut}); got != c.offs[n.ID] {
+					t.Errorf("near %s: off in, out = %v, want %v", n.ID, got, c.offs[n.ID])
+				}
+			}
+			for _, e := range v.Near.Edges {
+				edges = append(edges, e.Kind+" "+e.From+" "+e.To+" "+e.Status)
+			}
+			if !slices.Equal(nodes, c.nodes) {
+				t.Errorf("near nodes = %q, want %q", nodes, c.nodes)
+			}
+			if !slices.Equal(edges, c.edges) {
+				t.Errorf("near edges = %q, want %q", edges, c.edges)
+			}
+			for _, n := range v.Nodes {
+				if n.OffIn != 0 || n.OffOut != 0 {
+					t.Errorf("drawn %s: off in, out = %d, %d; its neighbours are all near", n.ID, n.OffIn, n.OffOut)
+				}
+			}
+		})
+	}
+}
+
+// TestChangeNearIsSorted: near is built from maps, and the same change writes
+// the same bytes.
+func TestChangeNearIsSorted(t *testing.T) {
+	edit := [3]string{"internal/store/store.go", "return &Repo{cache: map[int]Order{}}", "return &Repo{cache: map[int]Order{}, hook: func() {}}"}
+	a, err := json.Marshal(changeWith(t, edit))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for range 4 {
+		b, err := json.Marshal(changeWith(t, edit))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(a, b) {
+			t.Fatal("two builds of one change wrote different bytes")
+		}
+	}
+}

@@ -276,7 +276,7 @@ In every case:
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/internal/export/change_test.go b/internal/export/change_test.go
@@ -413,9 +413,9 @@ index 0b096fd..f294f15 100644
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/export -run 'TestChangeNear'` Expected: FAIL (`v.Near undefined (type *View has no field or method Near)`: the build fails)
+- [x] **Run:** `go test ./internal/export -run 'TestChangeNear'` Expected: FAIL (`v.Near undefined (type *View has no field or method Near)`: the build fails)
 
-- [ ] **Keep the unchanged declarations one call or embed from the change, and count the rest**
+- [x] **Keep the unchanged declarations one call or embed from the change, and count the rest**
 
 The golden's new `near` section is what `go test ./internal/export -run TestChangeGolden -update` writes. Review the diff.
 
@@ -658,9 +658,9 @@ index 83d65c8..f427c3b 100644
    regroup?: { parent: Record<string, string>; label: Record<string, string> };
 ```
 
-- [ ] **Run:** `go test ./... && cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `go test ./... && cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Commit:** `Keep a Change View's unchanged neighbours for its Screens`
+- [x] **Commit:** `Keep a Change View's unchanged neighbours for its Screens`
 
 ---
 

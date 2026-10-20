@@ -42,6 +42,10 @@ export type View = {
   policy?: { hash: string; levels: string[][]; order?: string[]; proposals?: Proposal[]; budget?: number };
   violations?: { new: Violation[]; fixed: Violation[]; known: number }; // 07: Change View only
   metrics?: Metrics; // 08: only when zu was given -coverprofile
+  // 18: Change View only: the unchanged declarations one call or embed from a
+  // drawn one, their types' methods, and the calls and embeds among them all
+  // that edges does not hold. Only the Screen reads it (screen.ts screenView).
+  near?: { nodes: ViewNode[]; edges: ViewEdge[] };
   // 07, never written by zu: the box tree a Proposal draws (proposal.ts). cut.ts
   // index reads parent instead of package ids, and scene.ts labels from label.
   regroup?: { parent: Record<string, string>; label: Record<string, string> };

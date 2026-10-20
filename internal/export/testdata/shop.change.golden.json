@@ -461,5 +461,65 @@
         ]
       }
     ]
+  },
+  "near": {
+    "nodes": [
+      {
+        "id": "example.com/shop/internal/checkout.Cart",
+        "kind": "type",
+        "parent": "example.com/shop/internal/checkout",
+        "exported": true,
+        "typeKind": "struct",
+        "loc": {
+          "path": "internal/checkout/checkout.go",
+          "line": 13
+        }
+      },
+      {
+        "id": "example.com/shop/internal/store.Reader",
+        "kind": "type",
+        "parent": "example.com/shop/internal/store",
+        "exported": true,
+        "typeKind": "interface",
+        "loc": {
+          "path": "internal/store/store.go",
+          "line": 13
+        }
+      },
+      {
+        "id": "example.com/shop/internal/store.Repo.Reset",
+        "kind": "function",
+        "parent": "example.com/shop/internal/store.Repo",
+        "exported": true,
+        "loc": {
+          "path": "internal/store/store.go",
+          "line": 51
+        },
+        "offOut": 1
+      }
+    ],
+    "edges": [
+      {
+        "from": "example.com/shop/internal/checkout.Cart",
+        "to": "example.com/shop/internal/store.Order",
+        "kind": "embeds",
+        "count": 1,
+        "loc": {
+          "path": "internal/checkout/checkout.go",
+          "line": 14
+        }
+      },
+      {
+        "from": "example.com/shop/internal/store.ReadWriter",
+        "to": "example.com/shop/internal/store.Reader",
+        "kind": "embeds",
+        "count": 1,
+        "loc": {
+          "path": "internal/store/store.go",
+          "line": 20
+        },
+        "status": "removed"
+      }
+    ]
   }
 }
