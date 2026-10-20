@@ -71,7 +71,7 @@ The part of a declaration's panel that shows its file (19): Go coloured by zu, t
 
 ## Declaration Diff
 
-In a Change View, a changed declaration's own diff (20): its whole text at Base, from its doc comment to its last line, against its whole text at head, numbered on both sides and coloured. A removed declaration shows its text at Base, and a Move its source's text against its own. An added declaration has none: its Code Panel shows its text.
+In a Change View, a changed declaration's own diff (20): its whole text at Base, from its doc comment to its last line, against its whole text at head, numbered on both sides and coloured. A removed declaration shows its text at Base, and a Move its source's text against its own, or none when it kept that text whole. An added declaration has none: its Code Panel shows its text.
 
 ## Foreign
 

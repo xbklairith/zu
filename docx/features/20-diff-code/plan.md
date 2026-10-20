@@ -193,7 +193,7 @@ The scan keeps no spans: it drops each file's AST once it has its facts (ADR 000
 - **`TestAllocator`'s diff** has 8,173 rows; the panel draws 5,000 of them, around its first change (Deviation 3).
 - **Lighting, before and after 20.** The same pointing, at `TestAllocator`'s first "Calls and embeds out" row on kubernetes' last 400 commits, timed as `measure.mjs` times it, three times in each engine:
   - 19: 108 / 156 / 193 ms. The panel draws 2,027 hunk rows and a window of 5,000 code rows; the lit line lies outside the window, and the window moves to it.
-  - 20: 209 / 274 / 329 ms. It draws a window of 5,000 declaration diff rows as well, and that window moves too, so the page replaces about 10,000 rows (**Risks**).
+  - 20: 209 / 274 / 329 ms. It draws a window of 5,000 declaration diff rows as well, and that window moves too, so the page re-renders 10,000 rows, about 7,450 of them new (**Risks**).
 - **No page errors** in any engine.
 
 **After scrutiny-20's fixes.** The runs above used this plan's code before scrutiny-20's fixes (**Notes**). The fixed build writes the same View on all five changes, but for the build's name, and a page 202 bytes larger, for its script. It was timed again on the two changes that have a Lit time, at a load of 3 to 7:
@@ -223,13 +223,13 @@ These follow 19's amendments, which land first.
 
 **`docx/core/decisions.md`, line 41 (UI v1).** In 19's **Code panel (19)** text, replace "A removed edge lights nothing: its lines are base's (20)." with:
 
-> **Diff Code (20):** in a Change View, a declaration the change modified, removed or moved shows its own diff first: its whole text at Base, from its doc comment, against its text at head, numbered on both sides and coloured. Then come its file's hunks, coloured too. A removed declaration shows its text at Base. Pointing at a call or embed the change removed lights the lines it was written on at Base, in the declaration diff, and the note names them ("Base line 20.", or "at base: path:line" outside it).
+> **Diff Code (20):** in a Change View, a declaration the change modified, removed or moved shows its own diff first: its whole text at Base, from its doc comment, against its text at head, numbered on both sides and coloured. Then come its file's hunks, coloured too. A removed declaration shows its text at Base. A Move that kept its text whole has none. Pointing at a call or embed the change removed lights the lines it was written on at Base, in the declaration diff, and the note names them ("Base line 20.", or "at base: path:line" outside it).
 
 **`docx/glossary.md`, a new entry after Code Panel (19's):**
 
 > ## Declaration Diff
 >
-> In a Change View, a changed declaration's own diff (20): its whole text at Base, from its doc comment to its last line, against its whole text at head, numbered on both sides and coloured. A removed declaration shows its text at Base, and a Move its source's text against its own. An added declaration has none: its Code Panel shows its text.
+> In a Change View, a changed declaration's own diff (20): its whole text at Base, from its doc comment to its last line, against its whole text at head, numbered on both sides and coloured. A removed declaration shows its text at Base, and a Move its source's text against its own, or none when it kept that text whole. An added declaration has none: its Code Panel shows its text.
 
 **`docx/glossary.md`, IR.** Append to the end of the entry:
 
@@ -2410,10 +2410,10 @@ index 2ae8b0e..7419165 100644
   - every engine reports no page errors.
 
 - [ ] **The user's check** (by hand; `zu diff -html` on a real branch, and `zu serve -base`).
-  1. Select a function the change modified. Its panel opens at its top and shows "Declaration diff": the function whole, numbered at Base and at head, coloured, the changed lines marked, and scrolled to the first of them. Under it are its file's hunks, coloured, and at the foot its code at head, scrolled to its line.
+  1. Select a function the change modified. Its panel opens at its top and shows "Declaration diff": the function whole, numbered at Base and at head, coloured, the changed lines marked, and scrolled to the first of them. Under it are its file's hunks, coloured, and at the foot its code at head, scrolled to its line. Scroll the panel to its foot and follow a row to another declaration the change modified: its panel opens at its top too.
   2. Select a declaration the change removed. Its panel shows its text at Base.
   3. Press `s` on it. On the Screen, point at a box it called: the Base line of that call lights, and the note says "Base line …".
-  4. Select a function that moved. Its diff is its old text against its new.
+  4. Select a function that moved and changed (a rename, say). Its diff is its old text against its new.
   5. In `zu serve` without `-base` (a Project View), select a declaration with many rows. Its panel opens at its top, its rows first, and its code box shows its line.
 
 - [x] **Commit:** `Record Diff Code's acceptance`
@@ -2427,7 +2427,7 @@ index 2ae8b0e..7419165 100644
 - **Each `zu serve -base` rescan diffs again.** A rescan builds the Change View again, and 20 adds to that: the changed files parsed again on each side, and every hunk line coloured (Deviation 2). It was measured with this plan's last commit's build, as 16 measured its budget, with 16's `measure.mjs`: a copy of kubernetes v1.37.0 served with `-base HEAD~50` (52 packages changed), eleven edits to `pkg/kubelet` left uncommitted, two runs of each build, 19's and 20's in turn, at a load of 3.2 to 6.0. The rescan's min / median / max went from 540 / 566 / 649 and 535 / 550 / 562 ms to 733 / 758 / 814 and 752 / 779 / 973 ms, about 200 ms more. That is within 16's budget (a median of at most 1 s, every rescan under 2 s), with less to spare. Write → drawn's median went from 1,453 and 1,438 ms to 1,623 and 1,744 ms.
 - **Pairing can pair the wrong texts.** A declaration written in several files, whose texts a change edits and whose files it renames, pairs by order, not by content (Deviation 5).
 - **A very long declaration.** A declaration diff of more than 5,000 rows draws 5,000; find-in-page reaches only those (19's Risk). The longest in the measured changes was `TestAllocator`, on kubernetes' last 400 commits: 8,173 rows, of which the panel draws 5,000.
-- **Lighting can move two windows.** When a lit line lies outside the 5,000 rows that a long declaration diff, or a long file's code, draws, the rows drawn move to it (19). On kubernetes' last 400 commits, pointing at `TestAllocator`'s first "Calls and embeds out" row lights a line near its foot, and both windows move. The diff's goes from rows 1–5,000 to 3,174–8,173, and the code's from lines 1–5,000 to 4,278–9,277, so the page replaces about 10,000 rows. It lights in 209 / 274 / 329 ms (Chromium / Firefox / WebKit). Before 20 only the code's window moved, and the same pointing took 108 / 156 / 193 ms. No criterion was set for it. 19's 100 ms was set for a Project View's code, and it holds there. On hugo's last 100 commits, where `doCreatePages`' diff (786 rows) has no window, 20 lights in 29 / 21 / 31 ms (**Measurements**).
+- **Lighting can move two windows.** When a lit line lies outside the 5,000 rows that a long declaration diff, or a long file's code, draws, the rows drawn move to it (19). On kubernetes' last 400 commits, pointing at `TestAllocator`'s first "Calls and embeds out" row lights a line near its foot, and both windows move. The diff's goes from rows 1–5,000 to 3,174–8,173, and the code's from lines 1–5,000 to 4,278–9,277, so the page re-renders 10,000 rows, about 7,450 of them new. It lights in 209 / 274 / 329 ms (Chromium / Firefox / WebKit). Before 20 only the code's window moved, and the same pointing took 108 / 156 / 193 ms. No criterion was set for it. 19's 100 ms was set for a Project View's code, and it holds there. On hugo's last 100 commits, where `doCreatePages`' diff (786 rows) has no window, 20 lights in 29 / 21 / 31 ms (**Measurements**).
 - **`diffcode.mjs` waits fixed times,** as 17's to 19's checks do: 300 ms after a pointer move.
 - **The replay depends on 16 to 19.** Task 2's diff of `change.go` is against 16's and 18's version, and every web diff against 19's. If any of them changes before it lands, regenerate these diffs from a scratch branch on the new base.
 

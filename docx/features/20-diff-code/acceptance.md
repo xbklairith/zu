@@ -87,3 +87,14 @@ Applied as the plan's **Doc amendments** quote them:
 ## After Task 4
 
 The scrutiny of 16 to 19 found faults, and their fixes landed on `build-16-20` after Task 4 and before this record. One touches a file 20 also changed: `Panel.tsx`'s Code scrolls to its lit line when its window moves (`e7ec73d`). `code.mjs` (13/13) and `diffcode.mjs` (14/14) pass after it in every engine. The Measure and the user's check above ran on Task 4's build.
+
+## After scrutiny
+
+Scrutiny round 1 (2026-10-21) returned fix-then-ship. Its findings and what changed:
+- **The panel kept its scroll across selections.** The tree's panel opened at its top only when it first mounted. Following a row from a panel scrolled to its foot kept that scroll, so the next declaration's diff sat above the fold. `4a62135` sets the panel to its top for each new node or edge, and keeps the reader's place through a redraw of the same one (13). In the same commit, a declaration diff is keyed by its files and its place among the declaration's diffs rather than by its start lines, so a line added above it in `zu serve` keeps the reader's scroll, as Architecture 6 says. `diffcode.mjs` gains `again` on both pages and `served shifted`, and is now 17/17 in each engine. Before the fix they failed in every engine: `again` gave `[true, 930, false]` (934 in Firefox, 945 in WebKit) and `served shifted` scrolled to 846.
+- **The docs said every Move shows its diff.** A Move that kept its text whole shows none: 1 of 246 changed declarations on hugo's last 100 commits, and 19 of 4,224 on kubernetes' last 400. `decisions.md`, the glossary and the plan's quotes of them now say so. Step 4 of the user's check selects a Move that changed. Step 1 now also follows a row from a panel scrolled to its foot.
+- **Two of the plan's paths had no test.** `51cc268` adds one test for a declaration not where the IR says, which gets no diff, and one for a file that does not parse at head, whose declarations show their Base text. Each test fails when the line it pins is removed.
+- **The Risks overstated the work.** "Replaces about 10,000 rows" now reads "re-renders 10,000 rows, about 7,450 of them new".
+- **Not changed:** each pointer move re-renders every row the panel draws: 37–54 ms on `TestAllocator`'s 12,000 rows, by the reviewer's run. The reviewer judged it needs no change.
+
+The Measure above ran on Task 4's build. These fixes add one scroll per selection and draw no other row.
