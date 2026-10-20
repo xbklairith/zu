@@ -46,6 +46,15 @@ export function readableFit(rects: readonly Rect[], canvas: { w: number; h: numb
   return { x: canvas.w / 2 - cx * zoom, y: PAD - top * zoom, zoom, whole: false };
 }
 
+// centredFit is a Screen's first view (17): all of it when its labels stay
+// readable, else the floor zoom with the Centre in the middle of the canvas,
+// since a Screen is read outward from it.
+export function centredFit(rects: readonly Rect[], centre: Rect, canvas: { w: number; h: number }): Viewport & { whole: boolean } {
+  const v = readableFit(rects, canvas);
+  if (v.whole) return v;
+  return { x: canvas.w / 2 - (centre.x + centre.w / 2) * FLOOR, y: canvas.h / 2 - (centre.y + centre.h / 2) * FLOOR, zoom: FLOOR, whole: false };
+}
+
 // reveal is the viewport that brings r (absolute, in layout units) into view
 // on a canvas of w × h px, moved as little as it can and never zoomed (15): a
 // box the reader opened that grew past the canvas's edge. Its top-left comes

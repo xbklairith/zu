@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import css from "./styles.css?raw";
-import { FLOOR, LABEL_PX, mapByDefault, PAD, readableFit, READABLE_PX, reveal } from "./viewport";
+import { centredFit, FLOOR, LABEL_PX, mapByDefault, PAD, readableFit, READABLE_PX, reveal } from "./viewport";
 
 const canvas = { w: 1000, h: 600 };
 
@@ -59,5 +59,17 @@ describe("reveal (15)", () => {
   });
   it("brings a box whose top-left is off the canvas back into view", () => {
     expect(reveal(v, { x: 20, y: 10, w: 50, h: 20 }, canvas)).toEqual({ x: -100 + (60 + PAD), y: -50 + (30 + PAD), zoom: 2 });
+  });
+});
+
+describe("centredFit (17)", () => {
+  it("shows a Screen whole when it fits, as readableFit does", () => {
+    const rects = [{ x: -50, y: 0, w: 100, h: 40 }, { x: -200, y: 100, w: 400, h: 40 }];
+    expect(centredFit(rects, rects[0], canvas)).toEqual(readableFit(rects, canvas));
+  });
+  it("else holds the floor with the Centre in the middle of the canvas", () => {
+    const centre = { x: -80, y: 0, w: 160, h: 60 };
+    const rects = [centre, ...Array.from({ length: 40 }, (_, i) => ({ x: -640, y: 100 + i * 60, w: 1280, h: 48 }))];
+    expect(centredFit(rects, centre, canvas)).toEqual({ x: 500, y: 300 - 30 * FLOOR, zoom: FLOOR, whole: false });
   });
 });

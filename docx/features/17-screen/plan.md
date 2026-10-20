@@ -852,7 +852,7 @@ The tests check:
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/web/src/screen.test.ts b/web/src/screen.test.ts
@@ -966,9 +966,9 @@ index d632809..ca586e5 100644
 +});
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/screen.test.ts src/viewport.test.ts` Expected: FAIL (6 tests: `placeScreen` and `centredFit` are not functions)
+- [x] **Run:** `cd web && npx vitest run src/screen.test.ts src/viewport.test.ts` Expected: FAIL (6 tests: `placeScreen` and `centredFit` are not functions)
 
-- [ ] **Add `placeScreen` and `centredFit`**
+- [x] **Add `placeScreen` and `centredFit`**
 
 ```diff
 diff --git a/web/src/screen.ts b/web/src/screen.ts
@@ -1110,9 +1110,9 @@ index 2115c31..21e49b2 100644
  // box the reader opened that grew past the canvas's edge. Its top-left comes
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Commit:** `Place a Screen without ELK, each line from its middle, and open it at the Centre`
+- [x] **Commit:** `Place a Screen without ELK, each line from its middle, and open it at the Centre`
 
 ---
 

@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import golden from "../../internal/export/testdata/shop.view.golden.json";
 import change from "../../internal/export/testdata/shop.change.golden.json";
 import type { View, ViewEdge } from "./data";
-import { centreOf, ROW_CAP, screenOf } from "./screen";
+import { ROW_MAX } from "./layout";
+import { centreOf, GAP_ROW, placeScreen, ROW_CAP, screenOf, type Drawn } from "./screen";
 import { decl, edge, exts, pkgs, view } from "./testkit";
 
 const shop = golden as unknown as View;
@@ -92,5 +93,68 @@ describe("screenOf", () => {
     expect(ids(screenOf(v, "m/core").above)).toEqual(many.slice(0, ROW_CAP));
     expect(screenOf(v, "m/core", true).above.boxes).toHaveLength(30);
     expect(screenOf(v, "m/core", true).above.more).toBe(0);
+  });
+});
+
+// overlap says two placed boxes share any area.
+const overlap = (a: Drawn, b: Drawn) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
+describe("placeScreen", () => {
+  const many = Array.from({ length: 60 }, (_, i) => `m/p${String(i).padStart(2, "0")}`);
+  const wide = view(pkgs(["m/core", ...many], "m"), [...many.map((p, i) => weighed(p, "m/core", 60 - i)), edge("m/core", "m/p00")]);
+
+  it("draws the Centre in the middle, its importers above and what it imports below", () => {
+    const p = placeScreen(screenOf(shop, S));
+    const c = p.nodes.find((n) => n.row === "centre")!;
+    expect(c).toMatchObject({ id: S, ref: S, label: S, sub: "", facts: "imports", x: -c.w / 2, y: 0 });
+    const d = placeScreen(screenOf(shop, `${S}.Repo`)).nodes[0];
+    expect(d).toMatchObject({ label: `${S}.Repo`, sub: "", facts: "calls and embeds" }); // its full id names its package
+    const up = p.nodes.filter((n) => n.row === "above");
+    const down = p.nodes.filter((n) => n.row === "below");
+    expect(up.map((n) => n.id)).toEqual(["up:example.com/shop/internal/checkout"]);
+    expect(down.map((n) => n.ref)).toEqual(["example.com/shop/internal/money", "github.com/lib/pq"]);
+    for (const n of up) expect(n.y + n.h).toBe(-GAP_ROW);
+    for (const n of down) expect(n.y).toBe(c.h + GAP_ROW);
+    expect(down[0].x + down[0].w).toBeLessThan(down[1].x); // the first in row order, then the next right of it
+    expect(p.edges).toEqual([
+      { id: "up:example.com/shop/internal/checkout>", from: "up:example.com/shop/internal/checkout", to: S },
+      { id: ">down:example.com/shop/internal/money", from: S, to: "down:example.com/shop/internal/money" },
+      { id: ">down:github.com/lib/pq", from: S, to: "down:github.com/lib/pq" },
+    ]);
+  });
+  it("wraps a row at ROW_MAX, its heaviest line nearest the Centre, each line outward from its middle", () => {
+    const p = placeScreen(screenOf(wide, "m/core", true));
+    const up = p.nodes.filter((n) => n.row === "above");
+    expect(up).toHaveLength(60);
+    const lines = [...new Set(up.map((n) => n.y + n.h))].sort((a, b) => b - a);
+    expect(lines.length).toBeGreaterThan(1);
+    expect(lines[0]).toBe(-GAP_ROW);
+    for (const y of lines) {
+      const line = up.filter((n) => n.y + n.h === y);
+      const [l, r] = [Math.min(...line.map((n) => n.x)), Math.max(...line.map((n) => n.x + n.w))];
+      expect(r - l).toBeLessThanOrEqual(ROW_MAX);
+      expect(l + r).toBeCloseTo(0); // centred on the Centre
+    }
+    expect(up.find((n) => n.ref === "m/p00")!.y + up.find((n) => n.ref === "m/p00")!.h).toBe(-GAP_ROW);
+    // The heaviest box in the middle of its line, the next right of it, the
+    // next left: the floor zoom, centred on the Centre, shows the heaviest.
+    const first = up.filter((n) => n.y + n.h === -GAP_ROW).sort((a, b) => a.x - b.x).map((n) => n.ref);
+    const k = first.indexOf("m/p00");
+    expect([first[k - 1], first[k], first[k + 1]]).toEqual(["m/p02", "m/p00", "m/p01"]);
+    for (const a of p.nodes) for (const b of p.nodes) if (a !== b) expect(overlap(a, b), `${a.id} ${b.id}`).toBe(false);
+  });
+  it("draws a larger box for a heavier Weight, and a box in both rows twice", () => {
+    const p = placeScreen(screenOf(wide, "m/core", true));
+    const [big, small] = [p.nodes.find((n) => n.ref === "m/p00" && n.row === "above")!, p.nodes.find((n) => n.ref === "m/p59")!];
+    expect([big.size, small.size]).toEqual(["large", "small"]);
+    expect(big.h).toBeGreaterThan(small.h);
+    expect(p.nodes.filter((n) => n.ref === "m/p00").map((n) => [n.id, n.both])).toEqual([["up:m/p00", true], ["down:m/p00", true]]);
+  });
+  it("ends a capped row with its +N more chip", () => {
+    const p = placeScreen(screenOf(wide, "m/core"));
+    const up = p.nodes.filter((n) => n.row === "above");
+    expect(up).toHaveLength(ROW_CAP + 1);
+    expect(up[ROW_CAP]).toMatchObject({ id: "up:#more", ref: null, label: `+${60 - ROW_CAP} more` });
+    expect(p.edges.some((e) => e.from === "up:#more")).toBe(false);
   });
 });
