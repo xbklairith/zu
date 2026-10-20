@@ -1,6 +1,6 @@
 # 18 · The Screen in a Change View — Plan
 
-**Status:** APPROVED 2026-10-20 (lead, after scrutiny-18, one revision and the replay; advisor sign-off); REVISED 2026-10-20 after a review of 17 and 18 (**Notes**), replayed again. Held: it queues behind 16 and 17, which are approved and held; zu builds them in order 16, 17, 18, and builds any only when the user says go.
+**Status:** Implemented 2026-10-21 (Tasks 1–5 on `build-16-20`; `acceptance.md`; the user's check is owed). APPROVED 2026-10-20 (lead, after scrutiny-18, one revision and the replay; advisor sign-off); REVISED 2026-10-20 after a review of 17 and 18 (**Notes**), replayed again. Held: it queues behind 16 and 17, which are approved and held; zu builds them in order 16, 17, 18, and builds any only when the user says go.
 
 **Base.** Every diff here is against `main` at c6f85b7 with 16's and 17's plans applied, in that order, 17's as revised on 2026-10-20. c6f85b7 differs from a18ff85 only by 17's plan documents. The diffs come from a scratch branch whose first commit is that tree: a `git archive` of a18ff85 with 16's and 17's tasks applied. After it come one commit per red step and one per green step. The plan was replayed on a fresh `git archive` of c6f85b7, after 16's and 17's replays (**Replay record**). Once 16 and 17 land, replay this plan again on `main` (**Overlap with 16 and 17**).
 
@@ -2144,17 +2144,17 @@ index 4dc3201..58a51b7 100644
 
 **Steps:**
 
-- [ ] **Run:** `make check` Expected: PASS (read the lint output)
+- [x] **Run:** `make check` Expected: PASS (read the lint output)
 
-- [ ] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (57 checks in each engine)
+- [x] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (57 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node place.mjs` Expected: PASS (9 checks in each engine)
+- [x] **Run:** `cd web/e2e && node place.mjs` Expected: PASS (9 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS (11 checks in each engine)
+- [x] **Run:** `cd web/e2e && node serve.mjs` Expected: PASS (11 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node screen.mjs` Expected: PASS (23 checks in each engine)
+- [x] **Run:** `cd web/e2e && node screen.mjs` Expected: PASS (23 checks in each engine)
 
-- [ ] **Measure** (by hand; not a replay step).
+- [x] **Measure** (by hand; not a replay step).
   1. In `.zu/corpus/kubernetes@v1.37.0` and `.zu/corpus/hugo@v0.166.0`, run `bin/zu diff HEAD~50 -max-parse-errors 1000000 -html <scratch>/<name>.html`. These clones are read-only: never clone, edit or check out in them. `scripts/bench-corpus.sh` deepens them so HEAD~50 is reachable. Check `git status --porcelain` is empty before and after.
   2. Run `node docx/features/18-change-screen/measure.mjs . <scratch>/kubernetes.html <scratch>/hugo.html`.
   3. Record the table in `acceptance.md`.
@@ -2174,7 +2174,7 @@ index 4dc3201..58a51b7 100644
   5. Press Esc. The tree is drawn with the Centre's package selected.
   6. On a change with a new violation, the walk's first step is its importer, with the violating line red.
 
-- [ ] **Commit:** `Record the Screen in a Change View's acceptance`
+- [x] **Commit:** `Record the Screen in a Change View's acceptance`
 
 ---
 

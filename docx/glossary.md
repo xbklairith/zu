@@ -57,6 +57,14 @@ The node a Screen is drawn around: the selected package, type, function or exter
 
 How much a box on a Screen is used by or uses its Centre, which sizes the box against the heaviest in its row: the files that import, for packages; √(call sites and embeds × the declarations at the box's end), for declarations, so breadth counts as well as volume. Only Screen boxes are sized by it.
 
+## Walk
+
+The way through a Change View one Screen at a time (18), in the decided reading order: each new violation's importer, then the changed packages bottom-up, each followed by the Centres of its changed declarations (a changed method's Centre is its type). `n` takes the next step and `p` the previous one, on the tree or a Screen; from the tree, `n` starts at the first. A Centre off the walk steps on from its package's place. Each step is a browser history entry.
+
+## Ghost
+
+On a Screen in a Change View (18), where a reversed import's far end was in base: the box drawn dotted and plain in the row opposite its real one, its line dotted and unsigned, its facts "⇄ in base". The diff reports a reversed import once, in head's direction, so the ghost is how the Screen shows the old direction.
+
 ## Foreign
 
 An external module drawn as an oval outside the Package Tree. The Policy can collapse
@@ -137,8 +145,9 @@ View, which answers "what did this change do to it?".
 
 The Mode B picture: the Project View of the head ref, compared against the merge-base.
 Every package and dependency is marked added, removed, modified or unchanged. New rule
-violations are called out, the Affected Set is outlined, Moves are dashed, and unchanged
-neighbours one hop away are dimmed. zu diff -html writes one; zu serve -base serves one (14).
+violations are called out, the Affected Set is outlined, and Moves are dashed. Its
+Screens (18) also draw the unchanged declarations one call or embed from the change. zu
+diff -html writes one; zu serve -base serves one (14).
 
 ## HTML Export
 
