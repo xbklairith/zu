@@ -149,6 +149,46 @@ func TestDirectoryLinksAreNotFollowed(t *testing.T) {
 	}
 }
 
+// The open itself stays in the root, whatever readMax's checks saw before
+// it: a directory swapped for a link out of the tree between the two is not
+// followed (19). A file link inside the tree still opens.
+func TestOpenStaysInTheRoot(t *testing.T) {
+	parent := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(parent, "outside"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(parent, "outside", "a.go"), []byte("package a // SECRET\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	root := tree(t, map[string]string{"go.mod": "module example.com/m\n", "e/e.go": "package e\n"})
+	for link, target := range map[string]string{
+		"a":    filepath.Join(parent, "outside"),                      // leaves the tree, absolute
+		"r":    filepath.Join("..", filepath.Base(parent), "outside"), // leaves the tree, relative
+		"f.go": filepath.Join("e", "e.go"),                            // a file link inside
+	} {
+		if err := os.Symlink(target, filepath.Join(root, link)); err != nil {
+			t.Skipf("symlinks unsupported: %v", err)
+		}
+	}
+	if b, err := os.ReadFile(filepath.Join(root, "r", "a.go")); err != nil || !strings.Contains(string(b), "SECRET") {
+		t.Fatalf("the relative link does not reach outside: %q, %v", b, err)
+	}
+	d := dirOf(t, root).(*dirTree)
+	for _, rel := range []string{"a/a.go", "r/a.go"} {
+		if f, err := d.open(rel); !errors.Is(err, fs.ErrNotExist) {
+			if f != nil {
+				f.Close()
+			}
+			t.Errorf("open(%s) = %v; want fs.ErrNotExist", rel, err)
+		}
+	}
+	f, err := d.open("f.go")
+	if err != nil {
+		t.Fatalf("open(f.go) = %v", err)
+	}
+	f.Close()
+}
+
 // TestScanLinksNoNetworkCode guards REQ-042: the scanner cannot open a
 // connection if no networking package is linked into it.
 func TestScanLinksNoNetworkCode(t *testing.T) {

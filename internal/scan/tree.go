@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"syscall"
 
 	"zu/internal/ir"
 )
@@ -214,7 +215,7 @@ func (d *dirTree) readMax(rel string, limit int64) ([]byte, error) {
 	default:
 		return nil, &fs.PathError{Op: "read", Path: rel, Err: fs.ErrNotExist}
 	}
-	f, err := os.Open(p) // #nosec G304 -- a regular file inside the root, checked above
+	f, err := d.open(rel)
 	if err != nil {
 		return nil, err
 	}
@@ -224,6 +225,26 @@ func (d *dirTree) readMax(rel string, limit int64) ([]byte, error) {
 		r = io.LimitReader(f, limit)
 	}
 	return io.ReadAll(r)
+}
+
+// open opens rel, a path readMax has checked, through an os.Root of the
+// tree: whatever is on disk by the time it opens, it follows no link out of
+// the root, so a directory swapped for a link after the checks does not take
+// the read outside (19). Such an escape, or a directory gone from under rel,
+// is fs.ErrNotExist, as the checks would have said.
+func (d *dirTree) open(rel string) (*os.File, error) {
+	r, err := os.OpenRoot(d.root)
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+	f, err := r.Open(filepath.FromSlash(rel))
+	var pe *fs.PathError
+	// os.Root does not export its escape error, so it is known by its text.
+	if errors.As(err, &pe) && (pe.Err.Error() == "path escapes from parent" || errors.Is(pe.Err, syscall.ENOTDIR) || errors.Is(pe.Err, syscall.ELOOP)) {
+		return nil, &fs.PathError{Op: "read", Path: rel, Err: fs.ErrNotExist}
+	}
+	return f, err
 }
 
 // MaxSmallFile caps the files zu reads whole by name, the Policy and the
