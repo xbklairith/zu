@@ -160,8 +160,10 @@ export function App({ view: whole, read }: { view: View; read?: Read }) {
     const c = centreOf(proposed, id);
     if (c !== null) update((s) => centreAt(s, c));
   };
-  // The Panel shows the Centre until the reader closes it, then the next one.
+  // The Panel shows the Centre until the reader closes it, and again once the
+  // Centre changes.
   const [closed, setClosed] = useState<string | null>(null);
+  useEffect(() => setClosed((c) => (c === centre ? c : null)), [centre]);
   // The Change View opens on the changed subgraph (Q4); U10 toggles to all of
   // it. A link whose focus lies outside the subgraph opens all of it, at that
   // focus: from the start, and on a later hashchange.

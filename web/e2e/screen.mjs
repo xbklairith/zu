@@ -104,6 +104,7 @@ async function walk(b) {
   got.panel = [shown?.startsWith(S), closed, (await panel(p))?.startsWith(C)];
   await p.goBack();
   const back = await drawn(p, S);
+  got.panel.push((await panel(p))?.startsWith(S)); // closed at S, shown again on the way back
   await p.goBack();
   await drawn(p, null);
   const tree = await hash(p);
@@ -246,7 +247,7 @@ async function changeView(b) {
 
 const CSS_ESCAPE = (s) => s.replace(/["\\]/g, "\\$&");
 const want = {
-  enter: true, button: [true, "true"], panel: [true, null, true], recentre: true, back: true, forward: true, keyboard: [C, C],
+  enter: true, button: [true, "true"], panel: [true, null, true, true], recentre: true, back: true, forward: true, keyboard: [C, C],
   wordStart: true, honest: true, esc: true, more: true, disabled: true, errors: [],
   walk: [true, true, "10 steps", "1 of 10"], marks: [true, true, true, "⇄", true, true, ["~ Order", "− ReadWriter", "~ Repo.Get", "~ Repo.check"]],
   affected: true, step: [true, "2 of 10", true, true], near: ["– of 10", true], leave: [null, C, true], full: [A, 0, true],
