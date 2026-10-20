@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"io"
 	"path/filepath"
 	"strings"
 	"sync/atomic"
@@ -142,5 +143,23 @@ func TestServeBaseNotesAHiddenCompareOnce(t *testing.T) {
 	}
 	if got := strings.Count(stderr.String(), hiddenNote); got != 1 {
 		t.Errorf("the note is printed %d times, want once: %s", got, stderr.String())
+	}
+}
+
+// The kept Base is in ir.Sort's order, as head's IR is: Compare then walks
+// the two side by side instead of matching 110k nodes by id (16).
+func TestServeKeepsTheBaseInOrder(t *testing.T) {
+	dir := diffRepo(t)
+	withUI(t)
+	o := &htmlOptions{}
+	if err := o.load(); err != nil {
+		t.Fatal(err)
+	}
+	s := &session{dir: dir, base: "HEAD", o: o, cache: scan.NewCache(), stderr: io.Discard}
+	if _, _, err := s.view(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if s.baseDoc == nil || !ir.InOrder(s.baseDoc) || s.baseDoc.Edges == nil {
+		t.Fatal("the kept Base is not as ir.Sort leaves it")
 	}
 }

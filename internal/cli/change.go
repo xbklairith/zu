@@ -47,6 +47,7 @@ func (s *session) viewOf(ctx context.Context, src *source, doc *ir.IR, pol *poli
 			return nil, fmt.Errorf("base %s: %w", mb[:min(12, len(mb))], err)
 		}
 		d.Ref = ir.Ref{Commit: mb}
+		ir.Sort(d) // once, as head's IR is on each rescan: Compare then merges the two (16)
 		s.baseDoc = d
 	}
 	delta := diff.Compare(s.baseDoc, doc)

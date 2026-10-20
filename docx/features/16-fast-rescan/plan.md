@@ -2347,7 +2347,7 @@ The test builds a `-base HEAD` session, renders its View once, and checks that t
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 diff --git a/internal/cli/change_test.go b/internal/cli/change_test.go
@@ -2386,9 +2386,9 @@ index 3ed03f8e66815be73270bb4eb0a03810d1ce9211..2bb79a4fec35b561c7ea700f2055bb68
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/cli -run TestServeKeepsTheBaseInOrder` Expected: FAIL (the kept Base is not as `ir.Sort` leaves it)
+- [x] **Run:** `go test ./internal/cli -run TestServeKeepsTheBaseInOrder` Expected: FAIL (the kept Base is not as `ir.Sort` leaves it)
 
-- [ ] **Sort the Base once, when it is scanned**
+- [x] **Sort the Base once, when it is scanned**
 
 ```diff
 diff --git a/internal/cli/change.go b/internal/cli/change.go
@@ -2405,9 +2405,9 @@ index 5681e0515bde55ecfcd0762f74943de8c49f1b18..76d7a32096f8ef260a62cfc664d94acd
  	delta := diff.Compare(s.baseDoc, doc)
 ```
 
-- [ ] **Run:** `go test -race ./internal/cli` Expected: PASS
+- [x] **Run:** `go test -race ./internal/cli` Expected: PASS
 
-- [ ] **Commit:** `Keep serve's Base in order, so Compare merges`
+- [x] **Commit:** `Keep serve's Base in order, so Compare merges`
 
 ---
 
