@@ -255,7 +255,7 @@ The green step also rewords the Cache's doc comment (Deviation 13).
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 diff --git a/internal/scan/lines_test.go b/internal/scan/lines_test.go
@@ -326,9 +326,9 @@ index 0000000..cff1f9f
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/scan -run TestLocationsAreTheFilesOwnLines` Expected: FAIL (all seven locations are the directive's: `calls x/p.F x/p.G at line 400, want 11 (the file's own)`, and so on)
+- [x] **Run:** `go test ./internal/scan -run TestLocationsAreTheFilesOwnLines` Expected: FAIL (all seven locations are the directive's: `calls x/p.F x/p.G at line 400, want 11 (the file's own)`, and so on)
 
-- [ ] **Take each line as the file's**
+- [x] **Take each line as the file's**
 
 ```diff
 diff --git a/internal/scan/cache.go b/internal/scan/cache.go
@@ -400,9 +400,9 @@ index 70badf8..d409f05 100644
  			site.Name = x.Name
 ```
 
-- [ ] **Run:** `go test ./... && cd web && npx vitest run && npm run typecheck` Expected: PASS (no golden changes)
+- [x] **Run:** `go test ./... && cd web && npx vitest run && npm run typecheck` Expected: PASS (no golden changes)
 
-- [ ] **Commit:** `Record the IR's lines as the file's own, not a //line directive's`
+- [x] **Commit:** `Record the IR's lines as the file's own, not a //line directive's`
 
 ---
 

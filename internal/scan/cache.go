@@ -19,7 +19,8 @@ import (
 // the last scan's, which is what a cold scan would build of it, byte for
 // byte. Keep one Cache per sequence of scans of one tree: scanning another
 // tree through it (serve's Base, say) replaces the kept assembly, and each
-// scan after that assembles every package again. Successive IRs share
+// scan after that assembles again, as a rescan would, every package the two
+// trees differ in and its importers. Successive IRs share
 // location lists with the kept parts: nothing may append to an IR's
 // Locations in place, or sort them but through ir.Sort, which leaves sorted
 // lists alone. Safe for concurrent use.

@@ -76,7 +76,7 @@ func extractSource(rel string, src []byte) *fileFacts {
 		return f
 	}
 	f.PkgName = file.Name.Name
-	f.PkgLine = fset.Position(file.Package).Line
+	f.PkgLine = fset.PositionFor(file.Package, false).Line
 	f.Generated = ast.IsGenerated(file)
 	f.addImports(fset, file)
 	for _, decl := range file.Decls {
@@ -140,7 +140,7 @@ func (f *fileFacts) addDecl(fset *token.FileSet, name *ast.Ident, recv string, k
 		Kind:     kind,
 		Exported: ast.IsExported(name.Name),
 		TypeKind: tk,
-		Line:     fset.Position(name.Pos()).Line,
+		Line:     fset.PositionFor(name.Pos(), false).Line,
 		node:     node,
 	})
 }

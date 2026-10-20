@@ -49,7 +49,7 @@ func (f *fileFacts) addImports(fset *token.FileSet, file *ast.File) {
 		if err != nil {
 			continue
 		}
-		imp := importFact{Path: p, Line: fset.Position(spec.Path.Pos()).Line}
+		imp := importFact{Path: p, Line: fset.PositionFor(spec.Path.Pos(), false).Line}
 		if spec.Name != nil {
 			imp.Name = spec.Name.Name
 		}
@@ -75,7 +75,7 @@ func (f *fileFacts) addCalls(fset *token.FileSet, d *ast.FuncDecl) {
 			return true // conversion to a receiver type parameter
 		}
 		s := from
-		s.Line = fset.Position(call.Lparen).Line
+		s.Line = fset.PositionFor(call.Lparen, false).Line
 		if classifyCall(&s, call.Fun, recv) {
 			f.Calls = append(f.Calls, s)
 		}
@@ -248,7 +248,7 @@ func (f *fileFacts) addEmbeds(fset *token.FileSet, ts *ast.TypeSpec) {
 			e = s.X
 		}
 		e = unwrapInstantiation(e)
-		site := embedSite{Owner: ts.Name.Name, Line: fset.Position(fld.Type.Pos()).Line}
+		site := embedSite{Owner: ts.Name.Name, Line: fset.PositionFor(fld.Type.Pos(), false).Line}
 		switch x := e.(type) {
 		case *ast.Ident:
 			site.Name = x.Name
