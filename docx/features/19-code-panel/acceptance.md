@@ -111,15 +111,29 @@ Applied as the plan's exact text, with one change:
   - "Byte for byte" stays, as recorded above.
 
 **Round 2** (2026-10-21, fix-then-ship):
-- **The link check came before the open.** So a directory renamed to a link out of the tree between the two was followed. In the reviewer's race, a goroutine swapped `a` between its directory and a link out of the tree, while eight clients asked `/source` for `a/a.go`. 1,141 of 324,235 answers carried the outside file. `cd4cfc0` opens through the tree's `os.Root` and keeps `viaLink`, which also refuses an in-tree directory link, as `os.Root` alone would not. An escape, a mid-swap `not a directory` and a link loop answer 404, not 500. `TestOpenStaysInTheRoot` refuses an absolute and a relative link out of the tree, and opens an in-tree file link.
-  - The reviewer's race, rerun at `d7e9a2a`: 0 of 313,239 answers came from outside, and none was a 500.
+- **The link check came before the open.** So a directory renamed to a link out of the tree between the two was followed. In the reviewer's race, a goroutine swapped `a` between its directory and a link out of the tree, while eight clients asked `/source` for `a/a.go`. 1,141 of 324,235 answers carried the outside file. `cd4cfc0` opens through the tree's `os.Root` and keeps `viaLink`, which also refuses an in-tree directory link, as `os.Root` alone would not. An escape answers 404, not 500, and so do the `not a directory` and too-many-links errors that a swap during the walk gives. A link loop never reaches the open: `ResolveLinks` refuses it first. `TestOpenStaysInTheRoot` refuses an absolute and a relative link out of the tree, and opens an in-tree file link.
+  - The reviewer's race, rerun at `d7e9a2a`: 0 of 313,239 answers came from outside, and none was a 500. Two other swaps still answered 500 until round 3 (below).
   - **The cost.** The watch's trusted rescan reads only the files whose stamp changed, so it is unaffected: 57–63 ms either way, by 16's round-2 reviewer. A page load's untrusted rescan reads every listed file, and pays the per-component walk `os.Root` makes:
     - in process on kubernetes, by the same reviewer, it went from about 180 ms to 500–570 ms;
     - the lead's raw read of kubernetes' 17,875 listed .go files, with GOMAXPROCS workers at a load of 6–8, took 208–232 ms with `os.Open` and 751–851 ms with a Root per read. With one Root shared, it took 675–797 ms.
 
-    A cold `zu scan` (4–5 s, alternated three times, byte-identical IR) hides this inside the parse, so it measured the wrong case. l.266 (a re-scan after one file changes, under 2 s, request to response) is still to be re-checked at a low load.
+    A cold `zu scan` (4–5 s, alternated three times, byte-identical IR) hides this inside the parse, so it measured the wrong case. l.266 (a re-scan after one file changes, under 2 s, request to response) still holds; see round 3.
 - **Nits** (`d7e9a2a`):
   - The serve test's tree is now a git checkout, so its rescan goes through `ListTree`. It fails with `ListTree`'s link check off.
   - `CommitTree` reads through an in-tree directory link, so the `Tree` doc says "a path through a directory link on disk". Nothing reaches that path: `ls-tree` lists a link as a link. `ResolveLinks` is unchanged, because refusing such paths there would break disk/commit parity.
   - `tree.go`'s `ListTree` comment is reflowed.
   - `e7ec73d` has no test. The reviewer asked for none: it changes only a scroll when the mark moves under a held light.
+
+**Round 3** (2026-10-21, at `cb05693`, fix-then-ship):
+- **`os.Root` follows at most eight links, and `ResolveLinks` 40.** On disk, a file behind 9 to 40 links passed every check and then read as missing, while a commit parsed it. So `zu scan` failed, `zu diff -worktree` reported a removal that did not happen, and a Policy behind such a chain read as missing. `1d1b7c8` opens a link at the path `ResolveLinks` returns, which holds no link, as `CommitTree` reads it. The parity repo gains a chain of nine links, and `TestRefScanMatchesDiskScan` failed on it before the fix.
+- **Nits, fixed in `1d1b7c8`.**
+  - `TestOpenStaysInTheRoot` now opens a nine-link chain and a path under a file. They pin the too-many-links and `not a directory` mappings, and each case fails with its mapping dropped.
+  - Two swaps still answered 500, with the tree's absolute path in the body. One was a directory replaced by a file between `viaLink` and `readMax`'s `Lstat`. The other was a file replaced by a directory before the open. `readMax` now maps that `Lstat`'s `not a directory`. `open` refuses what opens as no regular file, which the test pins with a directory.
+
+  The reviewer's five swaps (a directory to a link out, a directory to a file, a file to an absolute link out, a file to a relative link out, a file to a directory) were rerun at `1d1b7c8`. Of 1,486,389 answers, 0 came from outside and 0 were a 500.
+- **The page-load cost, measured.** The test was a page fetch after one file changes, request to response (l.266). On kubernetes under `zu serve -poll 0`, a function was appended to `pkg/util/env/env.go` before each fetch. Builds were alternated three times, 7 fetches each, at a load of 3.8–6.9. Medians per round:
+  - `1d1b7c8`: 0.926 / 0.943 / 0.916 s;
+  - `848fe00` (before `cd4cfc0`): 0.629 / 0.640 / 0.640 s.
+
+  `os.Root` costs about 0.29 s here. l.266's 2 s holds, below 10's 1.74–1.93 s. The reviewer measured the same case at 0.906 s against 0.621 s. A cheaper read that keeps the open atomic would share the walk per directory (one `OpenRoot` per directory). It is a follow-up, not needed for any gate.
+- **The record.** It said a link loop answers 404, but a loop never reaches the open. It said no answer was a 500, which held only for the race it named. And it said the cost was noise. Each now reads as measured.
