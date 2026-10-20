@@ -148,8 +148,8 @@ function DeclDiffs({ diffs, path, lit, hint }: { diffs: DeclDiff[]; path?: strin
           {litNote(lit, path, spans)}
         </p>
       )}
-      {diffs.map((d) => (
-        <OwnDiff key={`${d.basePath}\n${d.baseStart}\n${d.headPath}\n${d.headStart}`} diff={d} lit={lit} />
+      {diffs.map((d, i) => (
+        <OwnDiff key={`${i}\n${d.basePath}\n${d.headPath}`} diff={d} lit={lit} />
       ))}
     </section>
   );
@@ -177,9 +177,10 @@ function OwnDiff({ diff: d, lit }: { diff: DeclDiff; lit: Place[] | null }) {
   );
   // The diff alone scrolls, to its first change, as Code to its marked line,
   // and to its first lit row. Each View brings its diffs as new objects (13),
-  // and another diff is another OwnDiff (DeclDiffs keys them by their sides):
-  // scrolled again only when its change moves, a diff stays where the reader
-  // scrolled it through a redraw. The lit row's scroll is second, so it is
+  // and another diff is another OwnDiff (DeclDiffs keys them by their files,
+  // not their lines): scrolled again only when its change moves within it, a
+  // diff stays where the reader scrolled it through a redraw, a line added
+  // above it included. The lit row's scroll is second, so it is
   // the one kept when both run.
   useEffect(() => {
     const el = pre.current?.children[changed - 1 - from] as HTMLElement | undefined;
@@ -448,6 +449,13 @@ export function Panel({ view, id, edge, bundles, hidden, crap, ownTier, read, li
   // A row followed to another declaration goes without a mouseleave or a
   // blur: its light goes with the declaration it was in.
   useEffect(() => setOver(null), [id]);
+  // Another node or edge opens at the panel's top, as the first one does,
+  // its own diff first (20): the panel lives on across selections. A redraw
+  // of the same one (13) brings a new edge, but keeps where the reader is.
+  const aside = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (aside.current) aside.current.scrollTop = 0;
+  }, [id, edge?.from, edge?.to]);
   const title = edge ? `${edge.from} → ${edge.to}` : (id ?? "");
   const node = id === null ? undefined : view.nodes.find((n) => n.id === (id.endsWith(PKG) ? id.slice(0, -PKG.length) : id));
   let body: React.ReactNode;
@@ -511,7 +519,7 @@ export function Panel({ view, id, edge, bundles, hidden, crap, ownTier, read, li
     );
   }
   return (
-    <aside className="panel">
+    <aside className="panel" ref={aside}>
       <header>
         <code className="id">{title}</code>
         <button type="button" className="link" onClick={onClose} aria-label="Close panel">

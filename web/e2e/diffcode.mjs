@@ -1,6 +1,8 @@
 // Browser acceptance for Diff Code (20): in a Change View, a changed
 // declaration's own diff first, numbered and coloured, in view when its
-// panel opens, at its first change, before its file's hunks, coloured too;
+// panel opens (the first or a later one), at its first change, and kept
+// where the reader scrolled it when a line above moves it, before its file's
+// hunks, coloured too;
 // a removed declaration's text at base; and the base lines behind a call or
 // embed the change removed lit, from the panel's rows and from the Screen, in
 // zu diff -html's page and in zu serve -base.
@@ -135,6 +137,32 @@ async function top(b, url) {
   return { got, errors };
 }
 
+// again: a declaration followed from a panel scrolled to its foot opens at
+// its top too, its own diff in view: the panel lives on across selections.
+async function again(b, url) {
+  const { p, errors } = await open(b, `${url}#f=${enc(S)}&s=${enc(`${S}.Repo.Get`)}`);
+  await p.setViewportSize({ width: 1400, height: 500 });
+  await own(p);
+  await p.locator("aside.panel pre.source .hit").waitFor({ timeout: 10000 });
+  await settle(p);
+  const scrolled = await p.evaluate(() => {
+    const a = document.querySelector("aside.panel");
+    a.scrollTop = a.scrollHeight;
+    return a.scrollTop > 0;
+  });
+  await row(p, "Calls and embeds out", "Repo.check").click();
+  await p.locator("aside.panel header .id", { hasText: `${S}.Repo.check` }).waitFor({ timeout: 10000 });
+  await own(p);
+  await settle(p);
+  const got = await p.evaluate(() => {
+    const [panel, diff] = ["aside.panel", "aside.panel pre.hunk.decl"].map((s) => document.querySelector(s));
+    const [a, d] = [panel, diff].map((e) => e.getBoundingClientRect());
+    return [panel.scrollTop, d.top >= a.top && d.bottom <= a.bottom];
+  });
+  await p.close();
+  return { got: [scrolled, ...got], errors };
+}
+
 // removed: ReadWriter's text at base, and no code. The tree draws no
 // unchanged neighbour, so its panel lists no row (18).
 async function removed(b, url) {
@@ -168,6 +196,27 @@ async function far(b, url) {
     });
     return [panel.scrollTop, diff.scrollTop > 0, seen.length];
   });
+  await p.close();
+  return { got, errors };
+}
+
+// shifted (zu serve only): a line added above Far, in its file, moves both
+// its diff's sides; the diff stays where the reader scrolled it, its first
+// change where it was. far.go is put back after, for the next engine.
+async function shifted(b, url) {
+  const { p, errors } = await open(b, `${url}#f=${enc(S)}&s=${enc(`${S}.Far`)}`);
+  await own(p);
+  await settle(p);
+  const at = () => p.evaluate(() => document.querySelector("aside.panel .decl-at").textContent);
+  const was = await at();
+  await p.evaluate(() => (document.querySelector("aside.panel pre.hunk.decl").scrollTop = 0));
+  const f = join(repo, "internal/store/far.go");
+  writeFileSync(f, farGo(2).replace("package store\n", "package store\n\nvar _ = 0\n"));
+  await p.waitForFunction((w) => document.querySelector("aside.panel .decl-at")?.textContent !== w, was, { timeout: 15000 });
+  await settle(p);
+  const got = [await at(), await p.evaluate(() => document.querySelector("aside.panel pre.hunk.decl").scrollTop)];
+  writeFileSync(f, farGo(2));
+  await p.waitForFunction((w) => document.querySelector("aside.panel .decl-at")?.textContent === w, was, { timeout: 15000 });
   await p.close();
   return { got, errors };
 }
@@ -209,6 +258,7 @@ const HINT = "Point at a call or embed to light the lines it is written on.";
 const want = {
   modified: [GET, GET_ROWS, ["func", "type"], SECTIONS, true],
   top: [0, true, true],
+  again: [true, 0, true],
   removed: [["base internal/store/store.go:18–22"], [["18|-", "19|-", "20|-", "21|-", "22|-"]], false, 0],
   moved: [["base internal/money/money.go:13–14 → head internal/money/money.go:17–18"], [["13|17 ", "14|-", "|18+"]]],
   pointed: [[HINT], ["48|43 "], ["43"], ["Line 43."]],
@@ -216,11 +266,16 @@ const want = {
 };
 for (const k of Object.keys(want)) want[`served ${k}`] = want[k]; // zu serve -base: the branch's change
 want["served far"] = [0, true, 2];
+want["served shifted"] = ["base internal/store/far.go:3–78 → head internal/store/far.go:5–80", 0];
 want.errors = [];
-const parts = { modified, top, removed, moved, pointed, base };
+const parts = { modified, top, again, removed, moved, pointed, base };
 // Each part on its own, so one that fails hides no other: on both pages,
-// then far on zu serve's.
-const runs = [...Object.entries(parts).flatMap(([k, run]) => [[k, run, page], [`served ${k}`, run, served]]), ["served far", far, served]];
+// then far and shifted on zu serve's.
+const runs = [
+  ...Object.entries(parts).flatMap(([k, run]) => [[k, run, page], [`served ${k}`, run, served]]),
+  ["served far", far, served],
+  ["served shifted", shifted, served],
+];
 const channel = process.env.ZU_E2E_CHANNEL;
 const engines = [["chromium", chromium, channel ? { channel } : {}], ["firefox", firefox, {}], ["webkit", webkit, {}]];
 let failed = 0;
