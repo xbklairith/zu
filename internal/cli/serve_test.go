@@ -162,6 +162,25 @@ func TestServeDrawsEveryDeclarationAndSendsItsSourceOnDemand(t *testing.T) {
 	if code := statusOf(t, url+"source?path=b/b.go"); code != http.StatusOK {
 		t.Errorf("b/b.go after: %d", code)
 	}
+	// a becomes a link out of the tree while the last scan declares a/a.go:
+	// neither /source nor the rescan reads through it (ListTree's case, where
+	// git still lists the file, is scan's TestDirectoryLinksAreNotFollowed).
+	outside := t.TempDir()
+	writeFile(t, outside, "a.go", "package a // SECRET\n")
+	if err := os.Rename(filepath.Join(dir, "a"), filepath.Join(t.TempDir(), "a")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, filepath.Join(dir, "a")); err != nil {
+		t.Fatal(err)
+	}
+	for _, when := range []string{"before", "after"} {
+		if code := statusOf(t, url+"source?path=a/a.go"); code != http.StatusNotFound {
+			t.Errorf("a/a.go through a link out of the tree, %s a rescan: %d, want 404", when, code)
+		}
+		if v := fetch(t, url+"view.json"); strings.Contains(v, "SECRET") || strings.Contains(v, "a/a.go") {
+			t.Errorf("the rescan read a/a.go through the link: %s", v)
+		}
+	}
 	noZu(t, dir)
 }
 

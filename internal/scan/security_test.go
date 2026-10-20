@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -99,6 +100,51 @@ func TestReadFileByNameStaysInTheTree(t *testing.T) {
 		}
 		if _, err := ReadSmall(tr, "big.json"); err == nil || !strings.Contains(err.Error(), "larger than") {
 			t.Errorf("%s: ReadSmall past the cap: %v", name, err)
+		}
+	}
+}
+
+// A directory link is never followed (Tree), though a path through one
+// reaches a file: git still lists what a directory held before it became a
+// link, and zu serve reads files by such paths (19).
+func TestDirectoryLinksAreNotFollowed(t *testing.T) {
+	parent := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(parent, "outside"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(parent, "outside", "store.go"), []byte("package store // SECRET\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	root := tree(t, map[string]string{"go.mod": "module example.com/m\n", "a/a.go": "package a\n"})
+	if err := os.Mkdir(filepath.Join(root, "b"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for link, target := range map[string]string{
+		"b/store": filepath.Join(parent, "outside"), // leaves the tree
+		"alias":   "a",                              // stays inside
+	} {
+		if err := os.Symlink(target, filepath.Join(root, filepath.FromSlash(link))); err != nil {
+			t.Skipf("symlinks unsupported: %v", err)
+		}
+	}
+	through := []string{"b/store/store.go", "alias/a.go"}
+	list, err := ListTree(root, append([]string{"a/a.go", "go.mod"}, through...))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if files, errs, err := list.Files(); err != nil || len(errs) != 0 || !slices.Equal(files, []string{"a/a.go", "go.mod"}) {
+		t.Errorf("Files = %v, %v, %v; want [a/a.go go.mod]", files, errs, err)
+	}
+	// filepath.Join puts an absolute path below the root, and the walk up
+	// its directories ends there.
+	if d := dirOf(t, root).(*dirTree); d.viaLink("/a", nil) || !d.viaLink("/b/store", nil) {
+		t.Error(`viaLink("/a") or viaLink("/b/store") is wrong`)
+	}
+	for name, tr := range map[string]Tree{"dir": dirOf(t, root), "list": list} {
+		for _, rel := range through {
+			if data, err := tr.ReadFile(rel); !errors.Is(err, fs.ErrNotExist) {
+				t.Errorf("%s: ReadFile(%s) = %q, %v; want fs.ErrNotExist", name, rel, data, err)
+			}
 		}
 	}
 }

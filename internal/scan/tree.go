@@ -27,7 +27,8 @@ type Tree interface {
 	// ReadFile returns the content of a path from Files, or of a file zu
 	// looks up by name such as the Policy. A symlink is followed only to a
 	// regular file inside the tree, as Files would list it; anything else
-	// (a link leaving the tree, a directory, a device) is fs.ErrNotExist.
+	// (a link leaving the tree, a path through a directory link, a
+	// directory, a device) is fs.ErrNotExist.
 	ReadFile(rel string) ([]byte, error)
 }
 
@@ -83,8 +84,8 @@ type listTree struct {
 
 // ListTree is the directory at root, restricted to files: slash paths
 // relative to root, in any order. Of those, Files keeps what DirTree would:
-// regular files and in-tree file symlinks outside pruned directories. Listed
-// paths missing from disk are skipped. Files lists once: a later call returns
+// regular files and in-tree file symlinks outside pruned directories and
+// directory links. Listed paths missing from disk are skipped. Files lists once: a later call returns
 // the first listing and Stamps (16).
 func ListTree(root string, files []string) (Tree, error) {
 	d, err := openDir(root)
@@ -113,6 +114,7 @@ func (l *listTree) list() ([]string, []ir.ParseError) {
 		err  error
 	}
 	got := make([]seen, len(listed))
+	var dirs sync.Map // viaLink's answers, shared by the workers
 	var wg sync.WaitGroup
 	const workers = 4
 	for k := range workers {
@@ -120,6 +122,9 @@ func (l *listTree) list() ([]string, []ir.ParseError) {
 		go func() {
 			defer wg.Done()
 			for i := k; i < len(listed); i += workers {
+				if l.viaLink(path.Dir(listed[i]), &dirs) {
+					continue // git lists what a directory held before it became a link (19)
+				}
 				p := filepath.Join(l.root, filepath.FromSlash(listed[i]))
 				info, err := os.Lstat(p)
 				switch {
@@ -190,10 +195,14 @@ func (d *dirTree) ReadFile(rel string) ([]byte, error) {
 }
 
 // readMax reads rel, at most limit bytes when limit >= 0. rel must be a
-// regular file or a symlink that linkedFileInside accepts: the Policy and
-// the Baseline are read by name, not from Files, so a planted link must not
-// reach outside the root.
+// regular file or a symlink that linkedFileInside accepts, under no
+// directory link: the Policy and the Baseline are read by name, not from
+// Files, and zu serve reads source files by path (19), so a planted link
+// must not reach outside the root.
 func (d *dirTree) readMax(rel string, limit int64) ([]byte, error) {
+	if d.viaLink(path.Dir(rel), nil) {
+		return nil, &fs.PathError{Op: "read", Path: rel, Err: fs.ErrNotExist}
+	}
 	p := filepath.Join(d.root, filepath.FromSlash(rel))
 	info, err := os.Lstat(p)
 	if err != nil {
@@ -245,6 +254,27 @@ func ReadSmall(t Tree, rel string) ([]byte, error) {
 func (d *dirTree) linkedFileInside(p string) bool {
 	_, ok := ResolveLinks(d.rel(p), d.lookup)
 	return ok
+}
+
+// viaLink reports whether a directory on dir's way down from the root is
+// not a directory to Lstat: a link, which Files never follows. One Lstat
+// cannot describe is left to the caller's own Lstat to report. seen, when
+// not nil, keeps each answer for the next path.
+func (d *dirTree) viaLink(dir string, seen *sync.Map) bool {
+	if dir == "." || dir == "/" {
+		return false
+	}
+	if seen != nil {
+		if v, ok := seen.Load(dir); ok {
+			return v.(bool)
+		}
+	}
+	info, err := os.Lstat(filepath.Join(d.root, filepath.FromSlash(dir)))
+	link := err == nil && !info.IsDir() || d.viaLink(path.Dir(dir), seen)
+	if seen != nil {
+		seen.Store(dir, link)
+	}
+	return link
 }
 
 // lookup describes rel without following it.
