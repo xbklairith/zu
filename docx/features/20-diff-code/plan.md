@@ -1802,7 +1802,7 @@ The unit tests check, on 19's View, where the change removed F's call of `m.H`, 
 
 **Steps:**
 
-- [ ] **Write the failing tests and browser checks**
+- [x] **Write the failing tests and browser checks**
 
 ```diff
 diff --git a/web/e2e/diffcode.mjs b/web/e2e/diffcode.mjs
@@ -2014,11 +2014,11 @@ index 8b1d1bd..859b386 100644
  describe("Go colours' rules (19)", () => {
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/code.test.ts src/screen.test.ts src/styles.test.ts` Expected: FAIL (`behind` gives no place for the removed call, `litNote` calls a Base place another file's and says "The change removed it…" for none, `litRows` is not a function, `placesOf` gives no Base place, and there is no `.hunk .lit` rule)
+- [x] **Run:** `cd web && npx vitest run src/code.test.ts src/screen.test.ts src/styles.test.ts` Expected: FAIL (`behind` gives no place for the removed call, `litNote` calls a Base place another file's and says "The change removed it…" for none, `litRows` is not a function, `placesOf` gives no Base place, and there is no `.hunk .lit` rule)
 
-- [ ] **Run:** `cd web && npx vite build >/dev/null && cd .. && CGO_ENABLED=0 go build -trimpath -o bin/zu ./cmd/zu && cd web/e2e && node diffcode.mjs` Expected: FAIL (10/14 checks in each engine; pointed and base fail, here and served. Pointing at `Repo.check` lights its line in the code but no row of the declaration diff, and on the Screen pointing at `store.Reader` lights nothing and shows no note. Built with `vite build`, as in Task 3)
+- [x] **Run:** `cd web && npx vite build >/dev/null && cd .. && CGO_ENABLED=0 go build -trimpath -o bin/zu ./cmd/zu && cd web/e2e && node diffcode.mjs` Expected: FAIL (10/14 checks in each engine; pointed and base fail, here and served. Pointing at `Repo.check` lights its line in the code but no row of the declaration diff, and on the Screen pointing at `store.Reader` lights nothing and shows no note. Built with `vite build`, as in Task 3)
 
-- [ ] **Light the Base lines behind a removed call or embed**
+- [x] **Light the Base lines behind a removed call or embed**
 
 ```diff
 diff --git a/web/src/Panel.tsx b/web/src/Panel.tsx
@@ -2367,11 +2367,11 @@ index 2ae8b0e..7419165 100644
    max-height: 60vh;
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node diffcode.mjs` Expected: PASS (14 checks in each engine)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node diffcode.mjs` Expected: PASS (14 checks in each engine)
 
-- [ ] **Commit:** `Light the Base lines behind a call or embed the change removed`
+- [x] **Commit:** `Light the Base lines behind a call or embed the change removed`
 
 ---
 

@@ -85,7 +85,7 @@ describe.each([["light", light], ["dark", dark]])("Go colours, %s", (_, t) => {
 });
 
 // 20: hunks and declaration diffs are coloured too, on their added and
-// removed lines.
+// removed lines, and a declaration diff lights the lines behind a call.
 describe.each([["light", light], ["dark", dark]])("Go colours in diffs, %s", (_, t) => {
   it("keep text at 4.5:1 on added and removed lines", () => {
     const low: string[] = [];
@@ -104,6 +104,11 @@ describe("Go colours' rules in diffs (20)", () => {
   });
   it("scroll a declaration diff alone", () => {
     expect(css).toMatch(/\.hunk\.decl \{[^}]*max-height: 60vh[^}]*overflow: auto/);
+  });
+  it("light a diff line over its added or removed colour", () => {
+    const at = (re: RegExp) => css.search(re);
+    expect(css).toMatch(/\.hunk \.lit \{[^}]*background: var\(--lit\)/);
+    expect(at(/\.hunk \.lit \{/)).toBeGreaterThan(at(/\.hunk \.del \{/));
   });
 });
 

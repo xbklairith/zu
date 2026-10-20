@@ -1,8 +1,9 @@
 // Browser acceptance for Diff Code (20): in a Change View, a changed
 // declaration's own diff first, numbered and coloured, in view when its
-// panel opens, at its first change, before its file's hunks, coloured too,
-// and a removed declaration's text at base, in zu diff -html's page and in zu
-// serve -base.
+// panel opens, at its first change, before its file's hunks, coloured too;
+// a removed declaration's text at base; and the base lines behind a call or
+// embed the change removed lit, from the panel's rows and from the Screen, in
+// zu diff -html's page and in zu serve -base.
 // Not part of make check: it needs browsers and a bin/zu built with the UI.
 // Run from web/e2e after `make build`: npm run accept-diff-code.
 // ZU_E2E_CHANNEL=chrome uses an installed Chrome instead of Playwright's Chromium.
@@ -86,9 +87,9 @@ async function open(b, url) {
   return { p, errors };
 }
 // own is what the panel's declaration diffs show: each one's sides, its rows
-// as "base|head marker", whether Go is coloured in it and in the file's
-// hunks, the panel's section titles in order, and whether it draws the code
-// at head.
+// as "base|head marker", its lit rows, the notes over code, whether Go is
+// coloured in it and in the file's hunks, the panel's section titles in
+// order, and whether it draws the code at head.
 const own = (p) => p.locator("aside.panel pre.hunk.decl").first().waitFor({ timeout: 10000 }).then(() => p.evaluate(() => {
   const pres = [...document.querySelectorAll("aside.panel pre.hunk.decl")];
   const row = (d) => {
@@ -98,11 +99,15 @@ const own = (p) => p.locator("aside.panel pre.hunk.decl").first().waitFor({ time
   return {
     at: [...document.querySelectorAll("aside.panel .decl-at")].map((e) => e.textContent),
     rows: pres.map((pre) => [...pre.children].map(row)),
+    lit: pres.flatMap((pre) => [...pre.querySelectorAll(".lit")].map(row)),
+    notes: [...document.querySelectorAll("aside.panel .lit-note")].map((e) => e.textContent),
     kw: [document.querySelector("aside.panel pre.hunk.decl .kw")?.textContent, document.querySelector("aside.panel pre.hunk:not(.decl) .kw")?.textContent],
     order: [...document.querySelectorAll("aside.panel section > h3")].map((h) => h.textContent.replace(/ \(\d+\)$/, "").replace(/ · on the host$/, "")),
     code: document.querySelector("aside.panel pre.source") !== null,
+    codeLit: [...document.querySelectorAll("aside.panel pre.source .lit .ln")].map((e) => e.textContent),
   };
 }));
+const row = (p, title, id) => p.locator("aside.panel section", { has: p.locator(`h3:text-matches("^${title}")`) }).locator("li", { hasText: id });
 const settle = (p) => p.waitForTimeout(300);
 
 // modified: Get's own diff first, then its file's hunks, then its rows and
@@ -167,19 +172,52 @@ async function far(b, url) {
   return { got, errors };
 }
 
+// pointed: over Get's diff, the hint; pointing at its call to check lights
+// the line at head in the diff and in the code, and the note says which.
+async function pointed(b, url) {
+  const { p, errors } = await open(b, `${url}#f=${enc(S)}&s=${enc(`${S}.Repo.Get`)}`);
+  const first = await own(p);
+  await row(p, "Calls and embeds out", "Repo.check").hover();
+  await settle(p);
+  const lit = await own(p);
+  await p.close();
+  return { got: [first.notes, lit.lit, lit.codeLit, lit.notes], errors };
+}
+
+// base: on ReadWriter's Screen, pointing at the embed of Reader it lost, by
+// its row or its box, lights the base line it was written on.
+async function base(b, url) {
+  const { p, errors } = await open(b, `${url}#s=${enc(`${S}.ReadWriter`)}&c=${enc(`${S}.ReadWriter`)}`);
+  await own(p);
+  await row(p, "Calls and embeds out", "store.Reader").hover();
+  await settle(p);
+  const lit = await own(p);
+  await p.mouse.move(5, 5);
+  await settle(p);
+  const left = await own(p);
+  await p.locator(`.screen .react-flow__node[data-id="${`down:${S}.Reader`}"]`).hover();
+  await settle(p);
+  const box = await own(p);
+  await p.close();
+  return { got: [lit.lit, lit.notes, left.lit, box.lit, box.notes], errors };
+}
+
 const GET = ["base internal/store/store.go:42–49 → head internal/store/store.go:36–44"];
 const GET_ROWS = [["42|36 ", "43|37 ", "44|38 ", "45|39 ", "46|40 ", "47|41 ", "|42+", "48|43 ", "49|44 "]];
 const SECTIONS = ["Declaration diff", "Changes in internal/store/store.go", "Calls and embeds out", "Called or embedded by"];
+const HINT = "Point at a call or embed to light the lines it is written on.";
 const want = {
   modified: [GET, GET_ROWS, ["func", "type"], SECTIONS, true],
   top: [0, true, true],
   removed: [["base internal/store/store.go:18–22"], [["18|-", "19|-", "20|-", "21|-", "22|-"]], false, 0],
   moved: [["base internal/money/money.go:13–14 → head internal/money/money.go:17–18"], [["13|17 ", "14|-", "|18+"]]],
+  pointed: [[HINT], ["48|43 "], ["43"], ["Line 43."]],
+  base: [["20|-"], ["Base line 20."], [], ["20|-"], ["Base line 20."]],
 };
 for (const k of Object.keys(want)) want[`served ${k}`] = want[k]; // zu serve -base: the branch's change
 want["served far"] = [0, true, 2];
 want.errors = [];
-const parts = { modified, top, removed, moved };
+const parts = { modified, top, removed, moved, pointed, base };
 // Each part on its own, so one that fails hides no other: on both pages,
 // then far on zu serve's.
 const runs = [...Object.entries(parts).flatMap(([k, run]) => [[k, run, page], [`served ${k}`, run, served]]), ["served far", far, served]];

@@ -3,10 +3,10 @@
 // below, after codezoom's screens. A pure function of the View and the hash:
 // rows come only from the View's edges. 18: in a Change View, from its edges
 // and near's, each box and line marked by its Change Status.
-import type { Loc, NodeKind, View, ViewEdge } from "./data";
+import type { NodeKind, View, ViewEdge } from "./data";
 import { statusOf } from "./bundle";
 import { nodeMark } from "./change";
-import { behind } from "./code";
+import { behind, type Place } from "./code";
 import { cmp, index, packageOf, PKG } from "./cut";
 import { INSET, ROW_MAX, textWidth } from "./layout";
 import { LABEL_PX } from "./viewport";
@@ -222,10 +222,11 @@ export function screenOf(within: View, centre: string, all = false): Screen {
 }
 
 // placesOf is where the calls and embeds a Screen box's line stands for are
-// written (19, code.ts behind): drawn is the box's id or its line's ("up:X",
-// "up:X>", ">down:X"). It is null for the Centre, a "+N more" chip and a
-// Screen of imports, which light no line.
-export function placesOf(within: View, centre: string, drawn: string): Loc[] | null {
+// written (19, code.ts behind), at base for those the change removed (20):
+// drawn is the box's id or its line's ("up:X", "up:X>", ">down:X"). It is
+// null for the Centre, a "+N more" chip and a Screen of imports, which light
+// no line.
+export function placesOf(within: View, centre: string, drawn: string): Place[] | null {
   const view = screenView(within);
   const { node } = index(view);
   const kind = node.get(centre)?.kind;

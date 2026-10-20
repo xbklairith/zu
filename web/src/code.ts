@@ -61,35 +61,50 @@ export function inline(view: View, path: string): SourceFile | null {
   return text === undefined ? null : { path, text, syntax: view.syntax?.[path] ?? [] };
 }
 
+// Place is where a call or embed is written: at head, or (base) at base, for
+// one the change removed (20).
+export type Place = Loc & { base?: true };
+
 // behind is where the calls and embeds from an id from accepts to one to
-// accepts are written: each edge's loc and more, by path and line, each once.
-// A call or embed the change removed was written in base, whose lines the
-// code (head's) does not show: it gives none.
-export function behind(view: View, from: (id: string) => boolean, to: (id: string) => boolean): Loc[] {
-  const out = new Map<string, Loc>();
+// accepts are written: each edge's loc and more, by path and line, each once,
+// head's first. A call or embed the change removed was written at base: its
+// places are marked base (20).
+export function behind(view: View, from: (id: string) => boolean, to: (id: string) => boolean): Place[] {
+  const out = new Map<string, Place>();
   for (const e of view.edges) {
-    if (e.kind === "imports" || e.status === "removed" || !from(e.from) || !to(e.to)) continue;
-    for (const l of [e.loc, ...(e.more ?? [])]) out.set(`${l.path}\n${l.line}`, l);
+    if (e.kind === "imports" || !from(e.from) || !to(e.to)) continue;
+    const base = e.status === "removed";
+    for (const l of [e.loc, ...(e.more ?? [])]) out.set(`${base}\n${l.path}\n${l.line}`, base ? { ...l, base } : l);
   }
-  return [...out.values()].sort((a, b) => cmp(a.path, b.path) || a.line - b.line);
+  return [...out.values()].sort((a, b) => Number(!!a.base) - Number(!!b.base) || cmp(a.path, b.path) || a.line - b.line);
 }
+
+// Span is the lines of a file at base a declaration diff draws (20).
+export type Span = { path: string; first: number; last: number };
 
 const LIT_CAP = 8; // the places litNote lists of each, before "and N more"
 
-// litNote says where the lit lines are, in the shown file (path) and in
-// others; places is null while no call or embed is pointed at.
-export function litNote(places: Loc[] | null, path: string): string {
+// litNote says where the lit lines are: at head in the shown file (path) and
+// in others, at base in the spans drawn and elsewhere; places is null while
+// no call or embed is pointed at.
+export function litNote(places: Place[] | null, path?: string, spans: Span[] = []): string {
   if (places === null) return "Point at a call or embed to light the lines it is written on.";
-  if (places.length === 0) return "The change removed it: it has no line in head.";
   const list = (xs: string[]) =>
     xs.length > LIT_CAP ? `${xs.slice(0, LIT_CAP).join(", ")} and ${xs.length - LIT_CAP} more` : xs.join(", ");
-  const here = places.filter((p) => p.path === path).map((p) => String(p.line));
-  const there = places.filter((p) => p.path !== path).map((p) => `${p.path}:${p.line}`);
-  const out = [
-    here.length > 0 && `${here.length === 1 ? "Line" : "Lines"} ${list(here)}`,
-    there.length > 0 && `${here.length > 0 ? "in" : "In"} other files: ${list(there)}`,
-  ].filter(Boolean);
-  return `${out.join("; ")}.`;
+  const drawn = (p: Place) =>
+    p.base ? spans.some((s) => s.path === p.path && p.line >= s.first && p.line <= s.last) : p.path === path;
+  const of = (base: boolean, here: boolean) =>
+    places.filter((p) => !!p.base === base && drawn(p) === here).map((p) => (here ? String(p.line) : `${p.path}:${p.line}`));
+  const parts = [
+    [of(false, true), "Line", "Lines"],
+    [of(true, true), "base line", "base lines"],
+    [of(false, false), "in other files:", "in other files:"],
+    [of(true, false), "at base:", "at base:"],
+  ] as const;
+  const out = parts.filter(([xs]) => xs.length > 0).map(([xs, one, many]) => `${xs.length === 1 ? one : many} ${list(xs)}`);
+  if (out.length === 0) return "";
+  const s = out.join("; ");
+  return `${s[0].toUpperCase()}${s.slice(1)}.`;
 }
 
 // Numbered is a diff line as a declaration diff draws it (20): its marker,
@@ -105,6 +120,15 @@ export function numbered(h: Hunk): Numbered[] {
     if (n.mark !== "-") n.head = hd++;
     return n;
   });
+}
+
+// litRows is which rows of a declaration diff (basePath, headPath) places
+// lights: a line at base by its base line, at head by its head line.
+export function litRows(rows: Numbered[], basePath: string | undefined, headPath: string | undefined, places: Place[] | null): Set<number> {
+  const on = new Set(places?.map((p) => `${!!p.base}\n${p.path}\n${p.line}`));
+  const lit = (base: boolean, path: string | undefined, line: number | undefined) =>
+    path !== undefined && line !== undefined && on.has(`${base}\n${path}\n${line}`);
+  return new Set(rows.flatMap((r, i) => (lit(true, basePath, r.base) || lit(false, headPath, r.head) ? [i] : [])));
 }
 
 // Read gives a file zu serve sends on demand (19), or null.

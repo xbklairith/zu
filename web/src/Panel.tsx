@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Bundle } from "./bundle";
-import { around, behind, centre, inline, litNote, numbered, paint, type Read } from "./code";
+import { around, behind, centre, inline, litNote, litRows, numbered, paint, type Place, type Read, type Span } from "./code";
 import type { DeclDiff, Hunk, Loc, SourceFile, View, ViewEdge, ViewNode } from "./data";
 import { calls, imports, insideDecl, targets, type Row } from "./facts";
 import { isGroup, isStrip, rankNote } from "./group";
@@ -22,7 +22,7 @@ type Props = {
   crap?: Risk; // 08: the selected box's CRAP as the scene rolled it up
   ownTier?: number; // 12: the selected box's rank before the row cap merged its row
   read?: Read; // 19: the source the View does not carry, from zu serve
-  lit?: Loc[] | null; // 19: where the Screen line the reader points at is written (screen.ts placesOf)
+  lit?: Place[] | null; // 19: where the Screen line the reader points at is written (screen.ts placesOf), at base too (20)
   onReveal: (id: string) => void;
   onClose: () => void;
 };
@@ -133,39 +133,62 @@ function HunkLines({ hunk: h }: { hunk: Hunk }) {
 // where is a declaration diff's side: path:first–last.
 const where = (path: string, start: number, n: number) => `${path}:${n > 1 ? `${start}–${start + n - 1}` : start}`;
 
-// DeclDiffs draws a declaration's own diffs (20), first in its Change.
-function DeclDiffs({ diffs }: { diffs: DeclDiff[] }) {
+// DeclDiffs draws a declaration's own diffs (20), first in its Change. Over
+// them, where the lit lines are, at head and at base, or how to light them:
+// the Code under them says it no more.
+function DeclDiffs({ diffs, path, lit, hint }: { diffs: DeclDiff[]; path?: string; lit: Place[] | null; hint: boolean }) {
+  const spans: Span[] = diffs.flatMap((d) =>
+    d.basePath ? [{ path: d.basePath, first: d.baseStart, last: d.baseStart + d.baseLines - 1 }] : [],
+  );
   return (
     <section>
       <h3>Declaration diff</h3>
+      {(hint || lit !== null) && (
+        <p className="muted lit-note" aria-live="polite">
+          {litNote(lit, path, spans)}
+        </p>
+      )}
       {diffs.map((d) => (
-        <OwnDiff key={`${d.basePath}\n${d.baseStart}\n${d.headPath}\n${d.headStart}`} diff={d} />
+        <OwnDiff key={`${d.basePath}\n${d.baseStart}\n${d.headPath}\n${d.headStart}`} diff={d} lit={lit} />
       ))}
     </section>
   );
 }
 
-// OwnDiff is one declaration diff, numbered at base and at head and
-// coloured as React text only, scrolled to its first change. Of one longer
-// than CODE_LINES it draws those around that change, as Code does.
-function OwnDiff({ diff: d }: { diff: DeclDiff }) {
+// OwnDiff is one declaration diff, numbered at base and at head and coloured
+// as React text only, scrolled to its first change, its rows lit where the
+// call or embed pointed at is written. Of one longer than CODE_LINES it draws
+// those around its first change, or its first lit row, as Code does.
+function OwnDiff({ diff: d, lit }: { diff: DeclDiff; lit: Place[] | null }) {
   const pre = useRef<HTMLPreElement>(null);
   const rows = useMemo(() => numbered(d), [d]);
-  const changed = rows.findIndex((r) => r.mark !== " ") + 1; // counted from 1, as around counts
-  const [from, to] = around(rows.length, changed);
+  const on = useMemo(() => litRows(rows, d.basePath, d.headPath, lit), [rows, d.basePath, d.headPath, lit]);
+  const first = on.size > 0 ? Math.min(...on) + 1 : 0; // counted from 1, as centre counts
+  const changed = rows.findIndex((r) => r.mark !== " ") + 1;
+  // As in Code: the rows drawn move to the first lit row when they do not
+  // hold it, and stay when the light goes out, until the change moves.
+  const [held, setHeld] = useState({ changed, at: changed });
+  const at = centre(rows.length, held.changed === changed ? held.at : changed, first);
+  if (held.changed !== changed || held.at !== at) setHeld({ changed, at });
+  const [from, to] = around(rows.length, at);
   const segs = useMemo(
     () => paint(rows.slice(from, to).map((r) => r.text), (d.syntax ?? []).slice(from, to)),
     [rows, d.syntax, from, to],
   );
-  // The diff alone scrolls, to its first change, as Code to its marked line.
-  // Each View brings its diffs as new objects (13), and another diff is
-  // another OwnDiff (DeclDiffs keys them by their sides): scrolled again only
-  // when its change moves, a diff stays where the reader scrolled it through
-  // a redraw.
+  // The diff alone scrolls, to its first change, as Code to its marked line,
+  // and to its first lit row. Each View brings its diffs as new objects (13),
+  // and another diff is another OwnDiff (DeclDiffs keys them by their sides):
+  // scrolled again only when its change moves, a diff stays where the reader
+  // scrolled it through a redraw. The lit row's scroll is second, so it is
+  // the one kept when both run.
   useEffect(() => {
     const el = pre.current?.children[changed - 1 - from] as HTMLElement | undefined;
     if (pre.current && el) pre.current.scrollTop = el.offsetTop - pre.current.clientHeight / 2;
   }, [changed]);
+  useEffect(() => {
+    const el = pre.current?.children[first - 1 - from] as HTMLElement | undefined;
+    if (pre.current && el) pre.current.scrollTop = el.offsetTop - pre.current.clientHeight / 2;
+  }, [first, from]);
   const sides = [
     d.basePath && `base ${where(d.basePath, d.baseStart, d.baseLines)}`,
     d.headPath && `head ${where(d.headPath, d.headStart, d.headLines)}`,
@@ -180,7 +203,7 @@ function OwnDiff({ diff: d }: { diff: DeclDiff }) {
         {segs.map((ss, k) => {
           const r = rows[from + k];
           return (
-            <div key={from + k} className={lineClass(r.mark)}>
+            <div key={from + k} className={[lineClass(r.mark), on.has(from + k) && "lit"].filter(Boolean).join(" ") || undefined}>
               <span className="ln">{r.base}</span>
               <span className="ln">{r.head}</span>
               {r.mark}
@@ -203,8 +226,8 @@ function dir(path: string): string {
 
 // Change is what zu diff says about one node: status, Move, hop, and the
 // hunks of its file (a declaration) or of its directory (a package); before
-// them, a declaration's own diff (20).
-function Change({ view, node }: { view: View; node: ViewNode }) {
+// them, a declaration's own diff (20), lit by lit.
+function Change({ view, node, lit = null, hint = false }: { view: View; node: ViewNode; lit?: Place[] | null; hint?: boolean }) {
   if (view.kind !== "change") return null;
   const facts = [
     node.status,
@@ -236,7 +259,9 @@ function Change({ view, node }: { view: View; node: ViewNode }) {
           </a>
         </p>
       )}
-      {own.length > 0 && <DeclDiffs diffs={own} />}
+      {own.length > 0 && (
+        <DeclDiffs diffs={own} path={node.status === "removed" ? undefined : node.loc.path} lit={lit} hint={hint} />
+      )}
       {files.map((p) => (
         <Hunks key={p} view={view} path={p} hunks={hunks[p]} />
       ))}
@@ -246,9 +271,10 @@ function Change({ view, node }: { view: View; node: ViewNode }) {
 
 // Code renders file text as React text children only, never parsed as
 // markup, coloured as zu coloured it (19, code.ts), the line marked and the
-// lines in lit that are this file's lit. Of a file longer than CODE_LINES it
-// draws those around the marked line, and says which.
-function Code({ file, line, lit }: { file: SourceFile; line: number; lit: Loc[] | null }) {
+// places in lit at head in this file lit (20: a declaration diff lights base's).
+// Of a file longer than CODE_LINES it draws those around the marked line, and
+// says which.
+function Code({ file, line, lit }: { file: SourceFile; line: number; lit: Place[] | null }) {
   const pre = useRef<HTMLPreElement>(null);
   const mark = useRef<HTMLDivElement>(null);
   // Each View brings its files as new objects (13): cut, paint and scroll
@@ -256,7 +282,7 @@ function Code({ file, line, lit }: { file: SourceFile; line: number; lit: Loc[] 
   // code where the reader scrolled it. The colour is the text's
   // (export.Syntax), whose lines are cut as these are.
   const all = useMemo(() => file.text.split("\n"), [file.text]);
-  const on = useMemo(() => new Set(lit?.filter((l) => l.path === file.path).map((l) => l.line)), [lit, file.path]);
+  const on = useMemo(() => new Set(lit?.filter((l) => !l.base && l.path === file.path).map((l) => l.line)), [lit, file.path]);
   const first = on.size > 0 ? Math.min(...on) : 0;
   // The lines drawn move to the first lit line when they do not hold it,
   // and stay when the light goes out, as the scroll does, until the mark
@@ -307,8 +333,10 @@ function Code({ file, line, lit }: { file: SourceFile; line: number; lit: Loc[] 
 // Source is the code of the file loc is in: the View's, or (19) read from zu
 // serve, the last file read kept while the next comes. It draws nothing while
 // neither has the file. Over it, where the lines lit are, or (hint) how to
-// light them.
-function Source({ view, loc, read, lit, hint }: { view: View; loc: Loc; read?: Read; lit: Loc[] | null; hint: boolean }) {
+// light them, unless a declaration diff over it says (noted, 20).
+function Source({ view, loc, read, lit, hint, noted }: {
+  view: View; loc: Loc; read?: Read; lit: Place[] | null; hint: boolean; noted: boolean;
+}) {
   const own = useMemo(() => inline(view, loc.path), [view, loc.path]);
   const [got, setGot] = useState<SourceFile | null>(null);
   useEffect(() => {
@@ -323,7 +351,7 @@ function Source({ view, loc, read, lit, hint }: { view: View; loc: Loc; read?: R
   if (!file) return null;
   return (
     <>
-      {(hint || lit !== null) && (
+      {!noted && (hint || lit !== null) && (
         <p className="muted lit-note" aria-live="polite">
           {litNote(lit, file.path)}
         </p>
@@ -414,7 +442,7 @@ function Crap({ view, id, box, onReveal }: { view: View; id: string; box?: Risk;
 
 export function Panel({ view, id, edge, bundles, hidden, crap, ownTier, read, lit, onReveal, onClose }: Props) {
   // 19: the row the reader points at lights its lines, over the Screen's line.
-  const [over, setOver] = useState<{ id: string; places: Loc[] } | null>(null);
+  const [over, setOver] = useState<{ id: string; places: Place[] } | null>(null);
   const places = over !== null && over.id === id ? over.places : (lit ?? null);
   // A row followed to another declaration goes without a mouseleave or a
   // blur: its light goes with the declaration it was in.
@@ -443,17 +471,18 @@ export function Panel({ view, id, edge, bundles, hidden, crap, ownTier, read, li
   } else if (node?.kind === "type" || node?.kind === "function") {
     const c = calls(view, node.id);
     const inside = insideDecl(view, node.id);
+    const hint = c.out.length + c.in.length > 0;
     const point = (out: boolean) => (r: Row | null) =>
       setOver(r && { id: id!, places: out ? behind(view, inside, (x) => x === r.id) : behind(view, (x) => x === r.id, inside) });
     body = (
       <>
         <p className="muted">{node.typeKind ? `${node.kind} (${node.typeKind})` : node.kind}</p>
         <Where view={view} loc={node.loc} removed={node.status === "removed"} />
-        <Change view={view} node={node} />
+        <Change view={view} node={node} lit={places} hint={hint} />
         <Rows title="Calls and embeds out" rows={c.out} onReveal={onReveal} onPoint={point(true)} />
         <Rows title="Called or embedded by" rows={c.in} onReveal={onReveal} onPoint={point(false)} />
         {node.status !== "removed" && (
-          <Source view={view} loc={node.loc} read={read} lit={places} hint={c.out.length + c.in.length > 0} />
+          <Source view={view} loc={node.loc} read={read} lit={places} hint={hint} noted={!!view.declDiffs?.[node.id]} />
         )}
       </>
     );

@@ -343,6 +343,10 @@ describe("placesOf (19)", () => {
     expect(placesOf(v, "m.T", "down:m.G")).toEqual([loc("b.go", 5)]);
     expect(placesOf(v, "m.T", ">down:m.E")).toEqual([loc("t.go", 2)]);
   });
+  it("marks base the places of a call the change removed (20)", () => {
+    const c = { ...v, kind: "change" as const, edges: [...v.edges, { ...edge("m.F", "m.T.M", "calls"), loc: loc("a.go", 5), status: "removed" }] };
+    expect(placesOf(c, "m.T", "up:m.F")).toEqual([loc("a.go", 3), loc("a.go", 7), { ...loc("a.go", 5), base: true }]);
+  });
   it('is null for the Centre, a "+N more" chip, and a Screen of imports', () => {
     expect(placesOf(v, "m.T", "m.T")).toBeNull();
     expect(placesOf(v, "m.T", "up:#more")).toBeNull();

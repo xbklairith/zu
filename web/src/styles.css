@@ -626,7 +626,11 @@ button.st-removed {
 .hunk .del {
   background: var(--del-bg);
 }
-/* 20: a declaration diff, numbered, scrolls alone */
+/* 20: a declaration diff, numbered, scrolls alone, and lights the lines
+   behind the call or embed pointed at over their added or removed colour */
+.hunk .lit {
+  background: var(--lit);
+}
 .hunk.decl {
   position: relative;
   max-height: 60vh;

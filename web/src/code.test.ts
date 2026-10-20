@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import golden from "../../internal/export/testdata/shop.view.golden.json";
 import type { DeclDiff, Loc, SourceFile, View, ViewEdge } from "./data";
-import { around, behind, centre, CODE_LINES, inline, litNote, numbered, paint, reader } from "./code";
+import { around, behind, centre, CODE_LINES, inline, litNote, litRows, numbered, paint, reader, type Place } from "./code";
 import { decl, pkgs, view } from "./testkit";
 
 const shop = golden as unknown as View;
@@ -110,8 +110,9 @@ describe("behind (19)", () => {
     expect(behind(lines, is("m.F"), (x) => x === "m.G" || x.startsWith("m.T"))).toEqual([at("a.go", 4), at("a.go", 6), at("a.go", 9), at("b.go", 2)]);
     expect(behind(lines, is("m.T"), is("m.E"))).toEqual([at("t.go", 3)]);
   });
-  it("has none for a call the change removed: its lines are base's", () => {
-    expect(behind(lines, is("m.F"), is("m.H"))).toEqual([]);
+  it("marks base the places of a call the change removed, after head's (20)", () => {
+    expect(behind(lines, is("m.F"), is("m.H"))).toEqual([{ ...at("a.go", 5), base: true }]);
+    expect(behind(lines, is("m.F"), (x) => x === "m.G" || x === "m.H")).toEqual([at("a.go", 4), at("a.go", 9), at("b.go", 2), { ...at("a.go", 5), base: true }]);
   });
   it("reads no import", () => {
     expect(behind(lines, is("m"), is("m"))).toEqual([]);
@@ -128,9 +129,20 @@ describe("litNote (19)", () => {
     const many = Array.from({ length: 10 }, (_, i) => at("a.go", i + 1));
     expect(litNote(many, "a.go")).toBe("Lines 1, 2, 3, 4, 5, 6, 7, 8 and 2 more.");
   });
-  it("says how to light lines, and why a removed call has none", () => {
+  it("says how to light lines", () => {
     expect(litNote(null, "a.go")).toBe("Point at a call or embed to light the lines it is written on.");
-    expect(litNote([], "a.go")).toBe("The change removed it: it has no line in head.");
+  });
+  // 20: a declaration diff draws spans of base.
+  const base = (path: string, line: number): Place => ({ ...at(path, line), base: true });
+  it("says which lit lines are base's, in the spans drawn and elsewhere (20)", () => {
+    expect(litNote([base("s.go", 20)], undefined, [{ path: "s.go", first: 18, last: 22 }])).toBe("Base line 20.");
+    expect(litNote([at("a.go", 4), base("a.go", 9), at("b.go", 2), base("c.go", 7)], "a.go", [{ path: "a.go", first: 8, last: 12 }]))
+      .toBe("Line 4; base line 9; in other files: b.go:2; at base: c.go:7.");
+    expect(litNote([base("a.go", 30), base("a.go", 31)], "a.go", [{ path: "a.go", first: 8, last: 12 }])).toBe("At base: a.go:30, a.go:31.");
+    expect(litNote([base("a.go", 9)], "a.go")).toBe("At base: a.go:9.");
+  });
+  it("says nothing of no places", () => {
+    expect(litNote([], "a.go")).toBe("");
   });
 });
 
@@ -152,5 +164,20 @@ describe("numbered (20)", () => {
   it("numbers a removed declaration at base only", () => {
     const gone: DeclDiff = { basePath: "s.go", baseStart: 18, baseLines: 2, headStart: 0, headLines: 0, lines: ["-type R interface {", "-}"] };
     expect(numbered(gone).map((r) => [r.base, r.head])).toEqual([[18, undefined], [19, undefined]]);
+  });
+});
+
+describe("litRows (20)", () => {
+  const rows = numbered(get);
+  const base = (path: string, line: number): Place => ({ ...at(path, line), base: true });
+  it("lights a row by its base line at base and its head line at head", () => {
+    expect(litRows(rows, "s.go", "s.go", [base("s.go", 43)])).toEqual(new Set([1]));
+    expect(litRows(rows, "s.go", "s.go", [at("s.go", 37)])).toEqual(new Set([2]));
+    expect(litRows(rows, "s.go", "s.go", [at("s.go", 36), base("s.go", 44)])).toEqual(new Set([0, 3]));
+  });
+  it("lights nothing of another file, of the other side, or while nothing is pointed at", () => {
+    expect(litRows(rows, "s.go", "s.go", [base("t.go", 43), at("t.go", 37)])).toEqual(new Set());
+    expect(litRows(rows, "s.go", "s.go", [at("s.go", 43), base("s.go", 37)])).toEqual(new Set());
+    expect(litRows(rows, "s.go", "s.go", null)).toEqual(new Set());
   });
 });
