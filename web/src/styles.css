@@ -277,6 +277,22 @@ pre {
   white-space: nowrap;
 }
 
+/* 18: the Screen in a Change View. A ghost is where a reversed import's far
+   end was in base: dotted, muted, its line dotted, apart from a Move's dashes.
+   The Centre lists its changed members, signed + ~ − →. */
+.node.screen-box.ghost {
+  background: var(--bg);
+  border-style: dotted;
+  color: var(--muted);
+}
+.react-flow__edge.ghost path {
+  stroke-dasharray: 2 4;
+}
+.node.screen-box .member {
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 .node.selected {
   outline: 2px solid var(--accent);
 }
@@ -404,7 +420,8 @@ button.st-removed {
 .node.has-change {
   border-color: var(--modified);
 }
-.subgraph .node.affected {
+/* 18: not a Screen box: the Screen marks an affected box but dims none. */
+.subgraph .node.affected:not(.screen-box) {
   opacity: 0.6;
 }
 .node.chip {
@@ -481,6 +498,10 @@ button.st-removed {
 .legend .swatch.affected {
   border-style: dashed;
   border-color: var(--accent);
+}
+.legend .swatch.ghost {
+  border-style: dotted;
+  color: var(--muted);
 }
 .legend .swatch.crap-green {
   background: var(--crap-green);

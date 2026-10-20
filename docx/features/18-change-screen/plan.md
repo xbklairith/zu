@@ -1617,7 +1617,7 @@ A Project View's Screen with a red line (Deviation 12) is checked by the unit te
 
 **Steps:**
 
-- [ ] **Write the failing tests and browser checks**
+- [x] **Write the failing tests and browser checks**
 
 ```diff
 diff --git a/web/e2e/screen.mjs b/web/e2e/screen.mjs
@@ -1792,11 +1792,11 @@ index 13e7239..89145eb 100644
  describe("screenNote (17)", () => {
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/screen.test.ts src/headline.test.ts` Expected: FAIL (3 tests: no ghost rule in the CSS, the subgraph dims every affected box, and `redLegend` takes no Screen)
+- [x] **Run:** `cd web && npx vitest run src/screen.test.ts src/headline.test.ts` Expected: FAIL (3 tests: no ghost rule in the CSS, the subgraph dims every affected box, and `redLegend` takes no Screen)
 
-- [ ] **Run:** `cd web && npx vite build >/dev/null && cd e2e && node screen.mjs` Expected: FAIL (14/23 checks pass in each engine: walk, marks, affected, step, near, full, red, list and host fail; there is no walk toolbar, no mark, no red line, leaving audit.Check keeps the subgraph, the list leaves store's Screen drawn, and the Screen's header has no link to the host)
+- [x] **Run:** `cd web && npx vite build >/dev/null && cd e2e && node screen.mjs` Expected: FAIL (14/23 checks pass in each engine: walk, marks, affected, step, near, full, red, list and host fail; there is no walk toolbar, no mark, no red line, leaving audit.Check keeps the subgraph, the list leaves store's Screen drawn, and the Screen's header has no link to the host)
 
-- [ ] **Draw the walk toolbar, the marks, the ghosts, the red lines and the members**
+- [x] **Draw the walk toolbar, the marks, the ghosts, the red lines and the members**
 
 ```diff
 diff --git a/web/src/App.tsx b/web/src/App.tsx
@@ -2129,11 +2129,11 @@ index 4dc3201..58a51b7 100644
  }
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Run:** `make build >/dev/null && cd web/e2e && node screen.mjs` Expected: PASS (23 checks in each engine)
+- [x] **Run:** `make build >/dev/null && cd web/e2e && node screen.mjs` Expected: PASS (23 checks in each engine)
 
-- [ ] **Commit:** `Draw the walk and the change on the Screen`
+- [x] **Commit:** `Draw the walk and the change on the Screen`
 
 ---
 

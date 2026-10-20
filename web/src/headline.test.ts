@@ -79,4 +79,7 @@ describe("redLegend (07)", () => {
     expect(redLegend(null)).toBe("violates zu.policy.yaml (levels or cycle); a red box holds one");
     expect(redLegend("Hexagon")).toBe("violates Proposal Hexagon's layers; a red box holds one");
   });
+  it("names only the red line on the Screen, which draws no box red (18)", () => {
+    expect(redLegend(null, true)).toBe("violates zu.policy.yaml (levels or cycle)");
+  });
 });

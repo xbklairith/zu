@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { Canvas } from "./Canvas";
 import { changedSubgraph, nodeMark } from "./change";
-import { home, isBox, upTo } from "./cut";
+import { home, index, isBox, upTo } from "./cut";
 import type { View } from "./data";
 import { isGroup } from "./group";
 import { pageEngine } from "./engine";
@@ -18,12 +18,12 @@ import { PROPOSAL_NOTICE, proposalView } from "./proposal";
 import { reveal } from "./search";
 import { SearchBox } from "./SearchBox";
 import { DRAW_LIMIT, fitDepth, HUBS, opening, openFull, scene, type Scene, type SceneNode } from "./scene";
-import { centreOf, placeScreen, screenNote, screenOf } from "./screen";
+import { centreOf, placeScreen, screenNote, screenOf, screenView } from "./screen";
 import { ScreenCanvas } from "./ScreenCanvas";
 import { centreAt, deeper, drill, nextStage, select, shallower, toggle, up, type ViewState } from "./state";
 import { Toolbar } from "./Toolbar";
 import { useViewState } from "./useViewState";
-import { step } from "./walk";
+import { step, walkAt } from "./walk";
 
 const PKG = "#pkg";
 const FRAMES = 64; // 15: the most layouts the page keeps (place.ts)
@@ -33,12 +33,13 @@ type LegendProps = {
   change: boolean; policy: boolean; ranks: boolean; crap: boolean; proposal: string | null;
   onDemand: boolean; // 11: lines show for a selected or hovered box
   hubs: boolean; // 11: some box is drawn as one of the most used
+  screen?: boolean; // 18: the Screen: a Change View's marks and ghosts, red lines, no rows
 };
 
-function Legend({ change, policy, ranks, crap, proposal, onDemand, hubs }: LegendProps) {
+function Legend({ change, policy, ranks, crap, proposal, onDemand, hubs, screen }: LegendProps) {
   return (
     <div className="legend" aria-label="Legend">
-      <span className="rows">rows are dependency order: a box mostly uses the rows below it</span>
+      {!screen && <span className="rows">rows are dependency order: a box mostly uses the rows below it</span>}
       {onDemand && <span className="dirs">hover or select a box for its lines: solid, it uses · dotted, used by</span>}
       {hubs && <span className="swatch hub">thick border: the {HUBS} most used</span>}
       {change && (
@@ -48,10 +49,11 @@ function Legend({ change, policy, ranks, crap, proposal, onDemand, hubs }: Legen
           <span className="swatch st-modified">modified</span>
           <span className="swatch st-moved">moved</span>
           <span className="swatch affected">affected</span>
-          <span>edges: + added · − removed · ⇄ reversed · ± mixed</span>
+          {screen && <span className="swatch ghost">dotted: where a reversed import was in base</span>}
+          <span>{screen ? "lines" : "edges"}: + added · − removed · ⇄ reversed · ± mixed</span>
         </>
       )}
-      {policy && <span className="swatch violation">{redLegend(proposal)}</span>}
+      {policy && <span className="swatch violation">{redLegend(proposal, screen)}</span>}
       {ranks && <span>n: Level, 0 = innermost, drawn at the bottom</span>}
       {crap && (
         <>
@@ -130,8 +132,8 @@ export function App({ view: whole }: { view: View }) {
     () => (change || state.proposal === null ? whole : proposalView(whole, state.proposal)),
     [whole, change, state.proposal],
   );
-  // 17: the Screen of the Centre, drawn instead of the tree: never in a Change
-  // View (knownIds), and in a Proposal over the Proposal's View.
+  // 17: the Screen of the Centre, drawn instead of the tree, in a Proposal
+  // over the Proposal's View; 18: in a Change View over its near neighbours too.
   const centre = drawnCentre(proposed, state);
   const onScreen = centre !== null;
   const screen = useMemo(
@@ -139,8 +141,16 @@ export function App({ view: whole }: { view: View }) {
     [proposed, centre, state.more],
   );
   const drawing = useMemo(() => screen && placeScreen(screen), [screen]);
+  const red = drawing?.edges.some((e) => e.violation) ?? false; // 18: a Screen line the Policy forbids
   const canEnter = centreOf(proposed, state.selected) !== null;
-  const lens = () => update((s) => (s.centre === null ? enter(proposed, s) : leave(proposed, s)));
+  const lens = () => {
+    // 18: leaving for a box the changed subgraph leaves out draws all of the
+    // View (U10), as jump does.
+    const left = state.centre === null ? null : leave(proposed, state).selected;
+    if (change && !full && left !== null && index(whole).node.has(left) && !view.nodes.some((n) => n.id === left)) setFull(true);
+    update((s) => (s.centre === null ? enter(proposed, s) : leave(proposed, s)));
+  };
+  const walk = walkAt(proposed, centre); // 18: where the Screen is on the walk through the change
   const recentre = (id: string) => {
     const c = centreOf(proposed, id);
     if (c !== null) update((s) => centreAt(s, c));
@@ -337,22 +347,33 @@ export function App({ view: whole }: { view: View }) {
         screen={screen ? screenNote(screen) : undefined}
       />
       <div className="bar">
-        {!change && (
-          <div className="toolbar" role="toolbar" aria-label="Lens">
-            <button
-              type="button"
-              aria-pressed={onScreen}
-              disabled={!onScreen && !canEnter}
-              title={onScreen ? "Back to the tree (s)" : canEnter ? "Draw the selection's Screen (s)" : "Select a package or declaration to draw its Screen (s)"}
-              onClick={lens}
-            >
-              Screen
+        <div className="toolbar" role="toolbar" aria-label="Lens">
+          <button
+            type="button"
+            aria-pressed={onScreen}
+            disabled={!onScreen && !canEnter}
+            title={onScreen ? "Back to the tree (s)" : canEnter ? "Draw the selection's Screen (s)" : "Select a package or declaration to draw its Screen (s)"}
+            onClick={lens}
+          >
+            Screen
+          </button>
+          {screen && (state.more || screen.above.more > 0 || screen.below.more > 0) && (
+            <label>
+              <input type="checkbox" checked={state.more} onChange={(e) => update((s) => ({ ...s, more: e.target.checked }))} /> every box
+            </label>
+          )}
+        </div>
+        {change && walk.of > 0 && (
+          <div className="toolbar walk" role="toolbar" aria-label="Walk the change">
+            <button type="button" aria-label="Previous step" title="The previous step of the change (p)"
+              disabled={step(proposed, state, -1) === state} onClick={() => update((s) => step(proposed, s, -1))}>
+              ◂
             </button>
-            {screen && (state.more || screen.above.more > 0 || screen.below.more > 0) && (
-              <label>
-                <input type="checkbox" checked={state.more} onChange={(e) => update((s) => ({ ...s, more: e.target.checked }))} /> every box
-              </label>
-            )}
+            <span className="at">{onScreen ? `${walk.at ?? "–"} of ${walk.of}` : `${walk.of} ${walk.of === 1 ? "step" : "steps"}`}</span>
+            <button type="button" aria-label="Next step" title={onScreen ? "The next step of the change (n)" : "Walk the change in reading order (n)"}
+              disabled={step(proposed, state, 1) === state} onClick={() => update((s) => step(proposed, s, 1))}>
+              ▸
+            </button>
           </div>
         )}
         {!onScreen && (
@@ -365,7 +386,7 @@ export function App({ view: whole }: { view: View }) {
         )}
         <SearchBox view={proposed} input={searchBox} onOpen={setSearchOpen} onPick={onScreen ? recentre : jump} />
       </div>
-      {change && <ChangedList view={whole} onPick={pick} />}
+      {change && <ChangedList view={whole} onPick={onScreen ? recentre : pick} />}
       <main className="canvas">
         {proposed !== whole && (
           <div className="proposal-banner" role="status">
@@ -382,6 +403,9 @@ export function App({ view: whole }: { view: View }) {
             onDemand={!sc.lines}
             hubs={sc.nodes.some((n) => n.hub)}
           />
+        )}
+        {onScreen && (change || red) && (
+          <Legend change={change} screen policy={red} ranks={false} crap={false} proposal={proposed === whole ? null : state.proposal} onDemand={false} hubs={false} />
         )}
         {sc !== requested && !onScreen && (
           <div className="notice" id="zu-notice" role="status">
@@ -453,7 +477,7 @@ export function App({ view: whole }: { view: View }) {
       </main>
       {centre !== null && closed !== centre && (
         <Panel
-          view={proposed}
+          view={screenView(proposed)}
           id={isBox(proposed, centre + PKG) ? centre + PKG : centre}
           edge={null}
           bundles={[]}

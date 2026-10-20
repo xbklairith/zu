@@ -22,6 +22,15 @@ type Props = {
 
 export function Header({ view, focus, home = "", boxes, folded = 0, depth, onFocus, auto, from, hidden = 0, against, full, onToggle, screen }: Props) {
   const compare = view.links?.compare?.startsWith("https://") ? view.links.compare : null;
+  // The change's link to the host, after the tree's counts or the Screen's note (18).
+  const host = compare && (
+    <>
+      {" · "}
+      <a href={compare} target="_blank" rel="noopener noreferrer">
+        {compareLabel(view.links, view.base?.commit, view.head.commit)}
+      </a>
+    </>
+  );
   const [showErrors, setShowErrors] = useState(false);
   const errors = view.honesty.parseErrors;
   return (
@@ -49,6 +58,7 @@ export function Header({ view, focus, home = "", boxes, folded = 0, depth, onFoc
       {screen !== undefined ? (
         <p className="note" id="zu-screen">
           {screen}
+          {host}
         </p>
       ) : (
         <>
@@ -79,14 +89,7 @@ export function Header({ view, focus, home = "", boxes, folded = 0, depth, onFoc
                 </button>
               </>
             )}
-            {compare && (
-              <>
-                {" · "}
-                <a href={compare} target="_blank" rel="noopener noreferrer">
-                  {compareLabel(view.links, view.base?.commit, view.head.commit)}
-                </a>
-              </>
-            )}
+            {host}
           </p>
         </>
       )}

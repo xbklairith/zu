@@ -19,13 +19,15 @@ import {
 } from "@xyflow/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import "@xyflow/react/dist/style.css";
+import { edgeMark } from "./change";
 import type { Drawn, ScreenDrawing } from "./screen";
 import { centredFit, mapByDefault } from "./viewport";
 
 type SNode = Node<{ d: Drawn }>;
 
 // ScreenBox: the label at its Weight's size, the package or module under it,
-// and what the Weight is made of.
+// and what the Weight is made of. 18: in a Change View, its mark (change.ts),
+// a ghost dotted, and the Centre's changed members.
 function ScreenBox({ data: { d } }: NodeProps<SNode>) {
   const at = useRef<HTMLDivElement>(null);
   // Focus, lost with the last Screen (the page keys it by Centre), goes to
@@ -36,12 +38,13 @@ function ScreenBox({ data: { d } }: NodeProps<SNode>) {
     }
   }, [d.row]);
   return (
-    <div ref={at} className={`node screen-box ${d.size} k-${d.kind}${d.both ? " both" : ""}`} title={d.ref ?? `${d.label}: click to draw every box`}>
+    <div ref={at} className={`node screen-box ${d.size} k-${d.kind}${d.both ? " both" : ""}${d.mark ? ` ${d.mark}` : ""}${d.ghost ? " ghost" : ""}`} title={d.ref ?? `${d.label}: click to draw every box`}>
       <Handle type="target" position={Position.Top} isConnectable={false} />
       <Handle type="source" position={Position.Bottom} isConnectable={false} />
       <div className="label">{d.label}</div>
       {d.sub && <div className="sub">{d.sub}</div>}
       {d.facts && <div className="facts">{d.facts}</div>}
+      {d.members.map((m) => <div key={m} className="member">{m}</div>)}
     </div>
   );
 }
@@ -88,9 +91,17 @@ export function ScreenCanvas({ drawing, onCentre, onMore, fit }: Props) {
     connectable: false,
     data: { d },
   })), [drawing]);
-  const edges: Edge[] = useMemo(() => drawing.edges.map((e) => ({
-    id: e.id, source: e.from, target: e.to, type: "smoothstep", markerEnd: { type: MarkerType.ArrowClosed },
-  })), [drawing]);
+  // 18: a line's status as the tree draws a bundle's (Canvas), its sign the
+  // label, and red (pinned) when it holds a violation; a ghost's line is
+  // dotted and unsigned: its box says ⇄.
+  const edges: Edge[] = useMemo(() => drawing.edges.map((e) => {
+    const m = edgeMark(e.status);
+    const className = [m.cls, e.ghost && "ghost", e.violation && "pinned"].filter(Boolean).join(" ");
+    return {
+      id: e.id, source: e.from, target: e.to, type: "smoothstep", markerEnd: { type: MarkerType.ArrowClosed },
+      ...(className ? { className } : {}), ...(m.sign && !e.ghost ? { label: m.sign } : {}),
+    };
+  }), [drawing]);
   return (
     <div className="flow-row">
       {/* Enter or Space on a focused box re-centres, as a click does. */}

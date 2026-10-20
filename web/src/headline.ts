@@ -81,6 +81,7 @@ export function violationsNote(d: NonNullable<View["violations"]>): { heading: s
 }
 
 // redLegend says what a red edge or box violates: the Policy's Levels and
-// cycles, or, while a Proposal is drawn, only that Proposal's layers.
-export const redLegend = (proposal: string | null): string =>
-  `violates ${proposal === null ? "zu.policy.yaml (levels or cycle)" : `Proposal ${proposal}'s layers`}; a red box holds one`;
+// cycles, or, while a Proposal is drawn, only that Proposal's layers. The
+// Screen (18) draws only lines red.
+export const redLegend = (proposal: string | null, screen = false): string =>
+  `violates ${proposal === null ? "zu.policy.yaml (levels or cycle)" : `Proposal ${proposal}'s layers`}${screen ? "" : "; a red box holds one"}`;

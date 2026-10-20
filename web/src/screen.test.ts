@@ -174,6 +174,15 @@ describe("the Screen's styles (17)", () => {
     expect([px("medium"), px("large"), px("centre")].map(Number)).toEqual([FONT.medium, FONT.large, FONT.centre]);
     expect(FONT.small).toBe(LABEL_PX); // .node's own size, so the floor zoom keeps every label readable
   });
+  it("draws a ghost and its line dotted, apart from a Move's dashes (18)", () => {
+    expect(css).toMatch(/\.node\.screen-box\.ghost \{[^}]*border-style: dotted/);
+    expect(css).toMatch(/\.react-flow__edge\.ghost path \{[^}]*stroke-dasharray: 2 4/);
+    expect(css).toMatch(/\.legend \.swatch\.ghost \{[^}]*border-style: dotted/);
+  });
+  it("draws an affected box plain, as every Screen box is, though the changed subgraph dims the tree's (18)", () => {
+    expect(css).toMatch(/\.subgraph \.node\.affected:not\(\.screen-box\) \{[^}]*opacity: 0\.6/);
+    expect(css).not.toMatch(/\.subgraph \.node\.affected \{/);
+  });
 });
 
 describe("screenNote (17)", () => {

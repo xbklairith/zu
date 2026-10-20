@@ -1,5 +1,6 @@
-// Browser acceptance for the Screen (17). Not part of make check: it needs
-// browsers. Run from web/e2e after `make build`: npm run accept-screen.
+// Browser acceptance for the Screen (17), and in a Change View (18). Not part
+// of make check: it needs browsers. Run from web/e2e after `make build`: npm
+// run accept-screen.
 // ZU_E2E_CHANNEL=chrome uses an installed Chrome instead of Playwright's Chromium.
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -33,7 +34,26 @@ const many = (() => {
 
 const S = "example.com/shop/internal/store";
 const C = "example.com/shop/internal/checkout";
+const M = "example.com/shop/internal/money";
+const A = "example.com/shop/internal/audit";
 const enc = encodeURIComponent;
+// far: shop.change with internal/audit, which money imports unchanged, so
+// it is in no Affected Set and the changed subgraph leaves it out; money.Plus
+// calls its Check, a near declaration. And a Policy that checkout's import of
+// store breaks, a new violation.
+const far = (() => {
+  const v = golden("shop.change");
+  const loc = { path: "internal/audit/audit.go", line: 1 };
+  v.nodes.push({ id: A, kind: "package", module: "example.com/shop", loc, decls: 1 });
+  v.edges.push({ from: M, to: A, kind: "imports", count: 1, loc: { path: "internal/money/money.go", line: 3 } });
+  v.near.nodes.push({ id: `${A}.Check`, kind: "function", parent: A, loc });
+  v.near.edges.push({ from: `${M}.Plus`, to: `${A}.Check`, kind: "calls", count: 1, loc });
+  v.policy = { hash: "sha256:far", levels: [[C], [S]] };
+  for (const e of v.edges) if (e.kind === "imports" && e.from === C && e.to === S) e.violation = "levels";
+  v.violations = { new: [{ rule: "levels", from: C, to: S }], fixed: [], known: 0 };
+  v.links = { blob: "https://github.com/o/r/blob/h/{path}#L{line}", compare: "https://github.com/o/r/compare/b...h" };
+  return page("far", v);
+})();
 
 async function open(b, file, hash) {
   const p = await b.newPage({ viewport: { width: 1400, height: 900 } });
@@ -149,22 +169,88 @@ async function rows(b) {
   return { got, errors: [...bare.errors, ...errors] };
 }
 
+// changeView: the Screen in a Change View (18).
 async function changeView(b) {
-  const { p, errors } = await open(b, change, `#s=${enc(S)}`);
-  await p.keyboard.press("s");
-  await p.waitForTimeout(500);
-  const pressed = (await centre(p)) === null && !(await p.locator(".screen").count());
+  const { p, errors } = await open(b, change, "");
+  const got = {};
+  const start = await entries(p);
+  const at = () => p.locator('[aria-label="Walk the change"] .at').innerText({ timeout: 1000 }).catch(() => null);
+  const onTree = await at();
+  // n starts the walk from the tree at store, the first changed package bottom-up.
+  await p.keyboard.press("n");
+  const first = await drawn(p, S);
+  got.walk = [
+    JSON.stringify(first) === JSON.stringify([S, `down:${M}`, "down:github.com/lib/pq", `up:${C}`, `up:${M}`].sort()),
+    (await entries(p)) === start + 1, onTree, await at(),
+  ];
+  // Each box's mark and line's status; the reversed import's ghost; the Centre's members.
+  got.marks = await p.evaluate(({ S, M }) => {
+    const box = (id) => document.querySelector(`.screen .react-flow__node[data-id="${CSS.escape(id)}"] .screen-box`);
+    const line = (id) => document.querySelector(`.screen .react-flow__edge[data-id="${CSS.escape(id)}"]`);
+    const has = (e, c) => !!e && e.classList.contains(c);
+    return [
+      has(box(S), "st-modified"), has(box(`up:${M}`), "st-modified"), has(line(`up:${M}>`), "edge-reversed"),
+      line(`up:${M}>`)?.querySelector(".react-flow__edge-text")?.textContent ?? null,
+      has(box(`down:${M}`), "ghost"), has(line(`>down:${M}`), "ghost"),
+      [...(box(S)?.querySelectorAll(".member") ?? [])].map((e) => e.textContent),
+    ];
+  }, { S, M });
+  got.affected = (await p.locator("#zu-screen").innerText()).includes("Affected Set: changed; 4 packages import it, directly or not.")
+    && (await p.locator(".legend .swatch.ghost").count()) === 1;
+  // n and p step along the walk, each a history entry, and Back walks back.
+  await p.keyboard.press("n");
+  const order = await drawn(p, `${S}.Order`);
+  const second = await at();
+  await p.keyboard.press("p");
+  await drawn(p, S);
+  await p.goBack();
+  got.step = [order.includes(`up:${C}.Cart`), second, (await drawn(p, `${S}.Order`)).length > 0, (await entries(p)) === start + 3];
+  // A near box re-centres, off the walk; leaving there selects its package.
+  await p.click(`.react-flow__node[data-id="${CSS_ESCAPE(`up:${C}.Cart`)}"]`);
+  await drawn(p, `${C}.Cart`);
+  got.near = [await at(), (await panel(p))?.startsWith(`${C}.Cart`)];
+  await p.keyboard.press("Escape");
+  await drawn(p, null);
+  const left = await hash(p);
+  got.leave = [left.c ?? null, left.s, await centred(p, C)];
+  // On a Screen, a pick from the changed packages (U11) re-centres there, a step of the walk.
+  await p.keyboard.press("n");
+  await drawn(p, S);
+  await p.click(`nav.changed button[title="${C}"]`);
+  await drawn(p, C).catch(() => {}); // the values below say what was drawn instead
+  got.list = [await centre(p), await at()];
   await p.close();
-  const linked = await open(b, change, `#c=${enc(S)}`);
-  const ignored = (await centre(linked.p)) === null && !(await linked.p.locator(".screen").count());
-  await linked.p.close();
-  return { got: { change: pressed && ignored }, errors: [...errors, ...linked.errors] };
+  // Leaving for a package the changed subgraph leaves out draws all of the View (U10).
+  const f = await open(b, far, `#c=${enc(`${M}.Plus`)}`);
+  await drawn(f.p, `${M}.Plus`);
+  await f.p.click(`.react-flow__node[data-id="${CSS_ESCAPE(`down:${A}.Check`)}"]`);
+  await drawn(f.p, `${A}.Check`);
+  await f.p.keyboard.press("s");
+  await drawn(f.p, null);
+  got.full = [(await hash(f.p)).s, await f.p.locator(".app.subgraph").count(), await centred(f.p, A)];
+  await f.p.close();
+  // A new violation's importer is the walk's first step, its line red as the tree draws it.
+  const r = await open(b, far, "");
+  await r.p.keyboard.press("n");
+  await drawn(r.p, C);
+  got.red = await r.p.evaluate((S) => [
+    document.querySelector(`.screen .react-flow__edge[data-id="${CSS.escape(`>down:${S}`)}"]`)?.classList.contains("pinned") ?? null,
+    document.querySelectorAll(".screen .react-flow__edge.pinned").length,
+    document.querySelector(".legend .swatch.violation")?.textContent ?? null,
+  ], S);
+  // The Screen's header keeps the change's link to the host.
+  got.host = await r.p.evaluate(() => document.querySelector("header.header a[target=_blank]")?.getAttribute("href") ?? null);
+  await r.p.close();
+  return { got, errors: [...errors, ...f.errors, ...r.errors] };
 }
 
 const CSS_ESCAPE = (s) => s.replace(/["\\]/g, "\\$&");
 const want = {
   enter: true, button: [true, "true"], panel: [true, null, true], recentre: true, back: true, forward: true, keyboard: [C, C],
-  wordStart: true, honest: true, esc: true, more: true, disabled: true, change: true, errors: [],
+  wordStart: true, honest: true, esc: true, more: true, disabled: true, errors: [],
+  walk: [true, true, "10 steps", "1 of 10"], marks: [true, true, true, "⇄", true, true, ["~ Order", "− ReadWriter", "~ Repo.Get", "~ Repo.check"]],
+  affected: true, step: [true, "2 of 10", true, true], near: ["– of 10", true], leave: [null, C, true], full: [A, 0, true],
+  red: [true, 1, "violates zu.policy.yaml (levels or cycle)"], list: [C, "7 of 10"], host: "https://github.com/o/r/compare/b...h",
 };
 const channel = process.env.ZU_E2E_CHANNEL;
 const engines = [["chromium", chromium, channel ? { channel } : {}], ["firefox", firefox, {}], ["webkit", webkit, {}]];
