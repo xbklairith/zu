@@ -1,7 +1,9 @@
 package export
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"path/filepath"
 	"slices"
 
@@ -190,7 +192,13 @@ func hunksOf(files map[string]bool, baseTree, headTree scan.Tree) (map[string][]
 			if _, ok := slices.BinarySearch(list, p); !ok {
 				return nil, nil
 			}
-			return t.ReadFile(p)
+			// A listed file deleted since (a checkout mid-rescan) reads as
+			// empty too: the listing is the scan's, kept (16).
+			b, err := t.ReadFile(p)
+			if errors.Is(err, fs.ErrNotExist) {
+				return nil, nil
+			}
+			return b, err
 		}, nil
 	}
 	readBase, err := read(baseTree)

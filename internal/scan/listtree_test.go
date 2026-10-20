@@ -86,3 +86,29 @@ func TestListTreeRootMustBeADirectory(t *testing.T) {
 		t.Error("ListTree of a missing root must fail")
 	}
 }
+
+// A ListTree is one scan's listing: Files runs its Lstat pass once, and a
+// later call (the Change View's hunks, 16) returns the same listing and
+// Stamps, not what is on disk by then.
+func TestListTreeListsOnce(t *testing.T) {
+	root := tree(t, map[string]string{"go.mod": "module example.com/m\n", "a/a.go": "package a\n"})
+	lt, err := ListTree(root, []string{"go.mod", "a/a.go"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, _, err := lt.Files()
+	if err != nil {
+		t.Fatal(err)
+	}
+	st := StampIn(lt, "a/a.go")
+	if err := os.Remove(filepath.Join(root, "a", "a.go")); err != nil {
+		t.Fatal(err)
+	}
+	again, _, err := lt.Files()
+	if err != nil || !slices.Equal(again, first) {
+		t.Fatalf("second Files = %v, %v; want the first listing %v", again, err, first)
+	}
+	if StampIn(lt, "a/a.go") != st {
+		t.Error("the second Files changed a Stamp")
+	}
+}

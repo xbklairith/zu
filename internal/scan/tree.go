@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 
 	"zu/internal/ir"
 )
@@ -73,12 +74,18 @@ type listTree struct {
 	*dirTree
 	listed []string
 	stamps map[string]Stamp // each listed file's Stamp, from Files' Lstat
+	// once guards files and errs: Files lists once, so a second caller in
+	// the same scan (the Change View's hunks) skips the Lstat pass (16).
+	once  sync.Once
+	files []string
+	errs  []ir.ParseError
 }
 
 // ListTree is the directory at root, restricted to files: slash paths
 // relative to root, in any order. Of those, Files keeps what DirTree would:
 // regular files and in-tree file symlinks outside pruned directories. Listed
-// paths missing from disk are skipped.
+// paths missing from disk are skipped. Files lists once: a later call returns
+// the first listing and Stamps (16).
 func ListTree(root string, files []string) (Tree, error) {
 	d, err := openDir(root)
 	if err != nil {
@@ -88,33 +95,58 @@ func ListTree(root string, files []string) (Tree, error) {
 }
 
 func (l *listTree) Files() ([]string, []ir.ParseError, error) {
+	l.once.Do(func() { l.files, l.errs = l.list() })
+	return slices.Clone(l.files), slices.Clone(l.errs), nil
+}
+
+func (l *listTree) list() ([]string, []ir.ParseError) {
+	listed := slices.Compact(slices.Sorted(slices.Values(l.listed)))
+	listed = slices.DeleteFunc(listed, func(rel string) bool {
+		dirs := strings.Split(rel, "/")
+		return slices.ContainsFunc(dirs[:len(dirs)-1], PrunedDir)
+	})
+	// Lstat each listed file, a few at a time: kubernetes lists 28k, and one
+	// at a time takes 100ms of a rescan (16).
+	type seen struct {
+		st   Stamp
+		keep bool
+		err  error
+	}
+	got := make([]seen, len(listed))
+	var wg sync.WaitGroup
+	const workers = 4
+	for k := range workers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := k; i < len(listed); i += workers {
+				p := filepath.Join(l.root, filepath.FromSlash(listed[i]))
+				info, err := os.Lstat(p)
+				switch {
+				case errors.Is(err, fs.ErrNotExist):
+				case err != nil:
+					got[i].err = err
+				case info.Mode().IsRegular(), info.Mode()&fs.ModeSymlink != 0 && l.linkedFileInside(p):
+					got[i] = seen{st: StampOf(info), keep: true}
+				}
+			}
+		}()
+	}
+	wg.Wait()
 	var files []string
 	var errs []ir.ParseError
-	stamps := map[string]Stamp{}
-	listed := slices.Sorted(slices.Values(l.listed))
-	for _, rel := range slices.Compact(listed) {
-		dirs := strings.Split(rel, "/")
-		if slices.ContainsFunc(dirs[:len(dirs)-1], PrunedDir) {
-			continue
+	stamps := make(map[string]Stamp, len(listed))
+	for i, rel := range listed {
+		switch g := got[i]; {
+		case g.err != nil:
+			errs = append(errs, ir.ParseError{Path: rel, Message: ioMessage(g.err)})
+		case g.keep:
+			files = append(files, rel)
+			stamps[rel] = g.st
 		}
-		p := filepath.Join(l.root, filepath.FromSlash(rel))
-		info, err := os.Lstat(p)
-		switch {
-		case errors.Is(err, fs.ErrNotExist):
-			continue
-		case err != nil:
-			errs = append(errs, ir.ParseError{Path: rel, Message: ioMessage(err)})
-			continue
-		case info.Mode().IsRegular():
-		case info.Mode()&fs.ModeSymlink != 0 && l.linkedFileInside(p):
-		default:
-			continue
-		}
-		files = append(files, rel)
-		stamps[rel] = StampOf(info)
 	}
 	l.stamps = stamps
-	return files, errs, nil
+	return files, errs
 }
 
 // stamp is rel's Stamp as Files saw it, or zero before Files runs.

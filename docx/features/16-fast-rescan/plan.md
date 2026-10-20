@@ -325,7 +325,7 @@ Keeping the listing has one consequence. Before, a file deleted between the scan
 
 **Steps:**
 
-- [ ] **Write the failing test**
+- [x] **Write the failing test**
 
 ```diff
 diff --git a/internal/scan/listtree_test.go b/internal/scan/listtree_test.go
@@ -364,9 +364,9 @@ index 181f769fe171da574fe73accba0a50e914c17223..17b901cdabd8687e9c2b6889ce8d6478
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/scan -run TestListTreeListsOnce` Expected: FAIL (the second `Files` misses `a/a.go`)
+- [x] **Run:** `go test ./internal/scan -run TestListTreeListsOnce` Expected: FAIL (the second `Files` misses `a/a.go`)
 
-- [ ] **List once, four `Lstat`s at a time; `within` without a string**
+- [x] **List once, four `Lstat`s at a time; `within` without a string**
 
 ```diff
 diff --git a/internal/scan/tree.go b/internal/scan/tree.go
@@ -497,9 +497,9 @@ index 176827d98ff07782f0365b58615725b9e502bd4f..6f1b909d5958348be3f3cb414a0446be
  // importPath is the import path of the package in dir, which lies in m.
 ```
 
-- [ ] **Run:** `go test -race ./internal/scan ./internal/watch ./internal/cli` Expected: PASS
+- [x] **Run:** `go test -race ./internal/scan ./internal/watch ./internal/cli` Expected: PASS
 
-- [ ] **Write the failing test: a file deleted after the listing**
+- [x] **Write the failing test: a file deleted after the listing**
 
 ```diff
 diff --git a/internal/export/hunksof_test.go b/internal/export/hunksof_test.go
@@ -553,9 +553,9 @@ index 0000000000000000000000000000000000000000..5e187015c93efdba030ec1068b2f21e6
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/export -run TestHunksOfAFileDeletedAfterTheListing` Expected: FAIL (`read head a.go: … no such file or directory`)
+- [x] **Run:** `go test ./internal/export -run TestHunksOfAFileDeletedAfterTheListing` Expected: FAIL (`read head a.go: … no such file or directory`)
 
-- [ ] **Read a listed file that is gone as empty**
+- [x] **Read a listed file that is gone as empty**
 
 ```diff
 diff --git a/internal/export/change.go b/internal/export/change.go
@@ -589,9 +589,9 @@ index 4e4e14c3e98fd347aeba9b9b21abfa82af33bad2..966fec1059b6db3108bb06572046c254
  	readBase, err := read(baseTree)
 ```
 
-- [ ] **Run:** `go test ./internal/export ./internal/cli` Expected: PASS
+- [x] **Run:** `go test ./internal/export ./internal/cli` Expected: PASS
 
-- [ ] **Commit:** `List a tree once per scan, a few files at a time`
+- [x] **Commit:** `List a tree once per scan, a few files at a time`
 
 ---
 

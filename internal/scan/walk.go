@@ -130,7 +130,7 @@ func (w *walkResult) moduleFor(dir string) *module {
 }
 
 func within(dir, base string) bool {
-	return base == "." || dir == base || strings.HasPrefix(dir, base+"/")
+	return base == "." || strings.HasPrefix(dir, base) && (len(dir) == len(base) || dir[len(base)] == '/')
 }
 
 // importPath is the import path of the package in dir, which lies in m.
