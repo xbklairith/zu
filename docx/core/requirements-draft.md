@@ -271,7 +271,7 @@ Targets, to be validated against a real repo before they are commitments:
   - with `-base` at `HEAD~50`, a median of at most 1 s (measured at acceptance 538 ms uncommitted and 774 ms committed and pushed over a freshly copied tree after a new function, 584 ms after a new package. The plan's draft figures were 559–778 ms and 689–747 ms);
   - every rescan stays under 2 s, the first over a freshly copied tree included (measured at most 1,038 ms at acceptance; the plan's draft, 1,062 ms).
 
-  A function added to a package with 347 importers is gated on 2 s only: medians of 535 ms, and 863 ms with `-base`; at most 1,127 ms.
+  A function added to a package with 347 importers is gated on 2 s only: medians of 404 ms, and 711 ms with `-base`, at most 817 ms at acceptance (the plan's draft figures: 535 and 863 ms, at most 1,127 ms).
 
   **Not gated:** an edit to the modules (a new `go.mod`, a module path, a require's path or line) still assembles the whole tree. Under `-base` that measured 1.2–2.3 s, once over 2 s in 44 rescans.
 
