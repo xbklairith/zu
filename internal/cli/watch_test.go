@@ -44,20 +44,28 @@ func stream(t *testing.T, url string) <-chan string {
 	return out
 }
 
-// await returns the next event that is not an empty notice.
+// next returns the next event.
+func next(t *testing.T, events <-chan string) string {
+	t.Helper()
+	select {
+	case e, ok := <-events:
+		if !ok {
+			t.Fatal("the stream ended")
+		}
+		return e
+	case <-time.After(10 * time.Second):
+		t.Fatal("no event")
+	}
+	return ""
+}
+
+// await returns the next event that is neither an empty notice nor (19) a
+// count of rescans that published no View.
 func await(t *testing.T, events <-chan string) string {
 	t.Helper()
 	for {
-		select {
-		case e, ok := <-events:
-			if !ok {
-				t.Fatal("the stream ended")
-			}
-			if e != "notice " {
-				return e
-			}
-		case <-time.After(10 * time.Second):
-			t.Fatal("no event")
+		if e := next(t, events); e != "notice " && !strings.HasPrefix(e, "source ") {
+			return e
 		}
 	}
 }
@@ -158,7 +166,9 @@ func TestServeWatchKeepsTheViewWhileAFileDoesNotParse(t *testing.T) {
 	if e := await(t, events); e != "view 2" {
 		t.Fatalf("fixed: %q", e)
 	}
-	if v := latest(t, url); !strings.Contains(v, `"id":"example.com/m/a","kind":"package","module":"example.com/m","loc":{"path":"a/a.go","line":1},"decls":1}`) {
+	// 19: without -include zu serve draws every package's declarations.
+	if v := latest(t, url); !strings.Contains(v, `"id":"example.com/m/a","kind":"package","module":"example.com/m","loc":{"path":"a/a.go","line":1},"decls":1,"detail":true}`) ||
+		!strings.Contains(v, `"id":"example.com/m/a.F"`) {
 		t.Errorf("the fixed View lacks a.F: %.300s", v)
 	}
 	if !strings.Contains(stderr.String(), "a/a.go:3:") || !strings.Contains(stderr.String(), "the page keeps its drawing") {
@@ -196,13 +206,62 @@ func TestServeWatchKeepsTheViewWhenARescanFails(t *testing.T) {
 		t.Fatalf("a bad Policy: %q; %s", e, stderr.String())
 	}
 	writeFile(t, dir, "zu.policy.yaml", "levels: []\n")
-	select { // the notice clears; the View may be unchanged
-	case e := <-events:
-		if e != "notice " && e != "view 2" {
-			t.Fatalf("a good Policy again: %q", e)
+	e := next(t, events)
+	for strings.HasPrefix(e, "source ") {
+		e = next(t, events)
+	}
+	if e != "notice " && e != "view 2" { // the notice clears; the View may be unchanged
+		t.Fatalf("a good Policy again: %q", e)
+	}
+}
+
+// 19: a save the View does not show, here a literal, publishes no View. The
+// stream counts the rescan instead, so the page reads its files again, and
+// /source sends the file as saved. While a file does not parse, /source
+// still sends it: the drawing the page keeps declares something in it. A
+// page load then adds the files its own View declares something in.
+func TestServeWatchSaysWhenAFileChangesUnderTheView(t *testing.T) {
+	dir := repo(t, small)
+	url, _ := startServe(t, dir, "-poll", "100ms")
+	events := stream(t, url)
+	for _, want := range []string{"view 1", "notice "} {
+		if e := next(t, events); e != want {
+			t.Fatalf("on connect: %q, want %q", e, want)
 		}
-	case <-time.After(10 * time.Second):
-		t.Fatal("the notice stayed")
+	}
+	// Outside git the watch's first poll rescans every file and publishes no
+	// View: the counts below start from its count.
+	for e := next(t, events); e != "source 1"; e = next(t, events) {
+		if e != "source 0" {
+			t.Fatalf("before the first poll: %q, want source 0 or 1", e)
+		}
+	}
+	writeFile(t, dir, "a/a.go", "package a\n\nfunc F() { G(); _ = 1 }\n\nfunc G() {}\n")
+	if e := next(t, events); e != "source 2" {
+		t.Fatalf("a literal: %q, want source 2", e)
+	}
+	if f := fetch(t, url+"source?path=a/a.go"); !strings.Contains(f, "_ = 1") {
+		t.Errorf("source after a literal: %s", f)
+	}
+	writeFile(t, dir, "a/a.go", "package a\n\nfunc F( {\n")
+	if e := next(t, events); !strings.HasPrefix(e, "notice a/a.go:") {
+		t.Fatalf("a broken file: %q", e)
+	}
+	if e := next(t, events); e != "source 3" {
+		t.Fatalf("a broken file: %q, want source 3", e)
+	}
+	if f := fetch(t, url+"source?path=a/a.go"); !strings.Contains(f, "func F( {") {
+		t.Errorf("source while a/a.go does not parse: %s", f)
+	}
+	writeFile(t, dir, "c/c.go", "package c\n\nfunc C() {}\n")
+	if e := next(t, events); e != "source 4" {
+		t.Fatalf("a new file while a/a.go does not parse: %q, want source 4", e)
+	}
+	fetch(t, url+"view.json") // a page load: its View declares C, and nothing in a/a.go
+	for _, p := range []string{"a/a.go", "c/c.go"} {
+		if code := statusOf(t, url+"source?path="+p); code != http.StatusOK {
+			t.Errorf("source of %s after a page load while a/a.go does not parse: %d", p, code)
+		}
 	}
 }
 

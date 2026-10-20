@@ -4,15 +4,19 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	"zu/internal/export"
+	"zu/internal/policy"
 	"zu/internal/scan"
 )
 
@@ -108,6 +112,93 @@ func TestServeSendsTheViewScanHTMLInlines(t *testing.T) {
 	inlined = inlined[:strings.Index(inlined, "</script>")]
 	if served != inlined {
 		t.Errorf("served View differs from the inlined one:\nserved  %s\ninlined %s", served, inlined)
+	}
+}
+
+// statusOf is the status of GET url.
+func statusOf(t *testing.T, url string) int {
+	t.Helper()
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	return resp.StatusCode
+}
+
+// 19: without -include zu serve draws every package's declarations, which
+// zu scan -html leaves out, and inlines no source. The page reads a file
+// from /source, which sends one only if the last scan declares something in
+// it, from the tree as it is now.
+func TestServeDrawsEveryDeclarationAndSendsItsSourceOnDemand(t *testing.T) {
+	dir := repo(t, small)
+	url, _ := startServe(t, dir, "-poll", "0")
+	v := fetch(t, url+"view.json")
+	for _, want := range []string{`"id":"example.com/m/a.F"`, `"detail":true`, `"sources":{}`} {
+		if !strings.Contains(v, want) {
+			t.Errorf("View lacks %s: %s", want, v)
+		}
+	}
+	if strings.Contains(v, `"syntax"`) {
+		t.Errorf("View inlines syntax: %s", v)
+	}
+	var f export.SourceFile
+	if err := json.Unmarshal([]byte(fetch(t, url+"source?path=a/a.go")), &f); err != nil {
+		t.Fatal(err)
+	}
+	if want := small["a/a.go"]; f.Path != "a/a.go" || f.Text != want || !reflect.DeepEqual(f.Syntax, export.Syntax([]byte(want))) {
+		t.Errorf("source = %+v", f)
+	}
+	for _, p := range []string{"go.mod", "web/app.ts", "../a/a.go", "/a/a.go", "./a/a.go", "a", "", "b/b.go"} {
+		if code := statusOf(t, url+"source?path="+p); code != http.StatusNotFound {
+			t.Errorf("%q: %d, want 404", p, code)
+		}
+	}
+	writeFile(t, dir, "b/b.go", "package b\n\nfunc H() {}\n")
+	if code := statusOf(t, url+"source?path=b/b.go"); code != http.StatusNotFound {
+		t.Errorf("b/b.go before a scan lists it: %d", code)
+	}
+	fetch(t, url+"view.json")
+	if code := statusOf(t, url+"source?path=b/b.go"); code != http.StatusOK {
+		t.Errorf("b/b.go after: %d", code)
+	}
+	noZu(t, dir)
+}
+
+// 19: past the budget the page draws packages only, as zu serve did before
+// without -include, and zu serve says so once.
+func TestServeOverTheDetailBudgetDrawsPackagesOnly(t *testing.T) {
+	old := detailBudget
+	detailBudget = 1
+	t.Cleanup(func() { detailBudget = old }) // after startServe's, which stops zu serve
+	url, stderr := startServe(t, repo(t, small), "-poll", "0")
+	v := fetch(t, url+"view.json")
+	if strings.Contains(v, "a.F") || strings.Contains(v, `"detail":true`) {
+		t.Errorf("declarations past the budget: %s", v)
+	}
+	const note = "zu serve: 2 declarations, more than 1: the page draws packages only; -include picks the packages to draw\n"
+	if n := strings.Count(stderr.String(), note); n != 1 {
+		t.Errorf("note %d times in:\n%s", n, stderr.String())
+	}
+}
+
+// 19: the budget counts the declarations the page would draw: a package the
+// Policy omits counts for nothing.
+func TestServeDetailBudgetCountsWhatThePolicyDraws(t *testing.T) {
+	old := detailBudget
+	detailBudget = 1
+	t.Cleanup(func() { detailBudget = old })
+	url, stderr := startServe(t, repo(t, map[string]string{
+		"go.mod":        "module example.com/m\n",
+		"a/a.go":        "package a\n\nfunc F() {}\n",
+		"gen/gen.go":    "package gen\n\nfunc G() {}\n",
+		policy.FileName: "omit: [example.com/m/gen]\n",
+	}), "-poll", "0")
+	if v := fetch(t, url+"view.json"); !strings.Contains(v, `"id":"example.com/m/a.F"`) {
+		t.Errorf("a.F not drawn, though the Policy draws one declaration: %s", v)
+	}
+	if strings.Contains(stderr.String(), "more than") {
+		t.Errorf("over the budget:\n%s", stderr.String())
 	}
 }
 

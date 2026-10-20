@@ -2,13 +2,17 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
+	"maps"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -26,14 +30,15 @@ import (
 // (10): the Project View of the working tree, on a loopback address, until
 // interrupted, or with -base (14) the Change View zu diff ref -worktree
 // -html writes. Every load of the page rescans the tree, parsing only the
-// files whose content changed. Flags may come before or after dir. It
-// writes nothing to disk.
+// files whose content changed. Without -include the Project View draws
+// every package's declarations, and the page reads their source on demand
+// (19). Flags may come before or after dir. It writes nothing to disk.
 func runServe(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("zu serve", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	addr := fs.String("addr", "", "listen on `host:port`, a loopback address (default "+serve.DefaultAddr+", or a free port when that is taken)")
 	var o htmlOptions
-	fs.Var(&o.include, "include", "inline declarations and source of packages matching `pattern` (repeatable; ./ = root module)")
+	fs.Var(&o.include, "include", "draw only the declarations of packages matching `pattern`, their source inlined, as zu scan -html does (repeatable; ./ = root module); without it, every package's, up to "+strconv.Itoa(detailBudget)+" declarations")
 	fs.StringVar(&o.linkTmpl, "link-template", "", "source link `url` with {commit} {path} {line}; overrides origin detection")
 	fs.StringVar(&o.cover, "coverprofile", "", "colour packages by CRAP from `file`, written by go test -coverprofile over this tree; read once, at start")
 	poll := fs.Duration("poll", time.Second, "look for changes every `interval` and redraw the open page; 0: never")
@@ -96,7 +101,7 @@ func runServe(args []string, stdout, stderr io.Writer) int {
 		hub = serve.NewHub(first)
 		s.hub = hub
 	}
-	srv := newServer(serve.Handler(page, serve.Views{Scan: s.view, Hub: hub}))
+	srv := newServer(serve.Handler(page, serve.Views{Scan: s.view, Hub: hub, Source: s.source}))
 	if hub != nil {
 		srv.RegisterOnShutdown(hub.Close) // open streams end, so Shutdown need not wait them out
 		wctx, stopWatch := context.WithCancel(ctx)
@@ -132,6 +137,11 @@ func newServer(h http.Handler) *http.Server {
 	return &http.Server{Handler: h, ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second}
 }
 
+// detailBudget is the most declarations zu serve draws without -include
+// (19): past it the page draws packages only, as a big View is slow to
+// send, parse and lay out (kubernetes, at 107,196, would weigh 61 MB).
+var detailBudget = 20000
+
 // session is one zu serve: its options, and the Cache its rescans share.
 type session struct {
 	mu     sync.Mutex // one rescan at a time
@@ -160,6 +170,71 @@ type session struct {
 	// last began a poll. When they differ, a page load may have listed a
 	// file the watch's listing lacks.
 	scans, polledAt atomic.Int64
+
+	// files is what /source sends (19): the files the last page load's
+	// scan, or the watch's last rescan the page draws, declares a package,
+	// type or function in. A rescan the watch keeps from the page changes
+	// nothing: the page still draws what is declared there. overBudget,
+	// guarded by mu, is set once zu serve has said the tree is past
+	// detailBudget.
+	files      atomic.Pointer[map[string]bool]
+	overBudget bool
+}
+
+// every says whether the Project View draws every package's declarations
+// (19): without -include, while doc, as the Policy draws it, holds at most
+// detailBudget of them. The first time it is past, zu serve says so.
+func (s *session) every(doc *ir.IR) bool {
+	if len(s.o.include) > 0 {
+		return false
+	}
+	n := 0
+	for i := range doc.Nodes {
+		if k := doc.Nodes[i].Kind; k == ir.KindType || k == ir.KindFunction {
+			n++
+		}
+	}
+	if n <= detailBudget {
+		return true
+	}
+	if !s.overBudget {
+		s.overBudget = true
+		fmt.Fprintf(s.stderr, "zu serve: %d declarations, more than %d: the page draws packages only; -include picks the packages to draw\n", n, detailBudget)
+	}
+	return false
+}
+
+// source answers GET /source (19): the file at path in the tree as it is
+// now, with its Syntax, if the last scan declares something in it; else
+// fs.ErrNotExist. It takes no lock, so a rescan does not hold it up.
+func (s *session) source(path string) ([]byte, error) {
+	files := s.files.Load()
+	if files == nil || !(*files)[path] || !filepath.IsLocal(filepath.FromSlash(path)) {
+		return nil, fs.ErrNotExist
+	}
+	tree, err := scan.DirTree(s.dir)
+	if err != nil {
+		return nil, err
+	}
+	b, err := tree.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(export.SourceFile{Path: path, Text: string(b), Syntax: export.Syntax(b)})
+}
+
+// declared is the files doc declares a package, type or function in.
+func declared(doc *ir.IR) map[string]bool {
+	out := map[string]bool{}
+	for i := range doc.Nodes {
+		if doc.Nodes[i].Kind == ir.KindExternal {
+			continue
+		}
+		for _, l := range doc.Nodes[i].Locations {
+			out[l.Path] = true
+		}
+	}
+	return out
 }
 
 // view rescans the working tree under its Policy, as zu scan does, and
@@ -191,6 +266,13 @@ func (s *session) view(ctx context.Context) ([]byte, uint64, error) {
 		s.begun, s.git, s.seen, s.first = true, src.listing != nil, src.listing, src.tree
 		s.errs, s.commit = errPaths(doc), doc.Ref.Commit
 	}
+	files := declared(doc)
+	// While a file does not parse the watch keeps its drawing (changed),
+	// whose files pages still read: a page load adds its own to them.
+	if old := s.files.Load(); old != nil && newParseErrors(s.errs, doc) != "" && doc.Ref.Commit == s.commit {
+		maps.Copy(files, *old)
+	}
+	s.files.Store(&files)
 	var gen uint64
 	if s.hub != nil {
 		_, gen, _ = s.hub.Latest()

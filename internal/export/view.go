@@ -89,6 +89,14 @@ type Edge struct {
 	Violation string `json:"violation,omitempty"`
 }
 
+// SourceFile is one file as zu serve sends it to the page on demand (19),
+// at GET /source: what View.Sources and View.Syntax hold for an inlined one.
+type SourceFile struct {
+	Path   string  `json:"path"`
+	Text   string  `json:"text"`
+	Syntax [][]int `json:"syntax"`
+}
+
 // Honesty is what the view is not showing, always displayed in the header.
 type Honesty struct {
 	ParseErrors       []ir.ParseError `json:"parseErrors"`

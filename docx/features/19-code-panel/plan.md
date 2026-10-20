@@ -713,7 +713,7 @@ index f427c3b..846ec9b 100644
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/internal/cli/change_test.go b/internal/cli/change_test.go
@@ -1131,9 +1131,9 @@ index 6c61bf3..b9cffe7 100644
 +}
 ```
 
-- [ ] **Run:** `go test ./internal/export ./internal/serve ./internal/cli` Expected: FAIL (the builds fail: `undefined: Every`, `hub.Keep undefined (type *Hub has no field or method Keep)`, `unknown field Source in struct literal of type Views`, `undefined: export.SourceFile`, `undefined: detailBudget`)
+- [x] **Run:** `go test ./internal/export ./internal/serve ./internal/cli` Expected: FAIL (the builds fail: `undefined: Every`, `hub.Keep undefined (type *Hub has no field or method Keep)`, `unknown field Source in struct literal of type Views`, `undefined: export.SourceFile`, `undefined: detailBudget`)
 
-- [ ] **Detail every package within the budget, and serve `/source`**
+- [x] **Detail every package within the budget, and serve `/source`**
 
 ```diff
 diff --git a/internal/cli/change.go b/internal/cli/change.go
@@ -1604,9 +1604,9 @@ index 4704b8e..844f62e 100644
  			var gen uint64
 ```
 
-- [ ] **Run:** `go test ./... && cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `go test ./... && cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Commit:** `Draw every package in zu serve and send its source on demand`
+- [x] **Commit:** `Draw every package in zu serve and send its source on demand`
 
 ---
 

@@ -8,13 +8,15 @@ import (
 )
 
 // Hub holds what zu serve's watch last built (13): the latest View, its
-// generation, and a notice for the page, and wakes every open stream when
-// one changes. Safe for concurrent use.
+// generation, a notice for the page, and (19) how many rescans published no
+// View, and wakes every open stream when one changes. Safe for concurrent
+// use.
 type Hub struct {
 	mu     sync.Mutex
 	view   []byte
 	gen    uint64
 	notice string
+	source uint64 // rescans that published no View
 	subs   map[chan struct{}]bool
 	closed bool
 }
@@ -30,9 +32,12 @@ func (h *Hub) Publish(view []byte) {
 	h.set(func() { h.view, h.gen, h.notice = view, h.gen+1, "" })
 }
 
-// Notify sets the notice the page shows over its drawing; "" clears it.
-func (h *Hub) Notify(text string) {
-	h.set(func() { h.notice = text })
+// Keep says the watch rescanned and publishes no View (19): the View is the
+// same, the rescan failed, or a file no longer parses. The page shows text
+// over its drawing ("" clears it) and reads the files it shows again: a save
+// can change a file's text and not the View.
+func (h *Hub) Keep(text string) {
+	h.set(func() { h.notice, h.source = text, h.source+1 })
 }
 
 // Latest returns the latest View, its generation and the notice.
@@ -89,8 +94,9 @@ func (h *Hub) subscribe() (<-chan struct{}, func()) {
 }
 
 // stream is GET /events: Server-Sent Events, "view" with the latest
-// generation and "notice" with the notice, each sent at once and again
-// whenever it changes.
+// generation, "notice" with the notice and (19) "source" with the count of
+// rescans that published no View, each sent at once and again whenever it
+// changes.
 func (h *Hub) stream(w http.ResponseWriter, r *http.Request) {
 	fl, ok := w.(http.Flusher)
 	if !ok {
@@ -105,9 +111,12 @@ func (h *Hub) stream(w http.ResponseWriter, r *http.Request) {
 	wake, stop := h.subscribe()
 	defer stop()
 	var sentGen uint64
-	sentNotice := "\x00" // never a notice, so the first is sent
+	sentNotice := "\x00"     // never a notice, so the first is sent
+	sentSource := ^uint64(0) // never a count, so the first is sent
 	for {
-		_, gen, notice := h.Latest()
+		h.mu.Lock()
+		gen, notice, source := h.gen, h.notice, h.source
+		h.mu.Unlock()
 		if gen != sentGen {
 			fmt.Fprintf(w, "event: view\ndata: %d\n\n", gen)
 			sentGen = gen
@@ -115,6 +124,10 @@ func (h *Hub) stream(w http.ResponseWriter, r *http.Request) {
 		if notice != sentNotice {
 			fmt.Fprintf(w, "event: notice\ndata: %s\n\n", strings.Join(strings.Fields(notice), " "))
 			sentNotice = notice
+		}
+		if source != sentSource {
+			fmt.Fprintf(w, "event: source\ndata: %d\n\n", source)
+			sentSource = source
 		}
 		fl.Flush()
 		select {

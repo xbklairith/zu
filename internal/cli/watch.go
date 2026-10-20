@@ -87,8 +87,10 @@ func (s *session) list(ctx context.Context) (*watch.Listing, error) {
 // changed rescans after the watch saw a change and pushes the View, unless
 // the rescan failed or, at the same commit, a file that parsed in the
 // pushed View no longer does: then the page keeps its drawing and shows
-// why. If a page load scanned since the watch began its poll, it lists the
-// tree again first: the page may already draw a file l lacks.
+// why. A rescan that pushes no View, kept or the same, tells the page to
+// read its files again (19). If a page load scanned since the watch began
+// its poll, it lists the tree again first: the page may already draw a file
+// l lacks.
 func (s *session) changed(ctx context.Context, l *watch.Listing) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -122,17 +124,19 @@ func (s *session) changed(ctx context.Context, l *watch.Listing) {
 		return
 	case err != nil:
 		fmt.Fprintf(s.stderr, "zu serve: watch: rescan failed: %v; the page keeps its drawing\n", err)
-		s.hub.Notify("rescan failed: " + err.Error())
+		s.hub.Keep("rescan failed: " + err.Error())
 		return
 	}
 	if broken := newParseErrors(s.errs, doc); broken != "" && doc.Ref.Commit == s.commit {
 		fmt.Fprintf(s.stderr, "zu serve: watch: %s; the page keeps its drawing\n", broken)
-		s.hub.Notify(broken)
+		s.hub.Keep(broken)
 		return
 	}
 	s.errs, s.commit = errPaths(doc), doc.Ref.Commit
+	files := declared(doc)
+	s.files.Store(&files)
 	if last, _, _ := s.hub.Latest(); bytes.Equal(last, data) {
-		s.hub.Notify("")
+		s.hub.Keep("")
 		return
 	}
 	s.hub.Publish(data)

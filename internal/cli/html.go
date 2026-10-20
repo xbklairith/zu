@@ -199,7 +199,7 @@ func builtTemplate() ([]byte, error) {
 // ir.Encode) as the Policy draws it, reading source through the tree the
 // scan read.
 func writeHTML(ctx context.Context, src *source, doc *ir.IR, pol *policy.Policy, ms scan.Measures, o *htmlOptions, stderr io.Writer) error {
-	v, err := projectView(ctx, "scan", src, doc, pol, ms, o, stderr)
+	v, err := projectView(ctx, "scan", src, doc, pol, ms, o, nil, stderr)
 	if err != nil {
 		return err
 	}
@@ -207,8 +207,10 @@ func writeHTML(ctx context.Context, src *source, doc *ir.IR, pol *policy.Policy,
 }
 
 // projectView builds the Project View of doc, which must be sorted, for zu
-// scan -html and zu serve alike.
-func projectView(ctx context.Context, cmd string, src *source, doc *ir.IR, pol *policy.Policy, ms scan.Measures, o *htmlOptions, stderr io.Writer) (*export.View, error) {
+// scan -html and zu serve alike. When every says yes of the IR as the
+// Policy draws it (zu serve without -include, 19), it draws every package's
+// declarations and inlines no source.
+func projectView(ctx context.Context, cmd string, src *source, doc *ir.IR, pol *policy.Policy, ms scan.Measures, o *htmlOptions, every func(*ir.IR) bool, stderr io.Writer) (*export.View, error) {
 	root := export.RootModule(doc)
 	pats := make([]export.Pattern, 0, len(o.include))
 	for _, s := range o.include {
@@ -218,7 +220,12 @@ func projectView(ctx context.Context, cmd string, src *source, doc *ir.IR, pol *
 		}
 		pats = append(pats, p)
 	}
-	v, err := export.Project(pol.Apply(doc), pats, src.tree.ReadFile)
+	drawn := pol.Apply(doc)
+	read := src.tree.ReadFile
+	if every != nil && every(drawn) {
+		pats, read = []export.Pattern{export.Every}, nil
+	}
+	v, err := export.Project(drawn, pats, read)
 	if err != nil {
 		return nil, err
 	}

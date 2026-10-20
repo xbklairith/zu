@@ -61,6 +61,19 @@ func TestServeBaseSendsTheViewDiffHTMLWrites(t *testing.T) {
 	noZu(t, dir)
 }
 
+// 19: zu serve -base sends a file from the working tree, as with no -base:
+// the Change View inlines only meaningfully changed files.
+func TestServeBaseSendsSourceOnDemand(t *testing.T) {
+	dir := diffRepo(t)
+	url, _ := startServe(t, dir, "-base", "main", "-poll", "0")
+	fetch(t, url+"view.json")
+	edit := "package a\n\nfunc F() int { return 3 }\n\nfunc G() {}\n"
+	writeFile(t, dir, "a/a.go", edit)
+	if got := fetch(t, url+"source?path=a/a.go"); !strings.Contains(got, `"text":"package a\n\nfunc F() int { return 3 }`) {
+		t.Errorf("source = %s", got)
+	}
+}
+
 // The Base is scanned once and kept: again only when the merge-base or the
 // Policy's hash moves (ADR 0004), never on an edit in the worktree.
 func TestServeBaseScansTheBaseOnlyWhenItMoves(t *testing.T) {

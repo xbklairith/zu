@@ -13,6 +13,7 @@ type ReadFunc func(path string) ([]byte, error)
 
 // Project builds the Project View: every package and external with its import
 // edges, plus declarations, calls, embeds and source for included packages.
+// With read nil it inlines no source (19: zu serve sends it on demand).
 func Project(doc *ir.IR, include []Pattern, read ReadFunc) (*View, error) {
 	pkgOf := packageOf(nodesByID(doc))
 	detail, decls, gen := map[string]bool{}, map[string]int{}, map[string]int{}
@@ -34,7 +35,7 @@ func Project(doc *ir.IR, include []Pattern, read ReadFunc) (*View, error) {
 		}
 	}
 	for j, ok := range matched {
-		if !ok {
+		if !ok && !include[j].every {
 			return nil, fmt.Errorf("-include %s matches no package", include[j])
 		}
 	}
@@ -82,8 +83,10 @@ func Project(doc *ir.IR, include []Pattern, read ReadFunc) (*View, error) {
 		n := &v.Nodes[i]
 		n.OffIn, n.OffOut = offIn[n.ID], offOut[n.ID]
 	}
-	if err := addSources(v, files, read); err != nil {
-		return nil, err
+	if read != nil {
+		if err := addSources(v, files, read); err != nil {
+			return nil, err
+		}
 	}
 	sortView(v)
 	return v, nil

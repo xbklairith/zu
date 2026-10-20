@@ -74,7 +74,8 @@ func expect(t *testing.T, got <-chan string, want string) {
 }
 
 // GET /events streams the latest View's generation, at once and on each
-// change, and the notice, one line; closing the Hub ends the stream.
+// change, the notice, one line, and (19) how many rescans published no View;
+// closing the Hub ends the stream.
 func TestEventsStreamTheLatestGeneration(t *testing.T) {
 	hub := NewHub([]byte(`{"v":1}`))
 	srv, builds := liveServer(t, hub)
@@ -86,11 +87,17 @@ func TestEventsStreamTheLatestGeneration(t *testing.T) {
 	got := events(t, resp.Body)
 	expect(t, got, "view 1")
 	expect(t, got, "notice ")
-	hub.Notify("a.go:3:1: expected '}'\nfound EOF")
+	expect(t, got, "source 0")
+	hub.Keep("a.go:3:1: expected '}'\nfound EOF")
 	expect(t, got, "notice a.go:3:1: expected '}' found EOF")
+	expect(t, got, "source 1")
+	hub.Keep("") // a View the same as the last
+	expect(t, got, "notice ")
+	expect(t, got, "source 2")
 	hub.Publish([]byte(`{"v":2}`))
 	expect(t, got, "view 2")
-	expect(t, got, "notice ")
+	hub.Keep("")
+	expect(t, got, "source 3") // Publish counts no rescan: the page reads its files again for a new View anyway
 	hub.Close()
 	if e, ok := <-got; ok {
 		t.Errorf("after Close: %q, want the stream to end", e)

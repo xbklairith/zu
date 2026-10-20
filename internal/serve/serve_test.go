@@ -3,6 +3,7 @@ package serve
 import (
 	"context"
 	"errors"
+	"io/fs"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -183,5 +184,66 @@ func TestHandlerReportsAFailedBuild(t *testing.T) {
 	})
 	if w.Code != 500 || !strings.Contains(w.Body.String(), "zu.policy.yaml: line 3: bad level") {
 		t.Errorf("%d %q", w.Code, w.Body.String())
+	}
+}
+
+// 19: /source sends what Views.Source reads, under the View's rules: to this
+// machine's own page only, read-only. A path Source refuses is 404.
+func TestHandlerServesSourceOnDemand(t *testing.T) {
+	reads := 0
+	h := Handler([]byte("PAGE"), Views{
+		Scan: func(context.Context) ([]byte, uint64, error) { return nil, 0, errors.New("no scan") },
+		Source: func(path string) ([]byte, error) {
+			reads++
+			switch path {
+			case "a/a.go":
+				return []byte(`{"path":"a/a.go"}`), nil
+			case "boom.go":
+				return nil, errors.New("read boom.go: permission denied")
+			}
+			return nil, fs.ErrNotExist
+		},
+	})
+	do := func(method, target, host, site string) *httptest.ResponseRecorder {
+		r := httptest.NewRequest(method, target, nil)
+		r.Host = host
+		r.Header.Set("Sec-Fetch-Site", site)
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		return w
+	}
+	const local = "127.0.0.1:7433"
+	if w := do("GET", "/source?path=a/a.go", local, "same-origin"); w.Code != 200 || w.Body.String() != `{"path":"a/a.go"}` ||
+		w.Header().Get("Content-Type") != "application/json" || w.Header().Get("Cache-Control") != "no-store" {
+		t.Errorf("a/a.go: %d %q %q", w.Code, w.Header().Get("Content-Type"), w.Body.String())
+	}
+	if w := do("GET", "/source?path=b.go", local, ""); w.Code != http.StatusNotFound {
+		t.Errorf("b.go: %d, want 404", w.Code)
+	}
+	if w := do("GET", "/source?path=boom.go", local, ""); w.Code != 500 || !strings.Contains(w.Body.String(), "permission denied") {
+		t.Errorf("boom.go: %d %q", w.Code, w.Body.String())
+	}
+	if reads != 3 {
+		t.Errorf("%d reads, want 3", reads)
+	}
+	for _, c := range []struct {
+		method, host, site string
+		want               int
+	}{
+		{"GET", local, "cross-site", http.StatusForbidden},
+		{"GET", local, "same-site", http.StatusForbidden},
+		{"POST", local, "", http.StatusMethodNotAllowed},
+		{"GET", "evil.example:7433", "", http.StatusMisdirectedRequest},
+	} {
+		if w := do(c.method, "/source?path=a/a.go", c.host, c.site); w.Code != c.want {
+			t.Errorf("%s from %s (%s): %d, want %d", c.method, c.host, c.site, w.Code, c.want)
+		}
+	}
+	if reads != 3 {
+		t.Errorf("a refused request read: %d reads", reads)
+	}
+	// Without Source, as in a test of the View alone, there is no /source.
+	if w, _ := get(t, "GET", "/source?path=a/a.go", local, nil, nil); w.Code != http.StatusNotFound {
+		t.Errorf("no Source: %d, want 404", w.Code)
 	}
 }

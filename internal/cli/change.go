@@ -19,7 +19,7 @@ import (
 // only when the merge-base or head's Policy hash moved (ADR 0004).
 func (s *session) viewOf(ctx context.Context, src *source, doc *ir.IR, pol *policy.Policy, ms scan.Measures) (*export.View, error) {
 	if s.base == "" {
-		return projectView(ctx, "serve", src, doc, pol, ms, s.o, s.stderr)
+		return projectView(ctx, "serve", src, doc, pol, ms, s.o, s.every, s.stderr)
 	}
 	if doc.Ref.Commit == "" {
 		return nil, errors.New("-base: HEAD has no commit yet")

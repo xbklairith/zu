@@ -18,7 +18,11 @@ type Pattern struct {
 	path   string
 	tree   bool
 	module string // set for ./ patterns
+	every  bool   // Every
 }
+
+// Every selects every package: what zu serve draws without -include (19).
+var Every = Pattern{src: "every package", every: true}
 
 func (p Pattern) String() string { return p.src }
 
@@ -46,6 +50,9 @@ func ParsePattern(s, rootModule string) (Pattern, error) {
 
 // Match reports whether the package with import path pkg, in module, is selected.
 func (p Pattern) Match(pkg, module string) bool {
+	if p.every {
+		return true
+	}
 	if p.module != "" && module != p.module {
 		return false
 	}

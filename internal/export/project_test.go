@@ -177,6 +177,31 @@ func TestProjectColoursEachSource(t *testing.T) {
 	}
 }
 
+// 19: zu serve draws every package's declarations by default. Every
+// selects them all, in an IR with none too, and with no ReadFunc the View
+// inlines no source: the page reads it from zu serve.
+func TestProjectEveryPackageWithoutSource(t *testing.T) {
+	doc := shopIR(t)
+	v, err := Project(doc, []Pattern{Every}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(v.Nodes) != len(doc.Nodes) {
+		t.Errorf("%d nodes, want the IR's %d", len(v.Nodes), len(doc.Nodes))
+	}
+	for _, n := range v.Nodes {
+		if n.Kind == "package" && !n.Detail {
+			t.Errorf("package %s not detailed", n.ID)
+		}
+	}
+	if len(v.Sources) != 0 || v.Syntax != nil {
+		t.Errorf("inlined %d sources, %d coloured", len(v.Sources), len(v.Syntax))
+	}
+	if _, err := Project(&ir.IR{}, []Pattern{Every}, nil); err != nil {
+		t.Errorf("an IR with no package: %v", err)
+	}
+}
+
 func TestProjectRejectsAnIncludeThatMatchesNothing(t *testing.T) {
 	doc := shopIR(t)
 	p, _ := ParsePattern("./nosuch/...", RootModule(doc))
