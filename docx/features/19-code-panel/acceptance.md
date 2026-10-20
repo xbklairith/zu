@@ -113,7 +113,11 @@ Applied as the plan's exact text, with one change:
 **Round 2** (2026-10-21, fix-then-ship):
 - **The link check came before the open.** So a directory renamed to a link out of the tree between the two was followed. In the reviewer's race, a goroutine swapped `a` between its directory and a link out of the tree, while eight clients asked `/source` for `a/a.go`. 1,141 of 324,235 answers carried the outside file. `cd4cfc0` opens through the tree's `os.Root` and keeps `viaLink`, which also refuses an in-tree directory link, as `os.Root` alone would not. An escape, a mid-swap `not a directory` and a link loop answer 404, not 500. `TestOpenStaysInTheRoot` refuses an absolute and a relative link out of the tree, and opens an in-tree file link.
   - The reviewer's race, rerun at `d7e9a2a`: 0 of 313,239 answers came from outside, and none was a 500.
-  - A cold `zu scan` of kubernetes, old and new builds alternated three times: 5.06 / 4.52 / 4.85 s before, 4.43 / 3.83 / 5.63 s after, with byte-identical IR. That is noise.
+  - **The cost.** The watch's trusted rescan reads only the files whose stamp changed, so it is unaffected: 57–63 ms either way, by 16's round-2 reviewer. A page load's untrusted rescan reads every listed file, and pays the per-component walk `os.Root` makes:
+    - in process on kubernetes, by the same reviewer, it went from about 180 ms to 500–570 ms;
+    - the lead's raw read of kubernetes' 17,875 listed .go files, with GOMAXPROCS workers at a load of 6–8, took 208–232 ms with `os.Open` and 751–851 ms with a Root per read. With one Root shared, it took 675–797 ms.
+
+    A cold `zu scan` (4–5 s, alternated three times, byte-identical IR) hides this inside the parse, so it measured the wrong case. l.266 (a re-scan after one file changes, under 2 s, request to response) is still to be re-checked at a low load.
 - **Nits** (`d7e9a2a`):
   - The serve test's tree is now a git checkout, so its rescan goes through `ListTree`. It fails with `ListTree`'s link check off.
   - `CommitTree` reads through an in-tree directory link, so the `Tree` doc says "a path through a directory link on disk". Nothing reaches that path: `ls-tree` lists a link as a link. `ResolveLinks` is unchanged, because refusing such paths there would break disk/commit parity.

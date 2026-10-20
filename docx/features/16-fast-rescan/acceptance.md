@@ -105,3 +105,20 @@ Applied as the plan's exact text:
 - **requirements-draft.md:** the `zu serve -base` (14) line, and the **Rescan in `zu serve` (16)** bullet after it. They first carried the plan's figures; after scrutiny they quote this run's, the plan's kept as draft figures.
 - **10-serve/rescan-profile.md:** the **Taken by feature 16** paragraph.
 - **glossary.md:** **Part**, after **IR**.
+
+## After scrutiny
+
+**Round 1** (2026-10-21, fix-then-ship):
+- **The requirements quoted the plan's figures for a gate this run missed.** `725c2d6` quotes this run's figures, keeps the plan's as draft figures, names run 6's miss, and records the lead's waiver above.
+- **No test pinned `sameModules`' directory check.** `492c8ea` adds a step in which a nested `go.mod` moves to another directory under the same module path and requires. It fails with the check dropped.
+- **Nits.**
+  - The `Cache` doc comment was fixed by 20's Task 1 (`c82853d`), as this plan deferred.
+  - `a4114f9` states `separable`'s fallback exactly in `decisions.md` and the glossary, and dates `rescan-profile.md` by its build.
+  - Run 6's "same work" now reads as inferred, not logged.
+- **Not changed: `moduleFor` folds a module in a one-letter directory into the root.** The bug predates 16, and 16 neither causes nor widens it. It is in the backlog.
+
+**Round 2** (2026-10-21, at `cb05693`, **ship**):
+- **Round 1's fixes, checked.** The reviewer verified each fix, killing the `sameModules` mutant with `492c8ea`'s step. Corpus parity passes at the tip on kubernetes, hugo and cobra, with every count equal to this record's, and so does a trusted-`ListTree` parity probe on kubernetes.
+- **19's `4b4eb6d` inside 16's rescan.** It keeps the rescan correct under concurrent listing, and through a directory that becomes a link and back. The Cache keeps nothing the listing drops. The watch's rescan pays nothing measurable for it, so 16's gates hold.
+- **Two wording nits.** `c9da46c` quotes this run's figures for the hub package in the requirements, and says in the glossary's **Part** that only a required module the tree does not hold makes a rescan assemble whole.
+- **Outside 16.** The reviewer found that 19's `cd4cfc0` triples a page load's untrusted rescan on kubernetes, in process. That belongs to 19, whose record carries it.
