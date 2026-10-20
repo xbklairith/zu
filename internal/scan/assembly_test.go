@@ -99,6 +99,14 @@ func TestCacheAssemblesOnlyWhatChanged(t *testing.T) {
 	write("go.mod", "module example.com/shop\n\ngo 1.24\n\n// the requires move down a line\nrequire (\n\tgithub.com/lib/pq v1.10.9\n\tgolang.org/x/sync v0.9.0\n)\n")
 	step("a require's line", all)
 	step("no change again", n(0))
+	// tools' go.mod moves out and keeps its path: tools/gen's id and facts
+	// stay, but its files fall to the root module, which only the go.mod's
+	// Dir tells.
+	write("kit/README", "no Go files\n")
+	if err := os.Rename(filepath.Join(root, "tools", "go.mod"), filepath.Join(root, "kit", "go.mod")); err != nil {
+		t.Fatal(err)
+	}
+	step("a nested go.mod moved", all)
 }
 
 // A package importing another resolves its calls by the other's Name, so
