@@ -2,7 +2,8 @@
 // s key). The tree's fields of the hash stay as the reader left them while
 // the Screen is drawn.
 import type { View } from "./data";
-import { centreOf } from "./screen";
+import { index, packageOf } from "./cut";
+import { centreOf, screenView } from "./screen";
 import { reveal } from "./search";
 import { centreAt, type ViewState } from "./state";
 
@@ -15,10 +16,11 @@ export function enter(view: View, s: ViewState): ViewState {
 
 // leave draws the tree again: as the reader left it while the Centre is
 // still the selection's, else drawn at the Centre with it selected, as a
-// search pick is (reveal).
+// search pick is (reveal). 18: a near Centre is not in the tree; its package is.
 export function leave(view: View, s: ViewState): ViewState {
   const tree = { ...s, centre: null, more: false };
-  return s.centre === null || centreOf(view, s.selected) === s.centre ? tree : reveal(view, s.centre, tree);
+  if (s.centre === null || centreOf(view, s.selected) === s.centre) return tree;
+  return reveal(view, index(view).node.has(s.centre) ? s.centre : packageOf(screenView(view), s.centre)!, tree);
 }
 
 // drawnCentre is the Centre the page draws: s's while view has it. A newer

@@ -1274,7 +1274,7 @@ The tests check:
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/web/src/keys.test.ts b/web/src/keys.test.ts
@@ -1408,9 +1408,9 @@ index 0000000..c2826d5
 +});
 ```
 
-- [ ] **Run:** `cd web && npx vitest run src/walk.test.ts src/keys.test.ts src/lens.test.ts` Expected: FAIL (`Cannot find module './walk'`; `n` maps to nothing; leaving Cart does not reveal checkout)
+- [x] **Run:** `cd web && npx vitest run src/walk.test.ts src/keys.test.ts src/lens.test.ts` Expected: FAIL (`Cannot find module './walk'`; `n` maps to nothing; leaving Cart does not reveal checkout)
 
-- [ ] **Walk the change: n and p, in reading order**
+- [x] **Walk the change: n and p, in reading order**
 
 ```diff
 diff --git a/web/src/App.tsx b/web/src/App.tsx
@@ -1571,9 +1571,9 @@ index 0000000..712a580
 +}
 ```
 
-- [ ] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
+- [x] **Run:** `cd web && npx vitest run && npm run typecheck` Expected: PASS
 
-- [ ] **Commit:** `Walk a Change View in reading order with n and p`
+- [x] **Commit:** `Walk a Change View in reading order with n and p`
 
 ---
 

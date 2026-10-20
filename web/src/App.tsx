@@ -23,6 +23,7 @@ import { ScreenCanvas } from "./ScreenCanvas";
 import { centreAt, deeper, drill, nextStage, select, shallower, toggle, up, type ViewState } from "./state";
 import { Toolbar } from "./Toolbar";
 import { useViewState } from "./useViewState";
+import { step } from "./walk";
 
 const PKG = "#pkg";
 const FRAMES = 64; // 15: the most layouts the page keeps (place.ts)
@@ -277,6 +278,7 @@ export function App({ view: whole }: { view: View }) {
         typing: e.target instanceof HTMLInputElement && e.target.type !== "checkbox",
         mod: e.metaKey || e.ctrlKey || e.altKey,
         screen: onScreen,
+        change,
       });
       if (a === "search") {
         e.preventDefault();
@@ -289,6 +291,8 @@ export function App({ view: whole }: { view: View }) {
       else if (a === "deeper") update((s) => deeper(s, sc.depth));
       else if (a === "shallower") update((s) => shallower(s, sc.depth));
       else if (a === "lens") lens();
+      else if (a === "next") update((s) => step(proposed, s, 1)); // 18: the walk
+      else if (a === "previous") update((s) => step(proposed, s, -1));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
