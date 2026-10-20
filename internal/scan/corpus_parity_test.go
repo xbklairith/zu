@@ -5,19 +5,25 @@ import (
 	"cmp"
 	"context"
 	"os"
+	"path"
 	"path/filepath"
 	"reflect"
 	"regexp"
 	"slices"
 	"strings"
 	"testing"
+
+	"zu/internal/ir"
 )
 
 // On a real tree, every rescan through a Cache writes the IR a cold scan
 // writes, byte for byte, after each kind of edit a watch sees (16). The
 // random-edit test covers the rules; this one covers a real tree's scale:
 // kubernetes' 2,963 packages, its staging modules (required and scanned), a
-// package with 347 importers. It runs only when ZU_CORPUS names a writable
+// package with 347 importers. After a package appears, it also checks that
+// no more than that package and the packages importing its path were
+// assembled, and after it goes, no more than those importers; the new
+// package is imported before it exists, so an unresolved import resolves. It runs only when ZU_CORPUS names a writable
 // copy of a corpus tree (`cp -cRp`, never the corpus itself), and puts back
 // every file it touched. ZU_CORPUS_PKG names the package to edit, relative
 // to the tree; the default is kubernetes' apimachinery util/sets.
@@ -59,7 +65,7 @@ func TestCorpusRescansMatchColdScans(t *testing.T) {
 				t.Error(err)
 			}
 		}
-		for _, p := range []string{"zz_parity.go", "zz_broken.go", "zzparity"} {
+		for _, p := range []string{"zz_parity.go", "zz_broken.go", "zz_uses.go", "zzparity"} {
 			if err := os.RemoveAll(filepath.Join(dir, p)); err != nil {
 				t.Error(err)
 			}
@@ -87,7 +93,7 @@ func TestCorpusRescansMatchColdScans(t *testing.T) {
 	pkg := "package " + string(name) + "\n\n"
 
 	cache := NewCache()
-	step := func(what string, partial bool) {
+	step := func(what string, partial bool) (*ir.IR, int) {
 		t.Helper()
 		warm, ws, err := Run(context.Background(), Options{Tree: dirOf(t, root), Cache: cache})
 		if err != nil {
@@ -103,10 +109,30 @@ func TestCorpusRescansMatchColdScans(t *testing.T) {
 		if partial && ws.Assembled >= cs.Packages {
 			t.Errorf("%s: assembled all %d packages: the tree does not reuse parts", what, cs.Packages)
 		}
-		t.Logf("%-24s assembled %4d of %d packages, %d parse errors", what, ws.Assembled, cs.Packages, len(cold.ParseErrors))
+		t.Logf("%-34s assembled %4d of %d packages, %d parse errors", what, ws.Assembled, cs.Packages, len(cold.ParseErrors))
+		return cold, ws.Assembled
+	}
+	// importers counts the packages importing id in doc.
+	importers := func(doc *ir.IR, id string) int {
+		n := 0
+		for _, e := range doc.Edges {
+			if e.Kind == ir.EdgeImports && e.To == id {
+				n++
+			}
+		}
+		return n
 	}
 
-	step("first scan", false)
+	first, _ := step("first scan", false)
+	var id string // the edited package's import path
+	for _, n := range first.Nodes {
+		if n.Kind == ir.KindPackage && path.Dir(n.Locations[0].Path) == filepath.ToSlash(rel) {
+			id = n.ID
+		}
+	}
+	if id == "" {
+		t.Fatalf("no package at %s", rel)
+	}
 	write(files[0], withFunc(""))
 	step("new function", true)
 	write(files[0], withFunc(" _ = 1 "))
@@ -123,10 +149,19 @@ func TestCorpusRescansMatchColdScans(t *testing.T) {
 	step("new file", true)
 	remove(filepath.Join(dir, "zz_parity.go"))
 	step("file deleted", true)
+	write(filepath.Join(dir, "zz_uses.go"), []byte(pkg+"import \""+id+"/zzparity\"\n\nfunc zzUses() { zzparity.F() }\n"))
+	step("a file importing a missing package", true)
 	write(filepath.Join(dir, "zzparity", "zz.go"), []byte("package zzparity\n\nfunc F() {}\n"))
-	step("new package", false)
+	with, n := step("new package", true)
+	if k := importers(with, id+"/zzparity"); k == 0 || n > k+1 {
+		t.Errorf("new package: assembled %d packages; %d import it", n, k)
+	}
 	remove(filepath.Join(dir, "zzparity"))
-	step("package deleted", false)
+	if _, n := step("package deleted", true); n > importers(with, id+"/zzparity") {
+		t.Errorf("package deleted: assembled %d packages; %d imported it", n, importers(with, id+"/zzparity"))
+	}
+	remove(filepath.Join(dir, "zz_uses.go"))
+	step("the importing file deleted", true)
 	write(filepath.Join(dir, "zz_broken.go"), []byte(pkg+"func (\n"))
 	step("parse error", true)
 	remove(filepath.Join(dir, "zz_broken.go"))

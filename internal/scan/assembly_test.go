@@ -18,8 +18,9 @@ import (
 
 // A rescan through a Cache assembles again only the packages whose inputs
 // changed (16): a package whose files changed, every package importing one
-// whose Name, functions or types changed, and all of them when a go.mod or
-// the set of packages changed. Every IR is a cold scan's, byte for byte.
+// whose Name, functions or types changed or that appeared or went, and all
+// of them when a go.mod's paths or require lines changed. Every IR is a cold
+// scan's, byte for byte.
 func TestCacheAssemblesOnlyWhatChanged(t *testing.T) {
 	root := fixture(t, "shop")
 	cache := NewCache()
@@ -88,11 +89,11 @@ func TestCacheAssemblesOnlyWhatChanged(t *testing.T) {
 	}
 	step("the function gone", moneyAndImporters)
 	write("internal/extra/extra.go", "package extra\n")
-	step("a new package", all)
+	step("a new package", n(1)) // nothing imports it
 	if err := os.Rename(filepath.Join(root, "internal", "extra"), filepath.Join(root, "internal", "other")); err != nil {
 		t.Fatal(err)
 	}
-	step("a package renamed", all) // as many packages as before, one of them new
+	step("a package renamed", n(1)) // a new package, and one gone that nothing imported
 	write("go.mod", "module example.com/shop\n\ngo 1.24\n\nrequire (\n\tgithub.com/lib/pq v1.10.9\n\tgolang.org/x/sync v0.9.0\n)\n")
 	step("a version in go.mod", n(0)) // the IR holds require lines, not versions
 	write("go.mod", "module example.com/shop\n\ngo 1.24\n\n// the requires move down a line\nrequire (\n\tgithub.com/lib/pq v1.10.9\n\tgolang.org/x/sync v0.9.0\n)\n")
@@ -125,6 +126,60 @@ func TestCacheAssemblesImportersOfARenamedPackage(t *testing.T) {
 			t.Errorf("%s: assembled %d packages, want a and b", clause, ws.Assembled)
 		}
 	}
+}
+
+// A package's import may name a path the tree does not hold yet: the import
+// is unresolved, and so are the calls through it. When a package appears at
+// that path, or goes, only it and the packages whose imports name its path
+// are assembled again: the rest read nothing of it (16). A package whose
+// arrival lets ids meet assembles the whole tree.
+func TestCacheAssemblesImportersOfAnAddedOrRemovedPackage(t *testing.T) {
+	root := tree(t, map[string]string{
+		"go.mod": "module example.com/m\n",
+		"a/a.go": "package a\n\nimport \"example.com/m/c\"\n\nfunc F() { c.G() }\n",
+		"b/b.go": "package b\n\nimport \"example.com/m/c/d\"\n\nfunc H() { d.K() }\n",
+		"e/e.go": "package e\n\nimport \"example.com/m/a\"\n\nfunc E() { a.F() }\n",
+	})
+	cache := NewCache()
+	step := func(what string, want func(Stats) int, edit func(p string) error, rel string) {
+		t.Helper()
+		if edit != nil {
+			if err := edit(filepath.Join(root, filepath.FromSlash(rel))); err != nil {
+				t.Fatal(err)
+			}
+		}
+		warm, ws, err := Run(context.Background(), Options{Tree: dirOf(t, root), Cache: cache})
+		if err != nil {
+			t.Fatal(err)
+		}
+		cold, cs := run(t, root, 0)
+		if a, b := encode(t, warm), encode(t, cold); !bytes.Equal(a, b) {
+			t.Errorf("%s: the IR differs from a cold scan's\n%s", what, firstDiff(a, b))
+		}
+		if n := want(cs); ws.Assembled != n {
+			t.Errorf("%s: assembled %d packages, want %d", what, ws.Assembled, n)
+		}
+	}
+	add := func(body string) func(string) error {
+		return func(p string) error {
+			if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+				return err
+			}
+			return os.WriteFile(p, []byte(body), 0o644)
+		}
+	}
+	all := func(cs Stats) int { return cs.Packages }
+	n := func(k int) func(Stats) int { return func(Stats) int { return k } }
+
+	step("first scan", all, nil, "")
+	step("c appears: a's import resolves", n(2), add("package c\n\nfunc G() {}\n"), "c/c.go")
+	step("c/d appears: b's import resolves", n(2), add("package d\n\nfunc K() {}\n"), "c/d/d.go")
+	step("c goes: a's import is unresolved again", n(1), os.Remove, "c/c.go")
+	step("c/d goes", n(1), os.RemoveAll, "c")
+	step("x/d appears, imported by nothing", n(1), add("package d\n\nfunc K() {}\n"), "x/d/d.go")
+	step("a.F/y appears: its ids fall among a's", all, add("package y\n"), "a.F/y/y.go")
+	step("a.F/y goes", all, os.RemoveAll, "a.F")
+	step("no change", n(0), nil, "")
 }
 
 // Dots are legal in directory names, so two nodes can share an id: a

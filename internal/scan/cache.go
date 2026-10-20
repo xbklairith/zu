@@ -12,9 +12,10 @@ import (
 // hash, so a rescan parses only the files whose content changed (10). A
 // file's facts depend on nothing but its path and content, so one Cache
 // serves any Tree. It also keeps the last scan's assembly by package, so a
-// rescan assembles again only the packages whose files or imported surfaces
-// changed, and every package when the package set or the modules (a path, a
-// directory, or a require's path or line) changed (16). The rest of the IR is
+// rescan assembles again only the packages whose files changed, that are
+// new, or that import a path whose package is new, gone or has a new
+// surface, and every package when the modules (a path, a directory, or a
+// require's path or line) changed (16). The rest of the IR is
 // the last scan's, which is what a cold scan would build of it, byte for
 // byte. Keep one Cache per sequence of scans of one tree: scanning another
 // tree through it (serve's Base, say) replaces the kept assembly, and each

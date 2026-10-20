@@ -2584,7 +2584,7 @@ The tests are red on assertions: `main` after Task 6 assembles every package aft
 
 **Steps:**
 
-- [ ] **Write the failing tests**
+- [x] **Write the failing tests**
 
 ```diff
 diff --git a/internal/scan/assembly_test.go b/internal/scan/assembly_test.go
@@ -2784,9 +2784,9 @@ index f8dc8c47bfc3aa7605006a80bfc1a4343ed6d54f..c0aa963fc0c8c28fc72f87d23d681d51
  	remove(filepath.Join(dir, "zz_broken.go"))
 ```
 
-- [ ] **Run:** `go test ./internal/scan -run 'TestCacheAssemblesOnlyWhatChanged|TestCacheAssemblesImportersOfAnAddedOrRemovedPackage'` Expected: FAIL (a new package: assembled 6 packages, want 1; c appears: assembled 4 packages, want 2)
+- [x] **Run:** `go test ./internal/scan -run 'TestCacheAssemblesOnlyWhatChanged|TestCacheAssemblesImportersOfAnAddedOrRemovedPackage'` Expected: FAIL (a new package: assembled 6 packages, want 1; c appears: assembled 4 packages, want 2)
 
-- [ ] **Rebuild a new package, and the importers of a new, gone or changed one**
+- [x] **Rebuild a new package, and the importers of a new, gone or changed one**
 
 ```diff
 diff --git a/internal/scan/assembly.go b/internal/scan/assembly.go
@@ -2877,11 +2877,11 @@ index 37f65162b2c0b76d02189745a34b78488556b8b7..e16ab4d1d5e3071070b24f96192159e8
  // tree through it (serve's Base, say) replaces the kept assembly, and each
 ```
 
-- [ ] **Run:** `go test -race ./internal/scan` Expected: PASS
+- [x] **Run:** `go test -race ./internal/scan` Expected: PASS
 
-- [ ] **Run:** `go test ./...` Expected: PASS
+- [x] **Run:** `go test ./...` Expected: PASS
 
-- [ ] **Commit:** `Assemble only a new or removed package's importers`
+- [x] **Commit:** `Assemble only a new or removed package's importers`
 
 ---
 

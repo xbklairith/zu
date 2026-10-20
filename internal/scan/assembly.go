@@ -15,8 +15,9 @@ import (
 // package node, its declarations, the edges out of them, its unresolved
 // calls and imports, the externals its imports reach and its Measures.
 // Beyond its own files a part reads only the modules (every go.mod) and,
-// through its imports, the surface of the packages it imports: their Name,
-// functions and types. An assembly is never changed once built.
+// through its imports, whether a package is at each path it imports and, if
+// one is, its surface: its Name, functions and types. An assembly is never
+// changed once built.
 type assembly struct {
 	modules []*module
 	parts   map[string]*part // by package id
@@ -35,28 +36,40 @@ type part struct {
 }
 
 // assembleParts assembles facts from prev's parts where they still hold and
-// builds the rest, and reports how many packages it built. It returns nil
-// when two nodes could share an id (see separable): only a whole assembly
-// resolves that, as dropCollisions does.
+// builds the rest, and reports how many packages it built. It builds a
+// package whose files changed, a package that is new, and every package
+// importing the path of one that is new, gone, or whose surface changed:
+// index.classify looks a package up only by the exact path an import names.
+// It builds them all when the modules changed. It returns nil when two
+// nodes could share an id (see separable): only a whole assembly resolves
+// that, as dropCollisions does.
 func assembleParts(prev *assembly, w *walkResult, facts []*fileFacts) (*assembly, int) {
 	ix := buildIndex(w, facts)
 	if !separable(ix, w) {
 		return nil, 0
 	}
-	reuse := prev != nil && len(prev.parts) == len(ix.pkgs) && sameModules(prev.modules, w.Modules)
-	for id := range ix.pkgs {
-		reuse = reuse && prev.parts[id] != nil
-	}
+	reuse := prev != nil && sameModules(prev.modules, w.Modules)
 	build := map[string]bool{}
+	var moved []string // paths whose package is new, gone or has a new surface
 	for id, p := range ix.pkgs {
-		if !reuse || !slices.Equal(prev.parts[id].files, p.Files) {
+		var old *part
+		if reuse {
+			old = prev.parts[id]
+		}
+		switch {
+		case old == nil:
 			build[id] = true
+			moved = append(moved, id)
+		case !slices.Equal(old.files, p.Files):
+			build[id] = true
+			if surfaceOf(p) != old.surface {
+				moved = append(moved, id)
+			}
 		}
 	}
 	if reuse {
-		var moved []string // packages whose surface changed: their importers resolve against it
-		for id := range build {
-			if surfaceOf(ix.pkgs[id]) != prev.parts[id].surface {
+		for id := range prev.parts {
+			if ix.pkgs[id] == nil {
 				moved = append(moved, id)
 			}
 		}
