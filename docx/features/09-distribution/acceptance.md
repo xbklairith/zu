@@ -96,6 +96,55 @@ No budget was missed, so Task 5's list of known limits gains no miss. It keeps
 
 ## Release
 
-Pending, by a person: `docx/UserInstructions/09-first-release.md`. Gate 2
-(real Safari: the 05 checks and 04 step 1) has not been run. The tag has not been
-pushed and nothing has been published.
+v0.1.0, published 2026-10-21 (https://github.com/xbklairith/zu/releases/tag/v0.1.0),
+following `docx/UserInstructions/09-first-release.md`, at the user's word "release".
+Gate 1 on the clean `main` at `f459e85`: `make check` exit 0 at `065e4e5` (same Go
+and web code), `make release-snapshot` ending `release-verify: ok (3 archives, …)`,
+and `scripts/install-test.sh` 13/13. Gate 2 (real Safari: the 05 checks and 04 step 1)
+was not run; the user asked to release without it, so it is still owed. The tag
+`v0.1.0` (annotated) points at `f459e85913edefc729ee0af1492c6331df3ce1ca`.
+goreleaser v2.12.7 made the draft; `scripts/release-verify.sh dist` said
+`release-verify: ok (3 archives, zu_0.1.0_version.txt)`. The draft's notes were
+replaced with the install line, the macOS quarantine note and the known limits, then
+it was published.
+
+`gh release download v0.1.0`, then `shasum -a 256 -c checksums.txt`:
+
+```
+fc856a59c5e419477d4a24fd7803087864c9a105d2161493552a5ea95c8803ff  zu_0.1.0_darwin_amd64.tar.gz
+0968447fe8a522dd2fe7a9f453b411bab766a7e6f5a6ac1b284f3cbd8b0b67b2  zu_0.1.0_darwin_arm64.tar.gz
+8da5df77f64bcd3d7dc497970df729a08e41b6df3597c12ae1edd23938526f7f  zu_0.1.0_linux_amd64.tar.gz
+ffa8eceb83902754ec85921b414db49031ea636cf8df03c92f1244be9029cf0a  zu_0.1.0_version.txt
+```
+
+All four `OK`. The record, whose commit is `git rev-parse 'v0.1.0^{commit}'`:
+
+```
+zu version v0.1.0
+commit f459e85913edefc729ee0af1492c6331df3ce1ca
+ir-schema 1
+policy-format 1
+go go1.24.5
+ui embedded
+```
+
+`scripts/install-test.sh --release`, the README's line as written:
+
+```
+install-test: zu 0.1.0 (f459e85913edefc729ee0af1492c6331df3ce1ca), via: curl -fsSL https://raw.githubusercontent.com/xbklairith/zu/v0.1.0/scripts/install.sh | sh
+  ok    alpine, busybox ash, wget
+  ok    debian, dash
+  ok    debian, bash
+  ok    debian, zsh
+  ok    debian, fish
+  ok    ubuntu, a user, ZU_INSTALL_DIR
+  ok    ubuntu, a user, sudo
+  ok    ubuntu, a user, no sudo
+  ok    fedora, bash as sh
+  ok    linux arm64, busybox
+  ok    this Mac, zsh
+install-test: ok
+```
+
+The two cases that need a doctored download (no curl or wget; a wrong checksum) run
+only against a local `dist/`, where they passed in gate 1.
