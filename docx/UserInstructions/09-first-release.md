@@ -14,8 +14,10 @@ page and its archives, not the tag. So the rehearsal (step 3) and the Safari che
 
 ## Prerequisites
 
-- [ ] 09 is committed on `main`, and `git status --short` prints nothing
+- [ ] The commit to release is on `main`, and `git status --short` prints nothing
 - [ ] Safari, with Develop → Show Web Inspector enabled
+- [ ] Docker running: gate 1 and the verification run the README's install line in
+      fresh Linux images
 - [ ] A GitHub token for goreleaser. Recommended: a fine-grained token scoped to
       `xbklairith/zu` with *Contents: read and write* only (GitHub → Settings →
       Developer settings → Fine-grained tokens). Otherwise `gh auth token`, whose
@@ -62,10 +64,13 @@ page and its archives, not the tag. So the rehearsal (step 3) and the Safari che
    ```bash
    git switch main && git pull --ff-only && git status --short   # prints nothing
    make check && make release-snapshot                            # ends "release-verify: ok (3 archives, …)"
+   scripts/install-test.sh                                        # ends "install-test: ok" (about 6 minutes)
    rm -rf dist .zu/release
    ```
 
-   Stop here if either command fails.
+   Stop here if any command fails. `install-test.sh` serves `dist/` and
+   `scripts/install.sh` from a container, so it tests the installer this tag will carry
+   before the tag exists.
 
 4. **Gate 2: real Safari.** Run every step of
    `docx/UserInstructions/05-interaction-safari-check.md`, and step 1 of
@@ -73,7 +78,10 @@ page and its archives, not the tag. So the rehearsal (step 3) and the Safari che
    the results in the 05 and 04 `acceptance.md`. Stop here if a page fails to draw or
    the console shows a CSP error.
 
-5. Tag and release. The tag is the version: `v0.1.0` gives `zu version v0.1.0`.
+5. Tag and release. The tag is the version: `v0.1.0` gives `zu version v0.1.0`. For a
+   later release, first bump the version in the README's install line and in
+   `scripts/install.sh`'s default `ZU_VERSION`; `scripts/install-test.sh` fails until they
+   agree.
 
    ```bash
    git tag -a v0.1.0 -m "zu v0.1.0"
@@ -84,9 +92,10 @@ page and its archives, not the tag. So the rehearsal (step 3) and the Safari che
 
 6. On GitHub → Releases, open the draft `v0.1.0`. Add at the top:
    - install: the README's Install block, and the macOS quarantine note;
-   - known limits, from 09's `acceptance.md` (every measured budget was met): responsiveness
-     at 2,000 nodes isn't measured; incremental re-scan isn't built (watch mode comes after
-     v1); `serve` isn't built either.
+   - known limits: responsiveness at 2,000 nodes isn't measured (09's `acceptance.md`; no
+     later feature measured it); the binaries are not signed; there are no builds for
+     Linux arm64 or Windows. (`serve`, its watch and incremental rescans, which 09 listed
+     as not built, came in 10, 13 and 16.)
 
    Then press **Publish release**.
 
@@ -100,10 +109,12 @@ page and its archives, not the tag. So the rehearsal (step 3) and the Safari che
   cat zu_0.1.0_version.txt
 )
 git rev-parse 'v0.1.0^{commit}'
+scripts/install-test.sh --release   # the README's line as written; ends "install-test: ok"
 ```
 
 The record's `zu version` must be `v0.1.0`, its `commit` the `git rev-parse` output,
-and its `ui` line `embedded`. Record the digests and the record in
+and its `ui` line `embedded`. `install-test.sh --release` checks the same three lines
+on every zu it installs. Record the digests, the record and the install-test output in
 `docx/features/09-distribution/acceptance.md` under "Release".
 
 ## Troubleshooting
@@ -116,5 +127,7 @@ and its `ui` line `embedded`. Record the digests and the record in
   and write* on `xbklairith/zu`, or it has expired.
 - **goreleaser failed after the tag push:** the tag stays. Fix the cause and run
   `goreleaser release --clean` again on the same tag. It replaces the draft's files.
+- **`install-test.sh --release`: `could not download …tar.gz` or `curl: (22) … 404`:**
+  the release is still a draft, or the repository is private.
 - **A wrong commit was tagged and pushed:** the tag is already public (Overview). Don't
   move it. Delete the draft, fix forward on `main`, and release `v0.1.1`.

@@ -7,29 +7,23 @@ server, `zu serve`, listens on localhost only.
 
 ## Install
 
-Download a release from [Releases](https://github.com/xbklairith/zu/releases). There are
-builds for macOS arm64 and x86-64, and for Linux x86-64. This block picks the archive for
-your machine, checks it against `checksums.txt`, and puts `zu` in `/usr/local/bin`:
+There are builds for macOS arm64 and x86-64, and for Linux x86-64. From any shell (bash,
+zsh, fish, sh):
 
-```bash
-(
-  set -e
-  V=0.1.0
-  os=$(uname -s | tr '[:upper:]' '[:lower:]')
-  case "$(uname -m)" in
-    arm64 | aarch64) arch=arm64 ;;
-    x86_64) arch=amd64 ;;
-    *) echo "no zu release for $(uname -m)" >&2; exit 1 ;;
-  esac
-  cd "$(mktemp -d)"
-  base=https://github.com/xbklairith/zu/releases/download/v$V
-  curl -fsSLO "$base/zu_${V}_${os}_${arch}.tar.gz"
-  curl -fsSLO "$base/checksums.txt"
-  shasum -a 256 -c checksums.txt --ignore-missing
-  tar -xzf "zu_${V}_${os}_${arch}.tar.gz" zu
-  sudo mv zu /usr/local/bin/
-)
-zu version
+```sh
+curl -fsSL https://raw.githubusercontent.com/xbklairith/zu/v0.1.0/scripts/install.sh | sh
+```
+
+The pipe runs [`scripts/install.sh`](scripts/install.sh) from the `v0.1.0` tag in `sh`. It
+picks the [release](https://github.com/xbklairith/zu/releases) archive for your machine,
+checks it against `checksums.txt`, puts `zu` in `/usr/local/bin` (asking for sudo if that
+directory isn't yours), and runs `zu version`. To install without sudo, end the line with
+`| ZU_INSTALL_DIR=$HOME/.local/bin sh` instead. To read the script before running it:
+
+```sh
+curl -fsSLO https://raw.githubusercontent.com/xbklairith/zu/v0.1.0/scripts/install.sh
+less install.sh
+sh install.sh
 ```
 
 Checking `checksums.txt` proves the archive arrived intact. It does not prove who made

@@ -16,6 +16,7 @@ diagram (Mode A) and any MR as a structural delta over it (Mode B).
 - `internal/gitref` — the git CLI (the only process zu runs): HEAD commit + dirty, `WorktreeFiles` (what the next commit would contain), `Resolve` a ref, `MergeBase`, `CommitTree` reads a commit from git objects (`ls-tree` + one `cat-file --batch`)
 - `internal/diff` — pure: `Compare` two IRs (Change Status, Moves), `Affected` Set, `Summarize` into the Structural Summary, render text/Markdown/JSON; goldens in `testdata/` (`-update`); contract in `docx/features/03-diff-ci/output.md`
 - `scripts/bench-corpus.sh` — Test Corpus benchmarks (clones into `.zu/corpus/`)
+- `scripts/install.sh` — the README's installer, POSIX sh; `scripts/install-test.sh [dist | --release]` runs the README's line in fresh Docker images (sh, bash, zsh, fish; busybox, dash, a non-root user) and on this Mac
 - `web/` — Vite + React UI; `web/dist` is embedded by `web/embed.go`
 
 ## Commands
