@@ -1,6 +1,6 @@
 # 20 · Diff Code — Plan
 
-**Status:** Implemented 2026-10-21 (Tasks 1–5 on `build-16-20`; `acceptance.md`; the user's check is owed). APPROVED 2026-10-20 (lead, after scrutiny-20, its fixes and the replay; advisor sign-off). Held: it queues behind 16, 17, 18 and 19, which are approved and held. zu builds them in order 16, 17, 18, 19, 20, and builds any only when the user says go.
+**Status:** Implemented 2026-10-21 (Tasks 1–5 on `build-16-20`; `acceptance.md`; the user's check is owed). APPROVED 2026-10-20 (lead, after scrutiny-20, its fixes and the replay; advisor sign-off). The user lifted the hold on 2026-10-21; the build's scrutiny said ship at round 2.
 
 **Base.** Every diff here is against `main` with 16's, 17's, 18's and 19's plans applied, in that order, 19's as revised twice on 2026-10-20. `main` then differs from a18ff85 only by plan documents. The diffs come from a scratch branch. Its first commit is a `git archive` of a18ff85 with 16's to 19's tasks applied (19's revised scratch head). After it come one commit per red step and one per green step. The plan was replayed on a fresh `git archive` of `main`, after 16's to 19's replays (**Replay record**). Once those four land, replay this plan again on `main` (**Overlap with 16 to 19**).
 

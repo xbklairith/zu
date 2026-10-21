@@ -1,6 +1,6 @@
 # 17 · The Screen — Plan
 
-**Status:** Implemented 2026-10-21 (Tasks 1–7 on `build-16-20`; `acceptance.md`; the user's check is owed, so U14 is not yet recorded as met). APPROVED 2026-10-19 (lead, after scrutiny-17, one revision and the replay; advisor sign-off); REVISED 2026-10-20 after a review of 17 and 18 (**Notes**), replayed again. Held: it queues behind 16, which is approved and held; zu builds 16 first, and builds either only when the user says go.
+**Status:** Implemented 2026-10-21 (Tasks 1–7 on `build-16-20`; `acceptance.md`; the user's check is owed, so U14 is not yet recorded as met). APPROVED 2026-10-19 (lead, after scrutiny-17, one revision and the replay; advisor sign-off); REVISED 2026-10-20 after a review of 17 and 18 (**Notes**), replayed again. The user lifted the hold on 2026-10-21; the build's scrutiny said ship at round 2.
 
 **Base.** Every diff here is against `main` at a18ff85. The diffs come from a scratch branch built on a `git archive` of a18ff85, one commit per red step and one per green step. The plan was replayed on a fresh `git archive` of a18ff85 (**Replay record**). 16 lands first, so this plan must be replayed again on `main` after 16, as 15 was after 14 (**Overlap with 16**).
 
