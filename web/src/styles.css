@@ -572,16 +572,15 @@ button.st-removed {
 .changed .violations p {
   margin: 4px 0 0;
 }
+/* v0.1.1: a row of its own above the legend, as the legend is above the
+   canvas, so it covers neither (07 drew it over both). */
 .proposal-banner {
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 5;
+  padding: 4px 8px;
   color: var(--proposal);
   font-size: 16px;
   font-weight: 600;
-  pointer-events: none;
+  text-align: center;
+  background: var(--bg);
 }
 
 .changed h2 {
