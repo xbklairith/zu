@@ -162,6 +162,12 @@ const drawn = (p) => p.locator(".react-flow__node").first().waitFor({ timeout: 3
 const loaded = (p) => p.waitForFunction(() => document.querySelector(".react-flow__node, main .empty:not(#zu-status)") ||
   /^(?!Laying out)./.test(document.getElementById("zu-status")?.textContent ?? ""), null, { timeout: 30000 });
 const hash = (p) => p.evaluate(() => decodeURIComponent(location.hash));
+// spill: the nodes whose text reaches past their bottom edge: a label, a
+// stats, sub or facts line, role badges, a row. v0.1.1: React Flow's source
+// handle took the code panel's .source style, which put it in the flow and
+// pushed every node's text down by its height.
+const spill = () => [...document.querySelectorAll(".react-flow__node")].filter((n) => [...n.querySelectorAll(".label, .stats, .sub, .facts, .badges, .member")]
+  .some((t) => t.getBoundingClientRect().bottom > n.getBoundingClientRect().bottom + 0.5)).length;
 async function run(b) {
   const out = {};
   // Project View
@@ -173,6 +179,7 @@ async function run(b) {
   await drawn(p);
   await settle(p);
   out.nodes = await p.locator(".react-flow__node").count();
+  out.spill = await p.evaluate(spill);
   const v0 = await vp(p);
   await p.keyboard.press("/");
   await p.keyboard.type("Repo.Get");
@@ -605,6 +612,7 @@ async function run(b) {
 
 const want = {
   nodes: 10,
+  spill: 0,
   search: "#f=example.com/shop/internal/store&s=example.com/shop/internal/store.Repo.Get",
   row: ".Get",
   centred: true,

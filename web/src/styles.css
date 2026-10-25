@@ -367,8 +367,10 @@ pre {
   padding-left: 16px;
 }
 
-/* 19: the code scrolls on its own, so lighting a line moves no row of the panel */
-.source {
+/* 19: the code scrolls on its own, so lighting a line moves no row of the panel.
+   v0.1.1: pre.source, not .source: React Flow's source handle has that class
+   too, and took this style, which put it in the flow above each node's text. */
+pre.source {
   position: relative;
   max-height: 60vh;
   background: var(--code-bg);

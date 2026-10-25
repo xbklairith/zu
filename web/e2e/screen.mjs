@@ -102,6 +102,13 @@ const centred = (p, id) => p.waitForFunction((id) => {
 const panel = (p) => p.locator("aside.panel code.id").textContent({ timeout: 1000 }).catch(() => null);
 const lens = (p) => p.locator('[aria-label="Lens"] button');
 
+// spill: the nodes whose text reaches past their bottom edge: a label, a
+// stats, sub or facts line, role badges, a row. v0.1.1: React Flow's source
+// handle took the code panel's .source style, which put it in the flow and
+// pushed every node's text down by its height.
+const spill = () => [...document.querySelectorAll(".react-flow__node")].filter((n) => [...n.querySelectorAll(".label, .stats, .sub, .facts, .badges, .member")]
+  .some((t) => t.getBoundingClientRect().bottom > n.getBoundingClientRect().bottom + 0.5)).length;
+
 async function walk(b) {
   const { p, errors } = await open(b, shop, `#s=${enc(S)}`);
   const got = {};
@@ -111,6 +118,7 @@ async function walk(b) {
   got.enter = JSON.stringify(await drawn(p, S)) === JSON.stringify([S, "down:example.com/shop/internal/money", "down:github.com/lib/pq", `up:${C}`].sort())
     && (await centre(p)) === S && (await entries(p)) === start + 1;
   got.button = [enabled, await lens(p).getAttribute("aria-pressed")];
+  got.spill = await p.evaluate(spill);
   // The Screen's Panel shows the Centre; closed, it stays closed until the Centre changes.
   const shown = await panel(p);
   await p.locator('aside.panel button[aria-label="Close panel"]').click();
@@ -281,7 +289,7 @@ async function changeView(b) {
 const CSS_ESCAPE = (s) => s.replace(/["\\]/g, "\\$&");
 const want = {
   enter: true, button: [true, "true"], panel: [true, null, true, true], recentre: true, back: true, forward: true, keyboard: [C, C],
-  wordStart: true, honest: true, esc: true, more: true, disabled: true, errors: [],
+  wordStart: true, honest: true, spill: 0, esc: true, more: true, disabled: true, errors: [],
   walk: [true, true, "10 steps", "1 of 10"], marks: [true, true, true, "⇄", true, true, ["~ Order", "− ReadWriter", "~ Repo.Get", "~ Repo.check"]],
   affected: true, step: [true, "2 of 10", true, true], near: ["– of 10", true], leave: [null, C, true], full: [A, 0, true],
   red: [true, 1, "violates zu.policy.yaml (levels or cycle)"], list: [C, "7 of 10"], host: "https://github.com/o/r/compare/b...h",
