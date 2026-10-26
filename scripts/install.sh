@@ -3,7 +3,7 @@
 # against the release's checksums.txt, put zu in /usr/local/bin (with sudo if
 # that directory isn't writable), and run zu version. POSIX sh, so the README's
 # `curl -fsSL …/install.sh | sh` works whatever shell it is pasted into.
-# Environment: ZU_VERSION (0.1.0), ZU_INSTALL_DIR (/usr/local/bin), and
+# Environment: ZU_VERSION (0.1.1), ZU_INSTALL_DIR (/usr/local/bin), and
 # ZU_DOWNLOAD_URL (the release's download URL; scripts/install-test.sh points
 # it at a local dist/).
 set -eu
@@ -15,7 +15,7 @@ die() {
 
 # Everything runs from main, so a download cut short runs nothing.
 main() {
-  version=${ZU_VERSION:-0.1.0}
+  version=${ZU_VERSION:-0.1.1}
   version=${version#v}
   base=${ZU_DOWNLOAD_URL:-https://github.com/xbklairith/zu/releases/download/v$version}
   dir=${ZU_INSTALL_DIR:-/usr/local/bin}

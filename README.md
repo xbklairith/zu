@@ -11,17 +11,17 @@ There are builds for macOS arm64 and x86-64, and for Linux x86-64. From any shel
 zsh, fish, sh):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/xbklairith/zu/v0.1.0/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/xbklairith/zu/v0.1.1/scripts/install.sh | sh
 ```
 
-The pipe runs [`scripts/install.sh`](scripts/install.sh) from the `v0.1.0` tag in `sh`. It
+The pipe runs [`scripts/install.sh`](scripts/install.sh) from the `v0.1.1` tag in `sh`. It
 picks the [release](https://github.com/xbklairith/zu/releases) archive for your machine,
 checks it against `checksums.txt`, puts `zu` in `/usr/local/bin` (asking for sudo if that
 directory isn't yours), and runs `zu version`. To install without sudo, end the line with
 `| ZU_INSTALL_DIR=$HOME/.local/bin sh` instead. To read the script before running it:
 
 ```sh
-curl -fsSLO https://raw.githubusercontent.com/xbklairith/zu/v0.1.0/scripts/install.sh
+curl -fsSLO https://raw.githubusercontent.com/xbklairith/zu/v0.1.1/scripts/install.sh
 less install.sh
 sh install.sh
 ```
