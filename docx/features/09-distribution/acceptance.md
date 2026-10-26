@@ -148,3 +148,67 @@ install-test: ok
 
 The two cases that need a doctored download (no curl or wget; a wrong checksum) run
 only against a local `dist/`, where they passed in gate 1.
+
+### v0.1.1
+
+v0.1.1, published 2026-10-27 (https://github.com/xbklairith/zu/releases/tag/v0.1.1), at
+the user's yes to "release v0.1.1". It is a fix release cut from the maintenance branch
+`release/0.1`, which starts at `v0.1.0` and is not merged into `main`. It carries two
+CSS fixes, each with a browser check that failed first: the Proposal banner gets a row
+of its own (`71b17e0`; `main` has it as `1b3c8f6`), and the code pane's style is scoped
+to `pre.source` (`838f86b`; `main` gets it from 21's build). `fc7ece8` bumps the
+README's line and `install.sh`'s default to v0.1.1. The IR schema and the Policy format
+are unchanged.
+
+The procedure's "clean `main`" was `release/0.1` here. Gate 1 at `fc7ece8`: `make check`
+exit 0 (lint printed nothing), `make release-check`, `make release-snapshot` ending
+`release-verify: ok (3 archives, zu_0.1.1-snapshot_version.txt)`, and
+`scripts/install-test.sh` 13/13. With both fixes, at `838f86b`, `accept.mjs`,
+`screen.mjs`, `code.mjs`, `diffcode.mjs`, `place.mjs` and `serve.mjs` passed 59, 25, 13,
+17, 9 and 11 checks in Chromium, Firefox and WebKit. Gate 2 (real Safari) was not run, as
+for v0.1.0, and is still owed. The tag `v0.1.1` (annotated) points at
+`fc7ece890866c3d246b86a5e6c9bbc4eb000105c`. goreleaser v2.12.7 made the draft;
+`scripts/release-verify.sh dist` said `release-verify: ok (3 archives,
+zu_0.1.1_version.txt)`. The draft's notes were replaced with the two fixes, the install
+line, the macOS quarantine note and the known limits, then it was published.
+
+`gh release download v0.1.1`, then `shasum -a 256 -c checksums.txt`:
+
+```
+368f093d0fb6ed14d4e9e8271c47a670d80d352b1b1a9d5c2e059f4a5a2d9b2f  zu_0.1.1_darwin_amd64.tar.gz
+1af020f00c0f684cb4bc716394fb784a45698ebe2b895c9acdc0038a9ea3af89  zu_0.1.1_darwin_arm64.tar.gz
+215051241a0a3ff1f5ce64e30d15d9f1779eaaaee6c29d0c5977af6011137de8  zu_0.1.1_linux_amd64.tar.gz
+4f71d75de1bbc31e8c705d625c3557deea6c158167a9a80671b2d3598e59c29e  zu_0.1.1_version.txt
+```
+
+All four `OK`. The record, whose commit is `git rev-parse 'v0.1.1^{commit}'`:
+
+```
+zu version v0.1.1
+commit fc7ece890866c3d246b86a5e6c9bbc4eb000105c
+ir-schema 1
+policy-format 1
+go go1.24.5
+ui embedded
+```
+
+`scripts/install-test.sh --release`, the README's line as written:
+
+```
+install-test: zu 0.1.1 (fc7ece890866c3d246b86a5e6c9bbc4eb000105c), via: curl -fsSL https://raw.githubusercontent.com/xbklairith/zu/v0.1.1/scripts/install.sh | sh
+  ok    alpine, busybox ash, wget
+  ok    debian, dash
+  ok    debian, bash
+  ok    debian, zsh
+  ok    debian, fish
+  ok    ubuntu, a user, ZU_INSTALL_DIR
+  ok    ubuntu, a user, sudo
+  ok    ubuntu, a user, no sudo
+  ok    fedora, bash as sh
+  ok    linux arm64, busybox
+  ok    this Mac, zsh
+install-test: ok
+```
+
+`main`'s README line and `install.sh` default were bumped to v0.1.1 in the commit that
+records this, and are byte-identical to the tag's.
