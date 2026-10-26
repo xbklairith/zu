@@ -380,6 +380,16 @@ async function run(b) {
   await settle(p);
   const banner = () => p.locator(".proposal-banner").innerText().catch(() => null);
   out.proposal = [await hash(p), await banner(), await p.locator(".legend .violation").innerText()];
+  // v0.1.1: the banner is a row of its own, so it covers neither the legend
+  // nor a box (07 drew it over both): the boxes and the legend it meets.
+  out.bannerClear = await p.evaluate(() => {
+    const r = document.querySelector(".proposal-banner").getBoundingClientRect();
+    const meets = (e) => {
+      const q = e.getBoundingClientRect();
+      return r.left < q.right && q.left < r.right && r.top < q.bottom && q.top < r.bottom;
+    };
+    return [...document.querySelectorAll(".legend, .react-flow__node")].filter(meets).length;
+  });
   await p.reload();
   await drawn(p);
   await settle(p);
@@ -637,6 +647,7 @@ const want = {
   redBox: ["d=1: m/internal", "full:  / 1 0", "arrows:  / 1 0", "triangles:  / 0 2", "elements:  / 1 0", "classes:  / 1 0"],
   panel: ["Violations inside (1)", "levels m/internal/ir/bad → m/internal/cli"],
   proposal: ["#p=Hexagon", "PROPOSAL — not instantiated in code: Hexagon", "violates Proposal Hexagon's layers; a red box holds one"],
+  bannerClear: 0,
   proposalReload: "PROPOSAL — not instantiated in code: Hexagon",
   proposalNone: ["", 0],
   order: "m/z m/y m/x m#pkg m/a m/b m/c",

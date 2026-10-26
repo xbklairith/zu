@@ -1,6 +1,6 @@
 # 21 · Externals Rail — Plan
 
-**Status:** APPROVED 2026-10-21 (lead, after scrutiny-21, its fixes and the replay; scrutiny's re-check said ship; advisor sign-off). Not built: Tasks 1–3 wait.
+**Status:** APPROVED 2026-10-21 (lead, after scrutiny-21, its fixes and the replay; scrutiny's re-check said ship; advisor sign-off); text REVISED 2026-10-27, when the banner fix of v0.1.1 reached `main`: `accept.mjs` has one check more, so its counts below go up by one (**Replay record**). No code block changed. Not built: Tasks 1–3 wait.
 
 **Base.** Every diff here is against `main` at c7f9896 (v0.1.0). The diffs come from a scratch branch whose first commit is a `git archive` of c7f9896. After it come one commit per red step and one per green step. The plan was replayed on a fresh `git archive` of `main` (**Replay record**).
 
@@ -4318,7 +4318,7 @@ index 41f1022..509345a 100644
 
 - [ ] **Run:** `cd web && npx vite build >/dev/null && cd e2e && node rail.mjs` Expected: FAIL (0/16 checks in each engine: no band is drawn, so the wait for its caption times out after 10 s)
 
-- [ ] **Run:** `cd web/e2e && node accept.mjs` Expected: FAIL (56/58 checks in each engine: `spill = 5`, the fault of **Architecture 7**; `change = 17`, the two ovals gone from the canvas and no chip in their place)
+- [ ] **Run:** `cd web/e2e && node accept.mjs` Expected: FAIL (57/59 checks in each engine: `spill = 5`, the fault of **Architecture 7**; `change = 17`, the two ovals gone from the canvas and no chip in their place)
 
 - [ ] **Run:** `cd web/e2e && node screen.mjs` Expected: FAIL (24/25 checks in each engine: `spill = 4`)
 
@@ -4612,7 +4612,7 @@ index 7419165..08b5ae0 100644
 
 - [ ] **Run:** `cd web && npx vite build >/dev/null && cd e2e && node rail.mjs` Expected: PASS (16 checks in each engine)
 
-- [ ] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (58 checks in each engine)
+- [ ] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (59 checks in each engine)
 
 - [ ] **Run:** `cd web/e2e && node screen.mjs` Expected: PASS (25 checks in each engine)
 
@@ -4631,7 +4631,7 @@ index 7419165..08b5ae0 100644
 
 - [ ] **Run:** `make build >/dev/null` Expected: PASS
 
-- [ ] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (58 checks in each engine)
+- [ ] **Run:** `cd web/e2e && node accept.mjs` Expected: PASS (59 checks in each engine)
 
 - [ ] **Run:** `cd web/e2e && node place.mjs` Expected: PASS (9 checks in each engine)
 
@@ -4717,4 +4717,5 @@ Replayed with `replay.py`, after scrutiny's fixes, on a fresh `git archive` of `
 - The red reasons were seen as stated, on the scratch branch's red commits, since `replay.py` prints only each step's last line:
   - Task 1: 19 tests in 7 files (the replay counts 20 errors: the 19, and `rail.test.ts`, which cannot load).
   - Task 2: `rail.mjs` 0/16, `accept.mjs` 56/58 (`spill = 5`, `change = 17`) and `screen.mjs` 24/25 (`spill = 4`), in each engine.
+- **Again on 2026-10-27,** on a fresh `git archive` of `main` at 56b10c4 with the banner fix of v0.1.1 applied (`release/0.1`, 71b17e0: a check in `accept.mjs` and the `.proposal-banner` rule in `styles.css`), which `main` now carries: all 19 steps exited as in the table. `accept.mjs` counted one check more: its last line, WebKit's, read 57/59 at Task 2's red step and 59/59 at each green one. The counts above are the first replay's.
 - Toolchain: Go 1.24.5, Node 24.17.0, Python 3.11.17, macOS on an Apple M2.
